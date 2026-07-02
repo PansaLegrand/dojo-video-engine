@@ -1,7 +1,10 @@
 import {
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   FileAudio,
   FileVideo,
+  GripHorizontal,
   Image as ImageIcon,
   Info,
   Layers,
@@ -59,8 +62,11 @@ import {
 import {
   createPreviewSelectionOverlay,
   movePreviewLayerBoundsFromDrag,
+  resizePreviewLayerBoundsFromDrag,
   type PreviewCanvasRect,
+  type PreviewLayerBounds,
   type PreviewLayerMove,
+  type PreviewLayerResizeHandle,
 } from "@/lib/editor/preview-selection";
 import {
   formatFrameTime,
@@ -310,7 +316,8 @@ function AssetCard({
   onRemove: () => void;
 }) {
   const previewSrc =
-    asset.thumbnailUrl ?? (asset.type === "image" ? asset.objectUrl : undefined);
+    asset.thumbnailUrl ??
+    (asset.type === "image" ? asset.objectUrl : undefined);
   const metadata = assetMetadata(asset);
   const readiness = describeLocalMediaAssetReadiness(asset);
 
@@ -318,11 +325,7 @@ function AssetCard({
     <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-2 rounded-md border border-border bg-white p-2 shadow-sm">
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
         {previewSrc ? (
-          <img
-            src={previewSrc}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <img src={previewSrc} alt="" className="h-full w-full object-cover" />
         ) : (
           <AssetTypeIcon type={asset.type} />
         )}
@@ -459,6 +462,43 @@ function appendMentionToken(input: string, asset: LocalMediaAsset) {
   return `${input}${separator}${token} `;
 }
 
+function activeMentionQuery(input: string, caretIndex: number) {
+  const beforeCaret = input.slice(0, caretIndex);
+  const atIndex = beforeCaret.lastIndexOf("@");
+
+  if (atIndex < 0) {
+    return null;
+  }
+
+  const query = beforeCaret.slice(atIndex + 1);
+
+  if (/[\s\n.,;:!?()[\]{}]/.test(query)) {
+    return null;
+  }
+
+  return { start: atIndex, end: caretIndex, query };
+}
+
+function insertMentionTokenAtQuery({
+  input,
+  query,
+  asset,
+}: {
+  input: string;
+  query: { start: number; end: number };
+  asset: LocalMediaAsset;
+}) {
+  const token = mediaMentionToken(localAssetMentionItem(asset));
+  const before = input.slice(0, query.start);
+  const after = input.slice(query.end);
+  const separator = after.length === 0 || !/^\s/.test(after) ? " " : "";
+
+  return {
+    value: `${before}${token}${separator}${after}`,
+    caret: query.start + token.length + separator.length,
+  };
+}
+
 function ChatPanel({
   messages,
   messagesScrollerRef,
@@ -488,6 +528,57 @@ function ChatPanel({
   onNewSession: () => void;
   onSelectPlanStep: (id: string) => void;
 }) {
+  const [mentionQuery, setMentionQuery] = useState<{
+    start: number;
+    end: number;
+    query: string;
+  } | null>(null);
+  const mentionSuggestions = mentionQuery
+    ? mediaAssets
+        .filter((asset) => !describeLocalMediaAssetReadiness(asset).blocksUse)
+        .filter((asset) => {
+          const query = mentionQuery.query.trim().toLowerCase();
+
+          if (!query) {
+            return true;
+          }
+
+          return [
+            asset.label,
+            asset.fileName,
+            asset.id,
+            asset.sceneAssetId,
+            ...asset.aliases,
+          ].some((value) => value.toLowerCase().includes(query));
+        })
+        .slice(0, 6)
+    : [];
+  const updateMentionQuery = (textarea: HTMLTextAreaElement) => {
+    setMentionQuery(
+      activeMentionQuery(textarea.value, textarea.selectionStart),
+    );
+  };
+  const insertMentionAsset = (asset: LocalMediaAsset) => {
+    if (!mentionQuery) {
+      onInputChange(appendMentionToken(input, asset));
+      window.setTimeout(() => textareaRef.current?.focus(), 0);
+      return;
+    }
+
+    const nextInput = insertMentionTokenAtQuery({
+      input,
+      query: mentionQuery,
+      asset,
+    });
+
+    onInputChange(nextInput.value);
+    setMentionQuery(null);
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(nextInput.caret, nextInput.caret);
+    }, 0);
+  };
+
   return (
     <>
       <PanelHeader
@@ -572,20 +663,72 @@ function ChatPanel({
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(event) => onInputChange(event.target.value)}
+            onChange={(event) => {
+              onInputChange(event.target.value);
+              updateMentionQuery(event.currentTarget);
+            }}
+            onClick={(event) => updateMentionQuery(event.currentTarget)}
+            onKeyUp={(event) => {
+              if (["Enter", "Escape", "Tab"].includes(event.key)) {
+                return;
+              }
+              updateMentionQuery(event.currentTarget);
+            }}
             onKeyDown={(event) => {
+              const firstSuggestion = mentionSuggestions[0];
+              if (
+                firstSuggestion &&
+                !event.shiftKey &&
+                (event.key === "Enter" || event.key === "Tab")
+              ) {
+                event.preventDefault();
+                insertMentionAsset(firstSuggestion);
+                return;
+              }
+
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
                 if (input.trim() && !isSending) {
                   event.currentTarget.form?.requestSubmit();
                 }
               }
+              if (event.key === "Escape") {
+                setMentionQuery(null);
+              }
             }}
-            placeholder="Describe or refine the video..."
-            rows={4}
-            className="min-h-28 w-full resize-none border-0 bg-transparent px-3 py-2.5 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            placeholder="Describe or refine the video... Use @ to specify the file."
+            rows={6}
+            className="min-h-40 w-full resize-y border-0 bg-transparent px-3 py-2.5 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSending}
           />
+          {mentionSuggestions.length ? (
+            <div className="border-t border-border/70 bg-white px-2.5 py-2">
+              <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-white shadow-sm">
+                {mentionSuggestions.map((asset) => (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => insertMentionAsset(asset)}
+                    className="grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-muted"
+                  >
+                    <MentionAssetPreview asset={asset} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-foreground">
+                        {mediaMentionToken(localAssetMentionItem(asset))}
+                      </span>
+                      <span className="block truncate text-[10px] text-muted-foreground">
+                        {asset.fileName}
+                      </span>
+                    </span>
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                      {asset.type}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between border-t border-border/70 px-2.5 py-2">
             <button
               type="button"
@@ -610,7 +753,7 @@ function ChatPanel({
             </button>
           </div>
           {mediaAssets.length ? (
-            <div className="flex flex-wrap gap-1.5 border-t border-border/70 px-2.5 py-2">
+            <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto border-t border-border/70 px-2.5 py-2">
               {mediaAssets.slice(0, 5).map((asset) => (
                 <MentionAssetButton
                   key={asset.id}
@@ -647,18 +790,33 @@ function MentionAssetButton({
       onClick={() => onInputChange(appendMentionToken(input, asset))}
       disabled={isSending || readiness.blocksUse}
       className={cn(
-        "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border px-2 text-xs hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45",
+        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-md border px-1.5 pr-2 text-xs hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45",
         readiness.severity === "warning"
           ? "border-[hsl(38_80%_72%)] bg-[hsl(38_92%_94%)] text-[hsl(32_95%_30%)]"
           : "border-border bg-muted text-muted-foreground",
       )}
       title={readiness.blocksUse ? readiness.detail : `Mention ${asset.label}`}
     >
-      <AssetTypeIcon type={asset.type} />
+      <MentionAssetPreview asset={asset} />
       <span className="truncate">
         {mediaMentionToken(localAssetMentionItem(asset))}
       </span>
     </button>
+  );
+}
+
+function MentionAssetPreview({ asset }: { asset: LocalMediaAsset }) {
+  const previewSrc =
+    asset.thumbnailUrl ?? (asset.type === "image" ? asset.objectUrl : null);
+
+  return (
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border/80 bg-white text-muted-foreground">
+      {previewSrc ? (
+        <img src={previewSrc} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <AssetTypeIcon type={asset.type} />
+      )}
+    </span>
   );
 }
 
@@ -1048,7 +1206,10 @@ export function PreviewWorkspace({
   scene: Scene | null;
   playerState: Pick<PlayerUiState, "frame" | "loading" | "error">;
   selectedLayer: EditorLayer | null;
-  onMoveLayer: (id: string, move: PreviewLayerMove) => void;
+  onMoveLayer: (
+    id: string,
+    move: PreviewLayerMove | PreviewLayerBounds,
+  ) => void;
 }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const draggingLayerRef = useRef<PreviewDraggingLayer | null>(null);
@@ -1082,9 +1243,17 @@ export function PreviewWorkspace({
           ...selectionOverlay,
           rect: {
             ...selectionOverlay.rect,
-            left: (draggingLayer.previewLeft / (scene?.width ?? 1)) *
+            left:
+              (draggingLayer.previewLeft / (scene?.width ?? 1)) *
               (canvasRect?.width ?? 1),
-            top: (draggingLayer.previewTop / (scene?.height ?? 1)) *
+            top:
+              (draggingLayer.previewTop / (scene?.height ?? 1)) *
+              (canvasRect?.height ?? 1),
+            width:
+              (draggingLayer.previewWidth / (scene?.width ?? 1)) *
+              (canvasRect?.width ?? 1),
+            height:
+              (draggingLayer.previewHeight / (scene?.height ?? 1)) *
               (canvasRect?.height ?? 1),
           },
         }
@@ -1127,7 +1296,7 @@ export function PreviewWorkspace({
     return () => observer.disconnect();
   }, [canvasRef, scene?.height, scene?.width]);
 
-  const previewLayerDrag = (
+  const previewLayerGeometryDrag = (
     currentClientX: number,
     currentClientY: number,
   ): PreviewDraggingLayer | null => {
@@ -1137,27 +1306,52 @@ export function PreviewWorkspace({
       return activeDrag;
     }
 
-    const move = movePreviewLayerBoundsFromDrag({
-      initialLeft: activeDrag.initialLeft,
-      initialTop: activeDrag.initialTop,
-      startClientX: activeDrag.startClientX,
-      startClientY: activeDrag.startClientY,
-      currentClientX,
-      currentClientY,
-      sceneWidth: scene.width,
-      sceneHeight: scene.height,
-      canvasRect,
-    });
+    const move =
+      activeDrag.mode === "resize" && activeDrag.handle
+        ? resizePreviewLayerBoundsFromDrag({
+            handle: activeDrag.handle,
+            initialLeft: activeDrag.initialLeft,
+            initialTop: activeDrag.initialTop,
+            initialWidth: activeDrag.initialWidth,
+            initialHeight: activeDrag.initialHeight,
+            startClientX: activeDrag.startClientX,
+            startClientY: activeDrag.startClientY,
+            currentClientX,
+            currentClientY,
+            sceneWidth: scene.width,
+            sceneHeight: scene.height,
+            canvasRect,
+          })
+        : {
+            ...movePreviewLayerBoundsFromDrag({
+              initialLeft: activeDrag.initialLeft,
+              initialTop: activeDrag.initialTop,
+              startClientX: activeDrag.startClientX,
+              startClientY: activeDrag.startClientY,
+              currentClientX,
+              currentClientY,
+              sceneWidth: scene.width,
+              sceneHeight: scene.height,
+              canvasRect,
+            }),
+            width: activeDrag.initialWidth,
+            height: activeDrag.initialHeight,
+          };
     const nextDrag = {
       ...activeDrag,
       previewLeft: move.left,
       previewTop: move.top,
+      previewWidth: move.width,
+      previewHeight: move.height,
     };
 
     setDraggingLayer(nextDrag);
     return nextDrag;
   };
-  const commitLayerDrag = (currentClientX?: number, currentClientY?: number) => {
+  const commitLayerDrag = (
+    currentClientX?: number,
+    currentClientY?: number,
+  ) => {
     const activeDrag = draggingLayerRef.current;
 
     if (!activeDrag) {
@@ -1167,58 +1361,100 @@ export function PreviewWorkspace({
 
     const finalDrag =
       currentClientX !== undefined && currentClientY !== undefined
-        ? previewLayerDrag(currentClientX, currentClientY) ?? activeDrag
+        ? (previewLayerGeometryDrag(currentClientX, currentClientY) ??
+          activeDrag)
         : activeDrag;
 
     if (
       finalDrag.previewLeft !== finalDrag.initialLeft ||
-      finalDrag.previewTop !== finalDrag.initialTop
+      finalDrag.previewTop !== finalDrag.initialTop ||
+      finalDrag.previewWidth !== finalDrag.initialWidth ||
+      finalDrag.previewHeight !== finalDrag.initialHeight
     ) {
-      onMoveLayer(finalDrag.id, {
-        left: finalDrag.previewLeft,
-        top: finalDrag.previewTop,
-      });
+      const nextBounds =
+        finalDrag.mode === "resize"
+          ? {
+              left: finalDrag.previewLeft,
+              top: finalDrag.previewTop,
+              width: finalDrag.previewWidth,
+              height: finalDrag.previewHeight,
+            }
+          : {
+              left: finalDrag.previewLeft,
+              top: finalDrag.previewTop,
+            };
+
+      onMoveLayer(finalDrag.id, nextBounds);
     }
 
     setDraggingLayer(null);
   };
-  const handleSelectionPointerDown = (
-    event: PointerEvent<HTMLDivElement>,
-  ) => {
-    if (
-      !canDragSelection ||
-      !selectedLayer?.bounds
-    ) {
-      return;
+  const startPreviewGeometryDrag = ({
+    mode,
+    handle,
+    clientX,
+    clientY,
+  }: {
+    mode: PreviewDraggingLayer["mode"];
+    handle?: PreviewLayerResizeHandle;
+    clientX: number;
+    clientY: number;
+  }) => {
+    if (!canDragSelection || !selectedLayer?.bounds) {
+      return false;
     }
 
     const initialLeft = selectedLayer.bounds.left ?? 0;
     const initialTop = selectedLayer.bounds.top ?? 0;
+    const initialWidth = selectedLayer.bounds.width ?? scene?.width ?? 1;
+    const initialHeight = selectedLayer.bounds.height ?? scene?.height ?? 1;
 
-    if (!Number.isFinite(initialLeft) || !Number.isFinite(initialTop)) {
-      return;
+    if (
+      !Number.isFinite(initialLeft) ||
+      !Number.isFinite(initialTop) ||
+      !Number.isFinite(initialWidth) ||
+      !Number.isFinite(initialHeight)
+    ) {
+      return false;
     }
 
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
     setDraggingLayer({
+      mode,
       id: selectedLayer.id,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
+      handle,
+      startClientX: clientX,
+      startClientY: clientY,
       initialLeft,
       initialTop,
+      initialWidth,
+      initialHeight,
       previewLeft: initialLeft,
       previewTop: initialTop,
+      previewWidth: initialWidth,
+      previewHeight: initialHeight,
     });
+
+    return true;
   };
-  const handleSelectionPointerMove = (
-    event: PointerEvent<HTMLDivElement>,
-  ) => {
+  const handleSelectionPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    if (
+      startPreviewGeometryDrag({
+        mode: "move",
+        clientX: event.clientX,
+        clientY: event.clientY,
+      })
+    ) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+  };
+  const handleSelectionPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
       return;
     }
 
-    previewLayerDrag(event.clientX, event.clientY);
+    previewLayerGeometryDrag(event.clientX, event.clientY);
   };
   const handleSelectionPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -1245,22 +1481,71 @@ export function PreviewWorkspace({
       return;
     }
 
-    const initialLeft = selectedLayer.bounds.left ?? 0;
-    const initialTop = selectedLayer.bounds.top ?? 0;
+    event.stopPropagation();
+    startPreviewGeometryDrag({
+      mode: "move",
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+  };
+  const handleResizeHandlePointerDown = (
+    handle: PreviewLayerResizeHandle,
+    event: PointerEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
 
-    if (!Number.isFinite(initialLeft) || !Number.isFinite(initialTop)) {
+    if (
+      startPreviewGeometryDrag({
+        mode: "resize",
+        handle,
+        clientX: event.clientX,
+        clientY: event.clientY,
+      })
+    ) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+  };
+  const handleResizeHandlePointerMove = (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+
+    previewLayerGeometryDrag(event.clientX, event.clientY);
+  };
+  const handleResizeHandlePointerUp = (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    commitLayerDrag(event.clientX, event.clientY);
+  };
+  const handleResizeHandlePointerCancel = (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    setDraggingLayer(null);
+  };
+  const handleResizeHandleMouseDown = (
+    handle: PreviewLayerResizeHandle,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    if (draggingLayerRef.current) {
       return;
     }
 
     event.stopPropagation();
-    setDraggingLayer({
-      id: selectedLayer.id,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      initialLeft,
-      initialTop,
-      previewLeft: initialLeft,
-      previewTop: initialTop,
+    startPreviewGeometryDrag({
+      mode: "resize",
+      handle,
+      clientX: event.clientX,
+      clientY: event.clientY,
     });
   };
 
@@ -1270,7 +1555,7 @@ export function PreviewWorkspace({
     }
 
     const handleWindowMouseMove = (event: globalThis.MouseEvent) => {
-      previewLayerDrag(event.clientX, event.clientY);
+      previewLayerGeometryDrag(event.clientX, event.clientY);
     };
     const handleWindowMouseUp = (event: globalThis.MouseEvent) => {
       commitLayerDrag(event.clientX, event.clientY);
@@ -1287,7 +1572,7 @@ export function PreviewWorkspace({
 
   return (
     <div
-      className="relative min-h-0 min-w-0 overflow-hidden bg-[hsl(218_18%_92%)] bg-[linear-gradient(to_right,hsl(218_16%_82%/.55)_1px,transparent_1px),linear-gradient(to_bottom,hsl(218_16%_82%/.55)_1px,transparent_1px)] bg-[size:16px_16px]"
+      className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-[hsl(218_18%_92%)] bg-[linear-gradient(to_right,hsl(218_16%_82%/.55)_1px,transparent_1px),linear-gradient(to_bottom,hsl(218_16%_82%/.55)_1px,transparent_1px)] bg-[size:16px_16px]"
       data-editor-workspace
     >
       <div className="absolute inset-3 flex items-center justify-center">
@@ -1352,7 +1637,31 @@ export function PreviewWorkspace({
                   width: `${displaySelectionOverlay.rect.width}px`,
                   height: `${displaySelectionOverlay.rect.height}px`,
                 }}
-              />
+              >
+                {canDragSelection
+                  ? PREVIEW_RESIZE_HANDLES.map(({ handle, className }) => (
+                      <button
+                        key={handle}
+                        type="button"
+                        aria-label={`Resize ${displaySelectionOverlay.label} ${handle}`}
+                        title={`Resize ${displaySelectionOverlay.label}`}
+                        className={cn(
+                          "absolute z-10 h-3 w-3 rounded-sm border border-white bg-primary shadow touch-none",
+                          className,
+                        )}
+                        onPointerDown={(event) =>
+                          handleResizeHandlePointerDown(handle, event)
+                        }
+                        onPointerMove={handleResizeHandlePointerMove}
+                        onPointerUp={handleResizeHandlePointerUp}
+                        onPointerCancel={handleResizeHandlePointerCancel}
+                        onMouseDown={(event) =>
+                          handleResizeHandleMouseDown(handle, event)
+                        }
+                      />
+                    ))
+                  : null}
+              </div>
             </div>
           ) : null}
           {displaySelectionOverlay?.kind === "unbounded" ? (
@@ -1379,9 +1688,7 @@ export function PreviewWorkspace({
               <div className="rounded-md bg-[hsl(220_18%_12%/.86)] px-5 py-4 text-white shadow-xl">
                 <Sparkles className="mx-auto mb-2 h-5 w-5" />
                 <p className="text-sm font-medium">{overlay.title}</p>
-                <p className="mt-1 text-xs text-white/70">
-                  {overlay.detail}
-                </p>
+                <p className="mt-1 text-xs text-white/70">{overlay.detail}</p>
               </div>
             </div>
           ) : null}
@@ -1413,14 +1720,72 @@ type TimelineDraggingLayer = {
   previewDuration: number;
 };
 
+type TimelineResizeDrag = {
+  startClientY: number;
+  startHeight: number;
+};
+
+const TIMELINE_TRACK_ROW_HEIGHT = 32;
+const TIMELINE_TRACK_HEADER_HEIGHT = 24;
+const TIMELINE_BLOCK_TOP_OFFSET = 34;
+const TIMELINE_TRACK_ROW_TOP_PADDING =
+  TIMELINE_BLOCK_TOP_OFFSET - TIMELINE_TRACK_HEADER_HEIGHT;
+const TIMELINE_CONTENT_BOTTOM_PADDING = 8;
+const TIMELINE_COLLAPSED_HEIGHT = 44;
+const TIMELINE_MIN_PANEL_HEIGHT = 104;
+const TIMELINE_PREVIEW_MIN_HEIGHT = 140;
+const PREVIEW_RESIZE_HANDLES: Array<{
+  handle: PreviewLayerResizeHandle;
+  className: string;
+}> = [
+  {
+    handle: "nw",
+    className: "-left-1.5 -top-1.5 cursor-nwse-resize",
+  },
+  {
+    handle: "n",
+    className: "left-1/2 -top-1.5 -translate-x-1/2 cursor-ns-resize",
+  },
+  {
+    handle: "ne",
+    className: "-right-1.5 -top-1.5 cursor-nesw-resize",
+  },
+  {
+    handle: "e",
+    className: "-right-1.5 top-1/2 -translate-y-1/2 cursor-ew-resize",
+  },
+  {
+    handle: "se",
+    className: "-bottom-1.5 -right-1.5 cursor-nwse-resize",
+  },
+  {
+    handle: "s",
+    className: "bottom-[-6px] left-1/2 -translate-x-1/2 cursor-ns-resize",
+  },
+  {
+    handle: "sw",
+    className: "-bottom-1.5 -left-1.5 cursor-nesw-resize",
+  },
+  {
+    handle: "w",
+    className: "-left-1.5 top-1/2 -translate-y-1/2 cursor-ew-resize",
+  },
+];
+
 type PreviewDraggingLayer = {
+  mode: "move" | "resize";
   id: string;
+  handle?: PreviewLayerResizeHandle;
   startClientX: number;
   startClientY: number;
   initialLeft: number;
   initialTop: number;
+  initialWidth: number;
+  initialHeight: number;
   previewLeft: number;
   previewTop: number;
+  previewWidth: number;
+  previewHeight: number;
 };
 
 export function TimelinePanel({
@@ -1430,12 +1795,17 @@ export function TimelinePanel({
   selectedLayerId,
   playerState,
   exportStatus,
+  timelineHeight,
+  timelineCollapsed,
   onSelectLayer,
   onTogglePlayback,
   onSeek,
   onRetimeLayer,
   onResizeLayerDuration,
   onSplitSelectedLayer,
+  onDeleteLayer,
+  onTimelineHeightChange,
+  onTimelineCollapsedChange,
 }: {
   scene: Scene | null;
   layers: EditorLayer[];
@@ -1443,27 +1813,42 @@ export function TimelinePanel({
   selectedLayerId: string | null;
   playerState: PlayerUiState;
   exportStatus: string;
+  timelineHeight: number;
+  timelineCollapsed: boolean;
   onSelectLayer: (id: string) => void;
   onTogglePlayback: () => void;
   onSeek: (frame: number) => void;
   onRetimeLayer: (id: string, from: number) => void;
   onResizeLayerDuration: (id: string, duration: number) => void;
   onSplitSelectedLayer: () => void;
+  onDeleteLayer: (id: string) => void;
+  onTimelineHeightChange: (height: number) => void;
+  onTimelineCollapsedChange: (collapsed: boolean) => void;
 }) {
   const duration = scene?.duration ?? 1;
+  const timelineContentHeight =
+    TIMELINE_BLOCK_TOP_OFFSET +
+    Math.max(1, layers.length) * TIMELINE_TRACK_ROW_HEIGHT +
+    TIMELINE_CONTENT_BOTTOM_PADDING;
   const canScrub = Boolean(scene && !playerState.loading && !playerState.error);
   const selectedTimelineLayer =
     layers.find((layer) => layer.id === selectedLayerId) ?? null;
   const canSplitSelectedLayer = Boolean(
     scene &&
-      selectedTimelineLayer &&
-      selectedTimelineLayer.childCount === 0 &&
-      playerState.frame > selectedTimelineLayer.from &&
-      playerState.frame < selectedTimelineLayer.from + selectedTimelineLayer.duration,
+    selectedTimelineLayer &&
+    selectedTimelineLayer.childCount === 0 &&
+    playerState.frame > selectedTimelineLayer.from &&
+    playerState.frame <
+      selectedTimelineLayer.from + selectedTimelineLayer.duration,
   );
   const draggingLayerRef = useRef<TimelineDraggingLayer | null>(null);
+  const timelineResizeRef = useRef<TimelineResizeDrag | null>(null);
+  const trackListRef = useRef<HTMLDivElement | null>(null);
+  const timelineScrollerRef = useRef<HTMLDivElement | null>(null);
+  const syncingScrollRef = useRef(false);
   const [draggingLayer, setDraggingLayerState] =
     useState<TimelineDraggingLayer | null>(null);
+  const [resizingTimeline, setResizingTimeline] = useState(false);
   const setDraggingLayer = (state: TimelineDraggingLayer | null) => {
     draggingLayerRef.current = state;
     setDraggingLayerState(state);
@@ -1477,6 +1862,20 @@ export function TimelinePanel({
     exportStatus,
     layerCount: layers.length,
   });
+  const syncVerticalScroll = (
+    source: HTMLDivElement | null,
+    target: HTMLDivElement | null,
+  ) => {
+    if (!source || !target || syncingScrollRef.current) {
+      return;
+    }
+
+    syncingScrollRef.current = true;
+    target.scrollTop = source.scrollTop;
+    window.requestAnimationFrame(() => {
+      syncingScrollRef.current = false;
+    });
+  };
   const scrubTimelineAtClientX = (
     clientX: number,
     timelineElement: HTMLDivElement,
@@ -1630,12 +2029,7 @@ export function TimelinePanel({
     event.stopPropagation();
 
     if (
-      beginLayerDragFromElement(
-        mode,
-        layer,
-        event.clientX,
-        event.currentTarget,
-      )
+      beginLayerDragFromElement(mode, layer, event.clientX, event.currentTarget)
     ) {
       event.currentTarget.setPointerCapture(event.pointerId);
     }
@@ -1674,12 +2068,7 @@ export function TimelinePanel({
     event: MouseEvent<HTMLElement>,
   ) => {
     event.stopPropagation();
-    beginLayerDragFromElement(
-      mode,
-      layer,
-      event.clientX,
-      event.currentTarget,
-    );
+    beginLayerDragFromElement(mode, layer, event.clientX, event.currentTarget);
   };
   const handleLayerMouseMove = (event: MouseEvent<HTMLElement>) => {
     if (!draggingLayer) {
@@ -1698,6 +2087,80 @@ export function TimelinePanel({
       timelineElementForBlock(event.currentTarget),
     );
   };
+  const startTimelineResize = (clientY: number) => {
+    timelineResizeRef.current = {
+      startClientY: clientY,
+      startHeight: timelineHeight,
+    };
+    onTimelineCollapsedChange(false);
+    setResizingTimeline(true);
+  };
+  const beginTimelineResize = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    startTimelineResize(event.clientY);
+  };
+  const beginTimelineMouseResize = (event: MouseEvent<HTMLButtonElement>) => {
+    if (timelineResizeRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    startTimelineResize(event.clientY);
+  };
+  const resizeTimeline = (clientY: number) => {
+    const activeResize = timelineResizeRef.current;
+
+    if (!activeResize) {
+      return;
+    }
+
+    onTimelineHeightChange(
+      activeResize.startHeight + activeResize.startClientY - clientY,
+    );
+  };
+  const finishTimelineResize = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    resizeTimeline(event.clientY);
+    timelineResizeRef.current = null;
+    setResizingTimeline(false);
+  };
+  const cancelTimelineResize = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    timelineResizeRef.current = null;
+    setResizingTimeline(false);
+  };
+
+  useEffect(() => {
+    if (!resizingTimeline) {
+      return;
+    }
+
+    const handleWindowMouseMove = (event: globalThis.MouseEvent) => {
+      resizeTimeline(event.clientY);
+    };
+    const handleWindowMouseUp = (event: globalThis.MouseEvent) => {
+      resizeTimeline(event.clientY);
+      timelineResizeRef.current = null;
+      setResizingTimeline(false);
+    };
+
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
+    };
+  }, [resizingTimeline]);
 
   function previewDragWithoutState(
     activeDrag: TimelineDraggingLayer,
@@ -1730,7 +2193,40 @@ export function TimelinePanel({
   }
 
   return (
-    <div className="flex min-h-0 flex-col border-t border-border bg-card">
+    <div
+      className={cn(
+        "relative flex min-h-0 shrink-0 flex-col border-t border-border bg-card",
+        resizingTimeline ? "select-none" : "",
+      )}
+      style={{
+        height: timelineCollapsed
+          ? TIMELINE_COLLAPSED_HEIGHT
+          : `min(${timelineHeight}px, max(${TIMELINE_MIN_PANEL_HEIGHT}px, calc(100% - ${TIMELINE_PREVIEW_MIN_HEIGHT}px)))`,
+      }}
+    >
+      <button
+        type="button"
+        onPointerDown={beginTimelineResize}
+        onPointerMove={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            resizeTimeline(event.clientY);
+          }
+        }}
+        onPointerUp={finishTimelineResize}
+        onPointerCancel={cancelTimelineResize}
+        onMouseDown={beginTimelineMouseResize}
+        className={cn(
+          "absolute inset-x-0 top-0 z-20 flex h-4 cursor-ns-resize items-start justify-center text-muted-foreground hover:text-foreground",
+          resizingTimeline ? "text-foreground ring-2 ring-primary/25" : "",
+        )}
+        title="Resize tracks"
+        aria-label="Resize tracks"
+      >
+        <span className="pointer-events-none flex h-4 w-20 items-center justify-center rounded-b-md border border-t-0 border-border bg-white shadow-sm">
+          <GripHorizontal className="h-3.5 w-3.5" />
+        </span>
+      </button>
+
       <div className="flex h-11 shrink-0 items-center justify-between border-b border-border px-3">
         <div className="flex items-center gap-1.5">
           <button
@@ -1772,209 +2268,276 @@ export function TimelinePanel({
           className="mx-4 h-1.5 flex-1 accent-[hsl(var(--primary))]"
         />
 
-        <div className="hidden w-40 truncate text-right text-xs text-muted-foreground sm:block lg:w-56">
-          {exportReadiness.status}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <div className="hidden w-40 truncate text-right text-xs text-muted-foreground sm:block lg:w-56">
+            {exportReadiness.status}
+          </div>
+          <button
+            type="button"
+            onClick={() => onTimelineCollapsedChange(!timelineCollapsed)}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-white text-muted-foreground hover:text-foreground"
+            title={timelineCollapsed ? "Show tracks" : "Hide tracks"}
+            aria-label={timelineCollapsed ? "Show tracks" : "Hide tracks"}
+          >
+            {timelineCollapsed ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[120px_minmax(0,1fr)] overflow-hidden sm:grid-cols-[164px_minmax(0,1fr)]">
-        <div className="border-r border-border bg-[hsl(220_14%_98%)]">
-          <div className="h-6 border-b border-border px-3 text-[10px] font-semibold uppercase leading-6 text-muted-foreground">
-            Tracks
+      {timelineCollapsed ? null : (
+        <div className="grid min-h-0 flex-1 grid-cols-[120px_minmax(0,1fr)] overflow-hidden sm:grid-cols-[164px_minmax(0,1fr)]">
+          <div className="flex min-h-0 flex-col border-r border-border bg-[hsl(220_14%_98%)]">
+            <div className="h-6 shrink-0 border-b border-border px-3 text-[10px] font-semibold uppercase leading-6 text-muted-foreground">
+              Tracks
+            </div>
+            <div
+              ref={trackListRef}
+              className="scrollbar-thin min-h-0 flex-1 overflow-y-auto"
+              onScroll={() =>
+                syncVerticalScroll(
+                  trackListRef.current,
+                  timelineScrollerRef.current,
+                )
+              }
+            >
+              {layers.length ? (
+                <>
+                  <div style={{ height: TIMELINE_TRACK_ROW_TOP_PADDING }} />
+                  {layers.map((layer) => (
+                    <TimelineTrackButton
+                      key={layer.id}
+                      layer={layer}
+                      mediaInfo={describeTimelineMediaLayer({
+                        layer,
+                        mediaAssets,
+                      })}
+                      selected={selectedLayerId === layer.id}
+                      onSelect={() => onSelectLayer(layer.id)}
+                      onDelete={() => onDeleteLayer(layer.id)}
+                    />
+                  ))}
+                  <div style={{ height: TIMELINE_CONTENT_BOTTOM_PADDING }} />
+                </>
+              ) : (
+                <div className="px-2 py-4 text-xs leading-5 text-muted-foreground sm:px-3">
+                  No tracks yet.
+                </div>
+              )}
+            </div>
           </div>
-          <div className="scrollbar-thin max-h-[calc(100%-1.5rem)] overflow-y-auto">
-            {layers.length ? (
-              layers.slice(0, 4).map((layer) => (
-                <TimelineTrackButton
-                  key={layer.id}
-                  layer={layer}
-                  mediaInfo={describeTimelineMediaLayer({ layer, mediaAssets })}
-                  selected={selectedLayerId === layer.id}
-                  onSelect={() => onSelectLayer(layer.id)}
-                />
-              ))
-            ) : (
-              <div className="px-2 py-4 text-xs leading-5 text-muted-foreground sm:px-3">
-                No tracks yet.
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div
-          className={cn(
-            "relative overflow-hidden bg-white",
-            canScrub ? "cursor-col-resize touch-none" : "",
-          )}
-          onPointerDown={(event) => {
-            if (!canScrub) {
-              return;
-            }
-
-            event.currentTarget.setPointerCapture(event.pointerId);
-            scrubPointerTimeline(event);
-          }}
-          onPointerMove={(event) => {
-            if (
-              !event.currentTarget.hasPointerCapture(event.pointerId) ||
-              draggingLayer
-            ) {
-              return;
-            }
-
-            scrubPointerTimeline(event);
-          }}
-          onPointerUp={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-            commitLayerDrag(event.clientX, event.currentTarget);
-          }}
-          onPointerCancel={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-            setDraggingLayer(null);
-          }}
-          onMouseDown={(event) => {
-            scrubMouseTimeline(event);
-          }}
-          onMouseMove={(event) => {
-            if (draggingLayer) {
-              previewLayerDrag(event.clientX, event.currentTarget);
-              return;
-            }
-
-            if (event.buttons !== 1) {
-              return;
-            }
-
-            scrubMouseTimeline(event);
-          }}
-          onMouseUp={(event) => commitLayerDrag(event.clientX, event.currentTarget)}
-          aria-label="Timeline scrub area"
-        >
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(214_18%_86%/.8)_1px,transparent_1px)] bg-[size:64px_100%]" />
           <div
-            className="absolute bottom-0 top-0 w-px bg-accent"
-            style={{
-              left: `${scene ? (playerState.frame / Math.max(1, duration - 1)) * 100 : 0}%`,
-            }}
-          />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-7 border-b border-border/70 bg-white/70" />
-          <div className="relative h-full">
-            {layers.length ? (
-              layers.slice(0, 4).map((layer, index) => {
-                const mediaInfo = describeTimelineMediaLayer({
-                  layer,
-                  mediaAssets,
-                });
-                const dragPreview =
-                  draggingLayer?.id === layer.id
-                    ? draggingLayer.initialAbsoluteFrom +
-                      draggingLayer.previewFrom -
-                      draggingLayer.initialFrom
-                    : layer.from;
-                const durationPreview =
-                  draggingLayer?.id === layer.id
-                    ? draggingLayer.previewDuration
-                    : layer.duration;
-                const blockWidth = Math.max(
-                  4,
-                  (durationPreview / duration) * 100,
-                );
-                const timelineBlockStyle = {
-                  top: `${index * 32 + 34}px`,
-                  left: `${(dragPreview / duration) * 100}%`,
-                  width: `${blockWidth}%`,
-                };
-
-                return (
-                  <div
-                    key={layer.id}
-                    data-timeline-block-id={layer.id}
-                    className={cn(
-                      "absolute flex h-7 min-w-12 overflow-hidden rounded-md border text-left text-[11px] font-medium shadow-sm transition",
-                      selectedLayerId === layer.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20",
-                    )}
-                    style={timelineBlockStyle}
-                  >
-                    <button
-                      type="button"
-                      className="grid min-w-0 flex-1 cursor-grab grid-cols-[18px_minmax(0,1fr)] items-center gap-1 px-1.5 text-left active:cursor-grabbing"
-                      data-timeline-block-body-id={layer.id}
-                      onPointerDown={(event) =>
-                        handleLayerPointerDown("move", layer, event)
-                      }
-                      onPointerMove={handleLayerPointerMove}
-                      onPointerUp={handleLayerPointerUp}
-                      onPointerCancel={handleLayerPointerCancel}
-                      onMouseDown={(event) =>
-                        handleLayerMouseDown("move", layer, event)
-                      }
-                      onMouseMove={handleLayerMouseMove}
-                      onMouseUp={handleLayerMouseUp}
-                      onClick={() => onSelectLayer(layer.id)}
-                    >
-                      <TimelineMediaBadge
-                        mediaInfo={mediaInfo}
-                        selected={selectedLayerId === layer.id}
-                      />
-                      <span className="min-w-0">
-                        <span className="block truncate leading-3">
-                          {mediaInfo.label}
-                        </span>
-                        {mediaInfo.detailLabel ? (
-                          <span
-                            className={cn(
-                              "block truncate text-[9px] leading-3",
-                              selectedLayerId === layer.id
-                                ? "text-primary-foreground/72"
-                                : "text-primary/70",
-                            )}
-                          >
-                            {mediaInfo.detailLabel}
-                          </span>
-                        ) : null}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`Resize ${layer.label} duration`}
-                      className={cn(
-                        "flex h-full w-3 shrink-0 cursor-ew-resize items-center justify-center border-l",
-                        selectedLayerId === layer.id
-                          ? "border-primary-foreground/30 bg-primary-foreground/15"
-                          : "border-primary/25 bg-primary/10",
-                      )}
-                      data-timeline-resize-end-id={layer.id}
-                      onPointerDown={(event) =>
-                        handleLayerPointerDown("resize-end", layer, event)
-                      }
-                      onPointerMove={handleLayerPointerMove}
-                      onPointerUp={handleLayerPointerUp}
-                      onPointerCancel={handleLayerPointerCancel}
-                      onMouseDown={(event) =>
-                        handleLayerMouseDown("resize-end", layer, event)
-                      }
-                      onMouseMove={handleLayerMouseMove}
-                      onMouseUp={handleLayerMouseUp}
-                    >
-                      <span className="h-3 w-px rounded bg-current opacity-70" />
-                    </button>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="px-3 py-6 text-xs text-muted-foreground sm:px-4 sm:py-8">
-                Generated layers will appear on the timeline.
-              </div>
+            ref={timelineScrollerRef}
+            className={cn(
+              "scrollbar-thin relative min-h-0 overflow-y-auto bg-white",
+              canScrub ? "cursor-col-resize touch-none" : "",
             )}
+            onScroll={() =>
+              syncVerticalScroll(
+                timelineScrollerRef.current,
+                trackListRef.current,
+              )
+            }
+            onPointerDown={(event) => {
+              if (!canScrub) {
+                return;
+              }
+
+              event.currentTarget.setPointerCapture(event.pointerId);
+              scrubPointerTimeline(event);
+            }}
+            onPointerMove={(event) => {
+              if (
+                !event.currentTarget.hasPointerCapture(event.pointerId) ||
+                draggingLayer
+              ) {
+                return;
+              }
+
+              scrubPointerTimeline(event);
+            }}
+            onPointerUp={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              commitLayerDrag(event.clientX, event.currentTarget);
+            }}
+            onPointerCancel={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              setDraggingLayer(null);
+            }}
+            onMouseDown={(event) => {
+              scrubMouseTimeline(event);
+            }}
+            onMouseMove={(event) => {
+              if (draggingLayer) {
+                previewLayerDrag(event.clientX, event.currentTarget);
+                return;
+              }
+
+              if (event.buttons !== 1) {
+                return;
+              }
+
+              scrubMouseTimeline(event);
+            }}
+            onMouseUp={(event) =>
+              commitLayerDrag(event.clientX, event.currentTarget)
+            }
+            aria-label="Timeline scrub area"
+          >
+            <div
+              className="relative min-h-full"
+              style={{ height: layers.length ? timelineContentHeight : "100%" }}
+            >
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(214_18%_86%/.8)_1px,transparent_1px)] bg-[size:64px_100%]" />
+              <div
+                className="absolute bottom-0 top-0 w-px bg-accent"
+                style={{
+                  left: `${scene ? (playerState.frame / Math.max(1, duration - 1)) * 100 : 0}%`,
+                }}
+              />
+              <div className="pointer-events-none sticky inset-x-0 top-0 z-10 h-7 border-b border-border/70 bg-white/80 backdrop-blur-sm" />
+              <div className="absolute inset-0">
+                {layers.length ? (
+                  layers.map((layer, index) => {
+                    const mediaInfo = describeTimelineMediaLayer({
+                      layer,
+                      mediaAssets,
+                    });
+                    const dragPreview =
+                      draggingLayer?.id === layer.id
+                        ? draggingLayer.initialAbsoluteFrom +
+                          draggingLayer.previewFrom -
+                          draggingLayer.initialFrom
+                        : layer.from;
+                    const durationPreview =
+                      draggingLayer?.id === layer.id
+                        ? draggingLayer.previewDuration
+                        : layer.duration;
+                    const blockWidth = Math.max(
+                      4,
+                      (durationPreview / duration) * 100,
+                    );
+                    const timelineBlockStyle = {
+                      top: `${index * TIMELINE_TRACK_ROW_HEIGHT + TIMELINE_BLOCK_TOP_OFFSET}px`,
+                      left: `${(dragPreview / duration) * 100}%`,
+                      width: `${blockWidth}%`,
+                    };
+
+                    return (
+                      <div
+                        key={layer.id}
+                        data-timeline-block-id={layer.id}
+                        className={cn(
+                          "absolute flex h-7 min-w-12 overflow-hidden rounded-md border text-left text-[11px] font-medium shadow-sm transition",
+                          selectedLayerId === layer.id
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20",
+                        )}
+                        style={timelineBlockStyle}
+                      >
+                        <button
+                          type="button"
+                          className="grid min-w-0 flex-1 cursor-grab grid-cols-[18px_minmax(0,1fr)] items-center gap-1 px-1.5 text-left active:cursor-grabbing"
+                          data-timeline-block-body-id={layer.id}
+                          onPointerDown={(event) =>
+                            handleLayerPointerDown("move", layer, event)
+                          }
+                          onPointerMove={handleLayerPointerMove}
+                          onPointerUp={handleLayerPointerUp}
+                          onPointerCancel={handleLayerPointerCancel}
+                          onMouseDown={(event) =>
+                            handleLayerMouseDown("move", layer, event)
+                          }
+                          onMouseMove={handleLayerMouseMove}
+                          onMouseUp={handleLayerMouseUp}
+                          onClick={() => onSelectLayer(layer.id)}
+                        >
+                          <TimelineMediaBadge
+                            mediaInfo={mediaInfo}
+                            selected={selectedLayerId === layer.id}
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate leading-3">
+                              {mediaInfo.label}
+                            </span>
+                            {mediaInfo.detailLabel ? (
+                              <span
+                                className={cn(
+                                  "block truncate text-[9px] leading-3",
+                                  selectedLayerId === layer.id
+                                    ? "text-primary-foreground/72"
+                                    : "text-primary/70",
+                                )}
+                              >
+                                {mediaInfo.detailLabel}
+                              </span>
+                            ) : null}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Resize ${layer.label} duration`}
+                          className={cn(
+                            "flex h-full w-3 shrink-0 cursor-ew-resize items-center justify-center border-l",
+                            selectedLayerId === layer.id
+                              ? "border-primary-foreground/30 bg-primary-foreground/15"
+                              : "border-primary/25 bg-primary/10",
+                          )}
+                          data-timeline-resize-end-id={layer.id}
+                          onPointerDown={(event) =>
+                            handleLayerPointerDown("resize-end", layer, event)
+                          }
+                          onPointerMove={handleLayerPointerMove}
+                          onPointerUp={handleLayerPointerUp}
+                          onPointerCancel={handleLayerPointerCancel}
+                          onMouseDown={(event) =>
+                            handleLayerMouseDown("resize-end", layer, event)
+                          }
+                          onMouseMove={handleLayerMouseMove}
+                          onMouseUp={handleLayerMouseUp}
+                        >
+                          <span className="h-3 w-px rounded bg-current opacity-70" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={deleteLayerTitle(layer)}
+                          title={deleteLayerTitle(layer)}
+                          className={cn(
+                            "flex h-full w-6 shrink-0 items-center justify-center border-l transition",
+                            selectedLayerId === layer.id
+                              ? "border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground/80 hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                              : "border-primary/25 bg-primary/5 text-primary/70 hover:bg-destructive/10 hover:text-destructive",
+                          )}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteLayer(layer.id);
+                          }}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onMouseDown={(event) => event.stopPropagation()}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="px-3 py-6 text-xs text-muted-foreground sm:px-4 sm:py-8">
+                    Generated layers will appear on the timeline.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1984,37 +2547,55 @@ function TimelineTrackButton({
   mediaInfo,
   selected,
   onSelect,
+  onDelete,
 }: {
   layer: EditorLayer;
   mediaInfo: TimelineMediaInfo;
   selected: boolean;
   onSelect: () => void;
+  onDelete: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <div
       className={cn(
-        "grid h-8 w-full grid-cols-[18px_minmax(0,1fr)] items-center gap-2 border-b border-border/70 px-2 text-left text-xs sm:px-3",
+        "grid h-8 w-full grid-cols-[minmax(0,1fr)_28px] items-center border-b border-border/70 text-xs",
         selected
           ? "bg-primary/10 text-foreground"
           : "text-muted-foreground hover:bg-muted",
       )}
     >
-      <TimelineMediaBadge mediaInfo={mediaInfo} selected={selected} />
-      <span className="min-w-0">
-        <span className="block truncate leading-4">{mediaInfo.label}</span>
-        {mediaInfo.detailLabel ? (
-          <span className="block truncate text-[10px] leading-3 text-muted-foreground">
-            {mediaInfo.detailLabel}
-          </span>
-        ) : (
-          <span className="block truncate text-[10px] leading-3 text-muted-foreground">
-            {displayLayerType(layer.type)}
-          </span>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="grid min-w-0 grid-cols-[18px_minmax(0,1fr)] items-center gap-2 px-2 text-left sm:px-3"
+      >
+        <TimelineMediaBadge mediaInfo={mediaInfo} selected={selected} />
+        <span className="min-w-0">
+          <span className="block truncate leading-4">{mediaInfo.label}</span>
+          {mediaInfo.detailLabel ? (
+            <span className="block truncate text-[10px] leading-3 text-muted-foreground">
+              {mediaInfo.detailLabel}
+            </span>
+          ) : (
+            <span className="block truncate text-[10px] leading-3 text-muted-foreground">
+              {displayLayerType(layer.type)}
+            </span>
+          )}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className={cn(
+          "mr-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+          selected ? "bg-white/60" : "",
         )}
-      </span>
-    </button>
+        title={deleteLayerTitle(layer)}
+        aria-label={deleteLayerTitle(layer)}
+      >
+        <Trash2 className="h-3 w-3" />
+      </button>
+    </div>
   );
 }
 
@@ -2089,7 +2670,7 @@ function LayerRow({
           ? "border-primary/40 bg-primary/10 text-foreground"
           : included
             ? "border-primary/20 bg-primary/5 text-foreground"
-          : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
+            : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
       )}
       style={{ paddingLeft: `${8 + layer.depth * 14}px` }}
     >

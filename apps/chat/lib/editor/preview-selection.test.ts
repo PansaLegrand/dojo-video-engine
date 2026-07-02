@@ -3,6 +3,7 @@ import type { EditorLayer } from "./layers";
 import {
   createPreviewSelectionOverlay,
   movePreviewLayerBoundsFromDrag,
+  resizePreviewLayerBoundsFromDrag,
 } from "./preview-selection";
 
 const layer: EditorLayer = {
@@ -126,5 +127,84 @@ describe("movePreviewLayerBoundsFromDrag", () => {
         canvasRect: { width: 0, height: 250 },
       }),
     ).toEqual({ left: 100, top: 80 });
+  });
+});
+
+describe("resizePreviewLayerBoundsFromDrag", () => {
+  it("converts southeast handle drags into larger scene bounds", () => {
+    expect(
+      resizePreviewLayerBoundsFromDrag({
+        handle: "se",
+        initialLeft: 100,
+        initialTop: 80,
+        initialWidth: 400,
+        initialHeight: 120,
+        startClientX: 200,
+        startClientY: 100,
+        currentClientX: 260,
+        currentClientY: 130,
+        sceneWidth: 1000,
+        sceneHeight: 500,
+        canvasRect: { width: 500, height: 250 },
+      }),
+    ).toEqual({ left: 100, top: 80, width: 520, height: 180 });
+  });
+
+  it("moves the origin when resizing from the northwest handle", () => {
+    expect(
+      resizePreviewLayerBoundsFromDrag({
+        handle: "nw",
+        initialLeft: 100,
+        initialTop: 80,
+        initialWidth: 400,
+        initialHeight: 120,
+        startClientX: 200,
+        startClientY: 100,
+        currentClientX: 150,
+        currentClientY: 75,
+        sceneWidth: 1000,
+        sceneHeight: 500,
+        canvasRect: { width: 500, height: 250 },
+      }),
+    ).toEqual({ left: 0, top: 30, width: 500, height: 170 });
+  });
+
+  it("keeps bounds at the minimum size when a handle crosses the opposite edge", () => {
+    expect(
+      resizePreviewLayerBoundsFromDrag({
+        handle: "w",
+        initialLeft: 100,
+        initialTop: 80,
+        initialWidth: 400,
+        initialHeight: 120,
+        startClientX: 200,
+        startClientY: 100,
+        currentClientX: 500,
+        currentClientY: 100,
+        sceneWidth: 1000,
+        sceneHeight: 500,
+        canvasRect: { width: 500, height: 250 },
+        minSize: 24,
+      }),
+    ).toEqual({ left: 476, top: 80, width: 24, height: 120 });
+  });
+
+  it("keeps the layer bounds when geometry cannot be measured", () => {
+    expect(
+      resizePreviewLayerBoundsFromDrag({
+        handle: "se",
+        initialLeft: 100,
+        initialTop: 80,
+        initialWidth: 400,
+        initialHeight: 120,
+        startClientX: 200,
+        startClientY: 100,
+        currentClientX: 260,
+        currentClientY: 130,
+        sceneWidth: 1000,
+        sceneHeight: 500,
+        canvasRect: { width: 500, height: 0 },
+      }),
+    ).toEqual({ left: 100, top: 80, width: 400, height: 120 });
   });
 });

@@ -49,7 +49,10 @@ import type {
   PlayerUiState,
 } from "@/components/editor/types";
 import { describeExportReadiness } from "@/lib/editor/capability-messages";
-import type { PreviewLayerMove } from "@/lib/editor/preview-selection";
+import type {
+  PreviewLayerBounds,
+  PreviewLayerMove,
+} from "@/lib/editor/preview-selection";
 import {
   createChatMediaAssetManifest,
   createLocalMediaAssetShell,
@@ -60,12 +63,7 @@ import {
   type LocalMediaAsset,
 } from "@/lib/media/assets";
 import { createInsertLocalMediaAssetPatch } from "@/lib/media/insert";
-import {
-  cloneStarterTemplateScene,
-  promptChips,
-  starterTemplateExamples,
-  type StarterTemplateExample,
-} from "@/lib/motionforge/examples";
+import { promptChips } from "@/lib/motionforge/examples";
 import type { MotionforgeAgentResult } from "@/lib/motionforge/local-agent";
 import {
   cloneReadmeShowcaseScene,
@@ -85,6 +83,10 @@ const initialMessages: ChatMessage[] = [
     source: "local",
   },
 ];
+
+const DEFAULT_TIMELINE_HEIGHT = 188;
+const MIN_TIMELINE_HEIGHT = 104;
+const MAX_TIMELINE_HEIGHT = 420;
 
 type SceneChangeSource =
   | "assistant"
@@ -110,7 +112,6 @@ export function MotionforgeChatApp() {
   const [activePanel, setActivePanel] = useState<EditorPanel>("chat");
   const [mediaAssets, setMediaAssets] = useState<LocalMediaAsset[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
-  const [lastPatch, setLastPatch] = useState<ScenePatch | null>(null);
   const [editorError, setEditorError] = useState<string | null>(null);
   const [playerState, setPlayerState] = useState<PlayerUiState>({
     loading: true,
@@ -120,6 +121,8 @@ export function MotionforgeChatApp() {
     exportSupported: false,
   });
   const [showJson, setShowJson] = useState(false);
+  const [timelineHeight, setTimelineHeight] = useState(DEFAULT_TIMELINE_HEIGHT);
+  const [timelineCollapsed, setTimelineCollapsed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const playerRef = useRef<Player | null>(null);
   const assetsRef = useRef<ResolvedAssets | undefined>(undefined);
@@ -424,26 +427,29 @@ export function MotionforgeChatApp() {
     }
   }, []);
 
-  const removeMediaAsset = useCallback((id: string) => {
-    const currentAssets = mediaAssetsRef.current;
-    const asset = currentAssets.find((item) => item.id === id);
+  const removeMediaAsset = useCallback(
+    (id: string) => {
+      const currentAssets = mediaAssetsRef.current;
+      const asset = currentAssets.find((item) => item.id === id);
 
-    if (asset && scene?.assets[asset.sceneAssetId]) {
-      setEditorError(
-        `${asset.label} is used in the scene. Undo or remove the layer before removing the asset.`,
-      );
-      return;
-    }
+      if (asset && scene?.assets[asset.sceneAssetId]) {
+        setEditorError(
+          `${asset.label} is used in the scene. Undo or remove the layer before removing the asset.`,
+        );
+        return;
+      }
 
-    if (asset) {
-      revokeLocalMediaAssetUrls(asset);
-    }
+      if (asset) {
+        revokeLocalMediaAssetUrls(asset);
+      }
 
-    const nextAssets = currentAssets.filter((item) => item.id !== id);
-    mediaAssetsRef.current = nextAssets;
-    setMediaAssets(nextAssets);
-    setEditorError(null);
-  }, [scene]);
+      const nextAssets = currentAssets.filter((item) => item.id !== id);
+      mediaAssetsRef.current = nextAssets;
+      setMediaAssets(nextAssets);
+      setEditorError(null);
+    },
+    [scene],
+  );
 
   const insertMediaAsset = useCallback(
     (id: string) => {
@@ -489,7 +495,6 @@ export function MotionforgeChatApp() {
       );
       setScene(patchResult.scene);
       setSelectedLayerId(insertResult.nodeId);
-      setLastPatch(insertResult.patch);
       setEditorError(null);
       setExportStatus("");
       setShowJson(false);
@@ -516,7 +521,6 @@ export function MotionforgeChatApp() {
 
     setScene(result.scene);
     setSceneHistory(result.history);
-    setLastPatch(null);
     setEditorError(null);
     setExportStatus("");
   }, [scene, sceneHistory]);
@@ -530,7 +534,6 @@ export function MotionforgeChatApp() {
 
     setScene(result.scene);
     setSceneHistory(result.history);
-    setLastPatch(null);
     setEditorError(null);
     setExportStatus("");
   }, [scene, sceneHistory]);
@@ -575,7 +578,6 @@ export function MotionforgeChatApp() {
         }
 
         commitSceneChange(payload.result.scene, "assistant");
-        setLastPatch(payload.result.patch ?? null);
         const firstPlanNodeId = payload.result.mediaPlan?.steps[0]?.nodeId;
 
         if (firstPlanNodeId) {
@@ -653,7 +655,6 @@ export function MotionforgeChatApp() {
     ]);
     setInput("");
     setExportStatus("");
-    setLastPatch(null);
     setEditorError(null);
     setShowJson(false);
   }, [clearMediaAssets]);
@@ -680,7 +681,6 @@ export function MotionforgeChatApp() {
       }
 
       commitSceneChange(result.scene, "inspector");
-      setLastPatch(patchResult.patch);
       setEditorError(null);
       setExportStatus("");
     },
@@ -702,14 +702,23 @@ export function MotionforgeChatApp() {
   );
 
   const moveLayerFromPreview = useCallback(
-    (id: string, move: PreviewLayerMove) => {
+    (id: string, move: PreviewLayerMove | PreviewLayerBounds) => {
       if (!scene) {
         setEditorError("Create or load a scene before editing.");
         return;
       }
 
       const patch: ScenePatch = [
-        { op: "setStyle", id, style: { left: move.left, top: move.top } },
+        {
+          op: "setStyle",
+          id,
+          style: {
+            left: move.left,
+            top: move.top,
+            ...("width" in move ? { width: move.width } : {}),
+            ...("height" in move ? { height: move.height } : {}),
+          },
+        },
       ];
       const result = applyScenePatch(scene, patch);
 
@@ -720,7 +729,6 @@ export function MotionforgeChatApp() {
 
       commitSceneChange(result.scene, "inspector");
       setSelectedLayerId(id);
-      setLastPatch(patch);
       setEditorError(null);
       setExportStatus("");
     },
@@ -744,7 +752,6 @@ export function MotionforgeChatApp() {
 
       commitSceneChange(result.scene, "delete");
       setSelectedLayerId(null);
-      setLastPatch(patch);
       setEditorError(null);
       setExportStatus("");
       setShowJson(false);
@@ -778,7 +785,6 @@ export function MotionforgeChatApp() {
 
     commitSceneChange(result.scene, "inspector");
     setSelectedLayerId(splitResult.leftId);
-    setLastPatch(splitResult.patch);
     setEditorError(null);
     setExportStatus("");
   }, [
@@ -844,53 +850,41 @@ export function MotionforgeChatApp() {
     setActivePanel("layers");
   }, []);
 
-  const loadStarterTemplate = useCallback((example: StarterTemplateExample) => {
-    commitSceneChange(cloneStarterTemplateScene(example), "template");
-    setSelectedLayerId(null);
-    setExportStatus("");
-    setCopyStatus("idle");
-    setLastPatch(null);
-    setEditorError(null);
-    setShowJson(false);
-    setShowExamples(false);
-    setActivePanel("layers");
-    setMessages((items) => [
-      ...items,
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Loaded starter template: ${example.title}.`,
-        source: "local",
-        diagnostics: [`Prompt: ${example.prompt}`],
-      },
-    ]);
-  }, [commitSceneChange]);
-
-  const loadReadmeShowcase = useCallback((example: ReadmeShowcaseExample) => {
-    commitSceneChange(cloneReadmeShowcaseScene(example), "showcase");
-    setSelectedLayerId(null);
-    setExportStatus("");
-    setCopyStatus("idle");
-    setLastPatch(null);
-    setEditorError(null);
-    setShowJson(false);
-    setShowExamples(false);
-    setActivePanel("layers");
-    setMessages((items) => [
-      ...items,
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Loaded README showcase scene: ${example.title}.`,
-        source: "local",
-        diagnostics: [`Source JSON: ${example.jsonPath}`],
-      },
-    ]);
-  }, [commitSceneChange]);
+  const loadReadmeShowcase = useCallback(
+    (example: ReadmeShowcaseExample) => {
+      commitSceneChange(cloneReadmeShowcaseScene(example), "template");
+      setSelectedLayerId(null);
+      setExportStatus("");
+      setCopyStatus("idle");
+      setEditorError(null);
+      setShowJson(false);
+      setShowExamples(false);
+      setActivePanel("layers");
+      setMessages((items) => [
+        ...items,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Loaded starter template: ${example.title}.`,
+          source: "local",
+          diagnostics: [`Source JSON: ${example.jsonPath}`],
+        },
+      ]);
+    },
+    [commitSceneChange],
+  );
+  const changeTimelineHeight = useCallback((height: number) => {
+    setTimelineHeight(
+      Math.min(
+        MAX_TIMELINE_HEIGHT,
+        Math.max(MIN_TIMELINE_HEIGHT, Math.round(height)),
+      ),
+    );
+  }, []);
 
   return (
     <main className="h-[100dvh] min-h-0 overflow-hidden bg-[hsl(220_14%_96%)] text-foreground">
-      <div className="grid h-full min-h-0 grid-rows-[48px_minmax(180px,34dvh)_minmax(0,1fr)] overflow-hidden lg:grid-cols-[56px_320px_minmax(0,1fr)] lg:grid-rows-1">
+      <div className="grid h-full min-h-0 grid-rows-[48px_minmax(180px,34dvh)_minmax(0,1fr)] overflow-hidden lg:grid-cols-[56px_460px_minmax(0,1fr)] lg:grid-rows-1">
         <ToolRail activePanel={activePanel} onPanelChange={setActivePanel} />
 
         <aside className="flex min-h-0 min-w-0 flex-col border-b border-border bg-card lg:border-b-0 lg:border-r">
@@ -994,7 +988,7 @@ export function MotionforgeChatApp() {
             </div>
           </header>
 
-          <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_128px] overflow-hidden sm:grid-rows-[minmax(0,1fr)_156px]">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <PreviewWorkspace
               canvasRef={canvasRef}
               scene={scene}
@@ -1010,12 +1004,17 @@ export function MotionforgeChatApp() {
               selectedLayerId={selectedLayerId}
               playerState={playerState}
               exportStatus={exportStatus}
+              timelineHeight={timelineHeight}
+              timelineCollapsed={timelineCollapsed}
               onSelectLayer={setSelectedLayerId}
               onTogglePlayback={togglePlayback}
               onSeek={seek}
               onRetimeLayer={retimeLayerFromTimeline}
               onResizeLayerDuration={resizeLayerDurationFromTimeline}
               onSplitSelectedLayer={splitSelectedLayerAtPlayhead}
+              onDeleteLayer={deleteLayer}
+              onTimelineHeightChange={changeTimelineHeight}
+              onTimelineCollapsedChange={setTimelineCollapsed}
             />
           </div>
 
@@ -1047,22 +1046,11 @@ export function MotionforgeChatApp() {
               </pre>
             </div>
           ) : null}
-          {editorError || lastPatch ? (
+          {editorError ? (
             <div className="flex min-h-10 shrink-0 items-center gap-2 border-t border-border bg-card px-3 py-2 text-xs sm:gap-3 sm:px-4">
-              {editorError ? (
-                <span className="min-w-0 truncate text-destructive">
-                  {editorError}
-                </span>
-              ) : (
-                <>
-                  <span className="shrink-0 font-medium uppercase text-muted-foreground">
-                    Last patch
-                  </span>
-                  <code className="min-w-0 truncate rounded bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">
-                    {JSON.stringify(lastPatch)}
-                  </code>
-                </>
-              )}
+              <span className="min-w-0 truncate text-destructive">
+                {editorError}
+              </span>
             </div>
           ) : null}
         </section>
@@ -1070,12 +1058,10 @@ export function MotionforgeChatApp() {
 
       {showExamples ? (
         <ExamplesDialog
-          templates={starterTemplateExamples}
-          prompts={promptChips}
-          showcases={readmeShowcaseExamples}
-          onLoadTemplate={loadStarterTemplate}
+          templates={readmeShowcaseExamples}
+          prompts={promptChips.slice(0, 5)}
+          onLoadTemplate={loadReadmeShowcase}
           onSelectPrompt={selectExample}
-          onLoadShowcase={loadReadmeShowcase}
           onClose={() => setShowExamples(false)}
         />
       ) : null}

@@ -1,22 +1,17 @@
 import { Sparkles, X } from "lucide-react";
-import type { StarterTemplateExample } from "@/lib/motionforge/examples";
 import type { ReadmeShowcaseExample } from "@/lib/motionforge/readme-showcases";
 
 export function ExamplesDialog({
   templates,
   prompts,
-  showcases,
   onLoadTemplate,
   onSelectPrompt,
-  onLoadShowcase,
   onClose,
 }: {
-  templates: StarterTemplateExample[];
+  templates: ReadmeShowcaseExample[];
   prompts: string[];
-  showcases: ReadmeShowcaseExample[];
-  onLoadTemplate: (example: StarterTemplateExample) => void;
+  onLoadTemplate: (example: ReadmeShowcaseExample) => void;
   onSelectPrompt: (prompt: string) => void;
-  onLoadShowcase: (example: ReadmeShowcaseExample) => void;
   onClose: () => void;
 }) {
   return (
@@ -55,7 +50,7 @@ export function ExamplesDialog({
             <h4 className="text-xs font-semibold uppercase text-muted-foreground">
               Starter templates
             </h4>
-            <div className="mt-2 grid gap-2 md:grid-cols-3">
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
               {templates.map((example) => (
                 <button
                   key={example.id}
@@ -73,6 +68,9 @@ export function ExamplesDialog({
                   </span>
                   <span className="mt-2 block text-xs leading-5 text-muted-foreground">
                     {example.description}
+                  </span>
+                  <span className="mt-2 block truncate font-mono text-[10px] text-muted-foreground">
+                    {example.jsonPath}
                   </span>
                 </button>
               ))}
@@ -92,37 +90,6 @@ export function ExamplesDialog({
                   className="w-full rounded-md border border-border bg-white px-3 py-3 text-left text-sm leading-6 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
                 >
                   {prompt}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-5 border-t border-border pt-4">
-            <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-              README scenes
-            </h4>
-            <div className="mt-2 grid gap-2 md:grid-cols-2">
-              {showcases.map((example) => (
-                <button
-                  key={example.id}
-                  type="button"
-                  onClick={() => onLoadShowcase(example)}
-                  className="rounded-md border border-border bg-white px-3 py-3 text-left hover:border-primary/40 hover:bg-primary/5"
-                >
-                  <span className="block text-sm font-semibold text-foreground">
-                    {example.title}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                    {example.scene.width}x{example.scene.height} ·{" "}
-                    {example.scene.fps}fps ·{" "}
-                    {(example.scene.duration / example.scene.fps).toFixed(1)}s
-                  </span>
-                  <span className="mt-2 block text-xs leading-5 text-muted-foreground">
-                    {example.description}
-                  </span>
-                  <span className="mt-2 block truncate font-mono text-[10px] text-muted-foreground">
-                    {example.jsonPath}
-                  </span>
                 </button>
               ))}
             </div>
