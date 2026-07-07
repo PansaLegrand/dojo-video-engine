@@ -9,6 +9,8 @@
 
 If you like programmatic video but want a data-first system that can render inside a client app, motionforge leans on browser power — Canvas2D, WebCodecs, deterministic frame evaluation, and local MP4 export — instead of requiring a server-side Chrome render farm.
 
+motionforge is used by [dojoclip.com](https://dojoclip.com)'s video agent, so you can try it there in a real agent-driven video workflow.
+
 ![motionforge playground previewing the sample scene](docs/assets/playground.png)
 
 ## Showcases
