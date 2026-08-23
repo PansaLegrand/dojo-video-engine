@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/presets",
-  "version": "0.11.0",
+  "version": "1.0.0",
   "description": "Pure animation presets and caption generators that compile to motionforge scene data.",
   "keywords": [
     "motionforge",

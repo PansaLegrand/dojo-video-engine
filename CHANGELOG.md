@@ -3,6 +3,30 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 1.0.0 — 2026-08-24
+
+The first stable MotionForge release. Scene v1, public packages, extension
+contracts, renderer behavior, export adapters, and agent tool names now follow
+the published 1.x compatibility policy.
+
+### Hardening gate
+
+- Added deterministic property/fuzz coverage (750 scenes / 2,250 frames) and a
+  28-scene canonical/migration corpus gate.
+- Added Chromium, Firefox, and WebKit renderer probes to the mandatory release
+  gate and CI browser installation.
+- Added pinned performance budgets at 1280×720@30: all stages below 7 ms/frame
+  and 20 MiB heap locally, against 100 ms/256 MiB ceilings.
+- Promoted resource, golden media/audio/stream/tool, browser E2E, agent-eval,
+  package dry-run, and clean-tarball install checks into the full 1.0 gate.
+
+### Compatibility and evidence
+
+- Published [the 1.x compatibility contract](docs/compatibility.md) and
+  [reproducible 1.0 release evidence](docs/1.0-release.md).
+- Updated CI to run the full release and clean-install gates on every change.
+- Validated the full curated example/verification/migration corpus.
+
 ## 0.11.0 — 2026-08-24
 
 The agent-tools release: MotionForge's complete generation/edit/render/export

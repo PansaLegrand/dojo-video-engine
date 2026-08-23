@@ -48,13 +48,13 @@ buffer for short projects.
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - `createPlayer()`, `Player`, `PlayerOptions`, `PlayerEvent`, `FrameClock`, and event names `frame`, `play`, `pause`, and `ended`.
 - `play()`, `pause()`, `seek(frame)`, `dispose()`, `currentFrame`, and `on(event, callback)`.
 - Audio extension point: `AudioPreview`, `ChunkedWebAudioPreview`, and `WebAudioPreview`.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
 - Scheduler/time injection options are stable enough for tests, but may gain a narrower helper API as Studio and third-party apps converge.
 - Chunk scheduling may gain lookahead/cross-chunk overlap tuning while keeping `AudioPreview` as the integration boundary.

@@ -24,6 +24,11 @@ function-calling agents.
 Executable extension code remains host-installed; discovery publishes only
 manifests and bounded parameter schemas.
 
+## API stability
+
+Tool names, required inputs, direct function exports, and semantic diff paths
+are stable for 1.x. Results and capability manifests may gain additive fields.
+
 ## License
 
 MIT

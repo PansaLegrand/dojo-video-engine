@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: M7 complete](https://img.shields.io/badge/status-M7%20complete-brightgreen.svg)](docs/v1-roadmap.md)
-[![Version: 0.11.0](https://img.shields.io/badge/version-0.11.0-blue.svg)](CHANGELOG.md)
+[![Status: 1.0 stable](https://img.shields.io/badge/status-1.0%20stable-brightgreen.svg)](docs/1.0-release.md)
+[![Version: 1.0.0](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -360,7 +360,16 @@ Release 0.11 publishes the stable agent tool surface: validation through
 export, semantic diffs, runtime-derived capability catalogs, browser stills and
 contact sheets, JSON Schema function descriptors, and CLI diff/discovery.
 
-Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
+Release 1.0 freezes Scene v1 and public contracts after deterministic fuzzing,
+the curated corpus, three-engine browser probes, pinned performance budgets,
+full media/export/tool goldens, package dry-runs, and clean tarball installs.
+See the [1.x compatibility contract](docs/compatibility.md) and
+[release evidence](docs/1.0-release.md).
+
+Current known limits: preview audio is best-effort, local `blob:` media remains
+buffer-backed (HTTP media is range-backed), reverse video audio requires a
+separately reversed source, and hosted web-app deployment is intentionally not
+wired from this repo.
 
 See [docs/v1-roadmap.md](docs/v1-roadmap.md) for the base-engine plan,
 [docs/roadmap.md](docs/roadmap.md) for historical product milestones,

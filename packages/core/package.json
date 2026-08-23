@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/core",
-  "version": "0.11.0",
+  "version": "1.0.0",
   "description": "Scene builder API, keyframe animation evaluator, and layout pass for motionforge.",
   "keywords": [
     "motionforge",

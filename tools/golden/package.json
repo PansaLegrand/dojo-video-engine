@@ -12,6 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "benchmark": "tsx src/benchmark.ts",
+    "performance:gate": "tsx src/performance-gate.ts",
+    "cross-browser": "tsx src/cross-browser.ts",
     "resource:smoke": "tsx src/resource-smoke.ts",
     "e2e": "tsx src/e2e.ts"
   },

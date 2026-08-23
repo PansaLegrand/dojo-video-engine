@@ -341,7 +341,7 @@ animation.
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - Motion presets: 38 registry entries via `compileMotionPreset()`, plus direct `popIn()`, `fadeUp()`, `slideIn()`, and `pulse()`.
 - Timeline compiler: `timeline()`, `Timeline`, `TimelinePosition`, `SequenceStep`, and `StaggerOptions`.
@@ -350,7 +350,7 @@ Stable for 0.x integrations:
 - Template catalogs and keys for user-facing choices: caption/subtitle, text overlay, image overlay, video overlay, audio overlay, media look, clip layout, transition, and safe-area helpers.
 - `mediaLook()`, `clipLayout()`, `safeAreaBox()`, `resolveSafeArea()`, and `inferSafeAreaProfile()`.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
 - The `@motionforge/presets/catalog` export, `presetCatalog`, and `buildPresetPatchExample()` are shared UI infrastructure for Playground/Studio and may evolve with those apps.
 - Older caption helpers `tiktokCaptions()` and `karaokeCaptions()` remain supported, but new subtitle work should prefer `styledCaptions()` / `subtitleTrack()` templates.

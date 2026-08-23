@@ -43,7 +43,7 @@ assets, lifecycle, security, and determinism rules.
 
 ## API stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - `defineExtension()` and `createExtensionRegistry()`.
 - `extensionManifest()` and `registry.manifests()` for serializable capability
@@ -53,7 +53,7 @@ Stable for 0.x integrations:
 - Asset discovery, resolution, per-frame preparation, disposal, and renderer
   adapter contracts.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
 - Renderer adapter payload shapes are owned by each renderer package and may
   grow additively.

@@ -109,7 +109,7 @@ See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/mai
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, `SceneTextRun`, `SceneExtensionDescriptor`, `SceneShapeGeometry`, `SceneMaskDescriptor`, `SceneJsonValue`, and `VolumeEnvelope` types.
 - `CURRENT_SCENE_VERSION`, `parseScene()`, `validateScene()`, `migrateScene()`, `SceneValidationError`, `sceneJsonSchema()`, and `legacySceneV0JsonSchema()`.
@@ -117,9 +117,9 @@ Stable for 0.x integrations:
 - Scene patch APIs: `applyScenePatch()`, `scenePatchSchema`, `sceneOpSchema`, `ScenePatch`, `SceneOp`, and `ApplyScenePatchResult`.
 - Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `textRunSchema`, `extensionDescriptorSchema`, `shapeGeometrySchema`, `maskDescriptorSchema`, `safeAreaSchema`, `jsonValueSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
-- Helper exports such as `closestIds()`, `supportedStyleKeys`, `isFilterExpression()`, and `isEasingExpression()` are useful for editors and agents, but their exact shapes may change as validation ergonomics improve.
+- Helper exports may gain additive diagnostics and catalogs; existing 1.x signatures remain supported.
 - The scene schema may grow additively with new node/style fields. Breaking document changes require a `schemaVersion` bump.
 
 Internal/not public:

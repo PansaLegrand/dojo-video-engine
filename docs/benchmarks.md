@@ -4,6 +4,18 @@ Measured with `pnpm --filter @motionforge/golden run benchmark [width height fps
 
 Run `pnpm resource:smoke` for the cheap long-scene resource gate. It does not encode media; it asserts 10-minute audio chunk coverage, looped-bed source range splitting, volume-envelope chunk offsets, and many-node evaluate/layout behavior.
 
+## 1.0 pinned performance gate (2026-08-24)
+
+1280×720 @30 fps, 2 seconds, pinned Chromium:
+
+| Stage                               | ms/frame  | JS heap after stage |
+| ----------------------------------- | --------- | ------------------- |
+| render + encode                     | 6.27–6.32 | 12 MiB              |
+| 1 video node + caption              | 6.04–6.38 | 16 MiB              |
+| 2 video nodes (full + PiP @2× rate) | 6.15–6.76 | 20 MiB              |
+
+The enforced budgets are 100 ms/frame and 256 MiB. Run `pnpm performance:gate`.
+
 ## 1920×1080 @ 30 fps (2026-06-11)
 
 | Stage                               | 10 s (300 f)  | 30 s (900 f)  |
@@ -27,7 +39,7 @@ Current local-media path:
 
 - Upload/probe uses browser object URLs and media elements (`<img>`, `<video>`, `<audio>`) to read dimensions, durations, and thumbnails.
 - Preview/export resolves renderable scene assets through `resolveAssets()`.
-- Video/audio resolution still calls `BlobSource(await response.blob())`, so local `blob:` media is opened as a whole source before decode/composite/encode work begins.
+- HTTP(S) video/audio uses bounded range-backed `UrlSource`; local `blob:`/data sources remain buffer-backed. Declared proxies and source modes let hosts choose explicitly.
 
 Readiness thresholds:
 
@@ -45,14 +57,17 @@ Manual device QA still needs real phone clips in this matrix:
 | 250 MB iPhone/Android MP4 | pending real fixture | pending | pending         | pending | Expected to expose source-load latency before frame-loop cost.               |
 | 500 MB iPhone/Android MP4 | pending real fixture | pending | pending         | pending | Expected to determine whether streaming must move from deferred to required. |
 
-Streaming-source decision: **deferred for now**. The measured exporter is faster than realtime for production-size synthetic footage, object URL cleanup is already centralized, and users now see readiness/errors when a browser cannot decode or safely handle a file. Streaming becomes forced when real-device QA shows repeatable failure for the target clip size, or when production requirements include routine editing of >100-200 MB source footage without proxies.
+Streaming-source decision: **implemented for HTTP(S)** with a bounded cache.
+Local browser object URLs remain buffer-backed because browsers do not expose a
+portable random-access file path through a blob URL; use proxies for very large
+local sources.
 
 ## Conclusions
 
-1. **Worker-parallel export is not needed now.** Export beats realtime at production sizes on a single thread; the roadmap item stays parked until a measured workload demands it.
-2. **The memory boundary is source file size, not the pipeline.** Synthesized clips here are ~3 MB. `BlobSource` fetches whole files into memory, so a 200 MB phone clip costs ~200 MB of heap before decoding begins. That — not frame processing — is what will hurt first with real user footage; streaming sources remain the eventual fix and this is the number that will justify them.
+1. **Worker export is an orchestration boundary, not a second renderer.** It keeps UI responsive and uses the same measured pipeline; it is not parallel frame rendering.
+2. **HTTP source memory is bounded.** Local blob sources still scale with source size, while reachable loading, proxies, and decoder/image/cache budgets make the boundary explicit.
 3. **Export audio is chunked.** `exportVideo()` mixes audio in windows (`audioChunkSeconds`, default 10 s), so the final AAC path does not require one whole-scene PCM buffer. Golden browser checks force 0.4 s chunks and verify decoded RMS windows.
-4. **Preview audio is still whole-scene.** `@motionforge/player` caches one Web Audio buffer for the scene mix, about 23 MiB/min at 48 kHz stereo, plus decoded source PCM. That keeps short-scene preview simple and synced; long-scene editors should swap in a custom `AudioPreview` or wait for a chunked preview backend.
+4. **Preview audio is chunked.** The default backend mixes only the bounded chunk around the current play/seek position and schedules later chunks on demand.
 5. **Looped beds are range-split, not duplicated.** `loop: true` audio nodes split source ranges on demand, so long beds do not need manually duplicated nodes. `pnpm resource:smoke` checks a 10-minute looped bed.
 
 Re-run after any renderer/export change that touches the frame loop; paste new rows above with the date.

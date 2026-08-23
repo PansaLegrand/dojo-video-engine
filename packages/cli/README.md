@@ -99,16 +99,16 @@ motion-preset, macro, extension, and export capability metadata.
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge lint`, `motionforge diff`, `motionforge capabilities`, and `motionforge dev`.
 - Programmatic helpers: `executeCli()`, `runCli()`, `inspectScene()`, `CliResult`, `CliIo`, and `SceneInspection`.
 - Scene module loading contract: JSON files, JS/ESM modules, TypeScript modules through `tsx`, default export or named `scene`, and scene-returning functions/promises.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
 - Studio UI served by `motionforge dev` is part of the developer workflow, but its HTML/CSS/client internals are not stable.
-- `inspect` output may gain additive fields; existing field names are intended to stay stable through 0.x.
+- `inspect` output may gain additive fields; existing field names are intended to stay stable through 1.x.
 
 Internal/not public:
 

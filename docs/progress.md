@@ -1,5 +1,30 @@
 # Progress
 
+## 2026-08-24 (1.0 stable release gate)
+
+### Changed
+
+- Added deterministic scene/patch fuzzing and full example corpus validation.
+- Added mandatory Chromium, Firefox, and WebKit renderer probes.
+- Added pinned encoded performance/heap budgets and machine-readable output.
+- Promoted agent-eval, resource, browser media/tool, package, and clean-install
+  checks into the full gate and CI.
+- Published the 1.x compatibility contract and reproducible release evidence.
+- Synchronized all eleven public packages at 1.0.0.
+
+### Tested
+
+- `pnpm release:full` passed: 593 unit tests; 750-scene/2,250-frame fuzz;
+  28-scene corpus; agent-eval; seven resource checks; all pixel/media/audio/
+  stream/tool goldens; Chromium/Firefox/WebKit; pinned performance; ten E2E
+  checks; CLI/starter smoke; and eleven 1.0.0 package dry-runs.
+- `pnpm verify:clean` packed and installed all eleven 1.0.0 packages and built
+  an external starter from tarballs.
+
+### Notes
+
+- Scene v1 and public root exports are now stable under SemVer.
+
 ## 2026-08-24 (0.11 stable agent tools)
 
 ### Changed

@@ -44,7 +44,7 @@ The same builder program always emits the same scene JSON, so scenes can be diff
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - Builder API: `composition()`, `div()`, `text()`, `richText()`, `img()`, `video()`, `audio()`, `lottie()`, `effect()`, `extension()`, `shape()`, `SceneBuilder`, `NodeBuilder`, and their option types.
 - Evaluation and layout: `evaluateScene()`, `layoutScene()`, `ResolvedScene`, `ResolvedNode`, `LayoutScene`, and `LayoutBox`.
@@ -53,9 +53,9 @@ Stable for 0.x integrations:
 - Text measurement helpers used by renderers/editors: `wrapTextLines()`, `prepareTextLines()`, and `prepareTextLayout()`.
 - Per-side spacing, composable `safeArea` insets, and `aspectRatio` layout, including `parseAspectRatio()` for tools that mirror inspector geometry.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
-- Low-level parser helpers such as `parseTransform()` and `parseColor()` are exported for tests and custom tooling, but may be replaced by narrower renderer-facing APIs.
+- Low-level parser helpers such as `parseTransform()` and `parseColor()` may gain companion APIs; existing 1.x signatures remain supported.
 - `sampleScene()` is a demo helper, not a compatibility contract.
 
 Internal/not public:

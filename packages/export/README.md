@@ -64,16 +64,16 @@ await renderFrameSequence({
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - Browser export surface: `detectExportCapability()` and `exportVideo()`.
 - Planning/targets: `estimateExport()`, `preflightExport()`, and `exportVideoToStream()`.
 - Frame-loop surface: `renderFrameSequence()` plus `RenderFrameSequenceOptions`, `RenderFrameSequenceProgress`, `RenderedSequenceFrame`, and `RenderFrameSequenceResult`.
 - User-facing result/option types: `ExportVideoOptions`, `ExportVideoResult`, and `ExportCapability`.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
-- Audio math helpers (`collectAudioPlacements()`, `mixSceneAudio()`, `mixAudioSegments()`, `audioChunkRanges()`, `evaluateVolumeEnvelope()`, `loopedSourceRanges()`) are exported for tests, player preview, and custom pipelines, but may be reorganized once longer-scene audio work settles.
+- Audio math helpers may gain additive bus/streaming helpers; existing 1.x exports remain supported.
 - `AudioPlacement`, `AudioSegment`, and `LoopedSourceRange` are low-level data shapes rather than authoring contracts.
 
 Internal/not public:

@@ -31,8 +31,8 @@ best foundation for generated, editable, template-driven 2D video.
 | 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Committed in 0.8                             |
 | 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Committed in 0.9                             |
 | 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Committed in 0.10                            |
-| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Complete in 0.11 working tree                |
-| 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                      |
+| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Committed in 0.11                            |
+| 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Complete in 1.0 working tree                 |
 
 ## Milestone 0 — authoritative open-source engine
 
@@ -185,10 +185,18 @@ RFC 0008 defines tool naming, compatibility, discovery, and result contracts.
 
 ## Milestone 8 — 1.0 release gate
 
-Require unit, property/fuzz, pixel-golden, media round-trip, cross-browser,
-determinism, resource, performance, clean-install, package and agent-evaluation
-gates. Publish SemVer compatibility, migrations, reproducible benchmarks and a
-curated example corpus before declaring Scene v1 stable.
+Delivered for 1.0:
+
+- unit, deterministic fuzz, pixel/media/audio/stream/tool golden, three-engine
+  cross-browser, E2E, resource, and performance gates;
+- agent-eval, package dry-run, migration/schema/determinism, and clean-tarball
+  install gates;
+- 28-scene curated canonical/migratable corpus validation;
+- published SemVer/Scene/renderer/extension/agent-tool compatibility policy;
+- pinned reproducible benchmark budgets and release evidence;
+- CI runs the full release plus clean-install gates.
+
+Scene v1 and all eleven public packages are stable in MotionForge 1.0.
 
 ## Near-term allocation
 

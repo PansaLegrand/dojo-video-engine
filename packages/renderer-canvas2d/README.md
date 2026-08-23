@@ -84,7 +84,7 @@ proxy coverage, image decode estimates, and peak simultaneous video decoders.
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - `resolveAssets(scene, options)`, `prepareFrame(scene, frame, assets)`, `renderStill(context, scene, frame, options)`, and `disposeAssets(assets)`.
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
@@ -95,9 +95,9 @@ Stable for 0.x integrations:
 - `MediaResourceBudget`, `estimateMediaResources()`, `collectReachableAssetIds()`, waveform/cache types, and resource usage reporting.
 - `parseLinearGradient()`, `parseRadialGradient()`, `parseConicGradient()`, and `shapePointInBox()` for deterministic editor/renderer mirrors.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
-- Concrete decoded clip shapes (`VideoClip`, `AudioClip`, `LottieClip`, `PreparedVideoFrame`) are exposed so advanced integrations can share resolved assets, but their internals may change with streaming or pooling work.
+- Concrete decoded clip shapes may gain additive metadata as streaming/pooling evolves; existing 1.x fields remain supported.
 - `validateLottieDocument()` is public for preflight tools, but the rejection rules may tighten as Lottie support expands.
 
 Internal/not public:

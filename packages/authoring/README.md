@@ -290,14 +290,14 @@ For larger `.srt`, `.vtt`, or transcript files, keep them beside your source cod
 
 ## API Stability
 
-Stable for 0.x integrations:
+Stable for 1.x integrations:
 
 - Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `richTextNode()`, `richTextBlock()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, `extensionLayer()`, `shapeLayer()`, and `audioTrack()`.
 - Overlay/media helpers: `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `subtitleTrack()`, `captionTrack()`, and aliases `subtitles` / `captions`.
 - Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `lottieAsset()`, and `defineAssets()`.
 - Re-exported preset helpers for common authoring flows, including motion presets, subtitle parsers/templates, overlay template metadata, safe-area helpers, and `audioFadeEnvelope()`.
 
-Experimental before 1.0:
+Evolving additively in 1.x:
 
 - Higher-level overlay option shapes may gain fields as presets mature. They still emit ordinary validated scene nodes.
 - `AuthorNode` is intentionally simple, but custom author-node composition may get a more formal plugin interface later.

@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/schema",
-  "version": "0.11.0",
+  "version": "1.0.0",
   "description": "Zod scene schema and validation helpers for motionforge scene documents.",
   "keywords": [
     "motionforge",
