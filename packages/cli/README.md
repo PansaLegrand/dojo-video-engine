@@ -66,7 +66,8 @@ unused-asset conditions.
     "audio": 0,
     "lottie": 0,
     "effect": 0,
-    "extension": 0
+    "extension": 0,
+    "shape": 0
   },
   "effects": {},
   "extensions": {},
@@ -75,6 +76,14 @@ unused-asset conditions.
     "hasAudio": false,
     "hasEffects": false,
     "hasExtensions": false,
+    "hasShapes": false,
+    "hasVectorPaths": false,
+    "hasClipping": false,
+    "hasMasks": false,
+    "hasSoftMasks": false,
+    "hasBlendModes": false,
+    "hasIsolatedGroups": false,
+    "hasRichText": false,
     "requiresBrowserExport": true
   }
 }

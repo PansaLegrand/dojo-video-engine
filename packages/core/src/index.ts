@@ -5,8 +5,11 @@ import {
   type SceneEffectName,
   type SceneEffectParams,
   type SceneExtensionDescriptor,
+  type SceneMaskDescriptor,
   type SceneNode,
+  type SceneShapeGeometry,
   type SceneStyle,
+  type SceneTextRun,
   type VolumeEnvelope,
   parseScene,
 } from "@motionforge/schema";
@@ -24,6 +27,8 @@ export type NodeOptions = {
   duration?: number;
   style?: SceneStyle;
   assetId?: string;
+  clip?: SceneShapeGeometry;
+  mask?: SceneMaskDescriptor;
 };
 
 export type VideoNodeOptions = NodeOptions & {
@@ -61,8 +66,11 @@ export type ExtensionNodeOptions = NodeOptions & {
   extension: SceneExtensionDescriptor;
 };
 
+export type ShapeNodeOptions = NodeOptions;
+
 type InternalNodeOptions = NodeOptions & {
   text?: string;
+  runs?: SceneTextRun[];
   videoStartTime?: number;
   playbackRate?: number;
   audioStartTime?: number;
@@ -72,6 +80,7 @@ type InternalNodeOptions = NodeOptions & {
   effect?: SceneEffectName;
   params?: SceneEffectParams;
   extension?: SceneExtensionDescriptor;
+  shape?: SceneShapeGeometry;
 };
 
 type IdCounter = { next: number };
@@ -114,6 +123,7 @@ export class NodeBuilder {
   private readonly type: SceneNode["type"];
   private readonly id?: string;
   private readonly text?: string;
+  private readonly runs?: SceneTextRun[];
   private readonly assetId?: string;
   private readonly videoStartTime?: number;
   private readonly playbackRate?: number;
@@ -124,6 +134,9 @@ export class NodeBuilder {
   private readonly effect?: SceneEffectName;
   private readonly params?: SceneEffectParams;
   private readonly extension?: SceneExtensionDescriptor;
+  private readonly shape?: SceneShapeGeometry;
+  private readonly clip?: SceneShapeGeometry;
+  private readonly mask?: SceneMaskDescriptor;
   private from: number;
   private duration?: number;
   private readonly style: SceneStyle;
@@ -134,6 +147,7 @@ export class NodeBuilder {
     this.type = type;
     this.id = options.id;
     this.text = options.text;
+    this.runs = options.runs;
     this.assetId = options.assetId;
     this.videoStartTime = options.videoStartTime;
     this.playbackRate = options.playbackRate;
@@ -144,6 +158,9 @@ export class NodeBuilder {
     this.effect = options.effect;
     this.params = options.params;
     this.extension = options.extension;
+    this.shape = options.shape;
+    this.clip = options.clip;
+    this.mask = options.mask;
     this.from = options.from ?? 0;
     this.duration = options.duration;
     this.style = options.style ?? {};
@@ -185,6 +202,7 @@ export class NodeBuilder {
       id: this.id ?? `${this.type}-${counter.next++}`,
       type: this.type,
       text: this.text,
+      runs: this.runs,
       assetId: this.assetId,
       videoStartTime: this.videoStartTime,
       playbackRate: this.playbackRate,
@@ -195,6 +213,9 @@ export class NodeBuilder {
       effect: this.effect,
       params: this.params,
       extension: this.extension,
+      shape: this.shape,
+      clip: this.clip,
+      mask: this.mask,
       from: this.from,
       duration: this.duration,
       style: this.style,
@@ -214,6 +235,13 @@ export function div(options: NodeOptions = {}): NodeBuilder {
 
 export function text(value: string, options: NodeOptions = {}): NodeBuilder {
   return new NodeBuilder("text", { ...options, text: value });
+}
+
+export function richText(
+  runs: SceneTextRun[],
+  options: NodeOptions = {},
+): NodeBuilder {
+  return new NodeBuilder("text", { ...options, runs });
 }
 
 export function img(assetId: string, options: NodeOptions = {}): NodeBuilder {
@@ -254,6 +282,13 @@ export function effect(
 
 export function extension(options: ExtensionNodeOptions): NodeBuilder {
   return new NodeBuilder("extension", options);
+}
+
+export function shape(
+  geometry: SceneShapeGeometry,
+  options: ShapeNodeOptions = {},
+): NodeBuilder {
+  return new NodeBuilder("shape", { ...options, shape: geometry });
 }
 
 export type ResolvedNode = Omit<SceneNode, "children"> & {
@@ -1039,10 +1074,29 @@ function layoutNode(
   sizedByParent = false,
 ): LayoutBox {
   const style = node.style ?? {};
+  if (style.safeArea) {
+    containingBlock = insetContainingBlock(containingBlock, style.safeArea);
+  }
   const inset = readLength(style.inset, containingBlock.width, 0);
-  // A single margin value adds outer spacing on all sides: it shifts the box
-  // away from its anchor edge and shrinks auto-sized dimensions.
+  // Per-side values override the shorthand. Vertical percentages intentionally
+  // resolve against containing width, matching CSS spacing semantics.
   const margin = readLength(style.margin, containingBlock.width, 0);
+  const marginTop = readLength(style.marginTop, containingBlock.width, margin);
+  const marginRight = readLength(
+    style.marginRight,
+    containingBlock.width,
+    margin,
+  );
+  const marginBottom = readLength(
+    style.marginBottom,
+    containingBlock.width,
+    margin,
+  );
+  const marginLeft = readLength(
+    style.marginLeft,
+    containingBlock.width,
+    margin,
+  );
   const left = readLength(style.left, containingBlock.width, inset);
   const top = readLength(style.top, containingBlock.height, inset);
   const right =
@@ -1059,15 +1113,17 @@ function layoutNode(
     style.width === undefined
       ? containingBlock.width - left - right
       : containingBlock.width - inset * 2) -
-    margin * 2;
+    marginLeft -
+    marginRight;
   const heightFallback =
     (style.position === "absolute" &&
     bottom !== undefined &&
     style.height === undefined
       ? containingBlock.height - top - bottom
       : containingBlock.height - inset * 2) -
-    margin * 2;
-  const width = clampLength(
+    marginTop -
+    marginBottom;
+  let width = clampLength(
     resolveLength(style.width, containingBlock.width, widthFallback),
     style.minWidth,
     style.maxWidth,
@@ -1088,38 +1144,62 @@ function layoutNode(
     )
       ? textIntrinsicHeight(node, width, measure)
       : undefined;
-  const height = clampLength(
+  const aspectRatio = parseAspectRatio(style.aspectRatio);
+  const ratioHeight = aspectRatio ? width / aspectRatio : undefined;
+  let height = clampLength(
     resolveLength(
       style.height,
       containingBlock.height,
-      intrinsicHeight ?? heightFallback,
+      ratioHeight ?? intrinsicHeight ?? heightFallback,
     ),
     style.minHeight,
     style.maxHeight,
     containingBlock.height,
   );
 
+  if (aspectRatio && style.width === undefined && style.height !== undefined) {
+    width = clampLength(
+      height * aspectRatio,
+      style.minWidth,
+      style.maxWidth,
+      containingBlock.width,
+    );
+  }
+
   const x =
     containingBlock.x +
     (style.position === "absolute" &&
     style.left === undefined &&
     right !== undefined
-      ? containingBlock.width - right - width - margin
-      : left + margin);
+      ? containingBlock.width - right - width - marginRight
+      : left + marginLeft);
   const y =
     containingBlock.y +
     (style.position === "absolute" &&
     style.top === undefined &&
     bottom !== undefined
-      ? containingBlock.height - bottom - height - margin
-      : top + margin);
+      ? containingBlock.height - bottom - height - marginBottom
+      : top + marginTop);
 
-  const padding = readLength(style.padding, Math.min(width, height), 0);
+  const paddingReference = Math.min(width, height);
+  const padding = readLength(style.padding, paddingReference, 0);
+  const paddingTop = readLength(style.paddingTop, paddingReference, padding);
+  const paddingRight = readLength(
+    style.paddingRight,
+    paddingReference,
+    padding,
+  );
+  const paddingBottom = readLength(
+    style.paddingBottom,
+    paddingReference,
+    padding,
+  );
+  const paddingLeft = readLength(style.paddingLeft, paddingReference, padding);
   const content = {
-    x: x + padding,
-    y: y + padding,
-    width: Math.max(0, width - padding * 2),
-    height: Math.max(0, height - padding * 2),
+    x: x + paddingLeft,
+    y: y + paddingTop,
+    width: Math.max(0, width - paddingLeft - paddingRight),
+    height: Math.max(0, height - paddingTop - paddingBottom),
   };
 
   const children =
@@ -1135,6 +1215,22 @@ function layoutNode(
     height,
     node,
     children,
+  };
+}
+
+function insetContainingBlock(
+  containingBlock: { x: number; y: number; width: number; height: number },
+  safeArea: NonNullable<SceneStyle["safeArea"]>,
+): { x: number; y: number; width: number; height: number } {
+  const top = readLength(safeArea.top, containingBlock.height, 0);
+  const right = readLength(safeArea.right, containingBlock.width, 0);
+  const bottom = readLength(safeArea.bottom, containingBlock.height, 0);
+  const left = readLength(safeArea.left, containingBlock.width, 0);
+  return {
+    x: containingBlock.x + left,
+    y: containingBlock.y + top,
+    width: Math.max(0, containingBlock.width - left - right),
+    height: Math.max(0, containingBlock.height - top - bottom),
   };
 }
 
@@ -1168,6 +1264,17 @@ function layoutFlexChildren(
       content.height,
       Math.min(content.height, estimatedHeight),
     );
+    const childAspectRatio = parseAspectRatio(child.style.aspectRatio);
+    if (childAspectRatio) {
+      if (child.style.height === undefined && child.style.width !== undefined) {
+        childHeight = childWidth / childAspectRatio;
+      } else if (
+        child.style.width === undefined &&
+        child.style.height !== undefined
+      ) {
+        childWidth = childHeight * childAspectRatio;
+      }
+    }
 
     if (style.alignItems === "stretch") {
       // Stretch fills the cross axis for children without an explicit size.
@@ -1264,13 +1371,27 @@ function clampLength(
   return clamped;
 }
 
+export function parseAspectRatio(
+  value: SceneStyle["aspectRatio"],
+): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+  if (typeof value !== "string") return null;
+  const match = value.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+  if (!match) return null;
+  const width = Number.parseFloat(match[1] ?? "0");
+  const height = Number.parseFloat(match[2] ?? "0");
+  return width > 0 && height > 0 ? width / height : null;
+}
+
 function estimateNodeWidth(
   node: ResolvedNode,
   measure: MeasureTextLine,
 ): number {
   if (node.type === "text") {
     const fontSize = readLength(node.style.fontSize, 0, 24);
-    return (node.text ?? " ")
+    return (textNodeContent(node) || " ")
       .split("\n")
       .reduce(
         (longest, line) =>
@@ -1295,7 +1416,7 @@ function textIntrinsicHeight(
 ): number {
   const fontSize = readLength(node.style.fontSize, 0, 24);
   const layout = prepareTextLayout(
-    node.text ?? "",
+    textNodeContent(node),
     width,
     fontSize,
     (line, size) => measure(line, node.style, size),
@@ -1308,6 +1429,10 @@ function textIntrinsicHeight(
     },
   );
   return layout.lines.length * layout.lineHeight;
+}
+
+function textNodeContent(node: Pick<ResolvedNode, "text" | "runs">): string {
+  return node.text ?? node.runs?.map((run) => run.text).join("") ?? "";
 }
 
 function resolveLineHeight(

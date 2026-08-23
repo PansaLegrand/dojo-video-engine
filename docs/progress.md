@@ -1,5 +1,44 @@
 # Progress
 
+## 2026-08-24 (0.7 visual primitives)
+
+### Changed
+
+- Drafted RFC 0004 and added serializable rectangle, ellipse, normalized
+  line/polyline/polygon, and bounded SVG path + viewBox geometry through the
+  new Scene v1 `shape` node.
+- Added closed vector clips, binary/inverted vector masks, bounded Canvas
+  blend modes, shape fills/strokes/dashes, and linear/radial/conic paint.
+- Added per-side margin/padding, aspect-ratio sizing, and per-corner radii used
+  consistently across layout, backgrounds, media, overflow, borders, and
+  rectangle shapes.
+- Added core and seconds-first authoring builders, patch support, inspection
+  capability flags, Canvas Path2D/DOMMatrix preflight, and generated JSON
+  Schema coverage.
+- Added a combined pinned-browser exact-pixel fixture covering the complete
+  primitive render path without changing existing golden hashes.
+- Completed the milestone with staged multiple shadows, isolated subtree
+  compositing, feathered/opacity vector masks, composable safe-area insets,
+  metric-stable inline text runs, and explicit text direction.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 558 unit tests, contract/determinism/schema/
+  migration lint, production builds, six resource checks, all existing and
+  visual-primitive browser goldens, ten E2E checks, CLI/starter smoke, and all
+  ten 0.7.0 package dry-runs passed.
+- `pnpm golden:test` passes with `visual-primitives` at hash
+  `57fec0d6db33b95946191035a85315cdc9573f32e67eadf95429c0b739151b2d`.
+- `pnpm verify:clean` packed and installed all ten 0.7.0 packages into a
+  temporary starter, then validated, migrated, inspected, linted, and built it
+  outside the monorepo.
+
+### Notes
+
+- Bitmap/luminance masks, per-run font metrics, path morphing, and shadow
+  spread/inset remain additive follow-ups; the roadmap's Milestone 3 outcome is
+  otherwise complete and ready for the 0.7 release gate.
+
 ## 2026-08-24 (0.6 versioned extension kernel)
 
 ### Changed

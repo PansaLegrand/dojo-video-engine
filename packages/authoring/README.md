@@ -138,6 +138,14 @@ For a host-installed capability, use
 JSON-only `extension` node with seconds-first timing; the application still
 supplies the trusted registry to preview and export.
 
+Use `shapeLayer(geometry, options)` for rectangles, ellipses, normalized
+polygons/lines, or SVG path + viewBox geometry. Visual options accept closed
+`clip` geometry and vector alpha masks while preserving seconds-first timing.
+
+Use `richTextNode()` or `richTextBlock()` for metric-stable inline runs. Runs
+may change color, opacity, stroke, and background without changing line metrics
+or making layout diverge from the concatenated text.
+
 ## Image Overlays
 
 Use `imageOverlay()` for logos, stickers, watermarks, product shots, and avatars:
@@ -284,7 +292,7 @@ For larger `.srt`, `.vtt`, or transcript files, keep them beside your source cod
 
 Stable for 0.x integrations:
 
-- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, `extensionLayer()`, and `audioTrack()`.
+- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `richTextNode()`, `richTextBlock()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, `extensionLayer()`, `shapeLayer()`, and `audioTrack()`.
 - Overlay/media helpers: `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `subtitleTrack()`, `captionTrack()`, and aliases `subtitles` / `captions`.
 - Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `lottieAsset()`, and `defineAssets()`.
 - Re-exported preset helpers for common authoring flows, including motion presets, subtitle parsers/templates, overlay template metadata, safe-area helpers, and `audioFadeEnvelope()`.

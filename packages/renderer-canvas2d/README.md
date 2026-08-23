@@ -56,6 +56,16 @@ invokes the Canvas2D adapter, and `disposeAssets()` releases node resources.
 Adapters receive resolved layout geometry and node-local time through
 `Canvas2DExtensionDrawContext`. Scene JSON never carries a draw function.
 
+### Visual primitives
+
+`shape` nodes draw rectangles, ellipses, normalized polylines/polygons, and
+SVG path data mapped through an explicit viewBox. Fill/stroke paint supports
+solid, linear, circular-radial, and conic gradients. Closed geometry can clip
+or alpha-mask any visual subtree; masks may be inverted, opacity-scaled, and
+feathered. Per-corner radii and bounded blend modes use the same preview/export
+Canvas state. `isolation` stages descendants for one group composite, and rich
+text runs provide metric-stable inline paint.
+
 ### Runtime preflight
 
 Call `preflightCanvas2D(scene, environment, { extensions, worker })` before
@@ -72,8 +82,9 @@ Stable for 0.x integrations:
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
-- `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime capability checks.
+- `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime, Path2D, DOMMatrix, and extension capability checks.
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
+- `parseLinearGradient()`, `parseRadialGradient()`, `parseConicGradient()`, and `shapePointInBox()` for deterministic editor/renderer mirrors.
 
 Experimental before 1.0:
 

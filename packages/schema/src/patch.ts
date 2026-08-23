@@ -3,10 +3,13 @@ import {
   animationSchema,
   assetSchema,
   extensionDescriptorSchema,
+  maskDescriptorSchema,
   parseScene,
   sceneNodeSchema,
   sceneSchema,
+  shapeGeometrySchema,
   styleSchema,
+  textRunSchema,
   volumeEnvelopeSchema,
   type Scene,
   type SceneAnimation,
@@ -41,10 +44,29 @@ const setNodePropsOp = z.object({
   props: z
     .object({
       assetId: z.string().min(1).nullable().optional(),
+      text: z.string().nullable().optional(),
       effect: z.string().min(1).nullable().optional(),
       params: z.record(z.unknown()).nullable().optional(),
+      runs: z
+        .array(z.lazy(() => textRunSchema))
+        .min(1)
+        .max(256)
+        .nullable()
+        .optional(),
       extension: z
         .lazy(() => extensionDescriptorSchema)
+        .nullable()
+        .optional(),
+      shape: z
+        .lazy(() => shapeGeometrySchema)
+        .nullable()
+        .optional(),
+      clip: z
+        .lazy(() => shapeGeometrySchema)
+        .nullable()
+        .optional(),
+      mask: z
+        .lazy(() => maskDescriptorSchema)
         .nullable()
         .optional(),
       videoStartTime: z.number().nonnegative().nullable().optional(),

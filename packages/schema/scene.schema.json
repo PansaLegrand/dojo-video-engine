@@ -76,11 +76,50 @@
                   "audio",
                   "lottie",
                   "effect",
-                  "extension"
+                  "extension",
+                  "shape"
                 ]
               },
               "text": {
                 "type": "string"
+              },
+              "runs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "style": {
+                      "type": "object",
+                      "properties": {
+                        "color": {
+                          "type": "string"
+                        },
+                        "textStroke": {
+                          "type": "string"
+                        },
+                        "textBackgroundColor": {
+                          "type": "string"
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 256
               },
               "assetId": {
                 "type": "string"
@@ -298,6 +337,212 @@
                 ],
                 "additionalProperties": false
               },
+              "shape": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "rect"
+                      },
+                      "radius": {
+                        "type": [
+                          "number",
+                          "string"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "ellipse"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "line"
+                      },
+                      "points": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "items": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number",
+                                "minimum": -16,
+                                "maximum": 16
+                              },
+                              "y": {
+                                "type": "number",
+                                "minimum": -16,
+                                "maximum": 16
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "points"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "polyline"
+                      },
+                      "points": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                        },
+                        "minItems": 2,
+                        "maxItems": 256
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "points"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "polygon"
+                      },
+                      "points": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                        },
+                        "minItems": 3,
+                        "maxItems": 256
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "points"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "path"
+                      },
+                      "d": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100000,
+                        "pattern": "^[MmZzLlHhVvCcSsQqTtAa0-9eE+.,\\s-]+$"
+                      },
+                      "viewBox": {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          },
+                          "height": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "width",
+                          "height"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "fillRule": {
+                        "type": "string",
+                        "enum": [
+                          "nonzero",
+                          "evenodd"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "d",
+                      "viewBox"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "clip": {
+                "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape"
+              },
+              "mask": {
+                "type": "object",
+                "properties": {
+                  "shape": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/clip"
+                  },
+                  "inverted": {
+                    "type": "boolean"
+                  },
+                  "opacity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "feather": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 256
+                  }
+                },
+                "required": [
+                  "shape"
+                ],
+                "additionalProperties": false
+              },
               "videoStartTime": {
                 "type": "number",
                 "minimum": 0
@@ -385,34 +630,85 @@
                     ]
                   },
                   "gap": {
-                    "type": [
-                      "number",
-                      "string"
-                    ]
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "width": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "height": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "minWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "minHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "maxWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "maxHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "aspectRatio": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$"
+                      }
+                    ]
+                  },
+                  "safeArea": {
+                    "type": "object",
+                    "properties": {
+                      "top": {
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                      },
+                      "right": {
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                      },
+                      "bottom": {
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                      },
+                      "left": {
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "padding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "paddingTop": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "paddingRight": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "paddingBottom": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "paddingLeft": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "margin": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "marginTop": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "marginRight": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "marginBottom": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "marginLeft": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "position": {
                     "type": "string",
@@ -422,19 +718,19 @@
                     ]
                   },
                   "left": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "right": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "top": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "bottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "inset": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "background": {
                     "type": "string"
@@ -442,11 +738,60 @@
                   "backgroundColor": {
                     "type": "string"
                   },
+                  "fill": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stroke": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "strokeWidth": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1024
+                  },
+                  "strokeLineCap": {
+                    "type": "string",
+                    "enum": [
+                      "butt",
+                      "round",
+                      "square"
+                    ]
+                  },
+                  "strokeLineJoin": {
+                    "type": "string",
+                    "enum": [
+                      "bevel",
+                      "round",
+                      "miter"
+                    ]
+                  },
+                  "strokeDash": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "maxItems": 32
+                  },
                   "border": {
                     "type": "string"
                   },
                   "borderRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "borderTopLeftRadius": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "borderTopRightRadius": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "borderBottomRightRadius": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                  },
+                  "borderBottomLeftRadius": {
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "boxShadow": {
                     "type": "string"
@@ -462,6 +807,31 @@
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1
+                  },
+                  "blendMode": {
+                    "type": "string",
+                    "enum": [
+                      "source-over",
+                      "lighter",
+                      "multiply",
+                      "screen",
+                      "overlay",
+                      "darken",
+                      "lighten",
+                      "color-dodge",
+                      "color-burn",
+                      "hard-light",
+                      "soft-light",
+                      "difference",
+                      "exclusion",
+                      "hue",
+                      "saturation",
+                      "color",
+                      "luminosity"
+                    ]
+                  },
+                  "isolation": {
+                    "type": "boolean"
                   },
                   "filter": {
                     "type": "string"
@@ -479,7 +849,7 @@
                     "type": "string"
                   },
                   "fontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "fontWeight": {
                     "type": [
@@ -504,7 +874,7 @@
                     ]
                   },
                   "letterSpacing": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textAlign": {
                     "type": "string",
@@ -512,6 +882,14 @@
                       "left",
                       "center",
                       "right"
+                    ]
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "ltr",
+                      "rtl",
+                      "inherit"
                     ]
                   },
                   "textShadow": {
@@ -525,7 +903,7 @@
                     "exclusiveMinimum": 0
                   },
                   "minFontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textFit": {
                     "type": "string",
@@ -546,16 +924,16 @@
                     "type": "string"
                   },
                   "textBackgroundPadding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textBackgroundPaddingX": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textBackgroundPaddingY": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textBackgroundRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/gap"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "objectFit": {
                     "type": "string",

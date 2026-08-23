@@ -250,7 +250,9 @@ describe("@motionforge/cli", () => {
       expect(result.stderr).toContain(
         `Invalid MotionForge scene: ${scenePath}`,
       );
-      expect(result.stderr).toContain("Text nodes require a `text` string.");
+      expect(result.stderr).toContain(
+        "Text nodes require a `text` string or non-empty `runs`.",
+      );
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

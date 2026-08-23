@@ -13,7 +13,9 @@ import {
   parseScene,
   isAudioReactiveEffect,
   type Scene,
+  type SceneShapeGeometry,
   type SceneStyle,
+  type SceneTextRun,
 } from "@motionforge/schema";
 import {
   createExtensionRegistry,
@@ -106,6 +108,8 @@ export type Canvas2DPreflightIssue = {
     | "image_decoder_unavailable"
     | "lottie_requires_dom"
     | "extension_adapter_invalid"
+    | "dom_matrix_unavailable"
+    | "path2d_unavailable"
     | "video_decoder_unavailable";
   message: string;
 };
@@ -121,6 +125,8 @@ export type Canvas2DPreflightResult = {
     fontLoading: boolean;
     domLottie: boolean;
     extensions: boolean;
+    path2d: boolean;
+    domMatrix: boolean;
   };
   issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue>;
 };
@@ -149,6 +155,8 @@ export function preflightCanvas2D(
   const hasImageDecoder = "createImageBitmap" in globalObject;
   const hasVideoDecoder = "VideoDecoder" in globalObject;
   const hasAudioDecoder = "AudioDecoder" in globalObject;
+  const hasPath2D = "Path2D" in globalObject;
+  const hasDomMatrix = "DOMMatrix" in globalObject;
   const hasFontLoading = Boolean(
     "FontFace" in globalObject &&
     (documentObject?.fonts ||
@@ -202,6 +210,26 @@ export function preflightCanvas2D(
         "The current Lottie adapter requires a DOM canvas; render this scene on the main thread or omit Lottie assets.",
     });
   }
+  const needsPath2D =
+    inspection.capabilities.hasShapes ||
+    inspection.capabilities.hasClipping ||
+    inspection.capabilities.hasMasks;
+  if (needsPath2D && !hasPath2D) {
+    issues.push({
+      severity: "error",
+      code: "path2d_unavailable",
+      message:
+        "Shape, clip, and mask nodes need the Canvas Path2D API in this renderer.",
+    });
+  }
+  if (inspection.capabilities.hasVectorPaths && !hasDomMatrix) {
+    issues.push({
+      severity: "error",
+      code: "dom_matrix_unavailable",
+      message:
+        "SVG path geometry needs DOMMatrix to map its viewBox into the node box.",
+    });
+  }
   const extensionPreflight = preflightExtensions(
     scene,
     options.extensions ?? createExtensionRegistry(),
@@ -229,6 +257,8 @@ export function preflightCanvas2D(
       fontLoading: inspection.assets.font > 0,
       domLottie: inspection.capabilities.hasLottie,
       extensions: inspection.capabilities.hasExtensions,
+      path2d: needsPath2D,
+      domMatrix: inspection.capabilities.hasVectorPaths,
     },
     issues,
   };
@@ -1416,6 +1446,7 @@ function measureTextLine(
   }
 
   context.font = font;
+  context.direction = style.direction ?? "inherit";
   const spaced = letterSpacing !== 0 && "letterSpacing" in context;
   const previousLetterSpacing = spaced ? context.letterSpacing : undefined;
 
@@ -1460,12 +1491,58 @@ function drawBox(
   sceneFps: number,
   textMeasureCache: TextMeasureCache | undefined,
 ): void {
+  const softMask =
+    box.node.mask !== undefined &&
+    ((box.node.mask.feather ?? 0) > 0 || (box.node.mask.opacity ?? 1) < 1);
+  if (box.node.style.isolation || softMask) {
+    drawIsolatedBox(
+      context,
+      box,
+      scene,
+      assets,
+      sceneFrame,
+      sceneFps,
+      textMeasureCache,
+      softMask,
+    );
+    return;
+  }
+  drawBoxDirect(
+    context,
+    box,
+    scene,
+    assets,
+    sceneFrame,
+    sceneFps,
+    textMeasureCache,
+  );
+}
+
+function drawBoxDirect(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  scene: Scene,
+  assets: ResolvedAssets | undefined,
+  sceneFrame: number,
+  sceneFps: number,
+  textMeasureCache: TextMeasureCache | undefined,
+  options: {
+    suppressRootComposite?: boolean;
+    suppressRootMask?: boolean;
+  } = {},
+): void {
   const { node } = box;
   const style = node.style;
 
   context.save();
-  context.globalAlpha *= style.opacity ?? 1;
+  if (!options.suppressRootComposite) {
+    context.globalAlpha *= style.opacity ?? 1;
+  }
   applyTransform(context, box, style);
+
+  if (style.blendMode && !options.suppressRootComposite) {
+    context.globalCompositeOperation = style.blendMode;
+  }
 
   if (style.filter && style.filter !== "none") {
     // Canvas2D applies the filter per draw call, not to the composited
@@ -1475,19 +1552,22 @@ function drawBox(
     context.filter = style.filter;
   }
 
+  applyVectorConstraints(
+    context,
+    box,
+    node.clip,
+    options.suppressRootMask ? undefined : node.mask,
+  );
+
   drawBackground(context, box, style);
 
   if (style.overflow === "hidden") {
     // Clip own content and the subtree to the border box, following
     // borderRadius — CSS overflow:hidden semantics. The clip lives inside
     // this box's save/restore, so siblings are unaffected.
-    const radius = readLength(
-      style.borderRadius,
-      Math.min(box.width, box.height),
-      0,
-    );
+    const radius = resolveCornerRadii(style, box);
 
-    if (radius > 0) {
+    if (hasCornerRadius(radius)) {
       roundedRect(context, box.x, box.y, box.width, box.height, radius);
     } else {
       context.beginPath();
@@ -1497,8 +1577,15 @@ function drawBox(
     context.clip();
   }
 
-  if (node.type === "text" && node.text) {
-    drawText(context, box, node.text, style, textMeasureCache);
+  if (node.type === "text" && (node.text !== undefined || node.runs)) {
+    drawText(
+      context,
+      box,
+      node.text ?? node.runs?.map((run) => run.text).join("") ?? "",
+      style,
+      textMeasureCache,
+      node.runs,
+    );
   }
 
   if (node.type === "img" && node.assetId) {
@@ -1521,6 +1608,10 @@ function drawBox(
     drawExtension(context, box, scene, node, assets, sceneFrame, sceneFps);
   }
 
+  if (node.type === "shape" && node.shape) {
+    drawShape(context, box, node.shape, style);
+  }
+
   drawBorder(context, box, style);
 
   for (const child of sortByZIndex(box.children)) {
@@ -1535,6 +1626,49 @@ function drawBox(
     );
   }
 
+  context.restore();
+}
+
+function drawIsolatedBox(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  scene: Scene,
+  assets: ResolvedAssets | undefined,
+  sceneFrame: number,
+  sceneFps: number,
+  textMeasureCache: TextMeasureCache | undefined,
+  softMask: boolean,
+): void {
+  const canvas = createStagingCanvas(scene.width, scene.height);
+  const isolatedContext = canvas.getContext("2d") as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null;
+  if (!isolatedContext) {
+    throw new Error("Canvas2D unavailable for isolated group compositing.");
+  }
+  isolatedContext.clearRect(0, 0, scene.width, scene.height);
+  drawBoxDirect(
+    isolatedContext,
+    box,
+    scene,
+    assets,
+    sceneFrame,
+    sceneFps,
+    textMeasureCache,
+    { suppressRootComposite: true, suppressRootMask: softMask },
+  );
+
+  if (softMask && box.node.mask) {
+    applySoftMask(isolatedContext, box, box.node.mask, scene);
+  }
+
+  context.save();
+  context.globalAlpha *= box.node.style.opacity ?? 1;
+  if (box.node.style.blendMode) {
+    context.globalCompositeOperation = box.node.style.blendMode;
+  }
+  context.drawImage(canvas, 0, 0);
   context.restore();
 }
 
@@ -1578,6 +1712,253 @@ function drawExtension(
     localFrame: node.localFrame,
     sceneFps,
   });
+}
+
+type ShapePath = {
+  path: Path2D;
+  fillRule: CanvasFillRule;
+  open: boolean;
+};
+
+type CornerRadii = {
+  topLeft: number;
+  topRight: number;
+  bottomRight: number;
+  bottomLeft: number;
+};
+
+export function shapePointInBox(
+  point: { x: number; y: number },
+  box: Pick<LayoutBox, "x" | "y" | "width" | "height">,
+): { x: number; y: number } {
+  return {
+    x: box.x + point.x * box.width,
+    y: box.y + point.y * box.height,
+  };
+}
+
+function createShapePath(
+  box: Pick<LayoutBox, "x" | "y" | "width" | "height">,
+  geometry: SceneShapeGeometry,
+  radius: number | CornerRadii = 0,
+): ShapePath {
+  if (typeof Path2D === "undefined") {
+    throw new Error(
+      "Shape rendering needs Path2D. Call preflightCanvas2D() before rendering in this environment.",
+    );
+  }
+
+  const path = new Path2D();
+
+  if (geometry.kind === "rect") {
+    addRoundedRectPath(
+      path,
+      box,
+      geometry.radius === undefined
+        ? radius
+        : readLength(geometry.radius, Math.min(box.width, box.height), 0),
+    );
+    return { path, fillRule: "nonzero", open: false };
+  }
+
+  if (geometry.kind === "ellipse") {
+    path.ellipse(
+      box.x + box.width / 2,
+      box.y + box.height / 2,
+      Math.abs(box.width / 2),
+      Math.abs(box.height / 2),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    return { path, fillRule: "nonzero", open: false };
+  }
+
+  if (
+    geometry.kind === "line" ||
+    geometry.kind === "polyline" ||
+    geometry.kind === "polygon"
+  ) {
+    const first = geometry.points[0];
+    if (first) {
+      const start = shapePointInBox(first, box);
+      path.moveTo(start.x, start.y);
+      for (const point of geometry.points.slice(1)) {
+        const next = shapePointInBox(point, box);
+        path.lineTo(next.x, next.y);
+      }
+      if (geometry.kind === "polygon") path.closePath();
+    }
+    return {
+      path,
+      fillRule: "nonzero",
+      open: geometry.kind !== "polygon",
+    };
+  }
+
+  if (typeof DOMMatrix === "undefined") {
+    throw new Error(
+      "SVG path rendering needs DOMMatrix. Call preflightCanvas2D() before rendering in this environment.",
+    );
+  }
+  const source = new Path2D(geometry.d);
+  const scaleX = box.width / geometry.viewBox.width;
+  const scaleY = box.height / geometry.viewBox.height;
+  path.addPath(
+    source,
+    new DOMMatrix([
+      scaleX,
+      0,
+      0,
+      scaleY,
+      box.x - geometry.viewBox.x * scaleX,
+      box.y - geometry.viewBox.y * scaleY,
+    ]),
+  );
+  return {
+    path,
+    fillRule: geometry.fillRule ?? "nonzero",
+    open: false,
+  };
+}
+
+function addRoundedRectPath(
+  path: Path2D,
+  box: Pick<LayoutBox, "x" | "y" | "width" | "height">,
+  radius: number | CornerRadii,
+): void {
+  const radii = normalizeCornerRadii(radius, box.width, box.height);
+  if (!hasCornerRadius(radii)) {
+    path.rect(box.x, box.y, box.width, box.height);
+    return;
+  }
+
+  path.moveTo(box.x + radii.topLeft, box.y);
+  path.lineTo(box.x + box.width - radii.topRight, box.y);
+  path.quadraticCurveTo(
+    box.x + box.width,
+    box.y,
+    box.x + box.width,
+    box.y + radii.topRight,
+  );
+  path.lineTo(box.x + box.width, box.y + box.height - radii.bottomRight);
+  path.quadraticCurveTo(
+    box.x + box.width,
+    box.y + box.height,
+    box.x + box.width - radii.bottomRight,
+    box.y + box.height,
+  );
+  path.lineTo(box.x + radii.bottomLeft, box.y + box.height);
+  path.quadraticCurveTo(
+    box.x,
+    box.y + box.height,
+    box.x,
+    box.y + box.height - radii.bottomLeft,
+  );
+  path.lineTo(box.x, box.y + radii.topLeft);
+  path.quadraticCurveTo(box.x, box.y, box.x + radii.topLeft, box.y);
+  path.closePath();
+}
+
+function applyVectorConstraints(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  clip: LayoutBox["node"]["clip"],
+  mask: LayoutBox["node"]["mask"],
+): void {
+  if (clip) {
+    const clipPath = createShapePath(box, clip);
+    if (clipPath.open) {
+      throw new Error(`Node "${box.id}" uses open geometry as a clip.`);
+    }
+    context.clip(clipPath.path, clipPath.fillRule);
+  }
+
+  if (mask) {
+    const maskPath = createShapePath(box, mask.shape);
+    if (maskPath.open) {
+      throw new Error(`Node "${box.id}" uses open geometry as a mask.`);
+    }
+    if (mask.inverted) {
+      const inverse = new Path2D();
+      inverse.rect(box.x, box.y, box.width, box.height);
+      inverse.addPath(maskPath.path);
+      context.clip(inverse, "evenodd");
+    } else {
+      context.clip(maskPath.path, maskPath.fillRule);
+    }
+  }
+}
+
+function applySoftMask(
+  isolatedContext: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  mask: NonNullable<LayoutBox["node"]["mask"]>,
+  scene: Scene,
+): void {
+  const maskCanvas = createStagingCanvas(scene.width, scene.height);
+  const maskContext = maskCanvas.getContext("2d") as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null;
+  if (!maskContext) {
+    throw new Error("Canvas2D unavailable for soft-mask staging.");
+  }
+  const maskPath = createShapePath(box, mask.shape);
+  if (maskPath.open) {
+    throw new Error(`Node "${box.id}" uses open geometry as a mask.`);
+  }
+  const opacity = mask.opacity ?? 1;
+  const feather = mask.feather ?? 0;
+
+  if (mask.inverted) {
+    maskContext.fillStyle = "#ffffff";
+    maskContext.fillRect(0, 0, scene.width, scene.height);
+    maskContext.globalCompositeOperation = "destination-out";
+  }
+  maskContext.save();
+  applyTransform(maskContext, box, box.node.style);
+  maskContext.globalAlpha = opacity;
+  if (feather > 0) {
+    maskContext.filter = `blur(${feather}px)`;
+  }
+  maskContext.fillStyle = "#ffffff";
+  maskContext.fill(maskPath.path, maskPath.fillRule);
+  maskContext.restore();
+
+  isolatedContext.save();
+  isolatedContext.globalCompositeOperation = "destination-in";
+  isolatedContext.drawImage(maskCanvas, 0, 0);
+  isolatedContext.restore();
+}
+
+function drawShape(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  geometry: SceneShapeGeometry,
+  style: SceneStyle,
+): void {
+  const shapePath = createShapePath(
+    box,
+    geometry,
+    resolveCornerRadii(style, box),
+  );
+  const fill = style.fill ?? (shapePath.open ? undefined : "#000000");
+  const stroke = style.stroke ?? (shapePath.open ? "#000000" : undefined);
+
+  if (fill) {
+    context.fillStyle = parseFill(context, box, fill);
+    context.fill(shapePath.path, shapePath.fillRule);
+  }
+
+  if (stroke && (style.strokeWidth ?? 1) > 0) {
+    context.strokeStyle = parseFill(context, box, stroke);
+    context.lineWidth = style.strokeWidth ?? 1;
+    context.lineCap = style.strokeLineCap ?? "butt";
+    context.lineJoin = style.strokeLineJoin ?? "miter";
+    context.setLineDash(style.strokeDash ?? []);
+    context.stroke(shapePath.path);
+  }
 }
 
 /**
@@ -3576,13 +3957,9 @@ function drawMedia(
     context.imageSmoothingQuality = "high";
   }
 
-  const radius = readLength(
-    style.borderRadius,
-    Math.min(box.width, box.height),
-    0,
-  );
+  const radius = resolveCornerRadii(style, box);
 
-  if (radius > 0) {
+  if (hasCornerRadius(radius)) {
     roundedRect(context, box.x, box.y, box.width, box.height, radius);
   } else {
     context.beginPath();
@@ -3664,7 +4041,13 @@ function drawBackground(
     return;
   }
 
-  const shadow = style.boxShadow ? parseBoxShadow(style.boxShadow) : null;
+  const shadows = style.boxShadow ? parseBoxShadows(style.boxShadow) : [];
+  if (shadows.length > 1) {
+    shadows.forEach((shadow) =>
+      drawBoxShadowLayer(context, box, style, shadow),
+    );
+  }
+  const shadow = shadows.length === 1 ? shadows[0] : null;
 
   if (shadow) {
     // Canvas shadows emit from painted pixels, so the shadow rides the
@@ -3678,13 +4061,9 @@ function drawBackground(
   }
 
   context.fillStyle = parseFill(context, box, background);
-  const radius = readLength(
-    style.borderRadius,
-    Math.min(box.width, box.height),
-    0,
-  );
+  const radius = resolveCornerRadii(style, box);
 
-  if (radius > 0) {
+  if (hasCornerRadius(radius)) {
     roundedRect(context, box.x, box.y, box.width, box.height, radius);
     context.fill();
   } else {
@@ -3702,6 +4081,62 @@ export type ParsedBoxShadow = {
   blur: number;
   color: string;
 };
+
+export function parseBoxShadows(value: string): ParsedBoxShadow[] {
+  const parts = splitTopLevel(value);
+  if (parts.length === 0) return [];
+  const parsed = parts.map(parseBoxShadow);
+  return parsed.every((shadow): shadow is ParsedBoxShadow => shadow !== null)
+    ? parsed
+    : [];
+}
+
+function drawBoxShadowLayer(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  style: SceneStyle,
+  shadow: ParsedBoxShadow,
+): void {
+  const padding = Math.ceil(
+    Math.max(
+      2,
+      shadow.blur * 2 + Math.abs(shadow.offsetX) + Math.abs(shadow.offsetY),
+    ),
+  );
+  const canvas = createStagingCanvas(
+    Math.max(1, Math.ceil(box.width + padding * 2)),
+    Math.max(1, Math.ceil(box.height + padding * 2)),
+  );
+  const shadowContext = canvas.getContext("2d") as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null;
+  if (!shadowContext) {
+    throw new Error("Canvas2D unavailable for multiple box-shadow staging.");
+  }
+  const stagedBox = {
+    width: box.width,
+    height: box.height,
+  };
+  const radii = resolveCornerRadii(style, stagedBox);
+  shadowContext.fillStyle = "#000000";
+  shadowContext.shadowColor = shadow.color;
+  shadowContext.shadowOffsetX = shadow.offsetX;
+  shadowContext.shadowOffsetY = shadow.offsetY;
+  shadowContext.shadowBlur = shadow.blur;
+  roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
+  shadowContext.fill();
+
+  // Remove the staging source while keeping its emitted shadow.
+  shadowContext.globalCompositeOperation = "destination-out";
+  shadowContext.shadowColor = "transparent";
+  shadowContext.shadowOffsetX = 0;
+  shadowContext.shadowOffsetY = 0;
+  shadowContext.shadowBlur = 0;
+  roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
+  shadowContext.fill();
+  context.drawImage(canvas, box.x - padding, box.y - padding);
+}
 
 /**
  * Parses `<offset-x> <offset-y> [blur] <color>` box shadows (px lengths;
@@ -3794,25 +4229,21 @@ function drawBorder(
     return;
   }
 
-  const radius = readLength(
-    style.borderRadius,
-    Math.min(box.width, box.height),
-    0,
-  );
+  const radius = resolveCornerRadii(style, box);
   const inset = border.width / 2;
 
   context.save();
   context.strokeStyle = border.color;
   context.lineWidth = border.width;
 
-  if (radius > 0) {
+  if (hasCornerRadius(radius)) {
     roundedRect(
       context,
       box.x + inset,
       box.y + inset,
       box.width - border.width,
       box.height - border.width,
-      Math.max(0, radius - inset),
+      insetCornerRadii(radius, inset),
     );
     context.stroke();
   } else {
@@ -3845,11 +4276,13 @@ function drawText(
   value: string,
   style: SceneStyle,
   textMeasureCache: TextMeasureCache | undefined,
+  runs?: SceneTextRun[],
 ): void {
   const fontSize = readLength(style.fontSize, box.height, 24);
   context.font = canvasFont(style, fontSize);
   context.fillStyle = style.color ?? "#ffffff";
   context.textAlign = style.textAlign ?? "left";
+  context.direction = style.direction ?? "inherit";
   context.textBaseline = "middle";
 
   const letterSpacing = readLength(style.letterSpacing, fontSize, 0);
@@ -3904,6 +4337,21 @@ function drawText(
     box.y + box.height / 2 - ((lines.length - 1) * lineHeight) / 2;
   const background = parseTextBackground(style, fontSize);
 
+  if (runs) {
+    drawRichTextLines(
+      context,
+      box,
+      runs,
+      style,
+      textLayout,
+      firstLineY,
+      background,
+      stroke,
+      textMeasureCache,
+    );
+    return;
+  }
+
   lines.forEach((line, index) => {
     if (line !== "") {
       const y = firstLineY + index * lineHeight;
@@ -3941,6 +4389,128 @@ function drawText(
 
       context.fillText(line, x, y, box.width);
     }
+  });
+}
+
+type RichTextSegment = { text: string; run: SceneTextRun };
+
+function drawRichTextLines(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  runs: SceneTextRun[],
+  style: SceneStyle,
+  textLayout: ReturnType<typeof prepareTextLayout>,
+  firstLineY: number,
+  background: TextBackground | null,
+  nodeStroke: ReturnType<typeof parseTextStroke>,
+  textMeasureCache: TextMeasureCache | undefined,
+): void {
+  const styledLines = richSegmentsByLine(runs, textLayout.lines);
+  styledLines.forEach((segments, lineIndex) => {
+    const line = textLayout.lines[lineIndex] ?? "";
+    if (line === "") return;
+    const y = firstLineY + lineIndex * textLayout.lineHeight;
+    const lineWidth = Math.min(
+      measureTextLine(
+        context,
+        line,
+        style,
+        textLayout.fontSize,
+        textMeasureCache,
+      ),
+      box.width,
+    );
+    const anchorX =
+      style.textAlign === "center"
+        ? box.x + box.width / 2
+        : style.textAlign === "right"
+          ? box.x + box.width
+          : box.x;
+    let cursorX = textLineX(style.textAlign, box, anchorX, lineWidth, 0);
+
+    if (background) {
+      drawTextBackground(context, {
+        x: cursorX - background.paddingX,
+        y: y - textLayout.lineHeight / 2 - background.paddingY,
+        width: lineWidth + background.paddingX * 2,
+        height: textLayout.lineHeight + background.paddingY * 2,
+        radius: background.radius,
+        color: background.color,
+      });
+    }
+
+    for (const segment of segments) {
+      const segmentWidth = measureTextLine(
+        context,
+        segment.text,
+        style,
+        textLayout.fontSize,
+        textMeasureCache,
+      );
+      const runStyle = segment.run.style ?? {};
+      if (runStyle.textBackgroundColor) {
+        drawTextBackground(context, {
+          x: cursorX,
+          y: y - textLayout.lineHeight / 2,
+          width: segmentWidth,
+          height: textLayout.lineHeight,
+          radius: 0,
+          color: runStyle.textBackgroundColor,
+        });
+      }
+
+      context.save();
+      context.globalAlpha *= runStyle.opacity ?? 1;
+      context.textAlign = "left";
+      context.fillStyle = runStyle.color ?? style.color ?? "#ffffff";
+      const runStroke = runStyle.textStroke
+        ? parseTextStroke(runStyle.textStroke, textLayout.fontSize)
+        : nodeStroke;
+      if (runStroke) {
+        context.lineWidth = runStroke.width;
+        context.strokeStyle = runStroke.color;
+        context.lineJoin = "round";
+        context.miterLimit = 2;
+        context.strokeText(segment.text, cursorX, y);
+      }
+      context.fillText(segment.text, cursorX, y);
+      context.restore();
+      cursorX += segmentWidth;
+    }
+  });
+}
+
+function richSegmentsByLine(
+  runs: SceneTextRun[],
+  lines: string[],
+): RichTextSegment[][] {
+  const source = runs.flatMap((run) =>
+    Array.from(run.text).map((character) => ({ character, run })),
+  );
+  let sourceIndex = 0;
+  const fallbackRun = runs[runs.length - 1] ?? { text: "", style: {} };
+
+  return lines.map((line) => {
+    const segments: RichTextSegment[] = [];
+    for (const character of Array.from(line)) {
+      let matchedIndex = sourceIndex;
+      while (
+        matchedIndex < source.length &&
+        source[matchedIndex]?.character !== character
+      ) {
+        matchedIndex += 1;
+      }
+      const matched = source[matchedIndex];
+      const run = matched?.run ?? fallbackRun;
+      if (matched) sourceIndex = matchedIndex + 1;
+      const previous = segments[segments.length - 1];
+      if (previous?.run === run) {
+        previous.text += character;
+      } else {
+        segments.push({ text: character, run });
+      }
+    }
+    return segments;
   });
 }
 
@@ -4091,40 +4661,94 @@ export function parseLinearGradient(
     return null;
   }
 
-  const stops = parts.map((part) => parseLinearGradientStop(part));
+  return {
+    angleDeg,
+    stops: normalizeGradientStops(parts),
+  };
+}
 
-  // Fill in omitted positions: endpoints default to 0/1, interior stops
-  // spread evenly between the nearest positioned neighbors.
+export type ParsedRadialGradient = {
+  centerX: number;
+  centerY: number;
+  stops: Array<{ color: string; offset: number }>;
+};
+
+export function parseRadialGradient(
+  value: string,
+): ParsedRadialGradient | null {
+  const match = value.trim().match(/^radial-gradient\((.+)\)$/);
+  if (!match) return null;
+  const parts = splitTopLevel(match[1] ?? "");
+  let centerX = 0.5;
+  let centerY = 0.5;
+  const position = (parts[0] ?? "").match(
+    /^(?:circle\s+)?at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/,
+  );
+  if (position) {
+    centerX = Number.parseFloat(position[1] ?? "50") / 100;
+    centerY = Number.parseFloat(position[2] ?? "50") / 100;
+    parts.shift();
+  } else if (/^(?:circle|ellipse|at\s+)/.test(parts[0] ?? "")) {
+    return null;
+  }
+  if (parts.length < 2) return null;
+  return { centerX, centerY, stops: normalizeGradientStops(parts) };
+}
+
+export type ParsedConicGradient = {
+  angleDeg: number;
+  centerX: number;
+  centerY: number;
+  stops: Array<{ color: string; offset: number }>;
+};
+
+export function parseConicGradient(value: string): ParsedConicGradient | null {
+  const match = value.trim().match(/^conic-gradient\((.+)\)$/);
+  if (!match) return null;
+  const parts = splitTopLevel(match[1] ?? "");
+  let angleDeg = 0;
+  let centerX = 0.5;
+  let centerY = 0.5;
+  const prefix = (parts[0] ?? "").match(
+    /^(?:from\s+(-?\d+(?:\.\d+)?)deg\s*)?(?:at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%)?$/,
+  );
+  if (prefix && (prefix[1] !== undefined || prefix[2] !== undefined)) {
+    angleDeg = Number.parseFloat(prefix[1] ?? "0");
+    centerX = Number.parseFloat(prefix[2] ?? "50") / 100;
+    centerY = Number.parseFloat(prefix[3] ?? "50") / 100;
+    parts.shift();
+  } else if (/^(?:from|at)\s+/.test(parts[0] ?? "")) {
+    return null;
+  }
+  if (parts.length < 2) return null;
+  return {
+    angleDeg,
+    centerX,
+    centerY,
+    stops: normalizeGradientStops(parts),
+  };
+}
+
+function normalizeGradientStops(
+  parts: string[],
+): Array<{ color: string; offset: number }> {
+  const stops = parts.map((part) => parseLinearGradientStop(part));
   const firstStop = stops[0];
   const lastStop = stops[stops.length - 1];
 
-  if (firstStop && firstStop.offset === undefined) {
-    firstStop.offset = 0;
-  }
-
-  if (lastStop && lastStop.offset === undefined) {
-    lastStop.offset = 1;
-  }
+  if (firstStop && firstStop.offset === undefined) firstStop.offset = 0;
+  if (lastStop && lastStop.offset === undefined) lastStop.offset = 1;
 
   for (let index = 1; index < stops.length - 1; index += 1) {
-    if (stops[index]?.offset !== undefined) {
-      continue;
-    }
-
+    if (stops[index]?.offset !== undefined) continue;
     const prevIndex = index - 1;
     let nextIndex = index + 1;
-
-    while (stops[nextIndex]?.offset === undefined) {
-      nextIndex += 1;
-    }
-
+    while (stops[nextIndex]?.offset === undefined) nextIndex += 1;
     const start = stops[prevIndex]?.offset ?? 0;
     const end = stops[nextIndex]?.offset ?? 1;
     const span = nextIndex - prevIndex;
-
     for (let fill = index; fill < nextIndex; fill += 1) {
       const target = stops[fill];
-
       if (target) {
         target.offset = start + ((end - start) * (fill - prevIndex)) / span;
       }
@@ -4132,16 +4756,10 @@ export function parseLinearGradient(
   }
 
   let running = 0;
-
-  return {
-    angleDeg,
-    stops: stops.map((stop) => {
-      // Canvas requires non-decreasing offsets in [0, 1]; CSS clamps the
-      // same way for out-of-order positions.
-      running = Math.min(1, Math.max(running, stop.offset ?? 0));
-      return { color: stop.color, offset: running };
-    }),
-  };
+  return stops.map((stop) => {
+    running = Math.min(1, Math.max(running, stop.offset ?? 0));
+    return { color: stop.color, offset: running };
+  });
 }
 
 function parseLinearGradientStop(value: string): {
@@ -4202,6 +4820,51 @@ function parseFill(
   const parsed = parseLinearGradient(value);
 
   if (!parsed) {
+    const radial = parseRadialGradient(value);
+    if (radial) {
+      const centerX = box.x + box.width * radial.centerX;
+      const centerY = box.y + box.height * radial.centerY;
+      const radius = Math.max(
+        Math.hypot(centerX - box.x, centerY - box.y),
+        Math.hypot(centerX - (box.x + box.width), centerY - box.y),
+        Math.hypot(centerX - box.x, centerY - (box.y + box.height)),
+        Math.hypot(
+          centerX - (box.x + box.width),
+          centerY - (box.y + box.height),
+        ),
+      );
+      const gradient = context.createRadialGradient(
+        centerX,
+        centerY,
+        0,
+        centerX,
+        centerY,
+        radius,
+      );
+      radial.stops.forEach((stop) =>
+        gradient.addColorStop(stop.offset, stop.color),
+      );
+      return gradient;
+    }
+
+    const conic = parseConicGradient(value);
+    if (conic) {
+      if (!("createConicGradient" in context)) {
+        throw new Error(
+          "Conic gradients need CanvasRenderingContext2D.createConicGradient().",
+        );
+      }
+      const gradient = context.createConicGradient(
+        ((conic.angleDeg - 90) * Math.PI) / 180,
+        box.x + box.width * conic.centerX,
+        box.y + box.height * conic.centerY,
+      );
+      conic.stops.forEach((stop) =>
+        gradient.addColorStop(stop.offset, stop.color),
+      );
+      return gradient;
+    }
+
     return value;
   }
 
@@ -4346,21 +5009,119 @@ function drawTextBackground(
   context.restore();
 }
 
+function resolveCornerRadii(
+  style: SceneStyle,
+  box: Pick<LayoutBox, "width" | "height">,
+): CornerRadii {
+  const reference = Math.min(box.width, box.height);
+  const radius = readLength(style.borderRadius, reference, 0);
+  return normalizeCornerRadii(
+    {
+      topLeft: readLength(style.borderTopLeftRadius, reference, radius),
+      topRight: readLength(style.borderTopRightRadius, reference, radius),
+      bottomRight: readLength(style.borderBottomRightRadius, reference, radius),
+      bottomLeft: readLength(style.borderBottomLeftRadius, reference, radius),
+    },
+    box.width,
+    box.height,
+  );
+}
+
+function insetCornerRadii(radii: CornerRadii, inset: number): CornerRadii {
+  return {
+    topLeft: Math.max(0, radii.topLeft - inset),
+    topRight: Math.max(0, radii.topRight - inset),
+    bottomRight: Math.max(0, radii.bottomRight - inset),
+    bottomLeft: Math.max(0, radii.bottomLeft - inset),
+  };
+}
+
+function normalizeCornerRadii(
+  radius: number | CornerRadii,
+  width: number,
+  height: number,
+): CornerRadii {
+  const raw =
+    typeof radius === "number"
+      ? {
+          topLeft: radius,
+          topRight: radius,
+          bottomRight: radius,
+          bottomLeft: radius,
+        }
+      : radius;
+  const nonnegative = {
+    topLeft: Math.max(0, raw.topLeft),
+    topRight: Math.max(0, raw.topRight),
+    bottomRight: Math.max(0, raw.bottomRight),
+    bottomLeft: Math.max(0, raw.bottomLeft),
+  };
+  const scale = Math.min(
+    1,
+    Math.abs(width) / Math.max(1, nonnegative.topLeft + nonnegative.topRight),
+    Math.abs(width) /
+      Math.max(1, nonnegative.bottomLeft + nonnegative.bottomRight),
+    Math.abs(height) /
+      Math.max(1, nonnegative.topLeft + nonnegative.bottomLeft),
+    Math.abs(height) /
+      Math.max(1, nonnegative.topRight + nonnegative.bottomRight),
+  );
+  return {
+    topLeft: nonnegative.topLeft * scale,
+    topRight: nonnegative.topRight * scale,
+    bottomRight: nonnegative.bottomRight * scale,
+    bottomLeft: nonnegative.bottomLeft * scale,
+  };
+}
+
+function hasCornerRadius(radii: CornerRadii): boolean {
+  return (
+    radii.topLeft > 0 ||
+    radii.topRight > 0 ||
+    radii.bottomRight > 0 ||
+    radii.bottomLeft > 0
+  );
+}
+
 function roundedRect(
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,
   height: number,
-  radius: number,
+  radius: number | CornerRadii,
 ): void {
-  const r = Math.min(radius, width / 2, height / 2);
+  const radii = normalizeCornerRadii(radius, width, height);
+  if (
+    radii.topLeft === radii.topRight &&
+    radii.topLeft === radii.bottomRight &&
+    radii.topLeft === radii.bottomLeft
+  ) {
+    const uniform = radii.topLeft;
+    context.beginPath();
+    context.moveTo(x + uniform, y);
+    context.arcTo(x + width, y, x + width, y + height, uniform);
+    context.arcTo(x + width, y + height, x, y + height, uniform);
+    context.arcTo(x, y + height, x, y, uniform);
+    context.arcTo(x, y, x + width, y, uniform);
+    context.closePath();
+    return;
+  }
   context.beginPath();
-  context.moveTo(x + r, y);
-  context.arcTo(x + width, y, x + width, y + height, r);
-  context.arcTo(x + width, y + height, x, y + height, r);
-  context.arcTo(x, y + height, x, y, r);
-  context.arcTo(x, y, x + width, y, r);
+  context.moveTo(x + radii.topLeft, y);
+  context.lineTo(x + width - radii.topRight, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + radii.topRight);
+  context.lineTo(x + width, y + height - radii.bottomRight);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - radii.bottomRight,
+    y + height,
+  );
+  context.lineTo(x + radii.bottomLeft, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - radii.bottomLeft);
+  context.lineTo(x, y + radii.topLeft);
+  context.quadraticCurveTo(x, y, x + radii.topLeft, y);
   context.closePath();
 }
 

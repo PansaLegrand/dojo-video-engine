@@ -362,6 +362,182 @@ describe("scene schema", () => {
     }
   });
 
+  it("validates shape, SVG path, clipping, mask, and blend primitives", () => {
+    const valid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "triangle",
+          type: "shape",
+          shape: {
+            kind: "polygon",
+            points: [
+              { x: 0.5, y: 0 },
+              { x: 1, y: 1 },
+              { x: 0, y: 1 },
+            ],
+          },
+          clip: { kind: "ellipse" },
+          mask: {
+            shape: { kind: "rect", radius: "12%" },
+            inverted: false,
+          },
+          style: {
+            fill: "#22d3ee",
+            stroke: "#ffffff",
+            strokeWidth: 4,
+            strokeLineJoin: "round",
+            strokeDash: [8, 4],
+            blendMode: "screen",
+          },
+        },
+        {
+          id: "wave",
+          type: "shape",
+          shape: {
+            kind: "path",
+            d: "M 0 50 C 25 0 75 100 100 50 Z",
+            viewBox: { x: 0, y: 0, width: 100, height: 100 },
+            fillRule: "evenodd",
+          },
+        },
+      ],
+    });
+    expect(valid.ok).toBe(true);
+
+    const missing = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [{ id: "missing", type: "shape" }],
+    });
+    expect(missing.ok ? "" : missing.errors.join("\n")).toContain(
+      "Shape nodes require serializable shape geometry",
+    );
+
+    const unsafePath = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "unsafe",
+          type: "shape",
+          shape: {
+            kind: "path",
+            d: "javascript:alert(1)",
+            viewBox: { x: 0, y: 0, width: 100, height: 100 },
+          },
+        },
+      ],
+    });
+    expect(unsafePath.ok).toBe(false);
+
+    const openClip = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "bad-clip",
+          type: "div",
+          clip: {
+            kind: "line",
+            points: [
+              { x: 0, y: 0 },
+              { x: 1, y: 1 },
+            ],
+          },
+        },
+      ],
+    });
+    expect(openClip.ok ? "" : openClip.errors.join("\n")).toContain(
+      "Clip and mask geometry must be closed",
+    );
+
+    const legacy = validateScene({
+      schemaVersion: 0,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "legacy-shape",
+          type: "shape",
+          shape: { kind: "rect" },
+        },
+      ],
+    });
+    expect(legacy.ok).toBe(false);
+  });
+
+  it("validates metric-stable rich text runs and isolated soft masks", () => {
+    const valid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "headline",
+          type: "text",
+          runs: [
+            { text: "Build ", style: { color: "#ffffff" } },
+            {
+              text: "boldly",
+              style: {
+                color: "#22d3ee",
+                textStroke: "2px #082f49",
+                textBackgroundColor: "rgba(34,211,238,0.15)",
+              },
+            },
+          ],
+          mask: {
+            shape: { kind: "ellipse" },
+            opacity: 0.8,
+            feather: 12,
+          },
+          style: {
+            isolation: true,
+            safeArea: { top: "10%", right: 20, bottom: "5%", left: 20 },
+          },
+        },
+      ],
+    });
+    expect(valid.ok).toBe(true);
+
+    const both = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "ambiguous",
+          type: "text",
+          text: "plain",
+          runs: [{ text: "rich" }],
+        },
+      ],
+    });
+    expect(both.ok ? "" : both.errors.join("\n")).toContain(
+      "either `text` or `runs`, not both",
+    );
+  });
+
   it("rejects malformed effect nodes", () => {
     const missingPreset = validateScene({
       schemaVersion: 1,

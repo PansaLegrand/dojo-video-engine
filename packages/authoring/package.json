@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/authoring",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Seconds-first TypeScript authoring helpers for MotionForge scenes.",
   "keywords": [
     "motionforge",

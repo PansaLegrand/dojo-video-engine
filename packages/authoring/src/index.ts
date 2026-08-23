@@ -5,8 +5,11 @@ import type {
   SceneEffectName,
   SceneEffectParams,
   SceneExtensionDescriptor,
+  SceneMaskDescriptor,
   SceneNode,
+  SceneShapeGeometry,
   SceneStyle,
+  SceneTextRun,
   VolumeEnvelope,
 } from "@motionforge/schema";
 import {
@@ -17,6 +20,8 @@ import {
   extension,
   img,
   lottie,
+  richText,
+  shape,
   text,
   video,
   type AudioNodeOptions,
@@ -118,6 +123,8 @@ export type AuthorTimingOptions = {
 export type VisualOptions = AuthorTimingOptions & {
   style?: SceneStyle;
   enter?: SceneAnimation[];
+  clip?: SceneShapeGeometry;
+  mask?: SceneMaskDescriptor;
 };
 
 export type BoxOptions = VisualOptions & {
@@ -157,6 +164,7 @@ export type EffectLayerOptions = VisualOptions & {
 };
 
 export type ExtensionLayerOptions = VisualOptions;
+export type ShapeLayerOptions = VisualOptions;
 
 export type AudioTrackOptions = AuthorTimingOptions & {
   trimStart?: TimeValue;
@@ -454,6 +462,46 @@ export function textNode(value: string, options: TextOptions = {}): AuthorNode {
   };
 }
 
+export function richTextNode(
+  runs: SceneTextRun[],
+  options: TextOptions = {},
+): AuthorNode {
+  return {
+    toNode(fps) {
+      const node = richText(runs, {
+        ...timedNodeOptions(options, fps),
+        style: options.style,
+      });
+      for (const animation of options.enter ?? []) {
+        node.animate(animation.property, animation.frames);
+      }
+      return node;
+    },
+  };
+}
+
+export function richTextBlock(
+  runs: SceneTextRun[],
+  options: TextOptions = {},
+): AuthorNode {
+  return {
+    toNode(fps, scene) {
+      return richTextNode(runs, {
+        ...options,
+        style: {
+          ...centeredTextStyle(scene),
+          top: Math.round(scene.height * 0.49),
+          fontSize: Math.max(24, Math.round(scene.height * 0.022)),
+          fontWeight: 700,
+          lineHeight: 1.18,
+          color: "rgba(255,255,255,0.82)",
+          ...options.style,
+        },
+      }).toNode(fps, scene);
+    },
+  };
+}
+
 export function image(
   asset: AssetReference<"image">,
   options: MediaOptions = {},
@@ -557,6 +605,29 @@ export function extensionLayer(
       const node = extension({
         ...timedNodeOptions(options, fps),
         extension: descriptor,
+        style: {
+          ...defaultVisualStyle(scene),
+          ...options.style,
+        },
+      });
+
+      for (const animation of options.enter ?? []) {
+        node.animate(animation.property, animation.frames);
+      }
+
+      return node;
+    },
+  };
+}
+
+export function shapeLayer(
+  geometry: SceneShapeGeometry,
+  options: ShapeLayerOptions = {},
+): AuthorNode {
+  return {
+    toNode(fps, scene) {
+      const node = shape(geometry, {
+        ...timedNodeOptions(options, fps),
         style: {
           ...defaultVisualStyle(scene),
           ...options.style,
@@ -752,6 +823,8 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
     from: node.from,
     duration: node.duration,
     style: node.style,
+    clip: node.clip,
+    mask: node.mask,
   };
   let builder: ReturnType<typeof div>;
 
@@ -760,7 +833,9 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
       builder = div(baseOptions);
       break;
     case "text":
-      builder = text(node.text ?? "", baseOptions);
+      builder = node.runs
+        ? richText(node.runs, baseOptions)
+        : text(node.text ?? "", baseOptions);
       break;
     case "img":
       builder = img(requiredAssetId(node), baseOptions);
@@ -802,6 +877,9 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
         ...baseOptions,
         extension: requiredExtensionDescriptor(node),
       } as ExtensionNodeOptions);
+      break;
+    case "shape":
+      builder = shape(requiredShapeGeometry(node), baseOptions);
       break;
     default:
       throw new Error(
@@ -848,14 +926,25 @@ function requiredExtensionDescriptor(
   return node.extension;
 }
 
+function requiredShapeGeometry(node: SceneNode): SceneShapeGeometry {
+  if (!node.shape) {
+    throw new Error(`Shape node "${node.id}" is missing shape geometry.`);
+  }
+
+  return node.shape;
+}
+
 function collectAuthorNodeAssets(nodes: readonly AuthorNode[] = []) {
   return nodes.flatMap((node) => node.assets ?? []);
 }
 
 function timedNodeOptions(
-  options: AuthorTimingOptions,
+  options: AuthorTimingOptions & {
+    clip?: SceneShapeGeometry;
+    mask?: SceneMaskDescriptor;
+  },
   fps: number,
-): Pick<NodeOptions, "id" | "from" | "duration"> {
+): Pick<NodeOptions, "id" | "from" | "duration" | "clip" | "mask"> {
   return {
     id: options.id,
     from: toFrames(options.at, fps),
@@ -863,6 +952,8 @@ function timedNodeOptions(
       options.duration === undefined
         ? undefined
         : toFrames(options.duration, fps),
+    clip: options.clip,
+    mask: options.mask,
   };
 }
 

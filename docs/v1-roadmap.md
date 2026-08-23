@@ -26,8 +26,8 @@ best foundation for generated, editable, template-driven 2D video.
 | -------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
 | 0. Source of truth   | Reconcile the production engine, synchronize versions, enforce boundaries      | Committed in 0.4; downstream upgrade pending |
 | 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Committed in 0.5                             |
-| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Complete in 0.6 working tree                 |
-| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Planned                                      |
+| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Committed in 0.6                             |
+| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Complete in 0.7 working tree                 |
 | 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Planned                                      |
 | 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                      |
 | 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                      |
@@ -104,13 +104,21 @@ effect pixels or invalidating existing scenes.
 
 Prioritize primitives that unlock many design families:
 
-- shape and SVG/path nodes;
-- alpha masks and path/shape clipping;
-- Canvas compositing and blend modes;
-- radial/conic gradients and multiple shadows;
-- per-side spacing and per-corner radii;
-- aspect-ratio and safe-area constraints;
-- rich text runs and stronger RTL/CJK behavior.
+- [x] shape and bounded SVG/path nodes;
+- [x] binary vector masks and path/shape clipping;
+- [x] Canvas compositing and blend modes;
+- [x] radial and conic gradients;
+- [x] per-side spacing and per-corner radii;
+- [x] aspect-ratio constraints;
+- [x] multiple shadows and isolated group compositing;
+- [x] engine-level safe-area constraints;
+- [x] metric-stable rich text runs and explicit LTR/RTL direction.
+
+RFC 0004 defines the completed contract. One combined exact-pixel browser
+fixture covers geometry, paths, gradients, clips, soft/inverse masks, group
+isolation, multiple shadows, inline text runs, strokes, radii, and blend modes.
+Bitmap/luminance masks, per-run font metrics, and shadow spread/inset remain
+later additive refinements rather than milestone blockers.
 
 ## Milestone 4 — animation system
 

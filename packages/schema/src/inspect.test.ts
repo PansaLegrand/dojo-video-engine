@@ -41,6 +41,30 @@ describe("scene inspection", () => {
             params: { columns: 8 },
           },
         },
+        {
+          id: "wave",
+          type: "shape",
+          shape: {
+            kind: "path",
+            d: "M0 0 L100 0 L100 100 Z",
+            viewBox: { x: 0, y: 0, width: 100, height: 100 },
+          },
+          clip: { kind: "ellipse" },
+          mask: { shape: { kind: "rect" }, feather: 8 },
+          style: {
+            fill: "#22d3ee",
+            blendMode: "screen",
+            isolation: true,
+          },
+        },
+        {
+          id: "rich",
+          type: "text",
+          runs: [
+            { text: "Hello ", style: { color: "#ffffff" } },
+            { text: "world", style: { color: "#22d3ee" } },
+          ],
+        },
       ],
     });
 
@@ -48,7 +72,14 @@ describe("scene inspection", () => {
       schemaVersion: 1,
       durationSeconds: 3,
       assets: { total: 2, audio: 1, font: 1 },
-      nodes: { total: 3, root: 3, text: 1, effect: 1, extension: 1 },
+      nodes: {
+        total: 5,
+        root: 5,
+        text: 2,
+        effect: 1,
+        extension: 1,
+        shape: 1,
+      },
       effects: { spectrumBars: 1 },
       extensions: { "com.example.grid@1.0.0": 1 },
       capabilities: {
@@ -57,6 +88,14 @@ describe("scene inspection", () => {
         hasFonts: true,
         hasAnimations: true,
         hasExtensions: true,
+        hasShapes: true,
+        hasVectorPaths: true,
+        hasClipping: true,
+        hasMasks: true,
+        hasSoftMasks: true,
+        hasBlendModes: true,
+        hasIsolatedGroups: true,
+        hasRichText: true,
       },
     });
   });

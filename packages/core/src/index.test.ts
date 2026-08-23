@@ -10,10 +10,13 @@ import {
   layoutScene,
   lottie,
   parseColor,
+  parseAspectRatio,
   parseTransform,
   prepareTextLayout,
   prepareTextLines,
+  richText,
   sampleScene,
+  shape,
   springEasing,
   text,
 } from "./index.js";
@@ -86,6 +89,72 @@ describe("builder", () => {
         params: { columns: 8 },
       },
     });
+  });
+
+  it("builds serializable shape, clip, and mask geometry", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+    })
+      .children(
+        shape(
+          {
+            kind: "polygon",
+            points: [
+              { x: 0.5, y: 0 },
+              { x: 1, y: 1 },
+              { x: 0, y: 1 },
+            ],
+          },
+          {
+            id: "triangle",
+            clip: { kind: "ellipse" },
+            mask: { shape: { kind: "rect", radius: 12 } },
+            style: { fill: "#22d3ee", blendMode: "screen" },
+          },
+        ),
+      )
+      .toJSON();
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "triangle",
+      type: "shape",
+      shape: { kind: "polygon" },
+      clip: { kind: "ellipse" },
+      mask: { shape: { kind: "rect", radius: 12 } },
+      style: { fill: "#22d3ee", blendMode: "screen" },
+    });
+  });
+
+  it("builds metric-stable rich text runs", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+    })
+      .children(
+        richText(
+          [
+            { text: "Hello ", style: { color: "#ffffff" } },
+            { text: "MotionForge", style: { color: "#22d3ee" } },
+          ],
+          { id: "headline" },
+        ),
+      )
+      .toJSON();
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "headline",
+      type: "text",
+      runs: [
+        { text: "Hello ", style: { color: "#ffffff" } },
+        { text: "MotionForge", style: { color: "#22d3ee" } },
+      ],
+    });
+    expect(scene.nodes[0]?.text).toBeUndefined();
   });
 
   it("reflects builder mutations made after attaching to a parent", () => {
@@ -316,6 +385,73 @@ describe("layout", () => {
     expect(spaced?.y).toBe(10);
     expect(spaced?.width).toBe(180);
     expect(spaced?.height).toBe(80);
+  });
+
+  it("applies per-side margin and padding overrides", () => {
+    const layout = layoutOf(
+      composition({ width: 200, height: 100, fps: 30, duration: 1 }).children(
+        div({
+          id: "spaced",
+          style: {
+            margin: 5,
+            marginTop: 10,
+            marginRight: 30,
+            marginBottom: 15,
+            marginLeft: 20,
+            padding: 4,
+            paddingTop: 6,
+            paddingRight: 20,
+            paddingBottom: 8,
+            paddingLeft: 10,
+          },
+        }).children(div({ id: "content" })),
+      ),
+    );
+    const spaced = layout.boxes.find((box) => box.id === "spaced");
+    const content = spaced?.children[0];
+
+    expect(spaced).toMatchObject({ x: 20, y: 10, width: 150, height: 75 });
+    expect(content).toMatchObject({ x: 30, y: 16, width: 120, height: 61 });
+  });
+
+  it("derives an auto dimension from aspectRatio", () => {
+    const layout = layoutOf(
+      composition({ width: 400, height: 300, fps: 30, duration: 1 }).children(
+        div({ id: "wide", style: { width: 160, aspectRatio: "16/9" } }),
+        div({ id: "tall", style: { height: 100, aspectRatio: 2 } }),
+      ),
+    );
+
+    expect(layout.boxes.find((box) => box.id === "wide")).toMatchObject({
+      width: 160,
+      height: 90,
+    });
+    expect(layout.boxes.find((box) => box.id === "tall")).toMatchObject({
+      width: 200,
+      height: 100,
+    });
+    expect(parseAspectRatio("4 / 3")).toBe(4 / 3);
+    expect(parseAspectRatio("1/0")).toBeNull();
+  });
+
+  it("constrains a node to engine-level safe-area insets", () => {
+    const layout = layoutOf(
+      composition({ width: 400, height: 200, fps: 30, duration: 1 }).children(
+        div({
+          id: "safe",
+          style: {
+            safeArea: { top: 20, right: "10%", bottom: 30, left: "5%" },
+          },
+        }),
+      ),
+    );
+
+    expect(layout.boxes.find((box) => box.id === "safe")).toMatchObject({
+      x: 20,
+      y: 20,
+      width: 340,
+      height: 150,
+    });
   });
 
   it("clamps explicit sizes with min/max, min winning", () => {

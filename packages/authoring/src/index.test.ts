@@ -20,7 +20,9 @@ import {
   parseSrt,
   parseVtt,
   publicAsset,
+  richTextBlock,
   seconds,
+  shapeLayer,
   subtitleTrack,
   textBlock,
   textBox,
@@ -201,6 +203,67 @@ describe("@motionforge/authoring", () => {
         version: "1.0.0",
         params: { columns: 8, color: "#22d3ee" },
       },
+    });
+  });
+
+  it("authors shape layers with seconds-first timing and vector masks", () => {
+    const scene = makeScene({
+      size: "square",
+      fps: 30,
+      duration: seconds(2),
+      children: [
+        shapeLayer(
+          {
+            kind: "path",
+            d: "M 0 50 C 25 0 75 100 100 50 Z",
+            viewBox: { x: 0, y: 0, width: 100, height: 100 },
+          },
+          {
+            id: "wave",
+            at: seconds(0.25),
+            duration: seconds(1.5),
+            clip: { kind: "ellipse" },
+            style: { fill: "#a855f7", blendMode: "screen" },
+          },
+        ),
+      ],
+    });
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "wave",
+      type: "shape",
+      from: 8,
+      duration: 45,
+      shape: { kind: "path" },
+      clip: { kind: "ellipse" },
+      style: { fill: "#a855f7", blendMode: "screen" },
+    });
+  });
+
+  it("authors inline rich text runs", () => {
+    const scene = makeScene({
+      size: "landscape",
+      fps: 30,
+      duration: seconds(2),
+      children: [
+        richTextBlock(
+          [
+            { text: "Agent-native ", style: { color: "#ffffff" } },
+            { text: "video", style: { color: "#22d3ee" } },
+          ],
+          { id: "rich", at: seconds(0.5) },
+        ),
+      ],
+    });
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "rich",
+      type: "text",
+      from: 15,
+      runs: [
+        { text: "Agent-native ", style: { color: "#ffffff" } },
+        { text: "video", style: { color: "#22d3ee" } },
+      ],
     });
   });
 

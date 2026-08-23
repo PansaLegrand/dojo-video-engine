@@ -69,6 +69,19 @@ host supplies executable definitions through `@motionforge/extensions`.
 Missing definitions or incompatible versions fail during renderer preflight;
 scene documents never contain functions, module URLs, or shader source.
 
+### Visual primitives
+
+Scene v1 also supports `shape` nodes (rect, ellipse, normalized
+line/polyline/polygon, or bounded SVG path + viewBox), closed `clip` geometry,
+binary vector `mask` descriptors, shape fill/stroke styles, blend modes,
+per-side spacing, aspect ratio, and per-corner radii. Legacy v0 stays frozen
+and rejects these post-v1 additions.
+
+Soft vector masks add bounded opacity/feathering, `isolation` composites a
+subtree as one group, `safeArea` supplies engine-level containing-block
+insets, and text nodes may replace plain `text` with metric-stable inline
+`runs` for color, opacity, stroke, and background styling.
+
 ### JSON Schema
 
 For tools and agents that want to validate scenes without running code, the package exports a JSON Schema (draft-07) and ships it as `scene.schema.json`:
@@ -90,11 +103,11 @@ See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/mai
 
 Stable for 0.x integrations:
 
-- `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, `SceneExtensionDescriptor`, `SceneJsonValue`, and `VolumeEnvelope` types.
+- `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, `SceneTextRun`, `SceneExtensionDescriptor`, `SceneShapeGeometry`, `SceneMaskDescriptor`, `SceneJsonValue`, and `VolumeEnvelope` types.
 - `CURRENT_SCENE_VERSION`, `parseScene()`, `validateScene()`, `migrateScene()`, `SceneValidationError`, `sceneJsonSchema()`, and `legacySceneV0JsonSchema()`.
 - `inspectScene()` for stable feature summaries and `lintScene()` for valid-but-suspicious scene warnings.
 - Scene patch APIs: `applyScenePatch()`, `scenePatchSchema`, `sceneOpSchema`, `ScenePatch`, `SceneOp`, and `ApplyScenePatchResult`.
-- Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `extensionDescriptorSchema`, `jsonValueSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
+- Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `textRunSchema`, `extensionDescriptorSchema`, `shapeGeometrySchema`, `maskDescriptorSchema`, `safeAreaSchema`, `jsonValueSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
 
 Experimental before 1.0:
 

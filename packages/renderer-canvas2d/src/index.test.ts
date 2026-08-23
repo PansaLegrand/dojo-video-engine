@@ -11,13 +11,17 @@ import {
   lottieSourceFrame,
   parseBorder,
   parseBoxShadow,
+  parseBoxShadows,
+  parseConicGradient,
   parseLinearGradient,
+  parseRadialGradient,
   parseTextBackground,
   parseTextStroke,
   preflightCanvas2D,
   prepareFrame,
   renderStill,
   resolveAssets,
+  shapePointInBox,
   type Canvas2DExtensionAdapter,
   validateLottieDocument,
   VideoPlaybackCursor,
@@ -88,6 +92,8 @@ describe("Canvas2D preflight", () => {
         fontLoading: true,
         domLottie: true,
         extensions: false,
+        path2d: false,
+        domMatrix: false,
       },
     });
   });
@@ -153,6 +159,56 @@ describe("Canvas2D preflight", () => {
         extensions: malformedRegistry,
       }).issues.map((issue) => issue.code),
     ).toContain("extension_adapter_invalid");
+  });
+
+  it("preflights Path2D and DOMMatrix for vector geometry", () => {
+    const vectorScene = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [
+        {
+          id: "wave",
+          type: "shape",
+          shape: {
+            kind: "path",
+            d: "M0 0 L100 0 L100 100 Z",
+            viewBox: { x: 0, y: 0, width: 100, height: 100 },
+          },
+        },
+      ],
+    };
+    const missing = preflightCanvas2D(vectorScene, {});
+    expect(missing.issues.map((issue) => issue.code)).toEqual([
+      "canvas_unavailable",
+      "path2d_unavailable",
+      "dom_matrix_unavailable",
+    ]);
+
+    const supported = preflightCanvas2D(vectorScene, {
+      OffscreenCanvas: class {},
+      Path2D: class {},
+      DOMMatrix: class {},
+    } as unknown as Partial<typeof globalThis>);
+    expect(supported).toMatchObject({
+      ok: true,
+      issues: [],
+      requirements: { path2d: true, domMatrix: true },
+    });
+  });
+});
+
+describe("shape geometry", () => {
+  it("maps normalized shape points into a layout box", () => {
+    expect(
+      shapePointInBox(
+        { x: 0.25, y: 0.75 },
+        { x: 10, y: 20, width: 200, height: 80 },
+      ),
+    ).toEqual({ x: 60, y: 80 });
   });
 });
 
@@ -727,6 +783,50 @@ describe("parseLinearGradient", () => {
   });
 });
 
+describe("radial and conic gradients", () => {
+  it("parses radial centers and distributes color stops", () => {
+    expect(
+      parseRadialGradient(
+        "radial-gradient(circle at 25% 75%, #fff 0%, #38bdf8, #020617 100%)",
+      ),
+    ).toEqual({
+      centerX: 0.25,
+      centerY: 0.75,
+      stops: [
+        { color: "#fff", offset: 0 },
+        { color: "#38bdf8", offset: 0.5 },
+        { color: "#020617", offset: 1 },
+      ],
+    });
+  });
+
+  it("parses conic start angles and centers", () => {
+    expect(
+      parseConicGradient(
+        "conic-gradient(from 45deg at 40% 60%, #f00 0%, #0f0 50%, #00f 100%)",
+      ),
+    ).toEqual({
+      angleDeg: 45,
+      centerX: 0.4,
+      centerY: 0.6,
+      stops: [
+        { color: "#f00", offset: 0 },
+        { color: "#0f0", offset: 0.5 },
+        { color: "#00f", offset: 1 },
+      ],
+    });
+  });
+
+  it("rejects unsupported radial/conic prefixes", () => {
+    expect(
+      parseRadialGradient("radial-gradient(ellipse, #fff, #000)"),
+    ).toBeNull();
+    expect(
+      parseConicGradient("conic-gradient(from turn, #fff, #000)"),
+    ).toBeNull();
+  });
+});
+
 describe("parseTextStroke", () => {
   it("returns null when no stroke is provided", () => {
     expect(parseTextStroke(undefined)).toBeNull();
@@ -1070,6 +1170,16 @@ describe("parseBoxShadow", () => {
     expect(parseBoxShadow("2px 2px 4px 6px #000")).toBeNull();
     expect(parseBoxShadow("2px #000")).toBeNull();
     expect(parseBoxShadow("2px 2px 4px")).toBeNull();
+  });
+
+  it("parses comma-separated shadows without splitting rgba colors", () => {
+    expect(
+      parseBoxShadows("0 8px 20px rgba(0,0,0,0.45), -4px 0 10px #38bdf8"),
+    ).toEqual([
+      { offsetX: 0, offsetY: 8, blur: 20, color: "rgba(0,0,0,0.45)" },
+      { offsetX: -4, offsetY: 0, blur: 10, color: "#38bdf8" },
+    ]);
+    expect(parseBoxShadows("0 4px #000, inset 0 1px #fff")).toEqual([]);
   });
 });
 

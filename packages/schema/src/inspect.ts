@@ -25,6 +25,14 @@ export type SceneInspection = {
     hasLottie: boolean;
     hasEffects: boolean;
     hasExtensions: boolean;
+    hasShapes: boolean;
+    hasVectorPaths: boolean;
+    hasClipping: boolean;
+    hasMasks: boolean;
+    hasSoftMasks: boolean;
+    hasBlendModes: boolean;
+    hasIsolatedGroups: boolean;
+    hasRichText: boolean;
     hasAudioReactiveEffects: boolean;
     hasFonts: boolean;
     hasAnimations: boolean;
@@ -55,6 +63,7 @@ export function inspectScene(input: unknown): SceneInspection {
     lottie: 0,
     effect: 0,
     extension: 0,
+    shape: 0,
   };
   const effects: SceneInspection["effects"] = {};
   const extensions: SceneInspection["extensions"] = {};
@@ -62,6 +71,13 @@ export function inspectScene(input: unknown): SceneInspection {
   let hasVolumeAutomation = false;
   let hasLoopedAudio = false;
   let hasAudioReactiveEffects = false;
+  let hasVectorPaths = false;
+  let hasClipping = false;
+  let hasMasks = false;
+  let hasSoftMasks = false;
+  let hasBlendModes = false;
+  let hasIsolatedGroups = false;
+  let hasRichText = false;
 
   for (const asset of Object.values(scene.assets)) {
     assets.total += 1;
@@ -81,6 +97,17 @@ export function inspectScene(input: unknown): SceneInspection {
         const key = `${node.extension.name}@${node.extension.version}`;
         extensions[key] = (extensions[key] ?? 0) + 1;
       }
+      hasVectorPaths ||=
+        node.shape?.kind === "path" ||
+        node.clip?.kind === "path" ||
+        node.mask?.shape.kind === "path";
+      hasClipping ||= node.clip !== undefined;
+      hasMasks ||= node.mask !== undefined;
+      hasSoftMasks ||=
+        (node.mask?.feather ?? 0) > 0 || (node.mask?.opacity ?? 1) < 1;
+      hasBlendModes ||= node.style?.blendMode !== undefined;
+      hasIsolatedGroups ||= node.style?.isolation === true;
+      hasRichText ||= (node.runs?.length ?? 0) > 0;
       hasAnimations ||= (node.animations ?? []).length > 0;
       hasVolumeAutomation ||= node.volumeEnvelope !== undefined;
       hasLoopedAudio ||= node.type === "audio" && node.loop === true;
@@ -109,13 +136,22 @@ export function inspectScene(input: unknown): SceneInspection {
           nodes.video +
           nodes.lottie +
           nodes.effect +
-          nodes.extension >
+          nodes.extension +
+          nodes.shape >
         0,
       hasAudio: nodes.audio > 0 || nodes.video > 0 || assets.audio > 0,
       hasVideo: nodes.video > 0 || assets.video > 0,
       hasLottie: nodes.lottie > 0 || assets.lottie > 0,
       hasEffects: nodes.effect > 0,
       hasExtensions: nodes.extension > 0,
+      hasShapes: nodes.shape > 0,
+      hasVectorPaths,
+      hasClipping,
+      hasMasks,
+      hasSoftMasks,
+      hasBlendModes,
+      hasIsolatedGroups,
+      hasRichText,
       hasAudioReactiveEffects,
       hasFonts: assets.font > 0,
       hasAnimations,

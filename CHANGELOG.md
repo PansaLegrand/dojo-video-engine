@@ -3,6 +3,43 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.7.0 — 2026-08-24
+
+The visual-primitives release: MotionForge gains a compact serializable vector
+and compositing vocabulary instead of growing one hard-coded effect at a time.
+
+### Scene, layout, and authoring
+
+- Added `shape` nodes for rectangles, ellipses, normalized lines/polylines/
+  polygons, and bounded SVG path data mapped through an explicit viewBox.
+- Added shape fill/stroke/dash styles, closed vector clips, inverted/opacity/
+  feather masks, bounded blend modes, and isolated subtree compositing.
+- Added linear, circular-radial, and conic paint plus staged comma-separated
+  box shadows and per-corner radii.
+- Added per-side margin/padding, aspect-ratio sizing, and composable engine
+  `safeArea` insets.
+- Added metric-stable inline text runs for color, opacity, stroke, and
+  background styling, plus explicit LTR/RTL direction.
+- Added `shape()`, `richText()`, `shapeLayer()`, `richTextNode()`, and
+  `richTextBlock()` builders and complete patch/inspection support.
+
+### Renderer and capability contract
+
+- Canvas2D maps normalized/path geometry deterministically through Path2D and
+  DOMMatrix, with early runtime preflight when either API is unavailable.
+- Soft masks and isolated groups use explicit offscreen alpha composition;
+  multiple shadows use shadow-only staging so translucent fills are not
+  accidentally repainted.
+- Existing Scene v1 pixels remain unchanged; legacy v0 stays frozen and rejects
+  post-v1 primitive fields.
+
+### Testing and documentation
+
+- Accepted [RFC 0004](docs/rfcs/0004-visual-primitives.md) defining geometry,
+  paint, mask, compositing, layout, security, and compatibility semantics.
+- Added schema/builder/layout/parser/preflight tests and the combined
+  `visual-primitives` exact-pixel Chromium golden covering the complete stack.
+
 ## 0.6.0 — 2026-08-24
 
 The extension-kernel release: trusted host applications can add deterministic,

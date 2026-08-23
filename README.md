@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: M2 complete](https://img.shields.io/badge/status-M2%20complete-brightgreen.svg)](docs/v1-roadmap.md)
-[![Version: 0.6.0](https://img.shields.io/badge/version-0.6.0-blue.svg)](CHANGELOG.md)
+[![Status: M3 complete](https://img.shields.io/badge/status-M3%20complete-brightgreen.svg)](docs/v1-roadmap.md)
+[![Version: 0.7.0](https://img.shields.io/badge/version-0.7.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -336,6 +336,11 @@ exact versioned identity and validated params; host-installed definitions own
 asset resolution, per-frame preparation, Canvas2D drawing, and disposal. The
 player and exporter share the same registry-backed path, and a pinned-browser
 golden holds extension output to the engine's pixel-determinism contract.
+
+Release 0.7 adds the reusable visual vocabulary: vector shapes and SVG paths,
+clips and soft/inverted masks, isolated compositing and blend modes, richer
+gradient/shadow paint, per-side/aspect/safe-area layout, per-corner radii, and
+metric-stable inline text runs.
 
 Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
 

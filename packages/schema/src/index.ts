@@ -13,8 +13,18 @@ export const supportedStyleKeys = [
   "minHeight",
   "maxWidth",
   "maxHeight",
+  "aspectRatio",
+  "safeArea",
   "padding",
+  "paddingTop",
+  "paddingRight",
+  "paddingBottom",
+  "paddingLeft",
   "margin",
+  "marginTop",
+  "marginRight",
+  "marginBottom",
+  "marginLeft",
   "position",
   "left",
   "right",
@@ -23,11 +33,23 @@ export const supportedStyleKeys = [
   "inset",
   "background",
   "backgroundColor",
+  "fill",
+  "stroke",
+  "strokeWidth",
+  "strokeLineCap",
+  "strokeLineJoin",
+  "strokeDash",
   "border",
   "borderRadius",
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomRightRadius",
+  "borderBottomLeftRadius",
   "boxShadow",
   "overflow",
   "opacity",
+  "blendMode",
+  "isolation",
   "filter",
   "zIndex",
   "transform",
@@ -40,6 +62,7 @@ export const supportedStyleKeys = [
   "lineHeight",
   "letterSpacing",
   "textAlign",
+  "direction",
   "textShadow",
   "textStroke",
   "maxLines",
@@ -61,6 +84,35 @@ export type SupportedStyleKey = (typeof supportedStyleKeys)[number];
 
 const lengthValueSchema = z.union([z.number(), z.string()]);
 
+export const safeAreaSchema = z
+  .object({
+    top: lengthValueSchema.optional(),
+    right: lengthValueSchema.optional(),
+    bottom: lengthValueSchema.optional(),
+    left: lengthValueSchema.optional(),
+  })
+  .strict();
+
+export const blendModes = [
+  "source-over",
+  "lighter",
+  "multiply",
+  "screen",
+  "overlay",
+  "darken",
+  "lighten",
+  "color-dodge",
+  "color-burn",
+  "hard-light",
+  "soft-light",
+  "difference",
+  "exclusion",
+  "hue",
+  "saturation",
+  "color",
+  "luminosity",
+] as const;
+
 export const styleSchema = z
   .object({
     display: z.literal("flex").optional(),
@@ -78,8 +130,32 @@ export const styleSchema = z
     minHeight: lengthValueSchema.optional(),
     maxWidth: lengthValueSchema.optional(),
     maxHeight: lengthValueSchema.optional(),
+    aspectRatio: z
+      .union([
+        z.number().positive(),
+        z
+          .string()
+          .regex(
+            /^\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*$/,
+            "aspectRatio must be a positive number or a ratio such as 16/9.",
+          )
+          .refine((value) => {
+            const [width, height] = value.split("/").map(Number);
+            return (width ?? 0) > 0 && (height ?? 0) > 0;
+          }, "aspectRatio components must both be positive."),
+      ])
+      .optional(),
+    safeArea: safeAreaSchema.optional(),
     padding: lengthValueSchema.optional(),
+    paddingTop: lengthValueSchema.optional(),
+    paddingRight: lengthValueSchema.optional(),
+    paddingBottom: lengthValueSchema.optional(),
+    paddingLeft: lengthValueSchema.optional(),
     margin: lengthValueSchema.optional(),
+    marginTop: lengthValueSchema.optional(),
+    marginRight: lengthValueSchema.optional(),
+    marginBottom: lengthValueSchema.optional(),
+    marginLeft: lengthValueSchema.optional(),
     position: z.enum(["relative", "absolute"]).optional(),
     left: lengthValueSchema.optional(),
     right: lengthValueSchema.optional(),
@@ -88,11 +164,33 @@ export const styleSchema = z
     inset: lengthValueSchema.optional(),
     background: z.string().optional(),
     backgroundColor: z.string().optional(),
+    fill: z.string().min(1).optional(),
+    stroke: z.string().min(1).optional(),
+    strokeWidth: z.number().min(0).max(1024).optional(),
+    strokeLineCap: z.enum(["butt", "round", "square"]).optional(),
+    strokeLineJoin: z.enum(["bevel", "round", "miter"]).optional(),
+    strokeDash: z
+      .array(z.number().nonnegative())
+      .max(32)
+      .refine(
+        (values) => values.length === 0 || values.some((value) => value > 0),
+        {
+          message:
+            "strokeDash must be empty or contain at least one positive length.",
+        },
+      )
+      .optional(),
     border: z.string().optional(),
     borderRadius: lengthValueSchema.optional(),
+    borderTopLeftRadius: lengthValueSchema.optional(),
+    borderTopRightRadius: lengthValueSchema.optional(),
+    borderBottomRightRadius: lengthValueSchema.optional(),
+    borderBottomLeftRadius: lengthValueSchema.optional(),
     boxShadow: z.string().optional(),
     overflow: z.enum(["visible", "hidden"]).optional(),
     opacity: z.number().min(0).max(1).optional(),
+    blendMode: z.enum(blendModes).optional(),
+    isolation: z.boolean().optional(),
     filter: z
       .string()
       .refine(isFilterExpression, {
@@ -111,6 +209,7 @@ export const styleSchema = z
     lineHeight: z.union([z.number(), z.string()]).optional(),
     letterSpacing: lengthValueSchema.optional(),
     textAlign: z.enum(["left", "center", "right"]).optional(),
+    direction: z.enum(["ltr", "rtl", "inherit"]).optional(),
     textShadow: z.string().optional(),
     textStroke: z.string().optional(),
     maxLines: z.number().int().positive().optional(),
@@ -135,6 +234,24 @@ export const styleSchema = z
   });
 
 export type SceneStyle = z.infer<typeof styleSchema>;
+
+export const textRunStyleSchema = z
+  .object({
+    color: z.string().optional(),
+    textStroke: z.string().optional(),
+    textBackgroundColor: z.string().optional(),
+    opacity: z.number().min(0).max(1).optional(),
+  })
+  .strict();
+
+export const textRunSchema = z
+  .object({
+    text: z.string().min(1),
+    style: textRunStyleSchema.optional(),
+  })
+  .strict();
+
+export type SceneTextRun = z.infer<typeof textRunSchema>;
 
 const filterFunctionPattern =
   /^(?:(?:brightness|contrast|saturate|grayscale|sepia|invert|opacity)\(\s*\d+(?:\.\d+)?%?\s*\)|hue-rotate\(\s*-?\d+(?:\.\d+)?deg\s*\)|blur\(\s*\d+(?:\.\d+)?px\s*\))$/;
@@ -404,6 +521,94 @@ export type SceneExtensionDescriptor = z.infer<
   typeof extensionDescriptorSchema
 >;
 
+export const shapePointSchema = z
+  .object({
+    /** Normalized against the node box: 0 = start edge, 1 = end edge. */
+    x: z.number().finite().min(-16).max(16),
+    y: z.number().finite().min(-16).max(16),
+  })
+  .strict();
+
+const pathDataPattern = /^[MmZzLlHhVvCcSsQqTtAa0-9eE+.,\s-]+$/;
+
+const shapeGeometryOptions = [
+  z
+    .object({
+      kind: z.literal("rect"),
+      radius: lengthValueSchema.optional(),
+    })
+    .strict(),
+  z.object({ kind: z.literal("ellipse") }).strict(),
+  z
+    .object({
+      kind: z.literal("line"),
+      points: z.tuple([shapePointSchema, shapePointSchema]),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("polyline"),
+      points: z.array(shapePointSchema).min(2).max(256),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("polygon"),
+      points: z.array(shapePointSchema).min(3).max(256),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("path"),
+      d: z
+        .string()
+        .min(1)
+        .max(100_000)
+        .regex(
+          pathDataPattern,
+          "SVG path data may contain path commands and numeric coordinates only.",
+        ),
+      viewBox: z
+        .object({
+          x: z.number().finite(),
+          y: z.number().finite(),
+          width: z.number().positive(),
+          height: z.number().positive(),
+        })
+        .strict(),
+      fillRule: z.enum(["nonzero", "evenodd"]).optional(),
+    })
+    .strict(),
+] as const;
+
+export const shapeGeometrySchema = z.discriminatedUnion(
+  "kind",
+  shapeGeometryOptions,
+);
+
+export type SceneShapeGeometry = z.infer<typeof shapeGeometrySchema>;
+
+const closedShapeGeometrySchema = shapeGeometrySchema.refine(
+  (shape) => shape.kind !== "line" && shape.kind !== "polyline",
+  { message: "Clip and mask geometry must be closed." },
+);
+
+export const maskDescriptorSchema = z
+  .object({
+    shape: closedShapeGeometrySchema,
+    inverted: z.boolean().optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    feather: z.number().min(0).max(256).optional(),
+  })
+  .strict();
+
+export type SceneMaskDescriptor = {
+  shape: SceneShapeGeometry;
+  inverted?: boolean;
+  opacity?: number;
+  feather?: number;
+};
+
 export const assetSchema = z.object({
   id: z.string().min(1),
   type: z.enum(["image", "video", "audio", "font", "lottie"]),
@@ -422,8 +627,11 @@ export type SceneNodeInput = {
     | "audio"
     | "lottie"
     | "effect"
-    | "extension";
+    | "extension"
+    | "shape";
   text?: string;
+  /** Text nodes: metric-stable inline visual styles; mutually exclusive with text. */
+  runs?: SceneTextRun[];
   assetId?: string;
   /** Effect nodes: named procedural visual preset rendered by the effect renderer. */
   effect?: SceneEffectName;
@@ -431,6 +639,12 @@ export type SceneNodeInput = {
   params?: SceneEffectParams;
   /** Trusted host extension reference and JSON-only parameters. */
   extension?: SceneExtensionDescriptor;
+  /** Shape nodes: serializable rectangle, ellipse, line, polygon, or SVG path geometry. */
+  shape?: SceneShapeGeometry;
+  /** Visual nodes: closed geometry intersected with the current clipping region. */
+  clip?: SceneShapeGeometry;
+  /** Visual nodes: opaque vector mask, optionally inverted. */
+  mask?: SceneMaskDescriptor;
   /** Video nodes: source trim offset in seconds (source footage has its own timebase, independent of scene fps). */
   videoStartTime?: number;
   /** Video and lottie nodes: playback speed multiplier (1 = natural speed). */
@@ -473,6 +687,7 @@ function createSceneNodeSchema(
         "lottie",
         "effect",
         "extension",
+        "shape",
       ])
     : z.enum(["div", "text", "img", "video", "audio", "lottie", "effect"]);
   const nodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
@@ -481,11 +696,23 @@ function createSceneNodeSchema(
         id: z.string().min(1),
         type: nodeTypeSchema,
         text: z.string().optional(),
+        runs: includeExtensions
+          ? z.array(textRunSchema).min(1).max(256).optional()
+          : z.never().optional(),
         assetId: z.string().optional(),
         effect: z.enum(effectNames).optional(),
         params: effectParamsSchema.optional(),
         extension: includeExtensions
           ? extensionDescriptorSchema.optional()
+          : z.never().optional(),
+        shape: includeExtensions
+          ? shapeGeometrySchema.optional()
+          : z.never().optional(),
+        clip: includeExtensions
+          ? closedShapeGeometrySchema.optional()
+          : z.never().optional(),
+        mask: includeExtensions
+          ? maskDescriptorSchema.optional()
           : z.never().optional(),
         videoStartTime: z.number().nonnegative().optional(),
         playbackRate: z.number().positive().optional(),
@@ -500,11 +727,31 @@ function createSceneNodeSchema(
         children: z.array(nodeSchema).default([]),
       })
       .superRefine((node, ctx) => {
-        if (node.type === "text" && typeof node.text !== "string") {
+        if (
+          node.type === "text" &&
+          typeof node.text !== "string" &&
+          !node.runs
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["text"],
-            message: "Text nodes require a `text` string.",
+            message: "Text nodes require a `text` string or non-empty `runs`.",
+          });
+        }
+
+        if (node.type === "text" && node.text !== undefined && node.runs) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runs"],
+            message: "Text nodes use either `text` or `runs`, not both.",
+          });
+        }
+
+        if (node.type !== "text" && node.runs !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["runs"],
+            message: `runs only applies to text nodes; remove it from this ${node.type} node.`,
           });
         }
 
@@ -558,6 +805,31 @@ function createSceneNodeSchema(
             code: z.ZodIssueCode.custom,
             path: ["extension"],
             message: `extension only applies to extension nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type === "shape" && !node.shape) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["shape"],
+            message: "Shape nodes require serializable shape geometry.",
+          });
+        }
+
+        if (node.type !== "shape" && node.shape !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["shape"],
+            message: `shape only applies to shape nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type === "audio" && (node.clip || node.mask)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: node.clip ? ["clip"] : ["mask"],
+            message:
+              "Audio nodes are not visual and cannot carry clip or mask geometry.",
           });
         }
 

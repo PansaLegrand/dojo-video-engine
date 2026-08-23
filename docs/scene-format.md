@@ -43,12 +43,21 @@ type SceneNode = {
     | "audio"
     | "lottie"
     | "effect"
-    | "extension";
+    | "extension"
+    | "shape";
   text?: string; // required when type is "text"
   assetId?: string; // required for img, video, audio, and lottie nodes
   effect?: SceneEffectName; // required when type is "effect"
   params?: SceneEffectParams; // bounded effect parameters
   extension?: SceneExtensionDescriptor; // required when type is "extension"
+  shape?: SceneShapeGeometry; // required when type is "shape"
+  clip?: SceneShapeGeometry; // closed geometry; visual nodes only
+  mask?: {
+    shape: SceneShapeGeometry;
+    inverted?: boolean;
+    opacity?: number;
+    feather?: number;
+  };
   videoStartTime?: number; // video nodes only: source trim offset in seconds (default 0)
   playbackRate?: number; // video and lottie nodes: speed multiplier (default 1)
   audioStartTime?: number; // audio nodes only: source trim offset in seconds (default 0)
@@ -67,6 +76,21 @@ type SceneExtensionDescriptor = {
   version: string; // exact semantic version
   params: Record<string, JsonValue>; // data only; never functions or code
 };
+
+type SceneShapeGeometry =
+  | { kind: "rect"; radius?: number | string }
+  | { kind: "ellipse" }
+  | { kind: "line"; points: [ShapePoint, ShapePoint] }
+  | { kind: "polyline"; points: ShapePoint[] }
+  | { kind: "polygon"; points: ShapePoint[] }
+  | {
+      kind: "path";
+      d: string;
+      viewBox: { x: number; y: number; width: number; height: number };
+      fillRule?: "nonzero" | "evenodd";
+    };
+
+type ShapePoint = { x: number; y: number }; // normalized to the node box
 
 type JsonValue =
   | string
@@ -179,6 +203,31 @@ older descriptor only when it explicitly lists that exact version in
 `compatibleVersions`. See [RFC 0003](rfcs/0003-extension-kernel.md) and the
 [`@motionforge/extensions`](../packages/extensions) package.
 
+### Shapes, clips, and masks
+
+A `shape` node draws serializable vector geometry through the normal layout,
+timing, animation, transform, filter, and z-index pipeline. Rectangles,
+ellipses, normalized lines/polylines/polygons, and SVG path data with an
+explicit viewBox are supported. Shape paint uses `fill`, `stroke`,
+`strokeWidth`, `strokeLineCap`, `strokeLineJoin`, and `strokeDash`.
+
+Point coordinates map against the laid-out box: `(0, 0)` is top-left and
+`(1, 1)` is bottom-right. SVG path data accepts path commands and numbers, not
+arbitrary SVG markup, URLs, or executable code.
+
+Closed geometry may also appear as `clip` on any visual node. `mask` is an
+opaque vector mask; `inverted: true` preserves the node box outside the mask,
+while bounded `opacity` and `feather` enable soft alpha edges. Both apply
+before background/content/border/descendant drawing. Open line/polyline
+geometry is rejected for clipping and masking.
+
+`blendMode` exposes a bounded Canvas compositing set. It is per-draw Canvas
+compositing inherited by descendant draws, not an isolated CSS stacking group.
+Set `isolation: true` to stage the subtree and apply opacity/blend once as a
+group. Comma-separated `boxShadow` entries stage independent shadow layers.
+See [RFC 0004](rfcs/0004-visual-primitives.md) for exact semantics and deferred
+grayscale masks/group isolation.
+
 ### Audio
 
 Audio nodes place sound on the timeline with the same `from`/`duration` frame semantics as every other node — they are not visual, so `style`, `children`, and `animations` are rejected on them. During export, every audible node is decoded, trimmed by `audioStartTime`, scaled by `volume`, multiplied by `volumeEnvelope` when present, optionally repeated with `loop: true`, and mixed (overlaps sum, the final mix clamps) into one stereo 48 kHz track muxed into the MP4. An audio node trimmed past the end of its clip contributes silence unless `loop` is true. Video nodes with their own soundtrack join this mix automatically (see the video section).
@@ -211,25 +260,31 @@ Validation is intentionally stricter than implementation: a property may validat
 | Property                                         | Validated | Layout | Render | Notes                                                                                                                                                                                     |
 | ------------------------------------------------ | :-------: | :----: | :----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `width`, `height`                                |    ✅     |   ✅   |   —    | number, `px`, or `%`                                                                                                                                                                      |
+| `aspectRatio`                                    |    ✅     |   ✅   |   —    | positive number or `width/height` string; derives an unspecified dimension                                                                                                                |
+| `safeArea`                                       |    ✅     |   ✅   |   —    | top/right/bottom/left insets constrain the node against its containing block                                                                                                              |
 | `position`                                       |    ✅     |   ✅   |   —    | `relative` (default) or `absolute`                                                                                                                                                        |
 | `left`, `top`, `right`, `bottom`                 |    ✅     |   ✅   |   —    | `right`/`bottom` only apply with `position: absolute`                                                                                                                                     |
 | `inset`                                          |    ✅     |   ✅   |   —    | fallback for `left`/`top` and implied size                                                                                                                                                |
-| `padding`                                        |    ✅     |   ✅   |   —    | single value, all sides                                                                                                                                                                   |
+| `padding`, `paddingTop/Right/Bottom/Left`        |    ✅     |   ✅   |   —    | per-side values override the shorthand                                                                                                                                                    |
 | `display: "flex"`                                |    ✅     |   ✅   |   —    | the only non-default display                                                                                                                                                              |
 | `flexDirection`                                  |    ✅     |   ✅   |   —    | `row` (default) or `column`                                                                                                                                                               |
 | `gap`                                            |    ✅     |   ✅   |   —    | main-axis gap between flex children                                                                                                                                                       |
 | `justifyContent`                                 |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `space-between` (distributes leftover space on top of `gap`)                                                                                |
 | `alignItems`                                     |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `stretch` (fills the cross axis for children without an explicit size)                                                                      |
 | `backgroundColor`                                |    ✅     |   —    |   ✅   | any Canvas2D fill style string                                                                                                                                                            |
-| `background`                                     |    ✅     |   —    |   ✅   | solid colors or `linear-gradient` with any stop count; direction in `deg` or `to <side>`; omitted `%` positions distribute evenly                                                         |
-| `borderRadius`                                   |    ✅     |   —    |   ✅   | rounds the background fill; combine with `overflow: "hidden"` to clip children (CSS semantics)                                                                                            |
+| `background`                                     |    ✅     |   —    |   ✅   | solid, linear, circular radial, or conic gradients; percentage stops/centers and degree angles                                                                                            |
+| `fill`, `stroke`, `strokeWidth`, `stroke*`       |    ✅     |   —    |   ✅   | shape paint, line cap/join, and bounded dash arrays; fill/stroke accept supported gradients                                                                                               |
+| `borderRadius`, per-corner radius fields         |    ✅     |   —    |   ✅   | corner overrides apply to background, media, overflow, border, and rectangle shapes                                                                                                       |
 | `overflow`                                       |    ✅     |   —    |   ✅   | `visible` (default) or `hidden` — clips the node's content and subtree to the border box, following `borderRadius`                                                                        |
 | `opacity`                                        |    ✅     |   —    |   ✅   | `0`–`1`, multiplies down the subtree                                                                                                                                                      |
+| `blendMode`                                      |    ✅     |   —    |   ✅   | bounded Canvas composite operations; inherited by descendant draw calls, without isolated-group semantics                                                                                 |
+| `isolation`                                      |    ✅     |   —    |   ✅   | stages the subtree and applies node opacity/blend once to the group                                                                                                                       |
 | `transform`                                      |    ✅     |   —    |   ✅   | `translate()`, `scale()`, `rotate()` lists; pivot via `transformOrigin`; keyframes with matching function sequences tween                                                                 |
 | `fontSize`                                       |    ✅     |   ✅   |   ✅   | also drives intrinsic text size in flex layout                                                                                                                                            |
 | `fontFamily`, `fontWeight`                       |    ✅     |   —    |   ✅   | font assets register under their asset id; reference as `fontFamily: "<asset id>"`                                                                                                        |
 | `color`                                          |    ✅     |   —    |   ✅   | text fill                                                                                                                                                                                 |
 | `textAlign`                                      |    ✅     |   —    |   ✅   | `left` (default), `center`, `right`                                                                                                                                                       |
+| `direction`                                      |    ✅     |   —    |   ✅   | explicit `ltr`, `rtl`, or inherited Canvas bidi direction                                                                                                                                 |
 | `textShadow`                                     |    ✅     |   —    |   ✅   | single `x y blur color` shadow                                                                                                                                                            |
 | `textStroke`                                     |    ✅     |   —    |   ✅   | single `<width> <color>` outline; width accepts number, `px`, or `%` of `fontSize`; stroke paints before fill                                                                             |
 | `textBackgroundColor`                            |    ✅     |   —    |   ✅   | fitted per-line text background, measured after wrapping and before stroke/fill                                                                                                           |
@@ -237,13 +292,13 @@ Validation is intentionally stricter than implementation: a property may validat
 | `fontStyle`                                      |    ✅     |   —    |   ✅   | `normal` (default) or `italic`                                                                                                                                                            |
 | `lineHeight`                                     |    ✅     |   ✅   |   ✅   | unitless number = multiplier of `fontSize` (CSS semantics); `px`/`%` lengths also accepted; default `1.25`                                                                                |
 | `letterSpacing`                                  |    ✅     |   —    |   ✅   | number or `px`; uses the Canvas2D `letterSpacing` API (Chromium-class browsers)                                                                                                           |
-| `margin`                                         |    ✅     |   ✅   |   —    | single value, all sides: outer spacing that shifts the box from its anchor edge and shrinks auto sizes                                                                                    |
+| `margin`, `marginTop/Right/Bottom/Left`          |    ✅     |   ✅   |   —    | per-side values override the shorthand and participate in auto size/anchoring                                                                                                             |
 | `minWidth`, `minHeight`, `maxWidth`, `maxHeight` |    ✅     |   ✅   |   —    | clamp the resolved size; `min` wins over `max` (CSS semantics)                                                                                                                            |
 | `transformOrigin`                                |    ✅     |   —    |   ✅   | `left`/`center`/`right`, `top`/`center`/`bottom`, `px`, or `%` per axis; default center                                                                                                   |
 | `objectFit`                                      |    ✅     |   —    |   ✅   | `fill` (default), `contain`, `cover`, `none`, `scale-down`; applies to `img` and `video` nodes                                                                                            |
 | `objectPosition`                                 |    ✅     |   —    |   ✅   | keywords (`left`/`center`/`right`, `top`/`center`/`bottom`), `%` (CSS alignment semantics), or `px` per axis                                                                              |
 | `border`                                         |    ✅     |   —    |   ✅   | `<width> [solid] <color>`; strokes inside the border box, follows `borderRadius`; only solid lines                                                                                        |
-| `boxShadow`                                      |    ✅     |   —    |   ✅   | `<x> <y> [blur] <color>`; rides the background fill (no background → no shadow); no `inset`/spread                                                                                        |
+| `boxShadow`                                      |    ✅     |   —    |   ✅   | one or more comma-separated `<x> <y> [blur] <color>` shadows; no `inset`/spread                                                                                                           |
 | `filter`                                         |    ✅     |   —    |   ✅   | chain of `brightness`/`contrast`/`saturate`/`grayscale`/`sepia`/`invert`/`opacity` (number or `%`), `hue-rotate(deg)`, `blur(px)`; per draw call, not composited subtree; no-op in Safari |
 | `zIndex`                                         |    ✅     |   —    |   ✅   | integer; reorders painting among siblings (ascending, document order ties); never affects layout                                                                                          |
 | `maxLines`, `minFontSize`                        |    ✅     |   ✅   |   ✅   | bound text layout and the minimum size used by shrink fitting                                                                                                                             |
@@ -256,6 +311,9 @@ Validation is intentionally stricter than implementation: a property may validat
 
 `text` nodes render multi-line:
 
+- `runs` may replace `text` with inline color, opacity, stroke, and background
+  spans. Run styling is deliberately metric-stable, so wrapping and intrinsic
+  layout stay identical to the concatenated plain text.
 - Explicit `\n` in `text` always starts a new line; consecutive `\n` produce empty lines.
 - Words wrap when a line would exceed the node's box width, measured with the resolved font (including `letterSpacing`). Runs of whitespace collapse to single spaces, like HTML text.
 - A single word wider than the box gets its own line and is horizontally condensed to fit rather than overflowing.
@@ -333,7 +391,8 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 - `text` nodes require a `text` string.
 - `img` and `video` nodes require an `assetId` pointing at `scene.assets`.
 - `lottie` nodes require a Lottie asset; effect nodes require a supported
-  effect name; extension nodes require a name, exact version, and JSON params.
+  effect name; extension nodes require a name, exact version, and JSON params;
+  shape nodes require bounded geometry. Clips and masks must be closed.
 - Audio-reactive effects require `params.audioAssetId`.
 - Unknown style properties are rejected, with a message explaining the curated-subset policy.
 

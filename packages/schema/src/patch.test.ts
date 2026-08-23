@@ -226,6 +226,55 @@ describe("applyScenePatch", () => {
     });
   });
 
+  it("updates shape, clip, and mask geometry transactionally", () => {
+    const scene = applied(
+      [
+        {
+          op: "setNodeProps",
+          id: "shape",
+          props: {
+            shape: { kind: "ellipse" },
+            clip: { kind: "rect", radius: 12 },
+            mask: { shape: { kind: "ellipse" }, inverted: true },
+          },
+        },
+      ],
+      {
+        ...baseScene(),
+        nodes: [
+          ...baseScene().nodes,
+          { id: "shape", type: "shape", shape: { kind: "rect" } },
+        ],
+      },
+    );
+    const shape = scene.nodes.find((node) => node.id === "shape");
+
+    expect(shape).toMatchObject({
+      shape: { kind: "ellipse" },
+      clip: { kind: "rect", radius: 12 },
+      mask: { shape: { kind: "ellipse" }, inverted: true },
+    });
+  });
+
+  it("replaces plain text with metric-stable rich runs", () => {
+    const scene = applied([
+      {
+        op: "setNodeProps",
+        id: "title",
+        props: {
+          text: null,
+          runs: [
+            { text: "Hello ", style: { color: "#ffffff" } },
+            { text: "world", style: { color: "#22d3ee" } },
+          ],
+        },
+      },
+    ]);
+    const title = scene.nodes.find((node) => node.id === "title");
+
+    expect(title?.runs).toHaveLength(2);
+  });
+
   it("sets and deletes audio loop props", () => {
     const scene = applied(
       [
