@@ -35,6 +35,7 @@ import {
   BlobSource,
   CanvasSink,
   Input,
+  UrlSource,
   type InputVideoTrack,
   type WrappedCanvas,
 } from "mediabunny";
@@ -55,6 +56,24 @@ export type ResolveAssetsOptions = {
   /** Reject definitions that cannot execute in a worker host. */
   worker?: boolean;
   signal?: AbortSignal;
+  /** Use declared proxy sources (normally true for preview, false for export). */
+  preferProxy?: boolean;
+  budget?: Partial<MediaResourceBudget>;
+  analysisCache?: AudioAnalysisCache;
+  /** Precompute cached editor waveforms for reachable audio assets. */
+  analyzeWaveforms?: boolean;
+};
+
+export type MediaResourceBudget = {
+  maxSourceCacheBytes: number;
+  maxDecodedImageBytes: number;
+  maxVideoDecoders: number;
+};
+
+export const defaultMediaResourceBudget: MediaResourceBudget = {
+  maxSourceCacheBytes: 64 * 1024 * 1024,
+  maxDecodedImageBytes: 256 * 1024 * 1024,
+  maxVideoDecoders: 8,
 };
 
 export type Canvas2DExtensionDrawContext<
@@ -110,6 +129,8 @@ export type Canvas2DPreflightIssue = {
     | "extension_adapter_invalid"
     | "dom_matrix_unavailable"
     | "path2d_unavailable"
+    | "video_decoder_budget_exceeded"
+    | "decoded_image_budget_estimate_exceeded"
     | "video_decoder_unavailable";
   message: string;
 };
@@ -129,12 +150,21 @@ export type Canvas2DPreflightResult = {
     domMatrix: boolean;
   };
   issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue>;
+  resourceEstimate: MediaResourceEstimate;
 };
 
 export type Canvas2DPreflightOptions = Pick<
   ResolveAssetsOptions,
-  "extensions" | "worker"
+  "extensions" | "worker" | "budget"
 >;
+
+export type MediaResourceEstimate = {
+  declaredAssets: number;
+  reachableAssets: number;
+  proxyAssets: number;
+  estimatedDecodedImageBytes: number;
+  maxSimultaneousVideoDecoders: number;
+};
 
 /**
  * Checks environment capabilities before asset loading or frame preparation.
@@ -147,6 +177,8 @@ export function preflightCanvas2D(
   options: Canvas2DPreflightOptions = {},
 ): Canvas2DPreflightResult {
   const scene = parseScene(sceneInput);
+  const budget = { ...defaultMediaResourceBudget, ...options.budget };
+  const resourceEstimate = estimateMediaResources(scene);
   const inspection = inspectScene(scene);
   const documentObject = globalObject.document;
   const hasDomCanvas = Boolean(documentObject?.createElement);
@@ -230,6 +262,22 @@ export function preflightCanvas2D(
         "SVG path geometry needs DOMMatrix to map its viewBox into the node box.",
     });
   }
+  if (resourceEstimate.maxSimultaneousVideoDecoders > budget.maxVideoDecoders) {
+    issues.push({
+      severity: "error",
+      code: "video_decoder_budget_exceeded",
+      message: `Scene may need ${resourceEstimate.maxSimultaneousVideoDecoders} simultaneous video decoders, above the budget of ${budget.maxVideoDecoders}.`,
+    });
+  }
+  if (
+    resourceEstimate.estimatedDecodedImageBytes > budget.maxDecodedImageBytes
+  ) {
+    issues.push({
+      severity: "error",
+      code: "decoded_image_budget_estimate_exceeded",
+      message: `Declared image dimensions estimate ${resourceEstimate.estimatedDecodedImageBytes} decoded bytes, above the budget of ${budget.maxDecodedImageBytes}.`,
+    });
+  }
   const extensionPreflight = preflightExtensions(
     scene,
     options.extensions ?? createExtensionRegistry(),
@@ -261,6 +309,7 @@ export function preflightCanvas2D(
       domMatrix: inspection.capabilities.hasVectorPaths,
     },
     issues,
+    resourceEstimate,
   };
 }
 
@@ -302,6 +351,24 @@ export type AudioSpectrum = {
   frameCount: number;
   values: Uint8Array;
 };
+
+export type AudioWaveform = {
+  duration: number;
+  values: Float32Array;
+};
+
+export type AudioAnalysis = {
+  spectrum?: AudioSpectrum;
+  waveform: AudioWaveform;
+};
+
+export type AudioAnalysisCache = Map<string, AudioAnalysis>;
+
+export function createAudioAnalysisCache(): AudioAnalysisCache {
+  return new Map();
+}
+
+const sharedAudioAnalysisCache = createAudioAnalysisCache();
 
 /** A loaded Lottie animation opened by resolveAssets(). */
 export type LottieClip = {
@@ -348,6 +415,7 @@ export type ResolvedAssets = {
   audio: Map<string, AudioClip>;
   /** Compact, deterministic per-frame spectra for audio-reactive effects. */
   audioSpectra?: Map<string, AudioSpectrum>;
+  audioWaveforms?: Map<string, AudioWaveform>;
   /** Loaded Lottie animations, keyed by asset id. */
   lotties: Map<string, LottieClip>;
   /** Lottie frames staged by prepareFrame(), keyed by lottie node id. */
@@ -362,6 +430,12 @@ export type ResolvedAssets = {
   extensionNodes?: Map<string, ResolvedCanvas2DExtensionNode>;
   /** Node-local values staged by extension prepareFrame hooks. */
   extensionFrames?: Map<string, PreparedExtensionFrame>;
+  budget?: MediaResourceBudget;
+  resourceUsage?: {
+    decodedImageBytes: number;
+    reachableAssets: number;
+    declaredAssets: number;
+  };
 };
 
 function assertNotAborted(signal: AbortSignal | undefined): void {
@@ -529,6 +603,10 @@ export async function resolveAssets(
   options: ResolveAssetsOptions = {},
 ): Promise<ResolvedAssets> {
   const parsed = parseScene(scene);
+  const budget: MediaResourceBudget = {
+    ...defaultMediaResourceBudget,
+    ...options.budget,
+  };
   assertNotAborted(options.signal);
   const extensionPreflight = preflightExtensions(
     parsed,
@@ -548,35 +626,59 @@ export async function resolveAssets(
       parseCanvas2DExtensionAdapter(resolvedNode.rendererAdapter, resolvedNode),
     ]),
   );
+  const reachableAssetIds = collectReachableAssetIds(
+    parsed,
+    extensionPreflight.nodes,
+  );
   const images = new Map<string, ImageBitmap>();
   const fonts = new Map<string, FontFace>();
   const videos = new Map<string, VideoClip>();
   const audio = new Map<string, AudioClip>();
   const lotties = new Map<string, LottieClip>();
+  const resolvedSources = new Map<string, string>();
+  let decodedImageBytes = 0;
 
   await Promise.all(
-    Object.values(parsed.assets).map(async (asset) => {
-      assertNotAborted(options.signal);
-      try {
-        if (asset.type === "image") {
-          const response = await fetchAsset(asset.src);
-          images.set(asset.id, await decodeImageBlob(await response.blob()));
-        } else if (asset.type === "font") {
-          fonts.set(asset.id, await loadFont(asset.id, asset.src));
-        } else if (asset.type === "video") {
-          videos.set(asset.id, await openVideoClip(asset.src));
-        } else if (asset.type === "audio") {
-          audio.set(asset.id, await openAudioClip(asset.src));
-        } else if (asset.type === "lottie") {
-          lotties.set(asset.id, await openLottieClip(asset.src));
+    Object.values(parsed.assets)
+      .filter((asset) => reachableAssetIds.has(asset.id))
+      .map(async (asset) => {
+        assertNotAborted(options.signal);
+        const src = resolveAssetSource(asset, options.preferProxy ?? false);
+        resolvedSources.set(asset.id, src);
+        try {
+          if (asset.type === "image") {
+            const response = await fetchAsset(src);
+            const image = await decodeImageBlob(await response.blob());
+            decodedImageBytes += image.width * image.height * 4;
+            if (decodedImageBytes > budget.maxDecodedImageBytes) {
+              image.close();
+              throw new Error(
+                `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
+              );
+            }
+            images.set(asset.id, image);
+          } else if (asset.type === "font") {
+            fonts.set(asset.id, await loadFont(asset.id, src));
+          } else if (asset.type === "video") {
+            videos.set(
+              asset.id,
+              await openVideoClip(src, asset.sourceMode ?? "auto", budget),
+            );
+          } else if (asset.type === "audio") {
+            audio.set(
+              asset.id,
+              await openAudioClip(src, asset.sourceMode ?? "auto", budget),
+            );
+          } else if (asset.type === "lottie") {
+            lotties.set(asset.id, await openLottieClip(src));
+          }
+        } catch (cause) {
+          throw new Error(
+            `Failed to load ${asset.type} asset "${asset.id}" from ${truncateSrc(src)}: ${cause instanceof Error ? cause.message : String(cause)}`,
+            { cause },
+          );
         }
-      } catch (cause) {
-        throw new Error(
-          `Failed to load ${asset.type} asset "${asset.id}" from ${truncateSrc(asset.src)}: ${cause instanceof Error ? cause.message : String(cause)}`,
-          { cause },
-        );
-      }
-    }),
+      }),
   );
 
   const assetDefinitions = new Map(Object.entries(parsed.assets));
@@ -619,9 +721,15 @@ export async function resolveAssets(
   );
 
   const spectrumAssetIds = collectSpectrumAssetIds(parsed.nodes);
+  const analysisAssetIds = new Set([
+    ...(options.analyzeWaveforms ? audio.keys() : []),
+    ...spectrumAssetIds,
+  ]);
   const audioSpectra = new Map<string, AudioSpectrum>();
+  const audioWaveforms = new Map<string, AudioWaveform>();
+  const analysisCache = options.analysisCache ?? sharedAudioAnalysisCache;
   await Promise.all(
-    Array.from(spectrumAssetIds).map(async (assetId) => {
+    Array.from(analysisAssetIds).map(async (assetId) => {
       const clip = audio.get(assetId);
 
       if (!clip) {
@@ -630,14 +738,24 @@ export async function resolveAssets(
         );
       }
 
-      audioSpectra.set(
-        assetId,
-        await analyzeAudioSpectrum(
-          clip,
-          Math.min(clip.duration, parsed.duration / parsed.fps),
-          parsed.fps,
-        ),
+      const analysisKey = `${resolvedSources.get(assetId) ?? assetId}\u0000${parsed.fps}\u0000${parsed.duration}`;
+      let analysis = analysisCache.get(analysisKey);
+      const analysisDuration = Math.min(
+        clip.duration,
+        parsed.duration / parsed.fps,
       );
+      if (!analysis || (spectrumAssetIds.has(assetId) && !analysis.spectrum)) {
+        analysis = spectrumAssetIds.has(assetId)
+          ? await analyzeAudio(clip, analysisDuration, parsed.fps)
+          : {
+              waveform: await analyzeAudioWaveform(clip, analysisDuration),
+            };
+        analysisCache.set(analysisKey, analysis);
+      }
+      if (spectrumAssetIds.has(assetId) && analysis.spectrum) {
+        audioSpectra.set(assetId, analysis.spectrum);
+      }
+      audioWaveforms.set(assetId, analysis.waveform);
     }),
   );
 
@@ -648,10 +766,17 @@ export async function resolveAssets(
     videoFrames: new Map(),
     audio,
     audioSpectra,
+    audioWaveforms,
     lotties,
     lottieFrames: new Map(),
     extensionNodes,
     extensionFrames: new Map(),
+    budget,
+    resourceUsage: {
+      decodedImageBytes,
+      reachableAssets: reachableAssetIds.size,
+      declaredAssets: Object.keys(parsed.assets).length,
+    },
   };
 }
 
@@ -670,6 +795,9 @@ export function disposeAssets(assets: ResolvedAssets): void {
   });
   assets.extensionNodes?.clear();
   assets.extensionFrames?.clear();
+  assets.images.forEach((image) => image.close());
+  assets.images.clear();
+  assets.fonts.clear();
   Array.from(assets.videoCursors?.values() ?? []).forEach((cursor) => {
     void cursor.dispose();
   });
@@ -691,6 +819,7 @@ export function disposeAssets(assets: ResolvedAssets): void {
   assets.videoFrames.clear();
   assets.audio.clear();
   assets.audioSpectra?.clear();
+  assets.audioWaveforms?.clear();
   assets.lotties.clear();
   assets.lottieFrames.clear();
 
@@ -700,6 +829,103 @@ export function disposeAssets(assets: ResolvedAssets): void {
       "One or more MotionForge extension resources failed to dispose.",
     );
   }
+}
+
+export function collectReachableAssetIds(
+  scene: Scene,
+  extensionNodes: readonly ResolvedExtensionNode[] = [],
+): Set<string> {
+  const ids = new Set<string>();
+  const visit = (nodes: Scene["nodes"]): void => {
+    for (const node of nodes) {
+      if (node.assetId) ids.add(node.assetId);
+      if (node.params?.audioAssetId) ids.add(node.params.audioAssetId);
+      if (node.params?.coverAssetId) ids.add(node.params.coverAssetId);
+      if (
+        node.style?.fontFamily &&
+        scene.assets[node.style.fontFamily]?.type === "font"
+      ) {
+        ids.add(node.style.fontFamily);
+      }
+      visit(node.children ?? []);
+    }
+  };
+  visit(scene.nodes);
+  extensionNodes.forEach((node) =>
+    node.requirements.forEach((requirement) => {
+      if (scene.assets[requirement.assetId]) ids.add(requirement.assetId);
+    }),
+  );
+  return ids;
+}
+
+export function estimateMediaResources(
+  sceneInput: unknown,
+): MediaResourceEstimate {
+  const scene = parseScene(sceneInput);
+  const reachable = collectReachableAssetIds(scene);
+  const events: Array<{ frame: number; delta: number }> = [];
+  const visit = (
+    nodes: Scene["nodes"],
+    origin: number,
+    parentStart: number,
+    parentEnd: number,
+    parentDuration: number,
+  ): void => {
+    for (const node of nodes) {
+      const start = origin + (node.from ?? 0);
+      const duration = node.duration ?? parentDuration;
+      const activeStart = Math.max(start, parentStart);
+      const activeEnd = Math.min(start + duration, parentEnd);
+      if (activeStart >= activeEnd) continue;
+      if (node.type === "video" && activeStart < activeEnd) {
+        events.push({ frame: activeStart, delta: 1 });
+        events.push({ frame: activeEnd, delta: -1 });
+      }
+      visit(node.children ?? [], start, activeStart, activeEnd, duration);
+    }
+  };
+  visit(scene.nodes, 0, 0, scene.duration, scene.duration);
+  events.sort(
+    (left, right) => left.frame - right.frame || left.delta - right.delta,
+  );
+  let active = 0;
+  let maxSimultaneousVideoDecoders = 0;
+  events.forEach((event) => {
+    active += event.delta;
+    maxSimultaneousVideoDecoders = Math.max(
+      maxSimultaneousVideoDecoders,
+      active,
+    );
+  });
+  let estimatedDecodedImageBytes = 0;
+  let proxyAssets = 0;
+  reachable.forEach((id) => {
+    const asset = scene.assets[id];
+    if (!asset) return;
+    if (asset.proxy) proxyAssets += 1;
+    if (asset.type === "image") {
+      const width = asset.metadata?.width ?? asset.proxy?.width ?? 0;
+      const height = asset.metadata?.height ?? asset.proxy?.height ?? 0;
+      estimatedDecodedImageBytes += width * height * 4;
+    }
+  });
+  return {
+    declaredAssets: Object.keys(scene.assets).length,
+    reachableAssets: reachable.size,
+    proxyAssets,
+    estimatedDecodedImageBytes,
+    maxSimultaneousVideoDecoders,
+  };
+}
+
+function resolveAssetSource(
+  asset: Scene["assets"][string],
+  preferProxy: boolean,
+): string {
+  return preferProxy && asset.type !== "font" && asset.proxy?.src
+    ? asset.proxy.src
+    : asset.src;
 }
 
 function collectSpectrumAssetIds(nodes: Scene["nodes"]): Set<string> {
@@ -727,11 +953,11 @@ const SPECTRUM_FFT_SIZE = 512;
 const SPECTRUM_BAR_COUNT = 128;
 const SPECTRUM_MAX_FPS = 15;
 
-async function analyzeAudioSpectrum(
+async function analyzeAudio(
   clip: AudioClip,
   durationSeconds: number,
   sceneFps: number,
-): Promise<AudioSpectrum> {
+): Promise<AudioAnalysis> {
   const sampleCount = Math.max(
     1,
     Math.ceil(durationSeconds * SPECTRUM_SAMPLE_RATE),
@@ -825,7 +1051,62 @@ async function analyzeAudioSpectrum(
     }
   }
 
-  return { fps, barCount: SPECTRUM_BAR_COUNT, frameCount, values };
+  return {
+    spectrum: { fps, barCount: SPECTRUM_BAR_COUNT, frameCount, values },
+    waveform: {
+      duration: durationSeconds,
+      values: waveformFromSamples(mono),
+    },
+  };
+}
+
+export function waveformFromSamples(
+  samples: Float32Array,
+  pointCount = 2048,
+): Float32Array {
+  const count = Math.max(1, Math.min(pointCount, samples.length || 1));
+  const values = new Float32Array(count);
+  for (let point = 0; point < count; point += 1) {
+    const start = Math.floor((point / count) * samples.length);
+    const end = Math.max(
+      start + 1,
+      Math.floor(((point + 1) / count) * samples.length),
+    );
+    let peak = 0;
+    for (let index = start; index < end && index < samples.length; index += 1) {
+      peak = Math.max(peak, Math.abs(samples[index] ?? 0));
+    }
+    values[point] = peak;
+  }
+  return values;
+}
+
+async function analyzeAudioWaveform(
+  clip: AudioClip,
+  duration: number,
+  pointCount = 2048,
+): Promise<AudioWaveform> {
+  const values = new Float32Array(Math.max(1, pointCount));
+  for await (const wrapped of clip.sink.buffers(0, duration)) {
+    const buffer = wrapped.buffer;
+    for (let sample = 0; sample < buffer.length; sample += 1) {
+      const at = wrapped.timestamp + sample / buffer.sampleRate;
+      if (at < 0 || at >= duration) continue;
+      const point = Math.min(
+        values.length - 1,
+        Math.floor((at / Math.max(duration, 0.001)) * values.length),
+      );
+      let peak = 0;
+      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+        peak = Math.max(
+          peak,
+          Math.abs(buffer.getChannelData(channel)[sample] ?? 0),
+        );
+      }
+      values[point] = Math.max(values[point] ?? 0, peak);
+    }
+  }
+  return { duration, values };
 }
 
 function fftInPlace(real: Float64Array, imag: Float64Array): void {
@@ -862,11 +1143,14 @@ function fftInPlace(real: Float64Array, imag: Float64Array): void {
   }
 }
 
-async function openAudioClip(src: string): Promise<AudioClip> {
-  const response = await fetchAsset(src);
+async function openAudioClip(
+  src: string,
+  sourceMode: "auto" | "stream" | "buffer",
+  budget: MediaResourceBudget,
+): Promise<AudioClip> {
   const input = new Input({
     formats: ALL_FORMATS,
-    source: new BlobSource(await response.blob()),
+    source: await createMediaSource(src, sourceMode, budget),
   });
   const track = await input.getPrimaryAudioTrack();
 
@@ -884,13 +1168,14 @@ async function openAudioClip(src: string): Promise<AudioClip> {
   };
 }
 
-async function openVideoClip(src: string): Promise<VideoClip> {
-  // The whole clip is fetched into memory; fine for short clips, and it
-  // keeps frame access deterministic. Streaming sources can come later.
-  const response = await fetchAsset(src);
+async function openVideoClip(
+  src: string,
+  sourceMode: "auto" | "stream" | "buffer",
+  budget: MediaResourceBudget,
+): Promise<VideoClip> {
   const input = new Input({
     formats: ALL_FORMATS,
-    source: new BlobSource(await response.blob()),
+    source: await createMediaSource(src, sourceMode, budget),
   });
   const track = await input.getPrimaryVideoTrack();
 
@@ -923,6 +1208,22 @@ async function openVideoClip(src: string): Promise<VideoClip> {
   };
 }
 
+async function createMediaSource(
+  src: string,
+  sourceMode: "auto" | "stream" | "buffer",
+  budget: MediaResourceBudget,
+): Promise<BlobSource | UrlSource> {
+  const shouldBuffer =
+    sourceMode === "buffer" ||
+    (sourceMode === "auto" &&
+      (src.startsWith("data:") || src.startsWith("blob:")));
+  if (shouldBuffer) {
+    const response = await fetchAsset(src);
+    return new BlobSource(await response.blob());
+  }
+  return new UrlSource(src, { maxCacheSize: budget.maxSourceCacheBytes });
+}
+
 /**
  * Maps a video node's local frame to a source timestamp in seconds:
  * videoStartTime + (localFrame / fps) * playbackRate, clamped to the clip so
@@ -934,9 +1235,14 @@ export function videoSourceTime(
   videoStartTime: number,
   playbackRate: number,
   clipDuration: number,
+  endBehavior: "hold" | "loop" = "hold",
 ): number {
   const raw = videoStartTime + (localFrame / fps) * playbackRate;
   const lastFrameTime = Math.max(0, clipDuration - 0.001);
+  if (endBehavior === "loop" && clipDuration > 0) {
+    const looped = ((raw % clipDuration) + clipDuration) % clipDuration;
+    return Math.min(looped, lastFrameTime);
+  }
   return Math.min(Math.max(0, raw), lastFrameTime);
 }
 
@@ -1021,6 +1327,7 @@ export async function prepareFrame(
         node.videoStartTime ?? 0,
         node.playbackRate ?? 1,
         clip.duration,
+        node.videoEndBehavior ?? "hold",
       );
 
       // Keyed by node AND asset: reused assets can outlive one scene
@@ -1030,6 +1337,14 @@ export async function prepareFrame(
       let cursor = cursors.get(cursorKey);
 
       if (!cursor) {
+        const maxVideoDecoders =
+          assets.budget?.maxVideoDecoders ??
+          defaultMediaResourceBudget.maxVideoDecoders;
+        if (activeCursorKeys.size > maxVideoDecoders) {
+          throw new Error(
+            `Active video decoder budget exceeded (${activeCursorKeys.size} > ${maxVideoDecoders}). Reduce simultaneous video nodes, use proxies, or raise maxVideoDecoders.`,
+          );
+        }
         // One sink (and thus one decoder + canvas pool) per node, even when
         // nodes share an asset — cursors advance independently.
         cursor = new VideoPlaybackCursor(

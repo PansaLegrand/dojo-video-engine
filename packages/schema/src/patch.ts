@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   animationSchema,
   assetSchema,
+  audioBusSchema,
+  duckingSchema,
   extensionDescriptorSchema,
   maskDescriptorSchema,
   parseScene,
@@ -77,6 +79,13 @@ const setNodePropsOp = z.object({
         .lazy(() => volumeEnvelopeSchema)
         .nullable()
         .optional(),
+      audioBus: z.string().min(1).max(64).nullable().optional(),
+      pan: z.number().min(-1).max(1).nullable().optional(),
+      ducks: z
+        .lazy(() => duckingSchema)
+        .nullable()
+        .optional(),
+      videoEndBehavior: z.enum(["hold", "loop"]).nullable().optional(),
       loop: z.boolean().nullable().optional(),
     })
     .strict()
@@ -159,6 +168,13 @@ const setMarkerOp = z.object({
   frame: z.number().int().nonnegative().nullable(),
 });
 
+const setAudioBusOp = z.object({
+  op: z.literal("setAudioBus"),
+  name: z.string().min(1),
+  /** Null removes the bus. */
+  bus: z.lazy(() => audioBusSchema).nullable(),
+});
+
 export const sceneOpSchema = z.discriminatedUnion("op", [
   setStyleOp,
   setTextOp,
@@ -172,6 +188,7 @@ export const sceneOpSchema = z.discriminatedUnion("op", [
   removeAssetOp,
   setSceneMetaOp,
   setMarkerOp,
+  setAudioBusOp,
 ]);
 
 export const scenePatchSchema = z.array(sceneOpSchema);
@@ -554,6 +571,19 @@ function applyOp(draft: Scene, op: SceneOp): string | null {
       }
       if (Object.keys(draft.markers).length === 0) {
         delete draft.markers;
+      }
+      return null;
+    }
+
+    case "setAudioBus": {
+      draft.audioBuses = draft.audioBuses ?? {};
+      if (op.bus === null) {
+        delete draft.audioBuses[op.name];
+      } else {
+        draft.audioBuses[op.name] = op.bus;
+      }
+      if (Object.keys(draft.audioBuses).length === 0) {
+        delete draft.audioBuses;
       }
       return null;
     }

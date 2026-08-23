@@ -74,6 +74,14 @@ environments. It combines declared scene features with Canvas,
 image/video/audio decoder, font, current DOM-Lottie, and extension-registry
 requirements and returns typed issues without fetching media.
 
+### Bounded media resolution
+
+`resolveAssets()` loads reachable assets only. HTTP audio/video uses bounded
+range-backed sources; data/blob or explicit `buffer` sources remain blob-based.
+Options select declared proxies, source/image/decoder budgets, and opt-in
+waveform analysis. `estimateMediaResources()` reports reachable/declared assets,
+proxy coverage, image decode estimates, and peak simultaneous video decoders.
+
 ## API Stability
 
 Stable for 0.x integrations:
@@ -84,6 +92,7 @@ Stable for 0.x integrations:
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
 - `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime, Path2D, DOMMatrix, and extension capability checks.
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
+- `MediaResourceBudget`, `estimateMediaResources()`, `collectReachableAssetIds()`, waveform/cache types, and resource usage reporting.
 - `parseLinearGradient()`, `parseRadialGradient()`, `parseConicGradient()`, and `shapePointInBox()` for deterministic editor/renderer mirrors.
 
 Experimental before 1.0:

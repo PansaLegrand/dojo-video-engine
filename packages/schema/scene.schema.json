@@ -40,6 +40,59 @@
               "src": {
                 "type": "string",
                 "minLength": 1
+              },
+              "sourceMode": {
+                "type": "string",
+                "enum": ["auto", "stream", "buffer"]
+              },
+              "proxy": {
+                "type": "object",
+                "properties": {
+                  "src": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "bitrate": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": ["src"],
+                "additionalProperties": false
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "byteLength": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "codec": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "required": ["id", "type", "src"],
@@ -489,7 +542,8 @@
               },
               "playbackRate": {
                 "type": "number",
-                "exclusiveMinimum": 0
+                "minimum": -16,
+                "maximum": 16
               },
               "audioStartTime": {
                 "type": "number",
@@ -522,6 +576,47 @@
                   "additionalProperties": false
                 },
                 "minItems": 1
+              },
+              "audioBus": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "pan": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "ducks": {
+                "type": "object",
+                "properties": {
+                  "bus": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "gain": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "attackFrames": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "releaseFrames": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600
+                  }
+                },
+                "required": ["bus", "gain"],
+                "additionalProperties": false
+              },
+              "videoEndBehavior": {
+                "type": "string",
+                "enum": ["hold", "loop"]
               },
               "loop": {
                 "type": "boolean"
@@ -920,6 +1015,33 @@
           "additionalProperties": {
             "type": "integer",
             "minimum": 0
+          }
+        },
+        "audioBuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "gain": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "pan": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "limiter": {
+                "type": "boolean"
+              },
+              "limiterCeiling": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 1
+              }
+            },
+            "additionalProperties": false
           }
         }
       },

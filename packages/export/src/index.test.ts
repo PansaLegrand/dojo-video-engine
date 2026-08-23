@@ -8,6 +8,8 @@ import {
   exportVideo,
   frameToTimestampUs,
   loopedSourceRanges,
+  limitAudioPeak,
+  measureAudioLoudness,
   mixAudioSegments,
   renderFrameSequence,
 } from "./index.js";
@@ -473,6 +475,36 @@ describe("mixAudioSegments", () => {
     const mixed = mixAudioSegments([loud, loud], 1, 2, 1);
 
     expect(Array.from(mixed[0] ?? [])).toEqual([1, 1]);
+  });
+
+  it("applies deterministic stereo panning", () => {
+    const mixed = mixAudioSegments(
+      [
+        {
+          channels: [new Float32Array([0.5, 0.5])],
+          sampleRate: 2,
+          startTime: 0,
+          volume: 1,
+          pan: 1,
+        },
+      ],
+      1,
+      2,
+      2,
+    );
+    expect(Array.from(mixed[0] ?? [])).toEqual([0, 0]);
+    expect(Array.from(mixed[1] ?? [])).toEqual([0.5, 0.5]);
+  });
+
+  it("measures loudness and applies a peak limiter", () => {
+    const channels = [
+      new Float32Array([0.5, -1.5]),
+      new Float32Array([0.5, 1.5]),
+    ];
+    expect(measureAudioLoudness(channels)).toMatchObject({ peak: 1.5 });
+    const limited = limitAudioPeak(channels, 0.9);
+    expect(limited).toMatchObject({ peakBefore: 1.5, gain: 0.6 });
+    expect(measureAudioLoudness(channels).peak).toBeCloseTo(0.9);
   });
 });
 

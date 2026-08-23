@@ -8,7 +8,12 @@ import {
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
-import type { Scene, SceneNode, VolumeEnvelope } from "@motionforge/schema";
+import type {
+  Scene,
+  SceneAudioBus,
+  SceneNode,
+  VolumeEnvelope,
+} from "@motionforge/schema";
 import {
   AudioSample,
   AudioSampleSource,
@@ -62,6 +67,9 @@ export type ExportVideoOptions = {
   extensions?: ResolveAssetsOptions["extensions"];
   /** Require every extension definition to support worker execution. */
   worker?: boolean;
+  /** Final export uses original sources by default; opt in for draft proxy export. */
+  preferProxy?: boolean;
+  budget?: ResolveAssetsOptions["budget"];
   /**
    * Audio is mixed and fed to the encoder in windows of this many seconds
    * (default 10), so audio memory stays flat regardless of scene length.
@@ -154,6 +162,10 @@ export type AudioSegment = {
   envelopeStartTime?: number;
   /** Scene fps for frame-based volumeEnvelope sampling. */
   envelopeFps?: number;
+  /** Stereo balance from -1 (left) to 1 (right). */
+  pan?: number;
+  /** Named mix bus; default master. */
+  bus?: string;
 };
 
 /**
@@ -166,6 +178,7 @@ export function mixAudioSegments(
   durationSeconds: number,
   sampleRate = 48_000,
   channelCount = 2,
+  clampOutput = true,
 ): Float32Array<ArrayBuffer>[] {
   const length = Math.max(1, Math.round(durationSeconds * sampleRate));
   const output = Array.from(
@@ -214,18 +227,33 @@ export function mixAudioSegments(
           (target[outIndex] ?? 0) +
           (lowerValue + (upperValue - lowerValue) * t) *
             segment.volume *
-            (gains ? (gains[index] ?? 1) : 1);
+            (gains ? (gains[index] ?? 1) : 1) *
+            panGain(segment.pan ?? 0, channel, channelCount);
       }
     }
   }
 
-  for (const channel of output) {
-    for (let index = 0; index < channel.length; index += 1) {
-      channel[index] = Math.min(1, Math.max(-1, channel[index] ?? 0));
+  if (clampOutput) {
+    for (const channel of output) {
+      for (let index = 0; index < channel.length; index += 1) {
+        channel[index] = Math.min(1, Math.max(-1, channel[index] ?? 0));
+      }
     }
   }
 
   return output;
+}
+
+function panGain(pan: number, channel: number, channelCount: number): number {
+  if (channelCount !== 2) return 1;
+  const bounded = Math.min(1, Math.max(-1, pan));
+  return channel === 0
+    ? bounded > 0
+      ? 1 - bounded
+      : 1
+    : bounded < 0
+      ? 1 + bounded
+      : 1;
 }
 
 export function evaluateVolumeEnvelope(
@@ -462,6 +490,8 @@ export async function exportVideo(
       extensions: options.extensions,
       worker: options.worker,
       signal: options.signal,
+      preferProxy: options.preferProxy ?? false,
+      budget: options.budget,
     }));
   const { canvas, context } = createExportCanvas(scene.width, scene.height);
   const output = new Output({ format, target: new BufferTarget() });
@@ -767,6 +797,8 @@ export async function mixSceneAudioData(
         envelopeStartTime:
           framesIntoSource / scene.fps + range.outputOffset / rate,
         envelopeFps: scene.fps,
+        pan: placement.node.pan,
+        bus: placement.node.audioBus ?? "master",
       });
     }
   }
@@ -776,19 +808,180 @@ export async function mixSceneAudioData(
   }
 
   const durationSeconds = (endFrame - startFrame + 1) / scene.fps;
-  const mixed = mixAudioSegments(
-    segments,
-    durationSeconds,
-    MIX_SAMPLE_RATE,
-    MIX_CHANNELS,
+  const byBus = new Map<string, AudioSegment[]>();
+  segments.forEach((segment) => {
+    const bus = segment.bus ?? "master";
+    const group = byBus.get(bus);
+    if (group) group.push(segment);
+    else byBus.set(bus, [segment]);
+  });
+  const busMixes = new Map<string, Float32Array<ArrayBuffer>[]>();
+  for (const [name, busSegments] of byBus) {
+    const channels = mixAudioSegments(
+      busSegments,
+      durationSeconds,
+      MIX_SAMPLE_RATE,
+      MIX_CHANNELS,
+      false,
+    );
+    if (name !== "master") {
+      applyBusGainAndPan(channels, scene.audioBuses?.[name]);
+    }
+    if (name !== "master" && scene.audioBuses?.[name]?.limiter) {
+      limitAudioPeak(channels, scene.audioBuses[name]?.limiterCeiling ?? 0.98);
+    }
+    busMixes.set(name, channels);
+  }
+
+  const duckingWindows = placements.flatMap((placement) =>
+    placement.node.ducks
+      ? [
+          {
+            ...placement.node.ducks,
+            startFrame: placement.startFrame,
+            endFrame: placement.endFrame,
+          },
+        ]
+      : [],
   );
-  const length = mixed[0]?.length ?? 0;
+  for (const [name, channels] of busMixes) {
+    applyDucking(
+      channels,
+      duckingWindows.filter((window) => window.bus === name),
+      startFrame,
+      scene.fps,
+      MIX_SAMPLE_RATE,
+    );
+  }
+
+  const length = Math.max(1, Math.round(durationSeconds * MIX_SAMPLE_RATE));
+  const mixed = Array.from(
+    { length: MIX_CHANNELS },
+    () => new Float32Array(length),
+  );
+  for (const channels of busMixes.values()) {
+    channels.forEach((channel, channelIndex) => {
+      const target = mixed[channelIndex];
+      if (!target) return;
+      for (let index = 0; index < target.length; index += 1) {
+        target[index] = (target[index] ?? 0) + (channel[index] ?? 0);
+      }
+    });
+  }
+  applyBusGainAndPan(mixed, scene.audioBuses?.master);
+  limitAudioPeak(mixed, scene.audioBuses?.master?.limiterCeiling ?? 0.98);
 
   if (length === 0) {
     return null;
   }
 
   return { channels: mixed, sampleRate: MIX_SAMPLE_RATE };
+}
+
+type DuckingWindow = {
+  bus: string;
+  gain: number;
+  attackFrames?: number;
+  releaseFrames?: number;
+  startFrame: number;
+  endFrame: number;
+};
+
+function applyBusGainAndPan(
+  channels: Float32Array[],
+  bus: SceneAudioBus | undefined,
+): void {
+  const gain = bus?.gain ?? 1;
+  const pan = bus?.pan ?? 0;
+  channels.forEach((channel, channelIndex) => {
+    const balance = panGain(pan, channelIndex, channels.length);
+    for (let index = 0; index < channel.length; index += 1) {
+      channel[index] = (channel[index] ?? 0) * gain * balance;
+    }
+  });
+}
+
+function applyDucking(
+  channels: Float32Array[],
+  windows: DuckingWindow[],
+  mixStartFrame: number,
+  fps: number,
+  sampleRate: number,
+): void {
+  if (windows.length === 0) return;
+  const length = channels[0]?.length ?? 0;
+  for (let index = 0; index < length; index += 1) {
+    const frame = mixStartFrame + (index / sampleRate) * fps;
+    let gain = 1;
+    for (const window of windows) {
+      const attack = window.attackFrames ?? Math.round(fps * 0.08);
+      const release = window.releaseFrames ?? Math.round(fps * 0.18);
+      let candidate = 1;
+      if (frame >= window.startFrame && frame < window.endFrame) {
+        const progress =
+          attack === 0 ? 1 : Math.min(1, (frame - window.startFrame) / attack);
+        candidate = 1 + (window.gain - 1) * progress;
+      } else if (
+        frame >= window.endFrame &&
+        frame < window.endFrame + release
+      ) {
+        const progress =
+          release === 0 ? 1 : (frame - window.endFrame) / release;
+        candidate = window.gain + (1 - window.gain) * progress;
+      }
+      gain = Math.min(gain, candidate);
+    }
+    if (gain < 1) {
+      channels.forEach((channel) => {
+        channel[index] = (channel[index] ?? 0) * gain;
+      });
+    }
+  }
+}
+
+export function limitAudioPeak(
+  channels: Float32Array[],
+  ceiling = 0.98,
+): { peakBefore: number; gain: number } {
+  let peakBefore = 0;
+  channels.forEach((channel) =>
+    channel.forEach((sample) => {
+      peakBefore = Math.max(peakBefore, Math.abs(sample));
+    }),
+  );
+  const gain = peakBefore > ceiling ? ceiling / peakBefore : 1;
+  channels.forEach((channel) => {
+    for (let index = 0; index < channel.length; index += 1) {
+      channel[index] = Math.min(
+        ceiling,
+        Math.max(-ceiling, (channel[index] ?? 0) * gain),
+      );
+    }
+  });
+  return { peakBefore, gain };
+}
+
+export function measureAudioLoudness(channels: Float32Array[]): {
+  peak: number;
+  rms: number;
+  dbfs: number;
+} {
+  let peak = 0;
+  let sumSquares = 0;
+  let count = 0;
+  channels.forEach((channel) =>
+    channel.forEach((sample) => {
+      peak = Math.max(peak, Math.abs(sample));
+      sumSquares += sample * sample;
+      count += 1;
+    }),
+  );
+  const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
+  return {
+    peak,
+    rms,
+    dbfs: rms > 0 ? 20 * Math.log10(rms) : Number.NEGATIVE_INFINITY,
+  };
 }
 
 /**

@@ -8,9 +8,18 @@ import {
   type ResolveAssetsOptions,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
-import { WebAudioPreview, type AudioPreview } from "./audio.js";
+import {
+  ChunkedWebAudioPreview,
+  WebAudioPreview,
+  type AudioPreview,
+} from "./audio.js";
 
-export { WebAudioPreview, type AudioPreview } from "./audio.js";
+export {
+  ChunkedWebAudioPreview,
+  previewAudioChunkRange,
+  WebAudioPreview,
+  type AudioPreview,
+} from "./audio.js";
 
 /**
  * Maps wall-clock time to scene frames. This is the only place in the
@@ -135,6 +144,11 @@ export type PlayerOptions = {
   extensions?: ResolveAssetsOptions["extensions"];
   /** Require every extension definition to support worker execution. */
   worker?: boolean;
+  /** Preview uses declared proxy sources by default. */
+  preferProxy?: boolean;
+  /** Decoder/cache/image memory limits forwarded to asset resolution. */
+  budget?: ResolveAssetsOptions["budget"];
+  analyzeWaveforms?: boolean;
   loop?: boolean;
   /**
    * Audio preview. Defaults to a WebAudioPreview when the environment has
@@ -466,6 +480,9 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
       ? await resolveAssets(scene, {
           extensions: options.extensions,
           worker: options.worker,
+          preferProxy: options.preferProxy ?? true,
+          budget: options.budget,
+          analyzeWaveforms: options.analyzeWaveforms,
         })
       : undefined);
 
@@ -478,7 +495,9 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
   if (options.audio !== false) {
     const audio =
       options.audio ??
-      (WebAudioPreview.supported() ? new WebAudioPreview() : null);
+      (ChunkedWebAudioPreview.supported()
+        ? new ChunkedWebAudioPreview()
+        : null);
 
     if (audio) {
       player.setAudioReady(

@@ -491,6 +491,40 @@ describe("applyScenePatch", () => {
     ).toContain("must be inside the scene duration");
   });
 
+  it("sets audio buses and node routing properties", () => {
+    const scene = applied(
+      [
+        {
+          op: "setAudioBus",
+          name: "music",
+          bus: { gain: 0.75, limiter: true },
+        },
+        {
+          op: "setNodeProps",
+          id: "music",
+          props: { audioBus: "music", pan: -0.4 },
+        },
+      ],
+      {
+        ...baseScene(),
+        assets: {
+          ...baseScene().assets,
+          music: { id: "music", type: "audio", src: "music.wav" },
+        },
+        nodes: [
+          ...baseScene().nodes,
+          { id: "music", type: "audio", assetId: "music" },
+        ],
+      },
+    );
+
+    expect(scene.audioBuses).toEqual({ music: { gain: 0.75, limiter: true } });
+    expect(scene.nodes.find((node) => node.id === "music")).toMatchObject({
+      audioBus: "music",
+      pan: -0.4,
+    });
+  });
+
   it("reports malformed patches with op indexes", () => {
     const errors = rejected([
       { op: "setText", id: "title", text: "ok" },

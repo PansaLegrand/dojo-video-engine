@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateScene, type Scene, type SceneNode } from "@motionforge/schema";
 import {
+  audioCrossfade,
   audioFadeEnvelope,
   fadeUp,
   clipLayout,
@@ -1384,6 +1385,19 @@ describe("audio overlay template catalog", () => {
     expect(() => audioFadeEnvelope({ fadeInDuration: 1.5 })).toThrow(
       "non-negative integer",
     );
+  });
+
+  it("builds paired crossfade envelopes", () => {
+    expect(audioCrossfade(12)).toEqual({
+      outgoing: [
+        { frame: 0, value: 1 },
+        { frame: 12, value: 0, easing: "easeInOut" },
+      ],
+      incoming: [
+        { frame: 0, value: 0 },
+        { frame: 12, value: 1, easing: "easeInOut" },
+      ],
+    });
   });
 
   it("rejects empty audio overlay asset ids", () => {

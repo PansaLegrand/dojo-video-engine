@@ -789,6 +789,88 @@ describe("scene schema", () => {
     ).toBe(false);
   });
 
+  it("validates proxy metadata, audio buses, ducking, pan, and video edge behavior", () => {
+    const valid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      audioBuses: {
+        music: { gain: 0.8, pan: -0.1, limiter: true },
+        voice: { gain: 1 },
+      },
+      assets: {
+        music: {
+          id: "music",
+          type: "audio",
+          src: "music.wav",
+          sourceMode: "stream",
+          proxy: { src: "music-proxy.mp3", bitrate: 128000 },
+          metadata: { duration: 120, byteLength: 12_000_000 },
+        },
+        clip: {
+          id: "clip",
+          type: "video",
+          src: "clip.mp4",
+          metadata: { width: 1920, height: 1080, duration: 10 },
+        },
+      },
+      nodes: [
+        {
+          id: "music",
+          type: "audio",
+          assetId: "music",
+          audioBus: "music",
+          pan: -0.25,
+        },
+        {
+          id: "voice",
+          type: "audio",
+          assetId: "music",
+          audioBus: "voice",
+          ducks: {
+            bus: "music",
+            gain: 0.35,
+            attackFrames: 3,
+            releaseFrames: 8,
+          },
+        },
+        {
+          id: "reverse",
+          type: "video",
+          assetId: "clip",
+          playbackRate: -1,
+          videoStartTime: 9,
+          videoEndBehavior: "loop",
+          volume: 0,
+        },
+      ],
+    });
+    expect(valid.ok).toBe(true);
+
+    const invalid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      assets: { clip: { id: "clip", type: "video", src: "clip.mp4" } },
+      nodes: [
+        {
+          id: "reverse",
+          type: "video",
+          assetId: "clip",
+          playbackRate: -1,
+          audioBus: "missing",
+        },
+      ],
+    });
+    const errors = invalid.ok ? "" : invalid.errors.join("\n");
+    expect(errors).toContain("Reverse video playback is visual-only");
+    expect(errors).toContain("missing audio bus");
+  });
+
   it("accepts trim and rate on video nodes, rejects them elsewhere", () => {
     const valid = validateScene({
       schemaVersion: 1,

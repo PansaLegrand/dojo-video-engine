@@ -1,5 +1,35 @@
 # Progress
 
+## 2026-08-24 (0.9 bounded media and audio)
+
+### Changed
+
+- Accepted RFC 0006 and made resolution reachable-only, HTTP range-backed,
+  proxy-aware, and explicitly budgeted.
+- Added source/proxy metadata, decoder/image/cache estimates and enforcement,
+  video hold/loop/reverse-visual behavior, and capability reporting.
+- Added bounded waveform caching plus shared audio spectrum analysis.
+- Added audio buses, node/bus panning, crossfades, frame-based ducking,
+  loudness measurement, and deterministic peak limiting.
+- Replaced default whole-scene Web Audio preview with on-demand bounded chunks.
+- Extended browser media checks for video loop/reverse and audible stereo bus
+  routing/ducking.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 585 unit tests, contract/determinism/schema/
+  migration lint, production builds, seven long-resource checks, browser
+  pixel/media/audio goldens (including loop/reverse and bus ducking), ten E2E
+  checks, CLI/starter smoke, and all ten 0.9.0 package dry-runs passed.
+- `pnpm verify:clean` packed/installed all ten 0.9.0 packages and validated,
+  migrated, inspected, linted, and built an external starter.
+
+### Notes
+
+- Reverse video audio is deliberately unsupported and rejected unless muted.
+- Proxy selection is host-controlled: preview defaults to proxy, export to
+  original.
+
 ## 2026-08-24 (0.8 animation system)
 
 ### Changed

@@ -1,5 +1,6 @@
 import type {
   SceneAnimation,
+  SceneDucking,
   SceneNode,
   SceneStyle,
   VolumeEnvelope,
@@ -2268,6 +2269,10 @@ export type VideoOverlayOptions = {
   playbackRate?: number;
   volume?: number;
   muted?: boolean;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
+  endBehavior?: "hold" | "loop";
   composition?: CompositionSize;
   safeArea?: SafeAreaInput;
   placement?: VideoOverlayPlacement;
@@ -2298,6 +2303,10 @@ export function videoOverlay(options: VideoOverlayOptions): SceneNode {
     duration: options.duration,
     videoStartTime: options.trimStart,
     playbackRate: options.playbackRate,
+    audioBus: options.audioBus,
+    pan: options.pan,
+    ducks: options.ducks,
+    videoEndBehavior: options.endBehavior,
     volume:
       options.volume ??
       ((options.muted ?? template.muted ?? true) ? 0 : undefined),
@@ -2425,6 +2434,9 @@ export type AudioOverlayOptions = {
   fadeOutEasing?: string;
   loop?: boolean;
   muted?: boolean;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
 };
 
 export type AudioFadeEnvelopeOptions = {
@@ -2457,6 +2469,9 @@ export function audioOverlay(options: AudioOverlayOptions): SceneNode {
     audioStartTime: options.trimStart,
     volume: options.volume ?? (options.muted ? 0 : template.defaultVolume),
     loop: options.loop,
+    audioBus: options.audioBus,
+    pan: options.pan,
+    ducks: options.ducks,
     volumeEnvelope:
       options.volumeEnvelope ??
       audioFadeEnvelope({
@@ -2539,6 +2554,30 @@ export function audioFadeEnvelope(
   }
 
   return points;
+}
+
+export function audioCrossfade(
+  durationInFrames: number,
+  options: { easing?: string } = {},
+): { outgoing: VolumeEnvelope; incoming: VolumeEnvelope } {
+  const duration = normalizedFrameDuration(
+    durationInFrames,
+    "durationInFrames",
+  );
+  if (duration === 0) {
+    throw new Error("audioCrossfade() durationInFrames must be at least 1.");
+  }
+  const easing = options.easing ?? "easeInOut";
+  return {
+    outgoing: [
+      { frame: 0, value: 1 },
+      { frame: duration, value: 0, easing },
+    ],
+    incoming: [
+      { frame: 0, value: 0 },
+      { frame: duration, value: 1, easing },
+    ],
+  };
 }
 
 function normalizedFrameDuration(value: number | undefined, name: string) {

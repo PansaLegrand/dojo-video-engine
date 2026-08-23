@@ -2,6 +2,8 @@ import type {
   Scene,
   SceneAnimation,
   SceneAsset,
+  SceneAudioBus,
+  SceneDucking,
   SceneEffectName,
   SceneEffectParams,
   SceneExtensionDescriptor,
@@ -112,6 +114,7 @@ export type MakeSceneOptions = {
   duration: TimeValue;
   assets?: Record<string, SceneAsset> | SceneAsset[];
   markers?: Record<string, TimeValue>;
+  audioBuses?: Record<string, SceneAudioBus>;
   children?: AuthorNode[];
 };
 
@@ -154,6 +157,10 @@ export type VideoClipOptions = MediaOptions & {
   trimStart?: TimeValue;
   playbackRate?: number;
   volume?: number;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
+  endBehavior?: "hold" | "loop";
 };
 
 export type LottieClipOptions = MediaOptions & {
@@ -176,6 +183,9 @@ export type AudioTrackOptions = AuthorTimingOptions & {
   fadeOut?: TimeValue;
   fadeInEasing?: string;
   fadeOutEasing?: string;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
 };
 
 export type AudioOverlayOptions = Omit<
@@ -348,6 +358,10 @@ export function makeScene(options: MakeSceneOptions): Scene {
 
   for (const [name, value] of Object.entries(options.markers ?? {})) {
     builder.marker(name, toFrames(value, fps));
+  }
+
+  for (const [name, bus] of Object.entries(options.audioBuses ?? {})) {
+    builder.audioBus(name, bus);
   }
 
   builder.children(
@@ -540,11 +554,15 @@ export function videoClip(
         style: mediaStyle(scene, options),
         videoStartTime: toSeconds(options.trimStart, fps),
         playbackRate: options.playbackRate,
+        audioBus: options.audioBus,
+        pan: options.pan,
+        ducks: options.ducks,
+        videoEndBehavior: options.endBehavior,
       };
       const node = video(assetIdFromReference(asset), {
         ...nodeOptions,
         volume: options.volume,
-      } as VideoNodeOptions & { volume?: number });
+      });
 
       for (const animation of options.enter ?? []) {
         node.animate(animation.property, animation.frames);
@@ -661,6 +679,9 @@ export function audioTrack(
         audioStartTime: toSeconds(options.trimStart, fps),
         volume: options.volume,
         loop: options.loop,
+        audioBus: options.audioBus,
+        pan: options.pan,
+        ducks: options.ducks,
         volumeEnvelope:
           options.volumeEnvelope ??
           audioFadeEnvelope({
@@ -852,7 +873,11 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
         playbackRate: node.playbackRate,
         volume: node.volume,
         volumeEnvelope: node.volumeEnvelope,
-      } as VideoNodeOptions & { volume?: number });
+        audioBus: node.audioBus,
+        pan: node.pan,
+        ducks: node.ducks,
+        videoEndBehavior: node.videoEndBehavior,
+      });
       break;
     case "audio":
       builder = audio(requiredAssetId(node), {
@@ -863,6 +888,9 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
         volume: node.volume,
         volumeEnvelope: node.volumeEnvelope,
         loop: node.loop,
+        audioBus: node.audioBus,
+        pan: node.pan,
+        ducks: node.ducks,
       });
       break;
     case "lottie":

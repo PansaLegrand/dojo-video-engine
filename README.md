@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: M4 complete](https://img.shields.io/badge/status-M4%20complete-brightgreen.svg)](docs/v1-roadmap.md)
-[![Version: 0.8.0](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
+[![Status: M5 complete](https://img.shields.io/badge/status-M5%20complete-brightgreen.svg)](docs/v1-roadmap.md)
+[![Version: 0.9.0](https://img.shields.io/badge/version-0.9.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -346,6 +346,10 @@ Release 0.8 completes the animation layer with repeat/yoyo playback, named
 markers, sequence/stagger choreography, compiled motion paths and seeded
 signals, animated masks, and 38 schema-backed presets with reduced-motion
 variants.
+
+Release 0.9 makes media bounded and editor-ready: reachable/range-backed source
+loading, proxies and budgets, video edge behavior, cached waveforms, bus/pan/
+ducking/limiting audio, and chunked preview audio for long projects.
 
 Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
 

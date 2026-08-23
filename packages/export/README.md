@@ -30,6 +30,11 @@ Options: `startFrame`/`endFrame` export a sub-range, `signal` aborts cleanly, `b
 
 Audio is mixed into the MP4 in windows (`audioChunkSeconds`, default 10 s), so long exports avoid one whole-scene PCM buffer. Decoded source clips are still opened through the explicit asset resolver; call `disposeAssets(assets)` when reusing/resolving assets yourself.
 
+Named audio buses support gain, pan, limiting, and node-driven ducking. Public
+`measureAudioLoudness()` and `limitAudioPeak()` helpers expose the same
+deterministic peak/RMS path used by export. Final export uses original media by
+default; set `preferProxy` only for explicit draft exports.
+
 ## Lower-level frame loop
 
 `renderFrameSequence()` is the deterministic bridge `exportVideo()` is built on — use it to feed frames into your own encoder or pipeline:

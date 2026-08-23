@@ -86,6 +86,10 @@ Keyframe tracks may repeat finitely or infinitely and alternate with `yoyo`.
 Scenes may declare bounded named frame markers for choreography, seeking, and
 agent edits.
 
+Assets may declare source mode, proxy, and media metadata. Scenes may define
+named audio buses; audio/video nodes route, pan, and duck buses. Video nodes
+declare hold/loop edge behavior and may use muted negative playback rates.
+
 ### JSON Schema
 
 For tools and agents that want to validate scenes without running code, the package exports a JSON Schema (draft-07) and ships it as `scene.schema.json`:

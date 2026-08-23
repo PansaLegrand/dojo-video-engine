@@ -28,8 +28,8 @@ best foundation for generated, editable, template-driven 2D video.
 | 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Committed in 0.5                             |
 | 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Committed in 0.6                             |
 | 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Committed in 0.7                             |
-| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Complete in 0.8 working tree                 |
-| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                      |
+| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Committed in 0.8                             |
+| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Complete in 0.9 working tree                 |
 | 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                      |
 | 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                      |
 | 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                      |
@@ -140,11 +140,20 @@ contract.
 
 ## Milestone 5 — media and audio
 
-Add reachable-asset loading, streaming/range sources, proxy metadata, explicit
-decoder-memory budgets, video loop/freeze/reverse capability reporting,
-waveform caching, audio buses, pan, crossfades, ducking, loudness measurement,
-and peak limiting. Long projects must not require every whole source file and
-the entire preview mix in memory.
+Delivered in the 0.9 working tree:
+
+- reachable-only asset resolution across nodes/effects/fonts/extensions;
+- HTTP range sources, explicit source modes, proxies, and metadata;
+- decoded-image/source-cache/video-decoder budgets plus resource estimates;
+- video hold/loop and muted reverse visuals with capability reporting;
+- opt-in cached streaming waveforms and shared audio-reactive analysis;
+- audio buses, node/bus pan, crossfades, ducking, loudness measurement, and
+  deterministic peak limiting;
+- bounded chunked Web Audio preview around the current play/seek position;
+- browser MP4 assertions for video loop/reverse and audible bus pan/ducking.
+
+RFC 0006 defines the resource, source-selection, audio-graph, and determinism
+contract.
 
 ## Milestone 6 — export runtime
 

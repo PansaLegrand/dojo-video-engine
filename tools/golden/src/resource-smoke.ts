@@ -4,6 +4,7 @@ import {
   evaluateVolumeEnvelope,
   loopedSourceRanges,
 } from "@motionforge/export";
+import { estimateMediaResources } from "@motionforge/renderer-canvas2d";
 import type { Scene, SceneNode } from "@motionforge/schema";
 
 type Check = {
@@ -18,6 +19,7 @@ checkLongAudioChunks();
 checkLoopedRanges();
 checkVolumeEnvelopeOffsets();
 checkManyNodeScene();
+checkReachableBudgetEstimate();
 
 const failed = checks.filter((entry) => !entry.pass);
 
@@ -137,6 +139,35 @@ function checkManyNodeScene() {
     "many-node evaluate/layout keeps every active node addressable",
     evaluated.nodes.length === 1_000 && laidOut.boxes.length === 1_000,
     `${elapsed.toFixed(1)}ms`,
+  );
+}
+
+function checkReachableBudgetEstimate() {
+  const scene: Scene = {
+    schemaVersion: 1,
+    width: 320,
+    height: 180,
+    fps: 30,
+    duration: 300,
+    assets: {
+      clip: { id: "clip", type: "video", src: "clip.mp4" },
+      unused: { id: "unused", type: "image", src: "unused.png" },
+    },
+    nodes: Array.from({ length: 12 }, (_, index) => ({
+      id: `clip-${index}`,
+      type: "video" as const,
+      assetId: "clip",
+      from: index * 5,
+      duration: 60,
+    })),
+  };
+  const estimate = estimateMediaResources(scene);
+  record(
+    "reachable resource estimate excludes unused declarations and counts decoder overlap",
+    estimate.declaredAssets === 2 &&
+      estimate.reachableAssets === 1 &&
+      estimate.maxSimultaneousVideoDecoders === 12,
+    `${estimate.reachableAssets}/${estimate.declaredAssets} assets, ${estimate.maxSimultaneousVideoDecoders} decoders`,
   );
 }
 

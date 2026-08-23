@@ -1,9 +1,11 @@
 import {
   type Scene,
   type SceneAnimation,
+  type SceneAudioBus,
   type SceneAsset,
   type SceneEffectName,
   type SceneEffectParams,
+  type SceneDucking,
   type SceneExtensionDescriptor,
   type SceneMaskDescriptor,
   type SceneNode,
@@ -36,8 +38,14 @@ export type VideoNodeOptions = NodeOptions & {
   videoStartTime?: number;
   /** Playback speed multiplier (1 = natural speed). */
   playbackRate?: number;
+  /** Gain from 0 to 1 for the clip soundtrack. */
+  volume?: number;
   /** Node-local gain curve multiplied by `volume`. */
   volumeEnvelope?: VolumeEnvelope;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
+  videoEndBehavior?: "hold" | "loop";
 };
 
 export type AudioNodeOptions = Omit<NodeOptions, "style"> & {
@@ -49,6 +57,9 @@ export type AudioNodeOptions = Omit<NodeOptions, "style"> & {
   volumeEnvelope?: VolumeEnvelope;
   /** Wrap source playback through the node's active window. */
   loop?: boolean;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
 };
 
 export type LottieNodeOptions = NodeOptions & {
@@ -77,6 +88,10 @@ type InternalNodeOptions = NodeOptions & {
   volume?: number;
   volumeEnvelope?: VolumeEnvelope;
   loop?: boolean;
+  audioBus?: string;
+  pan?: number;
+  ducks?: SceneDucking;
+  videoEndBehavior?: "hold" | "loop";
   effect?: SceneEffectName;
   params?: SceneEffectParams;
   extension?: SceneExtensionDescriptor;
@@ -90,6 +105,7 @@ export class SceneBuilder {
   private readonly assets: Record<string, SceneAsset> = {};
   private readonly childBuilders: NodeBuilder[] = [];
   private readonly markers: Record<string, number> = {};
+  private readonly audioBuses: Record<string, SceneAudioBus> = {};
 
   constructor(options: CompositionOptions) {
     this.options = options;
@@ -107,6 +123,11 @@ export class SceneBuilder {
 
   marker(name: string, frame: number): this {
     this.markers[name] = frame;
+    return this;
+  }
+
+  audioBus(name: string, bus: SceneAudioBus): this {
+    this.audioBuses[name] = bus;
     return this;
   }
 
@@ -129,6 +150,9 @@ export class SceneBuilder {
             ),
           }
         : {}),
+      ...(Object.keys(this.audioBuses).length > 0
+        ? { audioBuses: structuredClone(this.audioBuses) }
+        : {}),
       nodes: this.childBuilders.map((node) => node.build(counter)),
     });
   }
@@ -146,6 +170,10 @@ export class NodeBuilder {
   private readonly volume?: number;
   private readonly volumeEnvelope?: VolumeEnvelope;
   private readonly loop?: boolean;
+  private readonly audioBus?: string;
+  private readonly pan?: number;
+  private readonly ducks?: SceneDucking;
+  private readonly videoEndBehavior?: "hold" | "loop";
   private readonly effect?: SceneEffectName;
   private readonly params?: SceneEffectParams;
   private readonly extension?: SceneExtensionDescriptor;
@@ -170,6 +198,10 @@ export class NodeBuilder {
     this.volume = options.volume;
     this.volumeEnvelope = options.volumeEnvelope;
     this.loop = options.loop;
+    this.audioBus = options.audioBus;
+    this.pan = options.pan;
+    this.ducks = options.ducks;
+    this.videoEndBehavior = options.videoEndBehavior;
     this.effect = options.effect;
     this.params = options.params;
     this.extension = options.extension;
@@ -225,6 +257,10 @@ export class NodeBuilder {
       volume: this.volume,
       volumeEnvelope: this.volumeEnvelope,
       loop: this.loop,
+      audioBus: this.audioBus,
+      pan: this.pan,
+      ducks: this.ducks,
+      videoEndBehavior: this.videoEndBehavior,
       effect: this.effect,
       params: this.params,
       extension: this.extension,

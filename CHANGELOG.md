@@ -3,6 +3,41 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.9.0 — 2026-08-24
+
+The bounded media/audio release: long projects no longer imply loading every
+asset, buffering every remote source, or mixing the entire preview soundtrack.
+
+### Media resolution
+
+- Asset resolution now loads reachable references only, including node,
+  effect, font, and extension requirements.
+- Added HTTP range-backed media via Mediabunny `UrlSource`, explicit
+  auto/stream/buffer modes, proxy sources, and source metadata.
+- Added decoded-image, source-cache, and simultaneous-video-decoder budgets
+  with estimates in Canvas preflight and hard runtime enforcement.
+- Preview prefers declared proxies; final export defaults to original sources.
+- Added explicit video hold/loop behavior and muted reverse visual playback,
+  plus truthful capability reporting.
+- Added cached streaming waveforms and shared waveform/spectrum analysis.
+
+### Audio graph and preview
+
+- Added named audio buses with gain/pan/limiting, node panning/routing, and
+  frame-based bus ducking with attack/release.
+- Added paired crossfade envelope compilation, peak/RMS/dBFS measurement, and
+  deterministic peak limiting.
+- Default Web Audio preview now mixes bounded chunks around play/seek position
+  instead of retaining a whole-scene AudioBuffer.
+- Preview and export continue to share the same mixer; browser round trips now
+  assert channel separation and audible ducking.
+
+### Testing and documentation
+
+- Accepted [RFC 0006](docs/rfcs/0006-media-audio-runtime.md).
+- Added reachability, budget estimation, waveform, panning, limiter/loudness,
+  proxy/schema, bus/ducking, chunk-range, loop, and reverse coverage.
+
 ## 0.8.0 — 2026-08-24
 
 The animation-system release: repeatable scene playback and markers become

@@ -613,13 +613,64 @@ export type SceneMaskDescriptor = {
   feather?: number;
 };
 
-export const assetSchema = z.object({
-  id: z.string().min(1),
-  type: z.enum(["image", "video", "audio", "font", "lottie"]),
-  src: z.string().min(1),
-});
+export const audioBusSchema = z
+  .object({
+    gain: z.number().min(0).max(2).optional(),
+    pan: z.number().min(-1).max(1).optional(),
+    limiter: z.boolean().optional(),
+    limiterCeiling: z.number().min(0.1).max(1).optional(),
+  })
+  .strict();
+
+export const duckingSchema = z
+  .object({
+    bus: z.string().min(1).max(64),
+    gain: z.number().min(0).max(1),
+    attackFrames: z.number().int().min(0).max(600).optional(),
+    releaseFrames: z.number().int().min(0).max(600).optional(),
+  })
+  .strict();
+
+export type SceneAudioBus = z.infer<typeof audioBusSchema>;
+export type SceneDucking = z.infer<typeof duckingSchema>;
+
+export const assetSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(["image", "video", "audio", "font", "lottie"]),
+    src: z.string().min(1),
+    sourceMode: z.enum(["auto", "stream", "buffer"]).optional(),
+    proxy: z
+      .object({
+        src: z.string().min(1),
+        width: z.number().int().positive().optional(),
+        height: z.number().int().positive().optional(),
+        bitrate: z.number().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    metadata: z
+      .object({
+        duration: z.number().positive().optional(),
+        width: z.number().int().positive().optional(),
+        height: z.number().int().positive().optional(),
+        byteLength: z.number().int().positive().optional(),
+        codec: z.string().min(1).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
 
 export type SceneAsset = z.infer<typeof assetSchema>;
+
+const legacyAssetSchema: z.ZodType<SceneAsset> = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(["image", "video", "audio", "font", "lottie"]),
+    src: z.string().min(1),
+  })
+  .strict();
 
 export type SceneNodeInput = {
   id: string;
@@ -667,6 +718,14 @@ export type SceneNodeInput = {
    * during mixing, so fades and ducking affect sound rather than visuals.
    */
   volumeEnvelope?: VolumeEnvelope;
+  /** Audio/video nodes: named mix bus (implicit default: master). */
+  audioBus?: string;
+  /** Audio/video nodes: stereo pan from -1 (left) to 1 (right). */
+  pan?: number;
+  /** Audio/video nodes: reduce a target bus while this node is active. */
+  ducks?: SceneDucking;
+  /** Video nodes: source behavior after reaching an edge. */
+  videoEndBehavior?: "hold" | "loop";
   /** Audio nodes: wrap source playback through the node's active window. */
   loop?: boolean;
   from?: number;
@@ -719,10 +778,19 @@ function createSceneNodeSchema(
           ? maskDescriptorSchema.optional()
           : z.never().optional(),
         videoStartTime: z.number().nonnegative().optional(),
-        playbackRate: z.number().positive().optional(),
+        playbackRate: z
+          .number()
+          .min(-16)
+          .max(16)
+          .refine((value) => value !== 0, "playbackRate cannot be zero.")
+          .optional(),
         audioStartTime: z.number().nonnegative().optional(),
         volume: z.number().min(0).max(1).optional(),
         volumeEnvelope: volumeEnvelopeSchema.optional(),
+        audioBus: z.string().min(1).max(64).optional(),
+        pan: z.number().min(-1).max(1).optional(),
+        ducks: duckingSchema.optional(),
+        videoEndBehavior: z.enum(["hold", "loop"]).optional(),
         loop: z.boolean().optional(),
         from: z.number().int().default(0),
         duration: z.number().int().positive().optional(),
@@ -871,6 +939,15 @@ function createSceneNodeSchema(
           });
         }
 
+        if (node.type === "lottie" && (node.playbackRate ?? 1) < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["playbackRate"],
+            message:
+              "Negative playbackRate is currently supported for video nodes only.",
+          });
+        }
+
         if (node.type !== "audio" && node.audioStartTime !== undefined) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -882,12 +959,47 @@ function createSceneNodeSchema(
         if (
           node.type !== "audio" &&
           node.type !== "video" &&
-          (node.volume !== undefined || node.volumeEnvelope !== undefined)
+          (node.volume !== undefined ||
+            node.volumeEnvelope !== undefined ||
+            node.audioBus !== undefined ||
+            node.pan !== undefined ||
+            node.ducks !== undefined)
         ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: node.volume !== undefined ? ["volume"] : ["volumeEnvelope"],
-            message: `volume and volumeEnvelope only apply to audio and video nodes; remove them from this ${node.type} node.`,
+            path: [
+              node.volume !== undefined
+                ? "volume"
+                : node.volumeEnvelope !== undefined
+                  ? "volumeEnvelope"
+                  : node.audioBus !== undefined
+                    ? "audioBus"
+                    : node.pan !== undefined
+                      ? "pan"
+                      : "ducks",
+            ],
+            message: `volume and volumeEnvelope only apply to audio and video nodes; audioBus, pan, and ducks share the same restriction. Remove them from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type !== "video" && node.videoEndBehavior !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["videoEndBehavior"],
+            message: `videoEndBehavior only applies to video nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (
+          node.type === "video" &&
+          (node.playbackRate ?? 1) < 0 &&
+          (node.volume ?? 1) > 0
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["volume"],
+            message:
+              "Reverse video playback is visual-only; set volume to 0 or use a separately reversed audio asset.",
           });
         }
 
@@ -944,10 +1056,15 @@ function sceneDocumentFields(
     height: z.number().int().positive(),
     fps: z.number().int().positive(),
     duration: z.number().int().positive(),
-    assets: z.record(assetSchema).default({}),
+    assets: z
+      .record(includeCurrentFeatures ? assetSchema : legacyAssetSchema)
+      .default({}),
     nodes: z.array(nodeSchema).default([]),
     markers: includeCurrentFeatures
       ? z.record(z.number().int().nonnegative()).optional()
+      : z.never().optional(),
+    audioBuses: includeCurrentFeatures
+      ? z.record(audioBusSchema).optional()
       : z.never().optional(),
   };
 }
@@ -957,6 +1074,7 @@ type SceneDocumentForValidation = {
   assets: Record<string, SceneAsset>;
   nodes: SceneNodeInput[];
   markers?: Record<string, number>;
+  audioBuses?: Record<string, SceneAudioBus>;
 };
 
 const nodeAssetTypes: Partial<
@@ -986,6 +1104,16 @@ function validateSceneDocument(
         code: z.ZodIssueCode.custom,
         path: ["markers", name],
         message: `Marker "${name}" at frame ${frame} must be inside the scene duration.`,
+      });
+    }
+  }
+  for (const name of Object.keys(scene.audioBuses ?? {})) {
+    if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(name)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["audioBuses", name],
+        message:
+          "Audio bus names must start with a letter and use at most 64 letters, numbers, dot, underscore, or hyphen characters.",
       });
     }
   }
@@ -1043,6 +1171,30 @@ function validateSceneDocument(
       }
 
       seenNodeIds.add(node.id);
+
+      if (
+        (node.type === "audio" || node.type === "video") &&
+        node.audioBus &&
+        node.audioBus !== "master" &&
+        !scene.audioBuses?.[node.audioBus]
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [...nodePath, "audioBus"],
+          message: `Node "${node.id}" references missing audio bus "${node.audioBus}".`,
+        });
+      }
+      if (
+        node.ducks &&
+        node.ducks.bus !== "master" &&
+        !scene.audioBuses?.[node.ducks.bus]
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [...nodePath, "ducks", "bus"],
+          message: `Node "${node.id}" ducks missing audio bus "${node.ducks.bus}".`,
+        });
+      }
 
       const expectedAssetType = nodeAssetTypes[node.type];
       if (node.assetId && expectedAssetType) {

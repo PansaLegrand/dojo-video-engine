@@ -15,6 +15,17 @@ export type SceneInspection = {
   durationFrames: number;
   durationSeconds: number;
   markers: { total: number; names: string[] };
+  media: {
+    reachableAssets: number;
+    unreachableAssets: number;
+    audioBuses: number;
+    video: {
+      freeze: true;
+      loop: boolean;
+      reverseVisual: boolean;
+      reverseAudio: false;
+    };
+  };
   assets: { total: number } & Record<SceneAsset["type"], number>;
   nodes: { total: number; root: number } & Record<SceneNode["type"], number>;
   effects: Partial<Record<SceneEffectName, number>>;
@@ -39,6 +50,11 @@ export type SceneInspection = {
     hasAnimations: boolean;
     hasVolumeAutomation: boolean;
     hasLoopedAudio: boolean;
+    hasLoopedVideo: boolean;
+    hasReverseVideo: boolean;
+    hasAudioBuses: boolean;
+    hasPanning: boolean;
+    hasDucking: boolean;
     requiresBrowserExport: true;
   };
 };
@@ -72,6 +88,11 @@ export function inspectScene(input: unknown): SceneInspection {
   let hasVolumeAutomation = false;
   let hasLoopedAudio = false;
   let hasAudioReactiveEffects = false;
+  let hasLoopedVideo = false;
+  let hasReverseVideo = false;
+  let hasPanning = false;
+  let hasDucking = false;
+  const reachableAssets = new Set<string>();
   let hasVectorPaths = false;
   let hasClipping = false;
   let hasMasks = false;
@@ -112,6 +133,22 @@ export function inspectScene(input: unknown): SceneInspection {
       hasAnimations ||= (node.animations ?? []).length > 0;
       hasVolumeAutomation ||= node.volumeEnvelope !== undefined;
       hasLoopedAudio ||= node.type === "audio" && node.loop === true;
+      hasLoopedVideo ||=
+        node.type === "video" && node.videoEndBehavior === "loop";
+      hasReverseVideo ||= node.type === "video" && (node.playbackRate ?? 1) < 0;
+      hasPanning ||= node.pan !== undefined && node.pan !== 0;
+      hasDucking ||= node.ducks !== undefined;
+      if (node.assetId) reachableAssets.add(node.assetId);
+      if (node.params?.audioAssetId)
+        reachableAssets.add(node.params.audioAssetId);
+      if (node.params?.coverAssetId)
+        reachableAssets.add(node.params.coverAssetId);
+      if (
+        node.style?.fontFamily &&
+        scene.assets[node.style.fontFamily]?.type === "font"
+      ) {
+        reachableAssets.add(node.style.fontFamily);
+      }
       visit(node.children ?? []);
     }
   };
@@ -128,6 +165,17 @@ export function inspectScene(input: unknown): SceneInspection {
     markers: {
       total: Object.keys(scene.markers ?? {}).length,
       names: Object.keys(scene.markers ?? {}).sort(),
+    },
+    media: {
+      reachableAssets: reachableAssets.size,
+      unreachableAssets: Math.max(0, assets.total - reachableAssets.size),
+      audioBuses: Object.keys(scene.audioBuses ?? {}).length,
+      video: {
+        freeze: true,
+        loop: hasLoopedVideo,
+        reverseVisual: hasReverseVideo,
+        reverseAudio: false,
+      },
     },
     assets,
     nodes,
@@ -162,6 +210,11 @@ export function inspectScene(input: unknown): SceneInspection {
       hasAnimations,
       hasVolumeAutomation,
       hasLoopedAudio,
+      hasLoopedVideo,
+      hasReverseVideo,
+      hasAudioBuses: Object.keys(scene.audioBuses ?? {}).length > 0,
+      hasPanning,
+      hasDucking,
       requiresBrowserExport: true,
     },
   };

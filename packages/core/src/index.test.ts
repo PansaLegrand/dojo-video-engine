@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  audio,
   composition,
   cubicBezierEasing,
   div,
@@ -21,6 +22,7 @@ import {
   shape,
   springEasing,
   text,
+  video,
 } from "./index.js";
 
 function layoutOf(builder: ReturnType<typeof composition>) {
@@ -171,6 +173,37 @@ describe("builder", () => {
       .toJSON();
 
     expect(scene.markers).toEqual({ intro: 0, outro: 48 });
+  });
+
+  it("builds audio buses, panning, ducking, and looping video behavior", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+    })
+      .audioBus("music", { gain: 0.8, limiter: true })
+      .asset({ id: "music", type: "audio", src: "music.wav" })
+      .asset({ id: "clip", type: "video", src: "clip.mp4" })
+      .children(
+        audio("music", {
+          id: "bed",
+          audioBus: "music",
+          pan: -0.2,
+        }),
+        video("clip", {
+          id: "clip",
+          videoEndBehavior: "loop",
+          ducks: { bus: "music", gain: 0.4 },
+        }),
+      )
+      .toJSON();
+
+    expect(scene.audioBuses).toEqual({ music: { gain: 0.8, limiter: true } });
+    expect(scene.nodes).toMatchObject([
+      { audioBus: "music", pan: -0.2 },
+      { videoEndBehavior: "loop", ducks: { bus: "music", gain: 0.4 } },
+    ]);
   });
 
   it("reflects builder mutations made after attaching to a parent", () => {

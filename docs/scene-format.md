@@ -21,6 +21,7 @@ type Scene = {
   duration: number; // positive integer, total frames
   assets: Record<string, Asset>;
   markers?: Record<string, number>; // named in-range scene frames
+  audioBuses?: Record<string, AudioBus>;
   nodes: SceneNode[];
 };
 
@@ -28,6 +29,22 @@ type Asset = {
   id: string; // must equal its key in scene.assets
   type: "image" | "video" | "audio" | "font" | "lottie";
   src: string;
+  sourceMode?: "auto" | "stream" | "buffer";
+  proxy?: { src: string; width?: number; height?: number; bitrate?: number };
+  metadata?: {
+    duration?: number;
+    width?: number;
+    height?: number;
+    byteLength?: number;
+    codec?: string;
+  };
+};
+
+type AudioBus = {
+  gain?: number;
+  pan?: number;
+  limiter?: boolean;
+  limiterCeiling?: number;
 };
 ```
 
@@ -64,6 +81,15 @@ type SceneNode = {
   audioStartTime?: number; // audio nodes only: source trim offset in seconds (default 0)
   volume?: number; // audio and video nodes: gain 0..1 (default 1)
   volumeEnvelope?: VolumeEnvelopePoint[]; // audio and video nodes: node-local gain automation
+  audioBus?: string; // audio/video routing, default "master"
+  pan?: number; // -1 left .. 1 right
+  ducks?: {
+    bus: string;
+    gain: number;
+    attackFrames?: number;
+    releaseFrames?: number;
+  };
+  videoEndBehavior?: "hold" | "loop";
   loop?: boolean; // audio nodes only: repeat source through the node window
   from?: number; // start frame, relative to the parent (default 0)
   duration?: number; // frames the node is active (default: parent's duration)
@@ -233,6 +259,11 @@ grayscale masks/group isolation.
 
 Audio nodes place sound on the timeline with the same `from`/`duration` frame semantics as every other node — they are not visual, so `style`, `children`, and `animations` are rejected on them. During export, every audible node is decoded, trimmed by `audioStartTime`, scaled by `volume`, multiplied by `volumeEnvelope` when present, optionally repeated with `loop: true`, and mixed (overlaps sum, the final mix clamps) into one stereo 48 kHz track muxed into the MP4. An audio node trimmed past the end of its clip contributes silence unless `loop` is true. Video nodes with their own soundtrack join this mix automatically (see the video section).
 
+Audio/video nodes route to `audioBus` (`master` by default) and may pan or duck
+another bus with frame-based attack/release. Bus gain/pan/limiting is applied
+before the deterministic master peak limiter. Reverse video is visual-only and
+must be muted; `videoEndBehavior` chooses freeze (`hold`) or source looping.
+
 `volumeEnvelope` points are sampled in node-local frames, after ancestor clipping. A chunk that begins halfway through an audio node samples the envelope halfway through the node too, so fades and future ducking automation remain stable when nodes are trimmed by parent windows.
 
 `loop` is audio-only. It wraps source playback after `audioStartTime` through the audio node's active window. The gain envelope does not restart on each wrap; it continues on the node-local timeline, which is usually what music beds and ambience need.
@@ -356,6 +387,9 @@ renderStill(context, scene, frame, { assets }); // pure given (scene, frame, ass
 - A failed fetch or decode rejects with the asset id and src; there is no placeholder fallback by design.
 - **Audio assets** open the same way (mediabunny decode); the export mixer pulls PCM from them. Player/Studio preview uses the same mixer path on a best-effort browser audio clock, while the exported file remains the source of truth for final audio.
 - Call `disposeAssets(assets)` when done with a scene to release video and audio decoder resources.
+- Resolution is reachable-only. HTTP audio/video uses bounded range requests;
+  proxy selection and source/image/decoder budgets are explicit host options.
+  Optional waveform analysis streams into a bounded cached peak array.
 
 ## Animations
 

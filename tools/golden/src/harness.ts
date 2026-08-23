@@ -318,6 +318,71 @@ window.runGoldenVideoChecks = async (): Promise<VideoCheck[]> => {
     detail: `source clip (60f): ${clipMs.toFixed(0)}ms, composite export (30f, 2 video nodes): ${exportMs.toFixed(0)}ms`,
   });
 
+  const behaviorScene: Scene = {
+    schemaVersion: 1,
+    width: 320,
+    height: 180,
+    fps,
+    duration: 30,
+    assets: { clip: { id: "clip", type: "video", src: clipUrl } },
+    nodes: [
+      {
+        id: "loop",
+        type: "video",
+        assetId: "clip",
+        videoStartTime: 1.5,
+        videoEndBehavior: "loop",
+        volume: 0,
+        style: {
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: 160,
+          height: 180,
+        },
+      },
+      {
+        id: "reverse",
+        type: "video",
+        assetId: "clip",
+        videoStartTime: 1.5,
+        playbackRate: -1,
+        volume: 0,
+        style: {
+          position: "absolute",
+          left: 160,
+          top: 0,
+          width: 160,
+          height: 180,
+        },
+      },
+    ],
+  };
+  const behaviorAssets = await resolveAssets(behaviorScene);
+  const behaviorCanvas = document.createElement("canvas");
+  behaviorCanvas.width = 320;
+  behaviorCanvas.height = 180;
+  const behaviorContext = behaviorCanvas.getContext("2d", {
+    willReadFrequently: true,
+  });
+  if (!behaviorContext) throw new Error("Canvas2D unavailable");
+  await prepareFrame(behaviorScene, 0, behaviorAssets);
+  renderStill(behaviorContext, behaviorScene, 0, { assets: behaviorAssets });
+  const behaviorAt0 = behaviorContext.getImageData(0, 0, 320, 180).data;
+  await prepareFrame(behaviorScene, 20, behaviorAssets);
+  renderStill(behaviorContext, behaviorScene, 20, { assets: behaviorAssets });
+  const behaviorAt20 = behaviorContext.getImageData(0, 0, 320, 180).data;
+  checks.push({
+    label: "edge behavior: loop wraps and reverse walks backward",
+    pass:
+      isBlue(readCenter(behaviorAt0, 320, 80, 90)) &&
+      isBlue(readCenter(behaviorAt0, 320, 240, 90)) &&
+      isRed(readCenter(behaviorAt20, 320, 80, 90)) &&
+      isRed(readCenter(behaviorAt20, 320, 240, 90)),
+    detail: "loop/reverse colors match source-time mapping",
+  });
+  disposeAssets(behaviorAssets);
+
   input.dispose();
   disposeAssets(assets);
   URL.revokeObjectURL(clipUrl);
@@ -380,12 +445,15 @@ async function rmsOver(
   sink: AudioBufferSink,
   start: number,
   end: number,
+  channel = 0,
 ): Promise<number> {
   let sumSquares = 0;
   let count = 0;
 
   for await (const wrapped of sink.buffers(start, end)) {
-    const data = wrapped.buffer.getChannelData(0);
+    const data = wrapped.buffer.getChannelData(
+      Math.min(channel, wrapped.buffer.numberOfChannels - 1),
+    );
 
     for (let index = 0; index < data.length; index += 1) {
       const at = wrapped.timestamp + index / wrapped.buffer.sampleRate;
@@ -724,6 +792,89 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
 
   automationInput.dispose();
   disposeAssets(automationAssets);
+
+  const voiceUrl = URL.createObjectURL(buildToneWav(1.0, 660));
+  const busScene: Scene = {
+    schemaVersion: 1,
+    width: 320,
+    height: 180,
+    fps: 30,
+    duration: 90,
+    audioBuses: {
+      music: { gain: 0.8 },
+      voice: { gain: 0.9 },
+      master: { limiter: true, limiterCeiling: 0.9 },
+    },
+    assets: {
+      tone: { id: "tone", type: "audio", src: toneUrl },
+      voice: { id: "voice", type: "audio", src: voiceUrl },
+    },
+    nodes: [
+      {
+        id: "music",
+        type: "audio",
+        assetId: "tone",
+        duration: 90,
+        loop: true,
+        volume: 0.8,
+        audioBus: "music",
+        pan: -1,
+      },
+      {
+        id: "voice",
+        type: "audio",
+        assetId: "voice",
+        from: 30,
+        duration: 30,
+        volume: 0.8,
+        audioBus: "voice",
+        pan: 1,
+        ducks: {
+          bus: "music",
+          gain: 0.25,
+          attackFrames: 3,
+          releaseFrames: 6,
+        },
+      },
+    ],
+  };
+  const busAssets = await resolveAssets(busScene);
+  const { blob: busBlob } = await exportVideo({
+    scene: busScene,
+    assets: busAssets,
+    audioChunkSeconds: 0.4,
+  });
+  const busInput = new Input({
+    formats: ALL_FORMATS,
+    source: new BlobSource(busBlob),
+  });
+  const busTrack = await busInput.getPrimaryAudioTrack();
+  if (busTrack) {
+    const sink = new AudioBufferSink(busTrack);
+    const leftBefore = await rmsOver(sink, 0.2, 0.7, 0);
+    const rightBefore = await rmsOver(sink, 0.2, 0.7, 1);
+    const leftDuring = await rmsOver(sink, 1.2, 1.7, 0);
+    const rightDuring = await rmsOver(sink, 1.2, 1.7, 1);
+    checks.push({
+      label: "audio: bus panning separates music and voice channels",
+      pass: leftBefore > rightBefore * 4 && rightDuring > leftDuring * 2,
+      detail: `before L/R ${leftBefore.toFixed(3)}/${rightBefore.toFixed(3)}, during ${leftDuring.toFixed(3)}/${rightDuring.toFixed(3)}`,
+    });
+    checks.push({
+      label: "audio: voice activity ducks the music bus",
+      pass: leftDuring < leftBefore * 0.55,
+      detail: `music rms ${leftBefore.toFixed(3)} -> ${leftDuring.toFixed(3)}`,
+    });
+  } else {
+    checks.push({
+      label: "audio: bus panning and ducking",
+      pass: false,
+      detail: "no audio track in bus export",
+    });
+  }
+  busInput.dispose();
+  disposeAssets(busAssets);
+  URL.revokeObjectURL(voiceUrl);
   URL.revokeObjectURL(toneUrl);
 
   return checks;

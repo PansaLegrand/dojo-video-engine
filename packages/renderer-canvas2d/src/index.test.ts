@@ -7,7 +7,9 @@ import {
 import { z } from "zod";
 import {
   computeObjectFit,
+  collectReachableAssetIds,
   disposeAssets,
+  estimateMediaResources,
   lottieSourceFrame,
   parseBorder,
   parseBoxShadow,
@@ -26,6 +28,7 @@ import {
   validateLottieDocument,
   VideoPlaybackCursor,
   videoSourceTime,
+  waveformFromSamples,
   wrapTextLines,
 } from "./index.js";
 
@@ -198,6 +201,99 @@ describe("Canvas2D preflight", () => {
       issues: [],
       requirements: { path2d: true, domMatrix: true },
     });
+  });
+
+  it("reports decoder and decoded-image budget estimates", () => {
+    const budgetScene = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {
+        one: {
+          id: "one",
+          type: "image",
+          src: "one.png",
+          metadata: { width: 100, height: 100 },
+        },
+        clip: { id: "clip", type: "video", src: "clip.mp4" },
+      },
+      nodes: [
+        { id: "one", type: "img", assetId: "one" },
+        { id: "a", type: "video", assetId: "clip" },
+        { id: "b", type: "video", assetId: "clip" },
+      ],
+    };
+    const result = preflightCanvas2D(
+      budgetScene,
+      {
+        OffscreenCanvas: class {},
+        createImageBitmap: () => undefined,
+        VideoDecoder: class {},
+      } as unknown as Partial<typeof globalThis>,
+      { budget: { maxVideoDecoders: 1, maxDecodedImageBytes: 1000 } },
+    );
+    expect(result.issues.map((issue) => issue.code)).toEqual([
+      "video_decoder_budget_exceeded",
+      "decoded_image_budget_estimate_exceeded",
+    ]);
+  });
+});
+
+describe("media resource planning", () => {
+  const scene = {
+    schemaVersion: 1 as const,
+    width: 320,
+    height: 180,
+    fps: 30,
+    duration: 60,
+    assets: {
+      used: { id: "used", type: "image" as const, src: "used.png" },
+      unused: { id: "unused", type: "image" as const, src: "unused.png" },
+      font: { id: "font", type: "font" as const, src: "font.woff2" },
+      clip: {
+        id: "clip",
+        type: "video" as const,
+        src: "clip.mp4",
+        proxy: { src: "clip-proxy.mp4", width: 640, height: 360 },
+      },
+    },
+    nodes: [
+      { id: "image", type: "img" as const, assetId: "used" },
+      {
+        id: "title",
+        type: "text" as const,
+        text: "Hi",
+        style: { fontFamily: "font" },
+      },
+      { id: "a", type: "video" as const, assetId: "clip", duration: 30 },
+      {
+        id: "b",
+        type: "video" as const,
+        assetId: "clip",
+        from: 15,
+        duration: 30,
+      },
+    ],
+  };
+
+  it("loads only assets reachable from scene nodes and styles", () => {
+    expect(Array.from(collectReachableAssetIds(scene as never)).sort()).toEqual(
+      ["clip", "font", "used"],
+    );
+    expect(estimateMediaResources(scene)).toMatchObject({
+      declaredAssets: 4,
+      reachableAssets: 3,
+      proxyAssets: 1,
+      maxSimultaneousVideoDecoders: 2,
+    });
+  });
+
+  it("builds bounded waveform peaks", () => {
+    expect(
+      Array.from(waveformFromSamples(new Float32Array([0, -0.5, 0.25, 1]), 2)),
+    ).toEqual([0.5, 1]);
   });
 });
 
@@ -912,6 +1008,12 @@ describe("videoSourceTime", () => {
   it("holds the last frame when the scene outlasts the clip", () => {
     expect(videoSourceTime(900, 30, 0, 1, 2)).toBeCloseTo(1.999, 5);
     expect(videoSourceTime(0, 30, 99, 1, 2)).toBeCloseTo(1.999, 5);
+  });
+
+  it("loops and reverses visual source time", () => {
+    expect(videoSourceTime(75, 30, 0, 1, 2, "loop")).toBeCloseTo(0.5);
+    expect(videoSourceTime(15, 30, 1.5, -1, 2, "hold")).toBeCloseTo(1);
+    expect(videoSourceTime(75, 30, 0.5, -1, 2, "loop")).toBeCloseTo(0);
   });
 });
 
