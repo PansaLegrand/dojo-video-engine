@@ -3,6 +3,34 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.10.0 — 2026-08-24
+
+The export-runtime release: buffered, streamed, worker, and headless exports
+share one deterministic render/audio/mux pipeline.
+
+### Export API
+
+- Added `estimateExport()` and `preflightExport()` for frames, duration, raw
+  work, estimated output bytes, audio/resource needs, and capability issues.
+- Added `exportVideoToStream()` using positional WritableStream chunks and
+  encoder/muxer backpressure; `exportVideo()` remains the Blob API.
+- Extended capability detection with worker and streaming-target support.
+
+### Worker/headless adapter
+
+- Added `@motionforge/export/worker` with serializable start/cancel requests,
+  progress/complete/error events, `ExportWorkerClient`, worker installation,
+  and a reusable handler for cloud/headless message hosts.
+- Worker jobs own AbortControllers, force worker extension compatibility, and
+  return the same Blob/result shape as main-thread export.
+
+### Verification
+
+- Accepted [RFC 0007](docs/rfcs/0007-export-runtime.md).
+- Added export estimate/preflight and worker protocol tests.
+- Browser export smoke now reconstructs and validates a streamed MP4 in
+  addition to the buffered file.
+
 ## 0.9.0 — 2026-08-24
 
 The bounded media/audio release: long projects no longer imply loading every

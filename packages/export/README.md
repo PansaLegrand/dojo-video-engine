@@ -35,6 +35,17 @@ Named audio buses support gain, pan, limiting, and node-driven ducking. Public
 deterministic peak/RMS path used by export. Final export uses original media by
 default; set `preferProxy` only for explicit draft exports.
 
+## Worker and streaming export
+
+Use `estimateExport()` / `preflightExport()` before starting expensive work.
+`exportVideoToStream(options, writable)` writes positional chunks with
+backpressure instead of retaining a final Blob.
+
+`@motionforge/export/worker` exports `ExportWorkerClient`,
+`installExportWorker()`, and `createExportWorkerHandler()`. The same protocol
+can back a dedicated browser worker or a headless/cloud message adapter; worker
+hosts install trusted extensions locally.
+
 ## Lower-level frame loop
 
 `renderFrameSequence()` is the deterministic bridge `exportVideo()` is built on — use it to feed frames into your own encoder or pipeline:
@@ -56,6 +67,7 @@ await renderFrameSequence({
 Stable for 0.x integrations:
 
 - Browser export surface: `detectExportCapability()` and `exportVideo()`.
+- Planning/targets: `estimateExport()`, `preflightExport()`, and `exportVideoToStream()`.
 - Frame-loop surface: `renderFrameSequence()` plus `RenderFrameSequenceOptions`, `RenderFrameSequenceProgress`, `RenderedSequenceFrame`, and `RenderFrameSequenceResult`.
 - User-facing result/option types: `ExportVideoOptions`, `ExportVideoResult`, and `ExportCapability`.
 

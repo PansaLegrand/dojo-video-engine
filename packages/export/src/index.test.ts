@@ -5,12 +5,14 @@ import {
   collectAudioPlacements,
   detectExportCapability,
   evaluateVolumeEnvelope,
+  estimateExport,
   exportVideo,
   frameToTimestampUs,
   loopedSourceRanges,
   limitAudioPeak,
   measureAudioLoudness,
   mixAudioSegments,
+  preflightExport,
   renderFrameSequence,
 } from "./index.js";
 
@@ -32,7 +34,47 @@ describe("detectExportCapability", () => {
       webCodecs: false,
       videoEncoder: false,
       offscreenCanvas: false,
+      worker: false,
+      streamingTarget: false,
     });
+  });
+});
+
+describe("export planning", () => {
+  it("estimates frame, raw pixel, encoded, audio, and media resources", () => {
+    const estimate = estimateExport(
+      {
+        ...scene,
+        duration: 60,
+        nodes: [
+          {
+            id: "audio",
+            type: "audio",
+            assetId: "tone",
+          },
+        ],
+        assets: { tone: { id: "tone", type: "audio", src: "tone.wav" } },
+      },
+      { bitrate: 1_000_000 },
+    );
+    expect(estimate).toMatchObject({
+      totalFrames: 60,
+      durationSeconds: 2,
+      rawRgbaBytes: 320 * 180 * 4 * 60,
+      hasAudio: true,
+      resources: { reachableAssets: 1 },
+    });
+    expect(estimate.estimatedEncodedBytes).toBe(282_000);
+  });
+
+  it("preflights export capability with actionable issues", () => {
+    const result = preflightExport(scene, {});
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toEqual([
+      "canvas_unavailable",
+      "video_encoder_unavailable",
+      "worker_unavailable",
+    ]);
   });
 });
 

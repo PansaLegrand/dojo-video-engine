@@ -1,10 +1,13 @@
 import {
   prepareFrame,
+  estimateMediaResources,
+  preflightCanvas2D,
   renderStill,
   resolveAssets,
   type AudioClip,
   type ResolvedAssets,
   type ResolveAssetsOptions,
+  type MediaResourceEstimate,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
@@ -23,6 +26,10 @@ import {
   getFirstEncodableVideoCodec,
   Mp4OutputFormat,
   Output,
+  StreamTarget,
+  type StreamTargetChunk,
+  type StreamTargetOptions,
+  type Target,
   QUALITY_HIGH,
   type AudioCodec,
   type Quality,
@@ -33,6 +40,28 @@ export type ExportCapability = {
   webCodecs: boolean;
   videoEncoder: boolean;
   offscreenCanvas: boolean;
+  worker: boolean;
+  streamingTarget: boolean;
+};
+
+export type ExportEstimate = {
+  totalFrames: number;
+  durationSeconds: number;
+  rawRgbaBytes: number;
+  estimatedEncodedBytes: number;
+  hasAudio: boolean;
+  resources: MediaResourceEstimate;
+};
+
+export type ExportPreflightResult = {
+  ok: boolean;
+  capability: ExportCapability;
+  estimate: ExportEstimate;
+  issues: Array<{
+    severity: "error" | "warning";
+    code: string;
+    message: string;
+  }>;
 };
 
 export type ExportVideoOptions = {
@@ -84,6 +113,10 @@ export type ExportVideoResult = {
   /** Audio codec of the mixed track, or null when the scene has no audio. */
   audioCodec: AudioCodec | null;
   totalFrames: number;
+};
+
+export type ExportVideoStreamResult = Omit<ExportVideoResult, "blob"> & {
+  mimeType: string;
 };
 
 /** An audible node's absolute active window in scene frames, ancestors applied. */
@@ -367,6 +400,87 @@ export function detectExportCapability(
     webCodecs: "VideoFrame" in globalObject,
     videoEncoder: "VideoEncoder" in globalObject,
     offscreenCanvas: "OffscreenCanvas" in globalObject,
+    worker: "Worker" in globalObject,
+    streamingTarget:
+      "WritableStream" in globalObject && "TransformStream" in globalObject,
+  };
+}
+
+export function estimateExport(
+  scene: Scene,
+  options: { startFrame?: number; endFrame?: number; bitrate?: number } = {},
+): ExportEstimate {
+  const startFrame = options.startFrame ?? 0;
+  const endFrame = options.endFrame ?? scene.duration - 1;
+  validateFrameRange(scene, startFrame, endFrame);
+  const totalFrames = endFrame - startFrame + 1;
+  const durationSeconds = totalFrames / scene.fps;
+  const bitrate =
+    options.bitrate ??
+    Math.max(
+      1_000_000,
+      Math.round(scene.width * scene.height * scene.fps * 0.08),
+    );
+  const hasAudio = collectAudioPlacements(scene).length > 0;
+  return {
+    totalFrames,
+    durationSeconds,
+    rawRgbaBytes: scene.width * scene.height * 4 * totalFrames,
+    estimatedEncodedBytes:
+      Math.ceil((durationSeconds * bitrate) / 8) +
+      (hasAudio ? Math.ceil((durationSeconds * 128_000) / 8) : 0),
+    hasAudio,
+    resources: estimateMediaResources(scene),
+  };
+}
+
+export function preflightExport(
+  scene: Scene,
+  globalObject: Partial<typeof globalThis> = globalThis,
+  options: Pick<
+    ExportVideoOptions,
+    "startFrame" | "endFrame" | "bitrate" | "extensions" | "worker" | "budget"
+  > = {},
+): ExportPreflightResult {
+  const capability = detectExportCapability(globalObject);
+  const estimate = estimateExport(scene, {
+    startFrame: options.startFrame,
+    endFrame: options.endFrame,
+    bitrate: typeof options.bitrate === "number" ? options.bitrate : undefined,
+  });
+  const canvas = preflightCanvas2D(scene, globalObject, {
+    extensions: options.extensions,
+    worker: options.worker,
+    budget: options.budget,
+  });
+  const issues: ExportPreflightResult["issues"] = [...canvas.issues];
+  if (!capability.videoEncoder) {
+    issues.push({
+      severity: "error",
+      code: "video_encoder_unavailable",
+      message: "MP4 export requires the WebCodecs VideoEncoder API.",
+    });
+  }
+  if (options.worker && !capability.offscreenCanvas) {
+    issues.push({
+      severity: "error",
+      code: "worker_offscreen_canvas_unavailable",
+      message: "Worker export requires OffscreenCanvas.",
+    });
+  }
+  if (!capability.worker) {
+    issues.push({
+      severity: "warning",
+      code: "worker_unavailable",
+      message:
+        "Worker export is unavailable; main-thread export remains possible.",
+    });
+  }
+  return {
+    ok: !issues.some((issue) => issue.severity === "error"),
+    capability,
+    estimate,
+    issues,
   };
 }
 
@@ -463,6 +577,36 @@ export async function renderFrameSequence(
 export async function exportVideo(
   options: ExportVideoOptions,
 ): Promise<ExportVideoResult> {
+  const target = new BufferTarget();
+  const result = await runExportVideo(options, target);
+  if (!target.buffer) {
+    throw new Error("MP4 muxing finished without producing an output buffer.");
+  }
+  const { mimeType, ...metadata } = result;
+  return {
+    ...metadata,
+    blob: new Blob([target.buffer], { type: mimeType }),
+  };
+}
+
+export async function exportVideoToStream(
+  options: ExportVideoOptions,
+  writable: WritableStream<StreamTargetChunk>,
+  streamOptions: StreamTargetOptions = {},
+): Promise<ExportVideoStreamResult> {
+  const result = await runExportVideo(
+    options,
+    new StreamTarget(writable, streamOptions),
+  );
+  return result;
+}
+
+type InternalExportResult = ExportVideoStreamResult;
+
+async function runExportVideo(
+  options: ExportVideoOptions,
+  target: Target,
+): Promise<InternalExportResult> {
   const { scene } = options;
   const capability = detectExportCapability();
 
@@ -494,7 +638,7 @@ export async function exportVideo(
       budget: options.budget,
     }));
   const { canvas, context } = createExportCanvas(scene.width, scene.height);
-  const output = new Output({ format, target: new BufferTarget() });
+  const output = new Output({ format, target });
   const source = new CanvasSource(canvas, {
     codec,
     bitrate: options.bitrate ?? QUALITY_HIGH,
@@ -614,14 +758,8 @@ export async function exportVideo(
     throw error;
   }
 
-  const buffer = output.target.buffer;
-
-  if (!buffer) {
-    throw new Error("MP4 muxing finished without producing an output buffer.");
-  }
-
   return {
-    blob: new Blob([buffer], { type: format.mimeType }),
+    mimeType: format.mimeType,
     codec,
     audioCodec,
     totalFrames: result.totalFrames,

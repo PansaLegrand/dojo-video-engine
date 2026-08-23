@@ -1,4 +1,4 @@
-import { exportVideo } from "@motionforge/export";
+import { exportVideo, exportVideoToStream } from "@motionforge/export";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
   disposeAssets,
@@ -13,6 +13,7 @@ import {
   BlobSource,
   CanvasSink,
   Input,
+  type StreamTargetChunk,
 } from "mediabunny";
 
 export type RenderedFrame = {
@@ -28,6 +29,8 @@ export type ExportedVideo = {
   totalFrames: number;
   /** First 12 bytes of the file; bytes 4-8 spell "ftyp" for valid MP4. */
   header: number[];
+  streamSize: number;
+  streamHeader: number[];
 };
 
 export type VideoCheck = {
@@ -393,6 +396,22 @@ window.runGoldenVideoChecks = async (): Promise<VideoCheck[]> => {
 window.renderGoldenExport = async (scene: Scene): Promise<ExportedVideo> => {
   const { blob, codec, totalFrames } = await exportVideo({ scene });
   const bytes = new Uint8Array(await blob.arrayBuffer());
+  let streamed = new Uint8Array(0);
+  const writable = new WritableStream<StreamTargetChunk>({
+    write(chunk) {
+      const needed = chunk.position + chunk.data.length;
+      if (needed > streamed.length) {
+        const grown = new Uint8Array(needed);
+        grown.set(streamed);
+        streamed = grown;
+      }
+      streamed.set(chunk.data, chunk.position);
+    },
+  });
+  await exportVideoToStream({ scene }, writable, {
+    chunked: true,
+    chunkSize: 64 * 1024,
+  });
 
   return {
     size: bytes.length,
@@ -400,6 +419,8 @@ window.renderGoldenExport = async (scene: Scene): Promise<ExportedVideo> => {
     codec,
     totalFrames,
     header: Array.from(bytes.slice(0, 12)),
+    streamSize: streamed.length,
+    streamHeader: Array.from(streamed.slice(0, 12)),
   };
 };
 

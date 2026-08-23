@@ -29,8 +29,8 @@ best foundation for generated, editable, template-driven 2D video.
 | 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Committed in 0.6                             |
 | 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Committed in 0.7                             |
 | 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Committed in 0.8                             |
-| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Complete in 0.9 working tree                 |
-| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                      |
+| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Committed in 0.9                             |
+| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Complete in 0.10 working tree                |
 | 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                      |
 | 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                      |
 
@@ -157,10 +157,17 @@ contract.
 
 ## Milestone 6 — export runtime
 
-Move the standard export path into a Web Worker, add cancellation and progress,
-support streaming output targets, and expose an estimate/preflight report. A
-reference headless worker should consume the same scene/renderer contract for
-mobile or unsupported-browser fallback.
+Delivered in the 0.10 working tree:
+
+- frame/audio/resource estimation and export capability preflight;
+- buffered Blob and positional streaming WritableStream targets;
+- worker start/cancel/progress/complete/error protocol and typed client;
+- AbortController cancellation through resolution, frames, and muxing;
+- reusable worker handler/installer for browser or headless/cloud hosts;
+- worker extension compatibility enforcement with main-thread fallback;
+- browser reconstruction and validation of a streamed MP4.
+
+RFC 0007 defines the single-pipeline orchestration and output-target contract.
 
 ## Milestone 7 — agent tools
 

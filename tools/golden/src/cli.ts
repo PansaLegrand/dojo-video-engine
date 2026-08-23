@@ -186,6 +186,7 @@ async function runExportSmokeTest(page: Page): Promise<string[]> {
 
   const failures: string[] = [];
   const ftyp = String.fromCharCode(...exported.header.slice(4, 8));
+  const streamFtyp = String.fromCharCode(...exported.streamHeader.slice(4, 8));
 
   if (exported.size <= 0) {
     failures.push("export-smoke: produced an empty file");
@@ -200,6 +201,12 @@ async function runExportSmokeTest(page: Page): Promise<string[]> {
   if (exported.totalFrames !== fixture.scene.duration) {
     failures.push(
       `export-smoke: expected ${fixture.scene.duration} frames, got ${exported.totalFrames}`,
+    );
+  }
+
+  if (exported.streamSize <= 0 || streamFtyp !== "ftyp") {
+    failures.push(
+      `export-smoke: streamed MP4 is invalid (${exported.streamSize} bytes, header ${exported.streamHeader.join(",")})`,
     );
   }
 

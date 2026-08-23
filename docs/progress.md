@@ -1,5 +1,31 @@
 # Progress
 
+## 2026-08-24 (0.10 worker and streaming export)
+
+### Changed
+
+- Accepted RFC 0007 and refactored export around one pipeline with buffered and
+  positional-stream targets.
+- Added export estimates and capability/resource preflight.
+- Added the `@motionforge/export/worker` start/cancel/progress/result protocol,
+  typed client, worker installer, and reusable headless message handler.
+- Browser export smoke now reconstructs a streamed MP4 under backpressure and
+  validates its container header.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 589 unit tests, contract/determinism/schema/
+  migration lint, production builds, seven resource checks, buffered and
+  streamed browser MP4 smoke, all media/audio/pixel goldens, ten E2E checks,
+  CLI/starter smoke, and all ten 0.10.0 package dry-runs passed.
+- `pnpm verify:clean` packed/installed all ten 0.10.0 packages (including the
+  worker subpath) and built an external starter.
+
+### Notes
+
+- Worker and main-thread exports intentionally share every rendering, audio,
+  timing, and muxing function; only orchestration/output storage differs.
+
 ## 2026-08-24 (0.9 bounded media and audio)
 
 ### Changed
