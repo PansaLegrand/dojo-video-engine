@@ -27,8 +27,8 @@ best foundation for generated, editable, template-driven 2D video.
 | 0. Source of truth   | Reconcile the production engine, synchronize versions, enforce boundaries      | Committed in 0.4; downstream upgrade pending |
 | 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Committed in 0.5                             |
 | 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Committed in 0.6                             |
-| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Complete in 0.7 working tree                 |
-| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Planned                                      |
+| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Committed in 0.7                             |
+| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Complete in 0.8 working tree                 |
 | 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                      |
 | 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                      |
 | 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                      |
@@ -122,10 +122,21 @@ later additive refinements rather than milestone blockers.
 
 ## Milestone 4 — animation system
 
-Add serializable repeat, yoyo, stagger, sequence, named markers, motion paths,
-animated masks, and seeded procedural signals. Publish 30–40 carefully designed
-animation presets with parameter schemas, thumbnails, reduced-motion variants,
-and goldens. Preset names must compile away before rendering.
+Delivered in the 0.8 working tree:
+
+- finite/infinite repeat and yoyo playback;
+- named scene markers with builder, patch, inspection, and timeline support;
+- sequence, stagger, overlap/gap, and marker choreography compilers;
+- distance-weighted motion paths with optional tangent orientation;
+- animated mask opacity/feather/radius and seeded numeric signals;
+- numeric interpolation for matching filter chains;
+- 38 curated motion presets with parameter schemas, thumbnail metadata,
+  reduced-motion variants, catalog integration, and one browser contact-sheet
+  golden;
+- preset names and choreography instructions compile away before rendering.
+
+RFC 0005 defines the playback, compiler, accessibility, and determinism
+contract.
 
 ## Milestone 5 — media and audio
 

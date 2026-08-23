@@ -24,6 +24,8 @@ export type TimelinePosition = {
   at?: number;
   /** Start when this earlier entry's node id finishes. Default: previous entry. */
   after?: string;
+  /** Start at a previously declared named timeline marker. */
+  atMarker?: string;
   /** Start `overlap` frames before the reference point. */
   overlap?: number;
   /** Start `gap` frames after the reference point. */
@@ -40,6 +42,12 @@ type TimelineEntry = {
   animations: SceneAnimation[];
   startFrame: number;
   endFrame: number;
+};
+
+export type SequenceStep = {
+  id: string;
+  animations: SceneAnimation[];
+  position?: TimelinePosition;
 };
 
 /** Last keyframe across an animation list — the preset's natural length. */
@@ -76,6 +84,7 @@ function shifted(frames: Keyframes, offset: number): Keyframes {
 
 export class Timeline {
   private entries: TimelineEntry[] = [];
+  private markers = new Map<string, number>();
 
   /**
    * Adds one node's preset output to the timeline. Without a position it
@@ -132,9 +141,33 @@ export class Timeline {
     return this;
   }
 
+  sequence(steps: readonly SequenceStep[]): this {
+    steps.forEach((step) =>
+      this.add(step.id, step.animations, step.position ?? {}),
+    );
+    return this;
+  }
+
+  marker(name: string, at = this.durationInFrames): this {
+    if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(name)) {
+      throw new Error(`Invalid timeline marker name ${JSON.stringify(name)}.`);
+    }
+    if (!Number.isInteger(at) || at < 0) {
+      throw new Error(`Timeline marker frame must be a non-negative integer.`);
+    }
+    if (this.markers.has(name)) {
+      throw new Error(`Timeline marker "${name}" is already defined.`);
+    }
+    this.markers.set(name, at);
+    return this;
+  }
+
   /** Timeline frame where the last entry ends (0 when empty). */
   get durationInFrames(): number {
-    return this.entries.reduce((max, entry) => Math.max(max, entry.endFrame), 0);
+    return this.entries.reduce(
+      (max, entry) => Math.max(max, entry.endFrame),
+      0,
+    );
   }
 
   /**
@@ -170,6 +203,32 @@ export class Timeline {
     }));
   }
 
+  compileMarkers(): Record<string, number> {
+    return Object.fromEntries(
+      Array.from(this.markers.entries()).sort(([left], [right]) =>
+        left.localeCompare(right),
+      ),
+    );
+  }
+
+  compileScenePatch(): Array<
+    | {
+        op: "setAnimations";
+        id: string;
+        animations: SceneAnimation[];
+      }
+    | { op: "setMarker"; name: string; frame: number }
+  > {
+    return [
+      ...this.compileToPatch(),
+      ...Object.entries(this.compileMarkers()).map(([name, frame]) => ({
+        op: "setMarker" as const,
+        name,
+        frame,
+      })),
+    ];
+  }
+
   private resolveStart(position: TimelinePosition): number {
     const overlap = position.overlap ?? 0;
     const gap = position.gap ?? 0;
@@ -182,12 +241,26 @@ export class Timeline {
 
     let reference: number;
 
+    if (position.at !== undefined && position.atMarker !== undefined) {
+      throw new Error(
+        "Timeline position uses either `at` or `atMarker`, not both.",
+      );
+    }
+
     if (position.at !== undefined) {
       if (position.at < 0) {
         throw new Error(`Timeline \`at\` must be >= 0, got ${position.at}.`);
       }
 
       reference = position.at;
+    } else if (position.atMarker !== undefined) {
+      const marker = this.markers.get(position.atMarker);
+      if (marker === undefined) {
+        throw new Error(
+          `Timeline atMarker references unknown marker "${position.atMarker}".`,
+        );
+      }
+      reference = marker;
     } else if (position.after !== undefined) {
       const target = this.entries.find((entry) => entry.id === position.after);
 

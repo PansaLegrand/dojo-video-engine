@@ -3,6 +3,41 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.8.0 — 2026-08-24
+
+The animation-system release: repeatable scene playback and markers become
+first-class data, while higher-level choreography compiles to ordinary
+keyframes.
+
+### Scene and core
+
+- Added finite/infinite `repeat` and `yoyo` keyframe playback with deterministic
+  cycle mapping and endpoint holds.
+- Added bounded named scene markers across validation, builders, patches, and
+  inspection.
+- Added animated mask opacity/feather/radius targets and numeric interpolation
+  for matching filter chains.
+
+### Presets and choreography
+
+- Added timeline `.sequence()`, named `.marker()` positioning, marker output,
+  and scene-patch compilation while retaining existing stagger/overlap APIs.
+- Added pure distance-weighted `motionPath()`, deterministic `seededSignal()`,
+  and `maskReveal()` compilers.
+- Added a curated registry of 38 entrance, exit, emphasis, and ambient motion
+  presets with bounded parameter schemas, thumbnail metadata, and opacity-only
+  reduced-motion variants.
+- Preset names and sequencing intent compile away; stored scenes contain only
+  validated keyframe data.
+
+### Testing and documentation
+
+- Accepted [RFC 0005](docs/rfcs/0005-animation-system.md).
+- Added unit coverage for playback cycles, markers, path/signal/mask compilers,
+  every registry entry, reduced motion, and filter interpolation.
+- Added the exact-pixel `motion-preset-catalog` browser contact sheet covering
+  the complete curated registry.
+
 ## 0.7.0 — 2026-08-24
 
 The visual-primitives release: MotionForge gains a compact serializable vector

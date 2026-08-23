@@ -4,10 +4,12 @@ import {
   clipLayout,
   captionTemplateEntries,
   clipLayoutEntries,
+  compileMotionPreset,
   imageOverlay,
   imageOverlayTemplateEntries,
   mediaLook,
   mediaLookEntries,
+  motionPresetDefinitions,
   textOverlay,
   textOverlayTemplateEntries,
   transitionOverlay,
@@ -18,6 +20,7 @@ import {
   type ClipLayoutKey,
   type ImageOverlayTemplateKey,
   type MediaLookKey,
+  type MotionPresetName,
   type TextOverlaySlot,
   type TextOverlayTemplateKey,
   type TransitionTemplateKey,
@@ -39,7 +42,8 @@ export type PresetFamily =
   | "audio"
   | "media"
   | "layout"
-  | "transition";
+  | "transition"
+  | "motion";
 
 export type PresetCatalogItem = {
   family: PresetFamily;
@@ -77,9 +81,22 @@ export const presetFamilyLabels: Record<PresetFamily, string> = {
   media: "Media Looks",
   layout: "Clip Layouts",
   transition: "Transitions",
+  motion: "Motion",
 };
 
 export const presetCatalog: PresetCatalogItem[] = [
+  ...motionPresetDefinitions.map((preset) => ({
+    family: "motion" as const,
+    key: preset.name,
+    name: preset.label,
+    category: preset.category,
+    description: preset.description,
+    snippet: `import { compileMotionPreset } from "@motionforge/presets";
+
+node.animations = compileMotionPreset("${preset.name}", {
+  durationInFrames: 16,
+});`,
+  })),
   ...captionTemplateEntries.map(([key, preset]) => ({
     family: "subtitles" as const,
     key,
@@ -240,6 +257,32 @@ export function buildPresetPatchExample(
   }
 
   switch (item.family) {
+    case "motion": {
+      const target = findFirstNode(
+        parsed.scene.nodes,
+        (node) => node.type !== "audio",
+      );
+      if (!target) {
+        return {
+          ok: false,
+          title: "Patch unavailable",
+          reason: "The current scene has no visual node to animate.",
+        };
+      }
+      return {
+        ok: true,
+        title: `${item.name} patch`,
+        description: `Applies ${item.key} to ${target.id}.`,
+        patch: [
+          {
+            op: "setAnimations",
+            id: target.id,
+            animations: compileMotionPreset(item.key as MotionPresetName),
+          },
+        ],
+      };
+    }
+
     case "media":
       return buildMediaStylePatch(
         item,

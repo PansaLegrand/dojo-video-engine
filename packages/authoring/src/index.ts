@@ -111,6 +111,7 @@ export type MakeSceneOptions = {
   fps?: number;
   duration: TimeValue;
   assets?: Record<string, SceneAsset> | SceneAsset[];
+  markers?: Record<string, TimeValue>;
   children?: AuthorNode[];
 };
 
@@ -343,6 +344,10 @@ export function makeScene(options: MakeSceneOptions): Scene {
 
   for (const asset of normalizeAssets(options.assets)) {
     builder.asset(asset);
+  }
+
+  for (const [name, value] of Object.entries(options.markers ?? {})) {
+    builder.marker(name, toFrames(value, fps));
   }
 
   builder.children(

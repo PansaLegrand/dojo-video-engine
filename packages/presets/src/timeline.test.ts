@@ -4,7 +4,13 @@ import { fadeUp, popIn, slideIn } from "./index.js";
 import { timeline } from "./timeline.js";
 
 /** Frame where a property's motion begins (skipping the frame-0 hold). */
-function startOf(animations: { property: string; frames: { frame: number; value: unknown }[] }[], property: string): number {
+function startOf(
+  animations: {
+    property: string;
+    frames: { frame: number; value: unknown }[];
+  }[],
+  property: string,
+): number {
   const frames = animations.find((a) => a.property === property)?.frames ?? [];
   const [first, second] = frames;
   // A shifted list starts with a hold: two keys with the same value, the
@@ -69,9 +75,13 @@ describe("timeline", () => {
 
   it("stagger accepts a per-index preset factory", () => {
     const compiled = timeline()
-      .stagger(["a", "b"], (index) => popIn({ durationInFrames: 4 + index * 2 }), {
-        every: 3,
-      })
+      .stagger(
+        ["a", "b"],
+        (index) => popIn({ durationInFrames: 4 + index * 2 }),
+        {
+          every: 3,
+        },
+      )
       .compile();
 
     expect(startOf(compiled["a"] ?? [], "transform")).toBe(0);
@@ -89,9 +99,9 @@ describe("timeline", () => {
   });
 
   it("rejects duplicate ids, unknown after targets, and negative nudges", () => {
-    expect(() =>
-      timeline().add("x", popIn()).add("x", fadeUp()),
-    ).toThrow(/already has an entry/);
+    expect(() => timeline().add("x", popIn()).add("x", fadeUp())).toThrow(
+      /already has an entry/,
+    );
 
     expect(() => timeline().add("x", popIn(), { after: "ghost" })).toThrow(
       /unknown entry "ghost"/,
@@ -152,5 +162,39 @@ describe("timeline", () => {
       const opacity = sub?.animations?.find((a) => a.property === "opacity");
       expect(opacity?.frames[1]?.frame).toBe(7); // 10 - 3 overlap
     }
+  });
+
+  it("sequences steps against named markers and compiles marker patches", () => {
+    const choreography = timeline()
+      .marker("intro", 4)
+      .sequence([
+        {
+          id: "title",
+          animations: popIn({ durationInFrames: 8 }),
+          position: { atMarker: "intro" },
+        },
+        {
+          id: "subtitle",
+          animations: fadeUp({ durationInFrames: 6 }),
+        },
+      ])
+      .marker("content");
+
+    expect(startOf(choreography.compile().title ?? [], "transform")).toBe(4);
+    expect(choreography.compileMarkers()).toEqual({ content: 18, intro: 4 });
+    expect(choreography.compileScenePatch()).toContainEqual({
+      op: "setMarker",
+      name: "intro",
+      frame: 4,
+    });
+  });
+
+  it("rejects unknown or duplicate markers", () => {
+    expect(() =>
+      timeline().add("title", popIn(), { atMarker: "missing" }),
+    ).toThrow(/unknown marker/);
+    expect(() => timeline().marker("intro").marker("intro")).toThrow(
+      /already defined/,
+    );
   });
 });

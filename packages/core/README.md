@@ -49,6 +49,7 @@ Stable for 0.x integrations:
 - Builder API: `composition()`, `div()`, `text()`, `richText()`, `img()`, `video()`, `audio()`, `lottie()`, `effect()`, `extension()`, `shape()`, `SceneBuilder`, `NodeBuilder`, and their option types.
 - Evaluation and layout: `evaluateScene()`, `layoutScene()`, `ResolvedScene`, `ResolvedNode`, `LayoutScene`, and `LayoutBox`.
 - Keyframe evaluation and deterministic easing: `evaluateKeyframes()`, `applyEasing()`, `cubicBezierEasing()`, and `springEasing()`.
+- Repeat/yoyo playback, animated mask targets, filter interpolation, and named `SceneBuilder.marker()` output.
 - Text measurement helpers used by renderers/editors: `wrapTextLines()`, `prepareTextLines()`, and `prepareTextLayout()`.
 - Per-side spacing, composable `safeArea` insets, and `aspectRatio` layout, including `parseAspectRatio()` for tools that mirror inspector geometry.
 

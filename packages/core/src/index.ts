@@ -89,6 +89,7 @@ export class SceneBuilder {
   private readonly options: CompositionOptions;
   private readonly assets: Record<string, SceneAsset> = {};
   private readonly childBuilders: NodeBuilder[] = [];
+  private readonly markers: Record<string, number> = {};
 
   constructor(options: CompositionOptions) {
     this.options = options;
@@ -104,6 +105,11 @@ export class SceneBuilder {
     return this;
   }
 
+  marker(name: string, frame: number): this {
+    this.markers[name] = frame;
+    return this;
+  }
+
   toJSON(): Scene {
     const counter: IdCounter = { next: 0 };
 
@@ -114,6 +120,15 @@ export class SceneBuilder {
       fps: this.options.fps,
       duration: this.options.duration,
       assets: structuredClone(this.assets),
+      ...(Object.keys(this.markers).length > 0
+        ? {
+            markers: Object.fromEntries(
+              Object.entries(this.markers).sort(([left], [right]) =>
+                left.localeCompare(right),
+              ),
+            ),
+          }
+        : {}),
       nodes: this.childBuilders.map((node) => node.build(counter)),
     });
   }
@@ -330,16 +345,31 @@ function evaluateNode(
   }
 
   const style = { ...(node.style ?? {}) };
+  const mask = node.mask ? { ...node.mask } : undefined;
 
   for (const animation of node.animations ?? []) {
     if (animation.kind === "keyframes") {
-      const value = evaluateKeyframes(animation.frames, localFrame);
+      const value = evaluateKeyframes(
+        animation.frames,
+        resolveAnimationFrame(animation, localFrame),
+      );
       if (value !== undefined) {
         if (animation.property === "transform" && typeof value !== "string") {
           continue;
         }
 
-        (style as Record<string, unknown>)[animation.property] = value;
+        if (animation.property === "mask.opacity" && mask) {
+          mask.opacity = clampNumber(value, 0, 1, mask.opacity ?? 1);
+        } else if (animation.property === "mask.feather" && mask) {
+          mask.feather = clampNumber(value, 0, 256, mask.feather ?? 0);
+        } else if (
+          animation.property === "mask.radius" &&
+          mask?.shape.kind === "rect"
+        ) {
+          mask.shape = { ...mask.shape, radius: value };
+        } else {
+          (style as Record<string, unknown>)[animation.property] = value;
+        }
       }
     }
   }
@@ -352,10 +382,48 @@ function evaluateNode(
     {
       ...node,
       style,
+      ...(mask ? { mask } : {}),
       localFrame,
       children,
     },
   ];
+}
+
+export function resolveAnimationFrame(
+  animation: SceneAnimation,
+  frame: number,
+): number {
+  const first = animation.frames[0];
+  const last = animation.frames[animation.frames.length - 1];
+  if (!first || !last || frame <= first.frame) return frame;
+  const span = last.frame - first.frame;
+  if (span <= 0) return last.frame;
+  const repeat = animation.repeat ?? 0;
+  const elapsed = frame - first.frame;
+  const cycles = repeat === "infinite" ? Number.POSITIVE_INFINITY : repeat + 1;
+  const total = span * cycles;
+  if (elapsed >= total) {
+    return animation.yoyo && repeat !== "infinite" && repeat % 2 === 1
+      ? first.frame
+      : last.frame;
+  }
+  const iteration = Math.floor(elapsed / span);
+  const within = elapsed % span;
+  return (
+    first.frame +
+    (animation.yoyo && iteration % 2 === 1 ? span - within : within)
+  );
+}
+
+function clampNumber(
+  value: string | number,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(max, Math.max(min, value))
+    : fallback;
 }
 
 /**
@@ -417,6 +485,13 @@ export function evaluateKeyframes(
         return mixed;
       }
     }
+
+    const fromFilter = parseFilter(prev.value);
+    const toFilter = parseFilter(next.value);
+    if (fromFilter && toFilter) {
+      const mixedFilter = mixFilters(fromFilter, toFilter, t);
+      if (mixedFilter !== null) return mixedFilter;
+    }
   }
 
   // Non-interpolatable values step at the next keyframe.
@@ -427,6 +502,81 @@ export type TransformFunction = {
   name: "translate" | "scale" | "rotate";
   args: Array<{ value: number; unit: "px" | "%" | "deg" | "" }>;
 };
+
+export type FilterFunction = {
+  name:
+    | "brightness"
+    | "contrast"
+    | "saturate"
+    | "grayscale"
+    | "sepia"
+    | "invert"
+    | "opacity"
+    | "hue-rotate"
+    | "blur";
+  value: number;
+  unit: "" | "%" | "deg" | "px";
+};
+
+export function parseFilter(value: string): FilterFunction[] | null {
+  const trimmed = value.trim();
+  if (trimmed === "" || trimmed === "none") return null;
+  const matches = Array.from(trimmed.matchAll(/([a-z-]+)\(([^)]+)\)/g));
+  if (trimmed.replace(/([a-z-]+)\(([^)]+)\)/g, "").trim() !== "") return null;
+  const allowed = new Set<FilterFunction["name"]>([
+    "brightness",
+    "contrast",
+    "saturate",
+    "grayscale",
+    "sepia",
+    "invert",
+    "opacity",
+    "hue-rotate",
+    "blur",
+  ]);
+  const result: FilterFunction[] = [];
+  for (const match of matches) {
+    const name = match[1] as FilterFunction["name"];
+    const parsed = (match[2] ?? "")
+      .trim()
+      .match(/^(-?\d+(?:\.\d+)?)(%|deg|px)?$/);
+    if (!allowed.has(name) || !parsed) return null;
+    result.push({
+      name,
+      value: Number.parseFloat(parsed[1] ?? "0"),
+      unit: (parsed[2] ?? "") as FilterFunction["unit"],
+    });
+  }
+  return result.length > 0 ? result : null;
+}
+
+function mixFilters(
+  from: FilterFunction[],
+  to: FilterFunction[],
+  t: number,
+): string | null {
+  if (from.length !== to.length) return null;
+  const parts: string[] = [];
+  for (let index = 0; index < from.length; index += 1) {
+    const left = from[index];
+    const right = to[index];
+    if (
+      !left ||
+      !right ||
+      left.name !== right.name ||
+      left.unit !== right.unit
+    ) {
+      return null;
+    }
+    const value = left.value + (right.value - left.value) * t;
+    parts.push(`${left.name}(${formatInterpolatedNumber(value)}${left.unit})`);
+  }
+  return parts.join(" ");
+}
+
+function formatInterpolatedNumber(value: number): string {
+  return String(Number(value.toFixed(5)));
+}
 
 /**
  * Parses a transform list of translate()/scale()/rotate() into normalized

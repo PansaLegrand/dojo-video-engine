@@ -1,5 +1,33 @@
 # Progress
 
+## 2026-08-24 (0.8 animation system)
+
+### Changed
+
+- Accepted RFC 0005 and added deterministic finite/infinite repeat plus yoyo
+  playback to keyframe tracks.
+- Added named scene markers across schema, core builders, patches, inspection,
+  and timeline choreography.
+- Added timeline sequence/marker compilation, distance-weighted motion paths,
+  seeded numeric signals, animated mask reveals, and filter interpolation.
+- Added 38 schema-backed curated motion presets with metadata, catalog entries,
+  thumbnail frames, and reduced-motion variants; all compile to plain keyframes.
+- Added a pinned-browser contact sheet rendering every motion preset.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 573 unit tests, contract/determinism/schema/
+  migration lint, production builds, six resource checks, all browser goldens
+  including the motion contact sheet, ten E2E checks, CLI/starter smoke, and
+  all ten 0.8.0 package dry-runs passed.
+- `pnpm verify:clean` packed/installed all ten 0.8.0 packages and validated,
+  migrated, inspected, linted, and built a temporary external starter.
+
+### Notes
+
+- Preset identity remains authoring metadata and never enters scene JSON.
+- Infinite animations remain bounded by their owning node and scene duration.
+
 ## 2026-08-24 (0.7 visual primitives)
 
 ### Changed

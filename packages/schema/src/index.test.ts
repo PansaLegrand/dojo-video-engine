@@ -734,6 +734,61 @@ describe("scene schema", () => {
     );
   });
 
+  it("validates repeat/yoyo playback and named scene markers", () => {
+    const valid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      markers: { intro: 0, "beat.drop": 24, outro: 48 },
+      nodes: [
+        {
+          id: "pulse",
+          type: "div",
+          animations: [
+            {
+              kind: "keyframes",
+              property: "opacity",
+              frames: [
+                { frame: 0, value: 0.4 },
+                { frame: 10, value: 1 },
+              ],
+              repeat: "infinite",
+              yoyo: true,
+            },
+          ],
+        },
+      ],
+    });
+    expect(valid.ok).toBe(true);
+
+    const invalid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      markers: { "9bad marker": 60 },
+      nodes: [],
+    });
+    const errors = invalid.ok ? "" : invalid.errors.join("\n");
+    expect(errors).toContain("Marker names must start with a letter");
+    expect(errors).toContain("must be inside the scene duration");
+
+    expect(
+      validateScene({
+        schemaVersion: 0,
+        width: 320,
+        height: 180,
+        fps: 30,
+        duration: 60,
+        markers: { intro: 0 },
+        nodes: [],
+      }).ok,
+    ).toBe(false);
+  });
+
   it("accepts trim and rate on video nodes, rejects them elsewhere", () => {
     const valid = validateScene({
       schemaVersion: 1,

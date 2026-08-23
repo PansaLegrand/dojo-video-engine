@@ -20,6 +20,7 @@ type Scene = {
   fps: number; // positive integer, frames per second
   duration: number; // positive integer, total frames
   assets: Record<string, Asset>;
+  markers?: Record<string, number>; // named in-range scene frames
   nodes: SceneNode[];
 };
 
@@ -370,6 +371,8 @@ type SceneAnimation = {
     // | "spring" | "spring(bounce)"      (bounce in [0, 1); 0 = no overshoot)
     easing?: string;
   }>;
+  repeat?: number | "infinite"; // additional cycles
+  yoyo?: boolean; // alternate direction on repeated cycles
 };
 ```
 
@@ -377,9 +380,12 @@ type SceneAnimation = {
 - Numeric values interpolate; `easing` on a keyframe shapes the segment _arriving at_ that keyframe (quadratic ease curves).
 - String values that both parse as colors (`#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()`) interpolate per-channel in RGBA space, emitting `rgba(...)` strings. Named colors, gradients, and other strings do not interpolate.
 - **Transform strings tween** when both keyframes are `translate`/`scale`/`rotate` lists with matching function sequences and matching units per slot (`scale(1) → scale(1.4)`, `translate(0px, -40px) → translate(0px, 40px)`). Mismatched sequences or unit conflicts (e.g. `px` → `%`) step instead, like CSS.
+- Matching filter chains interpolate numeric arguments; mismatched functions or units step.
 - `spring` easings may overshoot past the target value mid-tween (that is the point); the final keyframe value is always exact.
 - Other string values step: the value changes exactly at the next keyframe's frame.
 - Before the first keyframe the first value holds; after the last keyframe the last value holds.
+- `repeat` replays the track; `yoyo` reverses every alternate cycle. Infinite repeat remains bounded by node/scene duration.
+- `mask.opacity`, `mask.feather`, and rectangle `mask.radius` animate mask data rather than style.
 - The animated value overrides the node's static `style` value for that property at that frame.
 
 ## Validation invariants
@@ -387,6 +393,7 @@ type SceneAnimation = {
 Beyond per-field types, `parseScene` / `validateScene` enforce:
 
 - Node `id`s are unique across the entire scene tree (they are the handle for patching and diffing).
+- Marker names are bounded identifiers and marker frames lie inside scene duration.
 - Every key in `scene.assets` equals that asset's `id`.
 - `text` nodes require a `text` string.
 - `img` and `video` nodes require an `assetId` pointing at `scene.assets`.

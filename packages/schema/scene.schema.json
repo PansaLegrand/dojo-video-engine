@@ -35,24 +35,14 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "image",
-                  "video",
-                  "audio",
-                  "font",
-                  "lottie"
-                ]
+                "enum": ["image", "video", "audio", "font", "lottie"]
               },
               "src": {
                 "type": "string",
                 "minLength": 1
               }
             },
-            "required": [
-              "id",
-              "type",
-              "src"
-            ],
+            "required": ["id", "type", "src"],
             "additionalProperties": false
           },
           "default": {}
@@ -113,9 +103,7 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": [
-                    "text"
-                  ],
+                  "required": ["text"],
                   "additionalProperties": false
                 },
                 "minItems": 1,
@@ -158,11 +146,7 @@
                 "properties": {
                   "intensity": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "medium",
-                      "high"
-                    ]
+                    "enum": ["low", "medium", "high"]
                   },
                   "seed": {
                     "type": "integer",
@@ -204,11 +188,7 @@
                   },
                   "density": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "medium",
-                      "high"
-                    ]
+                    "enum": ["low", "medium", "high"]
                   },
                   "loops": {
                     "type": "integer",
@@ -256,10 +236,7 @@
                   },
                   "scope": {
                     "type": "string",
-                    "enum": [
-                      "text",
-                      "frame"
-                    ]
+                    "enum": ["text", "frame"]
                   },
                   "audioAssetId": {
                     "type": "string",
@@ -330,11 +307,7 @@
                     }
                   }
                 },
-                "required": [
-                  "name",
-                  "version",
-                  "params"
-                ],
+                "required": ["name", "version", "params"],
                 "additionalProperties": false
               },
               "shape": {
@@ -347,15 +320,10 @@
                         "const": "rect"
                       },
                       "radius": {
-                        "type": [
-                          "number",
-                          "string"
-                        ]
+                        "type": ["number", "string"]
                       }
                     },
-                    "required": [
-                      "kind"
-                    ],
+                    "required": ["kind"],
                     "additionalProperties": false
                   },
                   {
@@ -366,9 +334,7 @@
                         "const": "ellipse"
                       }
                     },
-                    "required": [
-                      "kind"
-                    ],
+                    "required": ["kind"],
                     "additionalProperties": false
                   },
                   {
@@ -397,10 +363,7 @@
                                 "maximum": 16
                               }
                             },
-                            "required": [
-                              "x",
-                              "y"
-                            ],
+                            "required": ["x", "y"],
                             "additionalProperties": false
                           },
                           {
@@ -409,10 +372,7 @@
                         ]
                       }
                     },
-                    "required": [
-                      "kind",
-                      "points"
-                    ],
+                    "required": ["kind", "points"],
                     "additionalProperties": false
                   },
                   {
@@ -431,10 +391,7 @@
                         "maxItems": 256
                       }
                     },
-                    "required": [
-                      "kind",
-                      "points"
-                    ],
+                    "required": ["kind", "points"],
                     "additionalProperties": false
                   },
                   {
@@ -453,10 +410,7 @@
                         "maxItems": 256
                       }
                     },
-                    "required": [
-                      "kind",
-                      "points"
-                    ],
+                    "required": ["kind", "points"],
                     "additionalProperties": false
                   },
                   {
@@ -490,27 +444,15 @@
                             "exclusiveMinimum": 0
                           }
                         },
-                        "required": [
-                          "x",
-                          "y",
-                          "width",
-                          "height"
-                        ],
+                        "required": ["x", "y", "width", "height"],
                         "additionalProperties": false
                       },
                       "fillRule": {
                         "type": "string",
-                        "enum": [
-                          "nonzero",
-                          "evenodd"
-                        ]
+                        "enum": ["nonzero", "evenodd"]
                       }
                     },
-                    "required": [
-                      "kind",
-                      "d",
-                      "viewBox"
-                    ],
+                    "required": ["kind", "d", "viewBox"],
                     "additionalProperties": false
                   }
                 ]
@@ -538,9 +480,7 @@
                     "maximum": 256
                   }
                 },
-                "required": [
-                  "shape"
-                ],
+                "required": ["shape"],
                 "additionalProperties": false
               },
               "videoStartTime": {
@@ -578,10 +518,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "frame",
-                    "value"
-                  ],
+                  "required": ["frame", "value"],
                   "additionalProperties": false
                 },
                 "minItems": 1
@@ -606,10 +543,7 @@
                   },
                   "flexDirection": {
                     "type": "string",
-                    "enum": [
-                      "row",
-                      "column"
-                    ]
+                    "enum": ["row", "column"]
                   },
                   "justifyContent": {
                     "type": "string",
@@ -622,12 +556,7 @@
                   },
                   "alignItems": {
                     "type": "string",
-                    "enum": [
-                      "flex-start",
-                      "center",
-                      "flex-end",
-                      "stretch"
-                    ]
+                    "enum": ["flex-start", "center", "flex-end", "stretch"]
                   },
                   "gap": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
@@ -712,10 +641,7 @@
                   },
                   "position": {
                     "type": "string",
-                    "enum": [
-                      "relative",
-                      "absolute"
-                    ]
+                    "enum": ["relative", "absolute"]
                   },
                   "left": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
@@ -753,19 +679,11 @@
                   },
                   "strokeLineCap": {
                     "type": "string",
-                    "enum": [
-                      "butt",
-                      "round",
-                      "square"
-                    ]
+                    "enum": ["butt", "round", "square"]
                   },
                   "strokeLineJoin": {
                     "type": "string",
-                    "enum": [
-                      "bevel",
-                      "round",
-                      "miter"
-                    ]
+                    "enum": ["bevel", "round", "miter"]
                   },
                   "strokeDash": {
                     "type": "array",
@@ -798,10 +716,7 @@
                   },
                   "overflow": {
                     "type": "string",
-                    "enum": [
-                      "visible",
-                      "hidden"
-                    ]
+                    "enum": ["visible", "hidden"]
                   },
                   "opacity": {
                     "type": "number",
@@ -852,45 +767,28 @@
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "fontWeight": {
-                    "type": [
-                      "number",
-                      "string"
-                    ]
+                    "type": ["number", "string"]
                   },
                   "fontStyle": {
                     "type": "string",
-                    "enum": [
-                      "normal",
-                      "italic"
-                    ]
+                    "enum": ["normal", "italic"]
                   },
                   "color": {
                     "type": "string"
                   },
                   "lineHeight": {
-                    "type": [
-                      "number",
-                      "string"
-                    ]
+                    "type": ["number", "string"]
                   },
                   "letterSpacing": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "textAlign": {
                     "type": "string",
-                    "enum": [
-                      "left",
-                      "center",
-                      "right"
-                    ]
+                    "enum": ["left", "center", "right"]
                   },
                   "direction": {
                     "type": "string",
-                    "enum": [
-                      "ltr",
-                      "rtl",
-                      "inherit"
-                    ]
+                    "enum": ["ltr", "rtl", "inherit"]
                   },
                   "textShadow": {
                     "type": "string"
@@ -907,18 +805,11 @@
                   },
                   "textFit": {
                     "type": "string",
-                    "enum": [
-                      "wrap",
-                      "shrink",
-                      "truncate"
-                    ]
+                    "enum": ["wrap", "shrink", "truncate"]
                   },
                   "textOverflow": {
                     "type": "string",
-                    "enum": [
-                      "clip",
-                      "ellipsis"
-                    ]
+                    "enum": ["clip", "ellipsis"]
                   },
                   "textBackgroundColor": {
                     "type": "string"
@@ -937,23 +828,14 @@
                   },
                   "objectFit": {
                     "type": "string",
-                    "enum": [
-                      "contain",
-                      "cover",
-                      "fill",
-                      "none",
-                      "scale-down"
-                    ]
+                    "enum": ["contain", "cover", "fill", "none", "scale-down"]
                   },
                   "objectPosition": {
                     "type": "string"
                   },
                   "imageRendering": {
                     "type": "string",
-                    "enum": [
-                      "auto",
-                      "pixelated"
-                    ]
+                    "enum": ["auto", "pixelated"]
                   },
                   "pixelSize": {
                     "type": "number",
@@ -987,29 +869,35 @@
                             "minimum": 0
                           },
                           "value": {
-                            "type": [
-                              "number",
-                              "string"
-                            ]
+                            "type": ["number", "string"]
                           },
                           "easing": {
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "frame",
-                          "value"
-                        ],
+                        "required": ["frame", "value"],
                         "additionalProperties": false
                       },
                       "minItems": 1
+                    },
+                    "repeat": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        {
+                          "type": "string",
+                          "const": "infinite"
+                        }
+                      ]
+                    },
+                    "yoyo": {
+                      "type": "boolean"
                     }
                   },
-                  "required": [
-                    "kind",
-                    "property",
-                    "frames"
-                  ],
+                  "required": ["kind", "property", "frames"],
                   "additionalProperties": false
                 },
                 "default": []
@@ -1022,22 +910,20 @@
                 "default": []
               }
             },
-            "required": [
-              "id",
-              "type"
-            ],
+            "required": ["id", "type"],
             "additionalProperties": false
           },
           "default": []
+        },
+        "markers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       },
-      "required": [
-        "schemaVersion",
-        "width",
-        "height",
-        "fps",
-        "duration"
-      ],
+      "required": ["schemaVersion", "width", "height", "fps", "duration"],
       "additionalProperties": false
     }
   },

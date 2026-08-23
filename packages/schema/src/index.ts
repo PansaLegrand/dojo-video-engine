@@ -331,6 +331,10 @@ export const animationSchema = z
     kind: z.literal("keyframes"),
     property: z.string().min(1),
     frames: z.array(keyframeSchema).min(1),
+    repeat: z
+      .union([z.number().int().min(0).max(1000), z.literal("infinite")])
+      .optional(),
+    yoyo: z.boolean().optional(),
   })
   .superRefine((animation, ctx) => {
     for (let index = 1; index < animation.frames.length; index += 1) {
@@ -931,7 +935,10 @@ function createSceneNodeSchema(
 export const sceneNodeSchema = createSceneNodeSchema(true);
 const legacySceneNodeSchema = createSceneNodeSchema(false);
 
-function sceneDocumentFields(nodeSchema: z.ZodType<SceneNodeInput>) {
+function sceneDocumentFields(
+  nodeSchema: z.ZodType<SceneNodeInput>,
+  includeCurrentFeatures: boolean,
+) {
   return {
     width: z.number().int().positive(),
     height: z.number().int().positive(),
@@ -939,12 +946,17 @@ function sceneDocumentFields(nodeSchema: z.ZodType<SceneNodeInput>) {
     duration: z.number().int().positive(),
     assets: z.record(assetSchema).default({}),
     nodes: z.array(nodeSchema).default([]),
+    markers: includeCurrentFeatures
+      ? z.record(z.number().int().nonnegative()).optional()
+      : z.never().optional(),
   };
 }
 
 type SceneDocumentForValidation = {
+  duration: number;
   assets: Record<string, SceneAsset>;
   nodes: SceneNodeInput[];
+  markers?: Record<string, number>;
 };
 
 const nodeAssetTypes: Partial<
@@ -960,6 +972,23 @@ function validateSceneDocument(
   scene: SceneDocumentForValidation,
   ctx: z.RefinementCtx,
 ): void {
+  for (const [name, frame] of Object.entries(scene.markers ?? {})) {
+    if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(name)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["markers", name],
+        message:
+          "Marker names must start with a letter and use at most 64 letters, numbers, dot, underscore, or hyphen characters.",
+      });
+    }
+    if (frame >= scene.duration) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["markers", name],
+        message: `Marker "${name}" at frame ${frame} must be inside the scene duration.`,
+      });
+    }
+  }
   for (const [id, asset] of Object.entries(scene.assets)) {
     if (id !== asset.id) {
       ctx.addIssue({
@@ -1054,7 +1083,7 @@ function validateSceneDocument(
 export const legacySceneV0Schema = z
   .object({
     schemaVersion: z.literal(0),
-    ...sceneDocumentFields(legacySceneNodeSchema),
+    ...sceneDocumentFields(legacySceneNodeSchema, false),
   })
   .superRefine(validateSceneDocument);
 
@@ -1062,7 +1091,7 @@ export const legacySceneV0Schema = z
 export const sceneSchema = z
   .object({
     schemaVersion: z.literal(1),
-    ...sceneDocumentFields(sceneNodeSchema),
+    ...sceneDocumentFields(sceneNodeSchema, true),
   })
   .superRefine(validateSceneDocument);
 

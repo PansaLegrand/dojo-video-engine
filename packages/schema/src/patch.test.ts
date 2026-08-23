@@ -478,6 +478,19 @@ describe("applyScenePatch", () => {
     expect(scene.width).toBe(1080);
   });
 
+  it("sets and removes named markers", () => {
+    const scene = applied([
+      { op: "setMarker", name: "intro", frame: 0 },
+      { op: "setMarker", name: "beat.drop", frame: 24 },
+      { op: "setMarker", name: "intro", frame: null },
+    ]);
+
+    expect(scene.markers).toEqual({ "beat.drop": 24 });
+    expect(
+      rejected([{ op: "setMarker", name: "outside", frame: 90 }])[0]?.message,
+    ).toContain("must be inside the scene duration");
+  });
+
   it("reports malformed patches with op indexes", () => {
     const errors = rejected([
       { op: "setText", id: "title", text: "ok" },

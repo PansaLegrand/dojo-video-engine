@@ -82,6 +82,10 @@ subtree as one group, `safeArea` supplies engine-level containing-block
 insets, and text nodes may replace plain `text` with metric-stable inline
 `runs` for color, opacity, stroke, and background styling.
 
+Keyframe tracks may repeat finitely or infinitely and alternate with `yoyo`.
+Scenes may declare bounded named frame markers for choreography, seeking, and
+agent edits.
+
 ### JSON Schema
 
 For tools and agents that want to validate scenes without running code, the package exports a JSON Schema (draft-07) and ships it as `scene.schema.json`:

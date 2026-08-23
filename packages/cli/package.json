@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/cli",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Command-line validation and inspection tools for MotionForge scene modules.",
   "keywords": [
     "motionforge",

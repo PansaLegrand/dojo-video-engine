@@ -267,6 +267,17 @@ describe("@motionforge/authoring", () => {
     });
   });
 
+  it("authors seconds-first named markers", () => {
+    const scene = makeScene({
+      size: "landscape",
+      fps: 30,
+      duration: seconds(4),
+      markers: { intro: seconds(0), "beat.drop": seconds(1.5) },
+    });
+
+    expect(scene.markers).toEqual({ "beat.drop": 45, intro: 0 });
+  });
+
   it("builds audio overlays with asset registration and role defaults", () => {
     const music = audioAsset("music", publicAsset("assets/music.mp3"));
     const ping = audioAsset("ping", publicAsset("assets/ping.wav"));

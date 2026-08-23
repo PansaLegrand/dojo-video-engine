@@ -152,6 +152,13 @@ const setSceneMetaOp = z.object({
   duration: z.number().int().positive().optional(),
 });
 
+const setMarkerOp = z.object({
+  op: z.literal("setMarker"),
+  name: z.string().min(1),
+  /** Null removes the marker. */
+  frame: z.number().int().nonnegative().nullable(),
+});
+
 export const sceneOpSchema = z.discriminatedUnion("op", [
   setStyleOp,
   setTextOp,
@@ -164,6 +171,7 @@ export const sceneOpSchema = z.discriminatedUnion("op", [
   setAssetOp,
   removeAssetOp,
   setSceneMetaOp,
+  setMarkerOp,
 ]);
 
 export const scenePatchSchema = z.array(sceneOpSchema);
@@ -534,6 +542,19 @@ function applyOp(draft: Scene, op: SceneOp): string | null {
       if (op.height !== undefined) draft.height = op.height;
       if (op.fps !== undefined) draft.fps = op.fps;
       if (op.duration !== undefined) draft.duration = op.duration;
+      return null;
+    }
+
+    case "setMarker": {
+      draft.markers = draft.markers ?? {};
+      if (op.frame === null) {
+        delete draft.markers[op.name];
+      } else {
+        draft.markers[op.name] = op.frame;
+      }
+      if (Object.keys(draft.markers).length === 0) {
+        delete draft.markers;
+      }
       return null;
     }
   }

@@ -9,6 +9,7 @@ describe("scene inspection", () => {
       height: 180,
       fps: 30,
       duration: 90,
+      markers: { intro: 0, outro: 75 },
       assets: {
         music: { id: "music", type: "audio", src: "music.mp3" },
         font: { id: "font", type: "font", src: "font.woff2" },
@@ -71,6 +72,7 @@ describe("scene inspection", () => {
     expect(inspection).toMatchObject({
       schemaVersion: 1,
       durationSeconds: 3,
+      markers: { total: 2, names: ["intro", "outro"] },
       assets: { total: 2, audio: 1, font: 1 },
       nodes: {
         total: 5,

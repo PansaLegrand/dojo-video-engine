@@ -10,11 +10,13 @@ import {
   layoutScene,
   lottie,
   parseColor,
+  parseFilter,
   parseAspectRatio,
   parseTransform,
   prepareTextLayout,
   prepareTextLines,
   richText,
+  resolveAnimationFrame,
   sampleScene,
   shape,
   springEasing,
@@ -155,6 +157,20 @@ describe("builder", () => {
       ],
     });
     expect(scene.nodes[0]?.text).toBeUndefined();
+  });
+
+  it("builds sorted named scene markers", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+    })
+      .marker("outro", 48)
+      .marker("intro", 0)
+      .toJSON();
+
+    expect(scene.markers).toEqual({ intro: 0, outro: 48 });
   });
 
   it("reflects builder mutations made after attaching to a parent", () => {
@@ -331,6 +347,65 @@ describe("animation evaluator", () => {
 
     expect(evaluateKeyframes(frames, 9)).toBe("left");
     expect(evaluateKeyframes(frames, 10)).toBe("right");
+  });
+});
+
+describe("animation playback", () => {
+  const repeated = {
+    kind: "keyframes" as const,
+    property: "opacity",
+    frames: [
+      { frame: 0, value: 0 },
+      { frame: 10, value: 1 },
+    ],
+    repeat: 2,
+    yoyo: true,
+  };
+
+  it("maps repeated and yoyo cycles deterministically", () => {
+    expect(resolveAnimationFrame(repeated, 0)).toBe(0);
+    expect(resolveAnimationFrame(repeated, 10)).toBe(10);
+    expect(resolveAnimationFrame(repeated, 15)).toBe(5);
+    expect(resolveAnimationFrame(repeated, 20)).toBe(0);
+    expect(resolveAnimationFrame(repeated, 30)).toBe(10);
+  });
+
+  it("animates mask opacity and feather as bounded node data", () => {
+    const scene = composition({
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+    })
+      .children(
+        div({
+          id: "masked",
+          mask: { shape: { kind: "ellipse" }, opacity: 0, feather: 20 },
+        })
+          .animate("mask.opacity", [
+            { frame: 0, value: 0 },
+            { frame: 10, value: 1 },
+          ])
+          .animate("mask.feather", [
+            { frame: 0, value: 20 },
+            { frame: 10, value: 0 },
+          ]),
+      )
+      .toJSON();
+    const node = evaluateScene(scene, 5).nodes[0];
+
+    expect(node?.mask?.opacity).toBe(0.5);
+    expect(node?.mask?.feather).toBe(10);
+  });
+
+  it("interpolates matching filter chains", () => {
+    const frames = [
+      { frame: 0, value: "blur(18px) brightness(0.8)" },
+      { frame: 10, value: "blur(0px) brightness(1.2)" },
+    ];
+    expect(evaluateKeyframes(frames, 5)).toBe("blur(9px) brightness(1)");
+    expect(parseFilter("blur(4px) saturate(120%)")).toHaveLength(2);
+    expect(parseFilter("none")).toBeNull();
   });
 });
 

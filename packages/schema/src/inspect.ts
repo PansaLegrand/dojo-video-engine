@@ -14,6 +14,7 @@ export type SceneInspection = {
   fps: number;
   durationFrames: number;
   durationSeconds: number;
+  markers: { total: number; names: string[] };
   assets: { total: number } & Record<SceneAsset["type"], number>;
   nodes: { total: number; root: number } & Record<SceneNode["type"], number>;
   effects: Partial<Record<SceneEffectName, number>>;
@@ -124,6 +125,10 @@ export function inspectScene(input: unknown): SceneInspection {
     fps: scene.fps,
     durationFrames: scene.duration,
     durationSeconds: scene.duration / scene.fps,
+    markers: {
+      total: Object.keys(scene.markers ?? {}).length,
+      names: Object.keys(scene.markers ?? {}).sort(),
+    },
     assets,
     nodes,
     effects,

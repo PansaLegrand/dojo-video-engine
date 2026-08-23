@@ -5,6 +5,8 @@ import type {
   VolumeEnvelope,
 } from "@motionforge/schema";
 
+export * from "./motion.js";
+
 export type MotionPresetOptions = {
   /** Length of the motion in frames (default 10). */
   durationInFrames?: number;

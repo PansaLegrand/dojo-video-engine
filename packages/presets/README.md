@@ -22,7 +22,29 @@ const node = {
 };
 ```
 
-`popIn`, `fadeUp`, `slideIn(direction)`, and `pulse` accept `durationInFrames`, `delay` (held from frame 0), and an `easing` expression (`spring(bounce)` and `cubic-bezier(...)` included). They use real transform tweens — `scale(0.8) → scale(1)` interpolates.
+`popIn`, `fadeUp`, `slideIn(direction)`, and `pulse` remain convenient direct
+helpers. The registry adds 38 discoverable presets:
+
+```ts
+import {
+  compileMotionPreset,
+  motionPresetDefinitions,
+} from "@motionforge/presets";
+
+node.animations = compileMotionPreset("bounceIn", {
+  durationInFrames: 18,
+  intensity: 0.8,
+});
+
+const accessible = compileMotionPreset(
+  "slideInLeft",
+  {},
+  { reducedMotion: true },
+);
+```
+
+Definitions include bounded parameter schemas, labels/descriptions/categories,
+and thumbnail metadata. Preset names compile away into ordinary keyframes.
 
 ## Caption Generators
 
@@ -295,6 +317,7 @@ Sequencing several nodes means deriving frame offsets from other durations — t
 import { timeline, popIn, fadeUp, slideIn } from "@motionforge/presets";
 
 const tl = timeline()
+  .marker("intro", 0)
   .add("title", popIn({ durationInFrames: 12 })) // starts at 0
   .add("subtitle", fadeUp(), { after: "title", overlap: 4 }) // starts at 12 - 4 = 8
   .stagger(["card-1", "card-2", "card-3"], slideIn("left"), { every: 5 });
@@ -306,6 +329,11 @@ node.animations = animations["title"];
 applyScenePatch(scene, tl.compileToPatch());
 ```
 
+Timeline also supports `.sequence()`, `atMarker`, `compileMarkers()`, and
+`compileScenePatch()`. `motionPath()`, `seededSignal()`, and `maskReveal()` are
+pure compilers for path motion, deterministic procedural motion, and soft-mask
+animation.
+
 - Entries default to starting **when the previous entry ends** (the GSAP timeline default); `at` positions absolutely, `after: "<id>"` targets an earlier entry, `overlap`/`gap` nudge from there, `stagger` spaces a group `every` N frames.
 - Offsets compile to a frame-0 hold of each preset's first value, so an entrance's held `opacity: 0` keeps the node invisible until its slot — no node retiming involved.
 - Pure and deterministic; the output round-trips `validateScene`. Choreographed nodes are assumed to share the same `from` (keyframes run on each node's local clock).
@@ -315,8 +343,9 @@ applyScenePatch(scene, tl.compileToPatch());
 
 Stable for 0.x integrations:
 
-- Motion presets: `popIn()`, `fadeUp()`, `slideIn()`, and `pulse()`.
-- Timeline compiler: `timeline()`, `Timeline`, `TimelinePosition`, and `StaggerOptions`.
+- Motion presets: 38 registry entries via `compileMotionPreset()`, plus direct `popIn()`, `fadeUp()`, `slideIn()`, and `pulse()`.
+- Timeline compiler: `timeline()`, `Timeline`, `TimelinePosition`, `SequenceStep`, and `StaggerOptions`.
+- Procedural compilers: `motionPath()`, `seededSignal()`, and `maskReveal()`.
 - Template helpers that emit plain scene data: `textOverlay()`, `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `transitionOverlay()`, `styledCaptions()`, `subtitleTrack()`, `captionTrack` equivalents, and SRT/VTT parsers.
 - Template catalogs and keys for user-facing choices: caption/subtitle, text overlay, image overlay, video overlay, audio overlay, media look, clip layout, transition, and safe-area helpers.
 - `mediaLook()`, `clipLayout()`, `safeAreaBox()`, `resolveSafeArea()`, and `inferSafeAreaProfile()`.
