@@ -30,6 +30,20 @@ Rendering is pure given `(scene, frame, assets)`: the same inputs always produce
 
 Font assets load through the same call and register under their asset id: declare `{ id: "Inter-Bold", type: "font", src: "..." }` and style text with `fontFamily: "Inter-Bold"`. Embed fonts whenever pixel-exact text matters; unregistered families fall back through the canvas font stack.
 
+### Procedural and audio-reactive effects
+
+`effect` nodes render deterministic procedural visuals without expanding a
+scene into hundreds of particle nodes. General effects need no assets;
+audio-reactive effects declare `params.audioAssetId`, and `resolveAssets()`
+analyzes only the referenced audio into a compact cached spectrum.
+
+Effects obey normal node layout, timing, transforms, opacity, filters,
+z-index, parent clipping, and animations. Random-looking output is derived
+from the node's bounded seed, never from `Math.random()`.
+
+The pinned-browser `effect-showcase` golden fixture covers the six general
+effects. Audio-spectrum math and all effect dispatch paths are unit-tested.
+
 ## API Stability
 
 Stable for 0.x integrations:
@@ -37,6 +51,7 @@ Stable for 0.x integrations:
 - `resolveAssets(scene)`, `prepareFrame(scene, frame, assets)`, `renderStill(context, scene, frame, options)`, and `disposeAssets(assets)`.
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
+- Deterministic `effect` node rendering and cached audio-spectrum analysis.
 
 Experimental before 1.0:
 

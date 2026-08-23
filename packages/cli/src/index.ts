@@ -227,12 +227,14 @@ export type SceneInspection = {
     video: number;
     audio: number;
     lottie: number;
+    effect: number;
   };
   capabilities: {
     hasVisuals: boolean;
     hasAudio: boolean;
     hasVideo: boolean;
     hasLottie: boolean;
+    hasEffects: boolean;
     hasAnimations: boolean;
     hasVolumeAutomation: boolean;
     hasLoopedAudio: boolean;
@@ -258,6 +260,7 @@ export function inspectScene(scene: Scene): SceneInspection {
     video: 0,
     audio: 0,
     lottie: 0,
+    effect: 0,
   };
   let hasAnimations = false;
   let hasVolumeAutomation = false;
@@ -302,10 +305,17 @@ export function inspectScene(scene: Scene): SceneInspection {
     nodes,
     capabilities: {
       hasVisuals:
-        nodes.div + nodes.text + nodes.img + nodes.video + nodes.lottie > 0,
+        nodes.div +
+          nodes.text +
+          nodes.img +
+          nodes.video +
+          nodes.lottie +
+          nodes.effect >
+        0,
       hasAudio: nodes.audio > 0 || nodes.video > 0 || assets.audio > 0,
       hasVideo: nodes.video > 0 || assets.video > 0,
       hasLottie: nodes.lottie > 0 || assets.lottie > 0,
+      hasEffects: nodes.effect > 0,
       hasAnimations,
       hasVolumeAutomation,
       hasLoopedAudio,

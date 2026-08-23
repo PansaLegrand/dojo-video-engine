@@ -40,11 +40,16 @@ const setNodePropsOp = z.object({
   props: z
     .object({
       assetId: z.string().min(1).nullable().optional(),
+      effect: z.string().min(1).nullable().optional(),
+      params: z.record(z.unknown()).nullable().optional(),
       videoStartTime: z.number().nonnegative().nullable().optional(),
       playbackRate: z.number().positive().nullable().optional(),
       audioStartTime: z.number().nonnegative().nullable().optional(),
       volume: z.number().min(0).max(1).nullable().optional(),
-      volumeEnvelope: z.lazy(() => volumeEnvelopeSchema).nullable().optional(),
+      volumeEnvelope: z
+        .lazy(() => volumeEnvelopeSchema)
+        .nullable()
+        .optional(),
       loop: z.boolean().nullable().optional(),
     })
     .strict()
@@ -147,6 +152,24 @@ export type ApplyScenePatchResult =
 
 // ---------------------------------------------------------------------------
 
+function formatPatchIssue(issue: z.ZodIssue): string {
+  const path = issue.path.join(".") || "patch";
+  const keys =
+    issue.code === z.ZodIssueCode.unrecognized_keys
+      ? ` Unsupported key(s): ${issue.keys.join(", ")}.`
+      : "";
+  return `${path}: ${issue.message}${keys}`;
+}
+
+function formatPatchedSceneIssue(issue: z.ZodIssue): string {
+  const path = issue.path.join(".") || "scene";
+  const keys =
+    issue.code === z.ZodIssueCode.unrecognized_keys
+      ? ` Unsupported key(s): ${issue.keys.join(", ")}.`
+      : "";
+  return `patched scene is invalid at ${path}: ${issue.message}${keys}`;
+}
+
 type MutableNode = SceneNode & { children?: MutableNode[] };
 
 /** Deep-clones the parts of the scene the patch may touch (copy-on-write). */
@@ -167,10 +190,9 @@ function collectNodes(
   }
 }
 
-function indexScene(scene: Scene): Map<
-  string,
-  { node: MutableNode; siblings: MutableNode[] }
-> {
+function indexScene(
+  scene: Scene,
+): Map<string, { node: MutableNode; siblings: MutableNode[] }> {
   const map = new Map<string, { node: MutableNode; siblings: MutableNode[] }>();
   collectNodes(scene.nodes as MutableNode[], map, scene.nodes as MutableNode[]);
   return map;
@@ -180,12 +202,19 @@ function indexScene(scene: Scene): Map<
  * Closest existing ids by edit distance, for misspelled-id error hints —
  * the predicted top failure mode for LLM-authored patches.
  */
-export function closestIds(target: string, ids: Iterable<string>, count = 3): string[] {
+export function closestIds(
+  target: string,
+  ids: Iterable<string>,
+  count = 3,
+): string[] {
   const scored: Array<{ id: string; distance: number }> = [];
 
-  for (const id of ids) {
-    scored.push({ id, distance: editDistance(target.toLowerCase(), id.toLowerCase()) });
-  }
+  Array.from(ids).forEach((id) => {
+    scored.push({
+      id,
+      distance: editDistance(target.toLowerCase(), id.toLowerCase()),
+    });
+  });
 
   return scored
     .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id))
@@ -214,7 +243,11 @@ function editDistance(a: string, b: string): number {
   return dist[cols - 1] ?? 0;
 }
 
-function missingNodeMessage(op: string, id: string, index: Map<string, unknown>): string {
+function missingNodeMessage(
+  op: string,
+  id: string,
+  index: Map<string, unknown>,
+): string {
   const hints = closestIds(id, index.keys());
   const hintText =
     hints.length > 0
@@ -258,7 +291,7 @@ export function applyScenePatch(
       ok: false,
       errors: parsedPatch.error.issues.map((issue) => ({
         opIndex: typeof issue.path[0] === "number" ? issue.path[0] : -1,
-        message: `${issue.path.join(".") || "patch"}: ${issue.message}`,
+        message: formatPatchIssue(issue),
       })),
     };
   }
@@ -271,7 +304,10 @@ export function applyScenePatch(
     const error = applyOp(draft, op);
 
     if (error) {
-      return { ok: false, errors: [{ opIndex, message: `op ${opIndex} ${error}` }] };
+      return {
+        ok: false,
+        errors: [{ opIndex, message: `op ${opIndex} ${error}` }],
+      };
     }
   }
 
@@ -284,7 +320,7 @@ export function applyScenePatch(
       ok: false,
       errors: final.error.issues.map((issue) => ({
         opIndex: -1,
-        message: `patched scene is invalid at ${issue.path.join(".") || "scene"}: ${issue.message}`,
+        message: formatPatchedSceneIssue(issue),
       })),
     };
   }
@@ -374,7 +410,8 @@ function applyOp(draft: Scene, op: SceneOp): string | null {
         siblings = draft.nodes as MutableNode[];
       } else {
         const parent = index.get(op.parentId);
-        if (!parent) return missingNodeMessage("insertNode parentId", op.parentId, index);
+        if (!parent)
+          return missingNodeMessage("insertNode parentId", op.parentId, index);
         parent.node.children = parent.node.children ?? [];
         siblings = parent.node.children as MutableNode[];
       }
@@ -412,7 +449,8 @@ function applyOp(draft: Scene, op: SceneOp): string | null {
           return `(moveNode "${op.id}"): cannot move a node into itself or its own subtree.`;
         }
         const parent = index.get(op.parentId);
-        if (!parent) return missingNodeMessage("moveNode parentId", op.parentId, index);
+        if (!parent)
+          return missingNodeMessage("moveNode parentId", op.parentId, index);
         parent.node.children = parent.node.children ?? [];
         targetSiblings = parent.node.children as MutableNode[];
       }
@@ -444,9 +482,9 @@ function applyOp(draft: Scene, op: SceneOp): string | null {
       }
 
       const referencing: string[] = [];
-      for (const [id, entry] of index) {
+      index.forEach((entry, id) => {
         if (entry.node.assetId === op.id) referencing.push(id);
-      }
+      });
 
       if (referencing.length > 0) {
         return `(removeAsset "${op.id}"): nodes ${referencing.map((id) => `"${id}"`).join(", ")} still reference it. Remove or repoint those nodes first.`;

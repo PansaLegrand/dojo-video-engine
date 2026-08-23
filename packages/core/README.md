@@ -46,7 +46,7 @@ The same builder program always emits the same scene JSON, so scenes can be diff
 
 Stable for 0.x integrations:
 
-- Builder API: `composition()`, `div()`, `text()`, `img()`, `video()`, `audio()`, `SceneBuilder`, `NodeBuilder`, and their option types.
+- Builder API: `composition()`, `div()`, `text()`, `img()`, `video()`, `audio()`, `lottie()`, `effect()`, `SceneBuilder`, `NodeBuilder`, and their option types.
 - Evaluation and layout: `evaluateScene()`, `layoutScene()`, `ResolvedScene`, `ResolvedNode`, `LayoutScene`, and `LayoutBox`.
 - Keyframe evaluation and deterministic easing: `evaluateKeyframes()`, `applyEasing()`, `cubicBezierEasing()`, and `springEasing()`.
 - Text measurement helpers used by renderers/editors: `wrapTextLines()`, `prepareTextLines()`, and `prepareTextLayout()`.

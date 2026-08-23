@@ -159,6 +159,34 @@ describe("applyScenePatch", () => {
     expect(shot?.playbackRate).toBeUndefined();
   });
 
+  it("names unsupported effect param keys in final scene validation errors", () => {
+    const scene = {
+      ...baseScene(),
+      nodes: [
+        ...baseScene().nodes,
+        {
+          id: "cloud",
+          type: "effect" as const,
+          effect: "cloudPop" as const,
+          duration: 30,
+          params: { softness: 0.5 },
+        },
+      ],
+    };
+    const errors = rejected(
+      [
+        {
+          op: "setNodeProps",
+          id: "cloud",
+          props: { params: { pulse: 0.8, blurAmount: 0.7 } },
+        },
+      ],
+      scene,
+    );
+
+    expect(errors[0]?.message).toContain("Unsupported key(s): blurAmount");
+  });
+
   it("sets and deletes audio loop props", () => {
     const scene = applied(
       [

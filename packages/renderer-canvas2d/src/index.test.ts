@@ -10,6 +10,7 @@ import {
   parseTextStroke,
   renderStill,
   validateLottieDocument,
+  VideoPlaybackCursor,
   videoSourceTime,
   wrapTextLines,
 } from "./index.js";
@@ -21,6 +22,46 @@ describe("renderStill", () => {
   it("exports a callable browser renderer", () => {
     expect(typeof renderStill).toBe("function");
     expect(sampleScene().width).toBe(1080);
+  });
+
+  it("ignores non-string transform values from malformed runtime animation data", () => {
+    const context = {
+      globalAlpha: 1,
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+      fillRect: () => undefined,
+      translate: () => undefined,
+      scale: () => undefined,
+      rotate: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+    const scene = {
+      schemaVersion: 0,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "box",
+          type: "div",
+          style: {
+            width: 20,
+            height: 20,
+          },
+          animations: [
+            {
+              kind: "keyframes",
+              property: "transform",
+              frames: [{ frame: 0, value: 1.1 }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() => renderStill(context, scene as never, 0)).not.toThrow();
   });
 });
 
@@ -162,6 +203,221 @@ describe("renderStill with image nodes", () => {
   });
 });
 
+describe("renderStill with effect nodes", () => {
+  it("draws cartoonBurst without resolved assets", () => {
+    const calls: string[] = [];
+    const context = {
+      globalAlpha: 1,
+      globalCompositeOperation: "source-over",
+      save: () => calls.push("save"),
+      restore: () => calls.push("restore"),
+      clearRect: () => calls.push("clearRect"),
+      beginPath: () => calls.push("beginPath"),
+      arc: () => calls.push("arc"),
+      ellipse: () => calls.push("ellipse"),
+      fill: () => calls.push("fill"),
+      stroke: () => calls.push("stroke"),
+      translate: () => undefined,
+      rotate: () => undefined,
+      moveTo: () => undefined,
+      lineTo: () => undefined,
+      arcTo: () => undefined,
+      closePath: () => undefined,
+      fillText: () => calls.push("fillText"),
+      fillRect: () => undefined,
+      strokeRect: () => undefined,
+      measureText: (line: string) => ({ width: line.length * 10 }),
+    } as unknown as CanvasRenderingContext2D;
+    const scene = {
+      schemaVersion: 0,
+      width: 400,
+      height: 400,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "boom",
+          type: "effect",
+          effect: "cartoonBurst",
+          duration: 30,
+          style: {
+            position: "absolute",
+            left: 100,
+            top: 100,
+            width: 200,
+            height: 200,
+          },
+          params: {
+            seed: 7,
+            particleCount: 8,
+            emoji: "!",
+          },
+        },
+      ],
+    };
+
+    renderStill(context, scene as never, 10);
+
+    expect(calls).toContain("arc");
+    expect(calls).toContain("fill");
+    expect(calls).toContain("fillText");
+  });
+
+  it("draws the Phase 1B effect catalog without resolved assets", () => {
+    const calls: string[] = [];
+    const context = {
+      globalAlpha: 1,
+      globalCompositeOperation: "source-over",
+      lineCap: "butt",
+      lineJoin: "miter",
+      save: () => calls.push("save"),
+      restore: () => calls.push("restore"),
+      clearRect: () => calls.push("clearRect"),
+      beginPath: () => calls.push("beginPath"),
+      arc: () => calls.push("arc"),
+      ellipse: () => calls.push("ellipse"),
+      rect: () => calls.push("rect"),
+      fill: () => calls.push("fill"),
+      stroke: () => calls.push("stroke"),
+      translate: () => undefined,
+      rotate: () => undefined,
+      moveTo: () => calls.push("moveTo"),
+      lineTo: () => calls.push("lineTo"),
+      arcTo: () => calls.push("arcTo"),
+      quadraticCurveTo: () => calls.push("quadraticCurveTo"),
+      closePath: () => undefined,
+      fillText: () => calls.push("fillText"),
+      fillRect: () => calls.push("fillRect"),
+      strokeRect: () => undefined,
+      measureText: (line: string) => ({ width: line.length * 10 }),
+    } as unknown as CanvasRenderingContext2D;
+    const effectNames = [
+      "confettiBurst",
+      "cloudPop",
+      "speedLines",
+      "neonAura",
+      "scribbleCircle",
+    ];
+    const scene = {
+      schemaVersion: 0,
+      width: 500,
+      height: 500,
+      fps: 30,
+      duration: 30,
+      nodes: effectNames.map((effect, index) => ({
+        id: effect,
+        type: "effect",
+        effect,
+        duration: 30,
+        style: {
+          position: "absolute",
+          left: 40,
+          top: 40,
+          width: 220,
+          height: 180,
+        },
+        params: {
+          seed: index + 1,
+          particleCount: 8,
+          colors: ["#ffffff", "#38bdf8"],
+          emoji: effect === "confettiBurst" ? "!" : undefined,
+        },
+      })),
+    };
+
+    renderStill(context, scene as never, 10);
+
+    expect(calls).toContain("fillRect");
+    expect(calls).toContain("ellipse");
+    expect(calls).toContain("lineTo");
+    expect(calls).toContain("arcTo");
+    expect(calls).toContain("stroke");
+    expect(calls).toContain("fillText");
+  });
+
+  it("draws mirrorBars as upper and lower center-reflected segments", () => {
+    const moveTos: Array<{ x: number; y: number }> = [];
+    const gradient = {
+      addColorStop: () => undefined,
+    };
+    const context = {
+      globalAlpha: 1,
+      globalCompositeOperation: "source-over",
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+      translate: () => undefined,
+      rotate: () => undefined,
+      scale: () => undefined,
+      createLinearGradient: () => gradient,
+      beginPath: () => undefined,
+      moveTo: (x: number, y: number) => moveTos.push({ x, y }),
+      arcTo: () => undefined,
+      closePath: () => undefined,
+      fill: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+    const values = new Uint8Array(128);
+    values.fill(255);
+    const scene = {
+      schemaVersion: 0,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 1,
+      assets: {
+        music: { id: "music", type: "audio", src: "music.mp3" },
+      },
+      nodes: [
+        {
+          id: "mirror",
+          type: "effect",
+          effect: "mirrorBars",
+          duration: 1,
+          style: {
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: 100,
+            height: 100,
+          },
+          params: {
+            audioAssetId: "music",
+            barCount: 8,
+            sensitivity: 1,
+            smoothing: false,
+          },
+        },
+      ],
+    };
+    const assets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      audioSpectra: new Map([
+        [
+          "music",
+          {
+            fps: 30,
+            barCount: 128,
+            frameCount: 1,
+            values,
+          },
+        ],
+      ]),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+
+    renderStill(context, scene as never, 0, { assets: assets as never });
+
+    expect(moveTos).toHaveLength(16);
+    expect(moveTos.filter(({ y }) => y < 5)).toHaveLength(8);
+    expect(moveTos.filter(({ y }) => y > 50 && y < 55)).toHaveLength(8);
+  });
+});
+
 describe("parseLinearGradient", () => {
   it("returns null for non-gradient fills", () => {
     expect(parseLinearGradient("#ff0000")).toBeNull();
@@ -198,6 +454,17 @@ describe("parseLinearGradient", () => {
       { color: "rgba(255, 0, 0, 0.5)", offset: 0 },
       { color: "#00ff00", offset: 0.5 },
       { color: "rgb(0, 0, 255)", offset: 1 },
+    ]);
+  });
+
+  it("strips px stop positions so Canvas receives only colors", () => {
+    const parsed = parseLinearGradient(
+      "linear-gradient(180deg, rgba(90,120,255,0.10) 1px, rgba(255,255,255,0.92) 100%)",
+    );
+
+    expect(parsed?.stops).toEqual([
+      { color: "rgba(90,120,255,0.10)", offset: 0 },
+      { color: "rgba(255,255,255,0.92)", offset: 1 },
     ]);
   });
 
@@ -335,6 +602,106 @@ describe("renderStill with video nodes", () => {
     expect(() => renderStill(context, scene as never, 0)).toThrow(
       /prepareFrame\(scene, frame, assets\)/,
     );
+  });
+
+  it("draws pixelated media through a low-resolution staging canvas", () => {
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    const stagingDraws: unknown[][] = [];
+    const stagingCanvases: Array<{ width: number; height: number }> = [];
+
+    class FakeOffscreenCanvas {
+      constructor(
+        public width: number,
+        public height: number,
+      ) {
+        stagingCanvases.push(this);
+      }
+
+      getContext() {
+        return {
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: "high",
+          clearRect: () => undefined,
+          drawImage: (...args: unknown[]) => {
+            stagingDraws.push(args);
+          },
+        };
+      }
+    }
+
+    (
+      globalThis as { OffscreenCanvas?: typeof OffscreenCanvas }
+    ).OffscreenCanvas =
+      FakeOffscreenCanvas as unknown as typeof OffscreenCanvas;
+
+    try {
+      const scene = {
+        schemaVersion: 0,
+        width: 100,
+        height: 100,
+        fps: 30,
+        duration: 1,
+        assets: {
+          clip: { id: "clip", type: "video", src: "blob:fake" },
+        },
+        nodes: [
+          {
+            id: "shot",
+            type: "video",
+            assetId: "clip",
+            style: {
+              width: 100,
+              height: 100,
+              imageRendering: "pixelated",
+              pixelSize: 10,
+            },
+          },
+        ],
+      };
+      const outputDraws: unknown[][] = [];
+      const context = {
+        globalAlpha: 1,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: "high",
+        save: () => undefined,
+        restore: () => undefined,
+        clearRect: () => undefined,
+        translate: () => undefined,
+        scale: () => undefined,
+        rotate: () => undefined,
+        beginPath: () => undefined,
+        rect: () => undefined,
+        clip: () => undefined,
+        drawImage: (...args: unknown[]) => {
+          outputDraws.push(args);
+        },
+      } as unknown as CanvasRenderingContext2D;
+      const source = { width: 100, height: 100 } as HTMLCanvasElement;
+      const assets = {
+        videoFrames: new Map([
+          [
+            "shot",
+            {
+              image: source,
+              width: 100,
+              height: 100,
+              sceneFrame: 0,
+            },
+          ],
+        ]),
+      };
+
+      renderStill(context, scene as never, 0, { assets: assets as never });
+
+      expect(stagingCanvases[0]).toMatchObject({ width: 10, height: 10 });
+      expect(stagingDraws[0]?.slice(-2)).toEqual([10, 10]);
+      expect(outputDraws[0]?.[0]).toBe(stagingCanvases[0]);
+      expect(outputDraws[0]?.slice(1)).toEqual([0, 0, 100, 100]);
+    } finally {
+      (
+        globalThis as { OffscreenCanvas?: typeof OffscreenCanvas }
+      ).OffscreenCanvas = originalOffscreenCanvas;
+    }
   });
 });
 
@@ -500,10 +867,36 @@ describe("zIndex paint order", () => {
       duration: 1,
       assets: {},
       nodes: [
-        { id: "top", type: "div", style: { width: 10, height: 10, backgroundColor: "#aa0000", zIndex: 5 } },
-        { id: "bottom", type: "div", style: { width: 10, height: 10, backgroundColor: "#00bb00", zIndex: -1 } },
-        { id: "mid-a", type: "div", style: { width: 10, height: 10, backgroundColor: "#0000cc" } },
-        { id: "mid-b", type: "div", style: { width: 10, height: 10, backgroundColor: "#dd00dd" } },
+        {
+          id: "top",
+          type: "div",
+          style: {
+            width: 10,
+            height: 10,
+            backgroundColor: "#aa0000",
+            zIndex: 5,
+          },
+        },
+        {
+          id: "bottom",
+          type: "div",
+          style: {
+            width: 10,
+            height: 10,
+            backgroundColor: "#00bb00",
+            zIndex: -1,
+          },
+        },
+        {
+          id: "mid-a",
+          type: "div",
+          style: { width: 10, height: 10, backgroundColor: "#0000cc" },
+        },
+        {
+          id: "mid-b",
+          type: "div",
+          style: { width: 10, height: 10, backgroundColor: "#dd00dd" },
+        },
       ],
     };
 
@@ -540,15 +933,22 @@ describe("lottieSourceFrame", () => {
   });
 
   it("respects a nonzero in-point when clamping", () => {
-    expect(lottieSourceFrame(900, 30, 1, { fr: 30, ip: 20, op: 50 })).toBeCloseTo(
-      29.999,
-      3,
-    );
+    expect(
+      lottieSourceFrame(900, 30, 1, { fr: 30, ip: 20, op: 50 }),
+    ).toBeCloseTo(29.999, 3);
   });
 });
 
 describe("validateLottieDocument", () => {
-  const minimal = { v: "5.7.4", fr: 30, ip: 0, op: 60, w: 100, h: 100, layers: [{ ty: 4 }] };
+  const minimal = {
+    v: "5.7.4",
+    fr: 30,
+    ip: 0,
+    op: 60,
+    w: 100,
+    h: 100,
+    layers: [{ ty: 4 }],
+  };
 
   it("accepts a self-contained vector document", () => {
     expect(validateLottieDocument(minimal)).toEqual([]);
@@ -574,7 +974,10 @@ describe("validateLottieDocument", () => {
     const withExpression = {
       ...minimal,
       layers: [
-        { ty: 4, ks: { p: { a: 0, k: [0, 0], x: "var $bm_rt = wiggle(2, 30);" } } },
+        {
+          ty: 4,
+          ks: { p: { a: 0, k: [0, 0], x: "var $bm_rt = wiggle(2, 30);" } },
+        },
       ],
     };
     expect(validateLottieDocument(withExpression).join(" ")).toContain(
@@ -583,7 +986,12 @@ describe("validateLottieDocument", () => {
     // bezier easing objects use numeric/array "x" — those must pass
     const withEasing = {
       ...minimal,
-      layers: [{ ty: 4, ks: { p: { a: 1, k: [{ t: 0, i: { x: [0.5], y: [0.5] } }] } } }],
+      layers: [
+        {
+          ty: 4,
+          ks: { p: { a: 1, k: [{ t: 0, i: { x: [0.5], y: [0.5] } }] } },
+        },
+      ],
     };
     expect(validateLottieDocument(withEasing)).toEqual([]);
   });
@@ -612,7 +1020,11 @@ describe("wrapTextLines with spaceless scripts", () => {
     // Each flag emoji is two code points (one grapheme may be wider);
     // ensure no break lands inside a surrogate pair.
     const text = "🎬🎬🎬🎬🎬🎬";
-    const lines = wrapTextLines(text, 45, (line) => Array.from(line).length * 10);
+    const lines = wrapTextLines(
+      text,
+      45,
+      (line) => Array.from(line).length * 10,
+    );
     for (const line of lines) {
       expect([...line].every((ch) => ch === "🎬")).toBe(true);
     }
@@ -629,5 +1041,160 @@ describe("wrapTextLines with spaceless scripts", () => {
       "brown fox",
       "jumps",
     ]);
+  });
+});
+
+describe("VideoPlaybackCursor", () => {
+  const FRAME = 1 / 30;
+
+  /**
+   * Scripted stand-in for CanvasSink: frames at the given timestamps, each
+   * canvases(start) yielding the frame covering `start` first (or the first
+   * frame when `start` precedes it), mirroring mediabunny's semantics.
+   */
+  function scriptedSource(timestamps: number[]) {
+    const stats = { seeks: [] as number[], decodes: 0, terminated: 0 };
+    const source = {
+      canvases(start = 0) {
+        stats.seeks.push(start);
+
+        async function* generate() {
+          try {
+            let index = 0;
+
+            for (let i = 0; i < timestamps.length; i += 1) {
+              const timestamp = timestamps[i] ?? 0;
+
+              if (timestamp <= start) {
+                index = i;
+              } else {
+                break;
+              }
+            }
+
+            for (; index < timestamps.length; index += 1) {
+              stats.decodes += 1;
+              yield {
+                canvas: {} as HTMLCanvasElement,
+                timestamp: timestamps[index] ?? 0,
+                duration: FRAME,
+              };
+            }
+          } finally {
+            stats.terminated += 1;
+          }
+        }
+
+        return generate();
+      },
+    };
+
+    return { source, stats };
+  }
+
+  const evenTimeline = (frames: number) =>
+    Array.from({ length: frames }, (_, index) => index * FRAME);
+
+  it("serves monotonic playback from a single iterator, one decode per frame", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(90));
+    const cursor = new VideoPlaybackCursor(source);
+
+    for (let frame = 0; frame < 60; frame += 1) {
+      const wrapped = await cursor.frameAt(frame * FRAME);
+      expect(wrapped?.timestamp).toBeCloseTo(frame * FRAME, 9);
+    }
+
+    expect(stats.seeks).toEqual([0]);
+    // One decode per served frame plus the single-frame peek-ahead.
+    expect(stats.decodes).toBe(61);
+  });
+
+  it("repeated timestamps and sub-frame steps decode nothing new", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(10));
+    const cursor = new VideoPlaybackCursor(source);
+
+    await cursor.frameAt(0);
+    const decodesAfterFirst = stats.decodes;
+    await cursor.frameAt(0);
+    await cursor.frameAt(FRAME / 3);
+    await cursor.frameAt(FRAME / 2);
+
+    expect(stats.decodes).toBe(decodesAfterFirst);
+    expect(stats.seeks).toEqual([0]);
+  });
+
+  it("re-seeks on a backward seek and terminates the old iterator", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(90));
+    const cursor = new VideoPlaybackCursor(source);
+
+    await cursor.frameAt(30 * FRAME);
+    const wrapped = await cursor.frameAt(3 * FRAME);
+
+    expect(wrapped?.timestamp).toBeCloseTo(3 * FRAME, 9);
+    expect(stats.seeks.length).toBe(2);
+    expect(stats.terminated).toBe(1);
+  });
+
+  it("re-seeks instead of draining on a far forward jump", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(300));
+    const cursor = new VideoPlaybackCursor(source);
+
+    await cursor.frameAt(0);
+    const decodesBeforeJump = stats.decodes;
+    const wrapped = await cursor.frameAt(150 * FRAME); // 5s ahead
+
+    expect(wrapped?.timestamp).toBeCloseTo(150 * FRAME, 9);
+    expect(stats.seeks.length).toBe(2);
+    // A drain would have decoded ~150 frames; the re-seek decodes two.
+    expect(stats.decodes - decodesBeforeJump).toBe(2);
+  });
+
+  it("advances through a small forward skip without re-seeking", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(90));
+    const cursor = new VideoPlaybackCursor(source);
+
+    await cursor.frameAt(0);
+    const wrapped = await cursor.frameAt(10 * FRAME); // ~0.33s ahead
+
+    expect(wrapped?.timestamp).toBeCloseTo(10 * FRAME, 9);
+    expect(stats.seeks).toEqual([0]);
+  });
+
+  it("holds the last frame past the end of the clip", async () => {
+    const { source } = scriptedSource(evenTimeline(5));
+    const cursor = new VideoPlaybackCursor(source);
+
+    const wrapped = await cursor.frameAt(10 * FRAME);
+    expect(wrapped?.timestamp).toBeCloseTo(4 * FRAME, 9);
+
+    const again = await cursor.frameAt(20 * FRAME);
+    expect(again?.timestamp).toBeCloseTo(4 * FRAME, 9);
+  });
+
+  it("serves timestamps before the first frame without re-seeking per request", async () => {
+    const first = 0.5;
+    const { source, stats } = scriptedSource([
+      first,
+      first + FRAME,
+      first + 2 * FRAME,
+    ]);
+    const cursor = new VideoPlaybackCursor(source);
+
+    const early = await cursor.frameAt(0);
+    expect(early?.timestamp).toBeCloseTo(first, 9);
+
+    await cursor.frameAt(FRAME);
+    await cursor.frameAt(2 * FRAME);
+    expect(stats.seeks.length).toBe(1);
+  });
+
+  it("dispose terminates the decode pipeline", async () => {
+    const { source, stats } = scriptedSource(evenTimeline(90));
+    const cursor = new VideoPlaybackCursor(source);
+
+    await cursor.frameAt(0);
+    await cursor.dispose();
+
+    expect(stats.terminated).toBe(1);
   });
 });

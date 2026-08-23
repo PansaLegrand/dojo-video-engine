@@ -3,9 +3,11 @@ import {
   composition,
   cubicBezierEasing,
   div,
+  effect,
   evaluateKeyframes,
   evaluateScene,
   layoutScene,
+  lottie,
   parseColor,
   parseTransform,
   prepareTextLayout,
@@ -80,6 +82,48 @@ describe("builder", () => {
     expect(scene.nodes[0]?.children?.[0]?.animations).toEqual([]);
     expect(updated.nodes[0]?.children?.[0]?.animations).toHaveLength(1);
   });
+
+  it("builds lottie and deterministic effect nodes", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+    })
+      .asset({
+        id: "sticker",
+        type: "lottie",
+        src: "/assets/sticker.json",
+      })
+      .children(
+        lottie("sticker", {
+          id: "sticker-node",
+          playbackRate: 1.5,
+          style: { width: 80, height: 80 },
+        }),
+        effect("confettiBurst", {
+          id: "celebration",
+          params: { seed: 42, intensity: "high" },
+          style: { width: "100%", height: "100%" },
+        }),
+      )
+      .toJSON();
+
+    expect(scene.nodes).toMatchObject([
+      {
+        id: "sticker-node",
+        type: "lottie",
+        assetId: "sticker",
+        playbackRate: 1.5,
+      },
+      {
+        id: "celebration",
+        type: "effect",
+        effect: "confettiBurst",
+        params: { seed: 42, intensity: "high" },
+      },
+    ]);
+  });
 });
 
 describe("animation evaluator", () => {
@@ -124,6 +168,22 @@ describe("animation evaluator", () => {
 
     expect(outer?.localFrame).toBe(8);
     expect(inner?.localFrame).toBe(3);
+  });
+
+  it("does not assign non-string transform animation values into resolved style", () => {
+    const scene = composition({
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 10,
+    })
+      .children(
+        div({ id: "box" }).animate("transform", [{ frame: 0, value: 1 }]),
+      )
+      .toJSON();
+
+    const resolved = evaluateScene(scene, 0);
+    expect(resolved.nodes[0]?.style.transform).toBeUndefined();
   });
 
   it("interpolates hex colors in RGBA space", () => {
@@ -311,7 +371,13 @@ describe("intrinsic text auto-height", () => {
       composition({ width: 200, height: 400, fps: 30, duration: 1 }).children(
         text("aaaa bbbb", {
           id: "title",
-          style: { position: "absolute", left: 0, top: 30, width: 50, fontSize: 20 },
+          style: {
+            position: "absolute",
+            left: 0,
+            top: 30,
+            width: 50,
+            fontSize: 20,
+          },
         }),
       ),
     );
@@ -328,7 +394,13 @@ describe("intrinsic text auto-height", () => {
       composition({ width: 200, height: 400, fps: 30, duration: 1 }).children(
         text("abc", {
           id: "subtitle",
-          style: { position: "absolute", left: 0, bottom: 40, width: 100, fontSize: 20 },
+          style: {
+            position: "absolute",
+            left: 0,
+            bottom: 40,
+            width: 100,
+            fontSize: 20,
+          },
         }),
       ),
     );
@@ -363,7 +435,12 @@ describe("intrinsic text auto-height", () => {
       composition({ width: 200, height: 400, fps: 30, duration: 1 }).children(
         div({
           id: "column",
-          style: { width: "100%", height: "100%", display: "flex", flexDirection: "column" },
+          style: {
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          },
         }).children(
           text("aaaa bbbb", {
             id: "wrapped",
@@ -386,7 +463,13 @@ describe("intrinsic text auto-height", () => {
       composition({ width: 200, height: 400, fps: 30, duration: 1 }).children(
         text("aaaa bbbb", {
           id: "title",
-          style: { position: "absolute", left: 0, top: 30, width: 50, fontSize: 20 },
+          style: {
+            position: "absolute",
+            left: 0,
+            top: 30,
+            width: 50,
+            fontSize: 20,
+          },
         }),
       ),
     );

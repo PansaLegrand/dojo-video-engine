@@ -6,7 +6,6 @@ import type { Scene } from "@motionforge/schema";
 const quadrantsPng =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAIUlEQVR42mP4z8DwHx8mAo4aMAwMIKAfCBjw4lEDhoUBAFfoPd+JcsLjAAAAAElFTkSuQmCC";
 
-
 // Minimal self-contained Lottie document (the spike's): a teal rounded
 // rectangle translating left-to-right while rotating, 60 frames @ 30fps,
 // 200x200. Inlined as a data URL so the fixture needs no network.
@@ -32,14 +31,26 @@ const lottieRectJson = JSON.stringify({
         r: {
           a: 1,
           k: [
-            { t: 0, s: [0], e: [180], i: { x: [0.5], y: [0.5] }, o: { x: [0.5], y: [0.5] } },
+            {
+              t: 0,
+              s: [0],
+              e: [180],
+              i: { x: [0.5], y: [0.5] },
+              o: { x: [0.5], y: [0.5] },
+            },
             { t: 60, s: [180] },
           ],
         },
         p: {
           a: 1,
           k: [
-            { t: 0, s: [40, 100, 0], e: [160, 100, 0], i: { x: 0.5, y: 0.5 }, o: { x: 0.5, y: 0.5 } },
+            {
+              t: 0,
+              s: [40, 100, 0],
+              e: [160, 100, 0],
+              i: { x: 0.5, y: 0.5 },
+              o: { x: 0.5, y: 0.5 },
+            },
             { t: 60, s: [160, 100, 0] },
           ],
         },
@@ -52,9 +63,28 @@ const lottieRectJson = JSON.stringify({
           ty: "gr",
           nm: "group",
           it: [
-            { ty: "rc", nm: "box", d: 1, s: { a: 0, k: [60, 60] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 8 } },
-            { ty: "fl", nm: "fill", c: { a: 0, k: [0.4, 0.96, 0.84, 1] }, o: { a: 0, k: 100 } },
-            { ty: "tr", p: { a: 0, k: [0, 0] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] }, r: { a: 0, k: 0 }, o: { a: 0, k: 100 } },
+            {
+              ty: "rc",
+              nm: "box",
+              d: 1,
+              s: { a: 0, k: [60, 60] },
+              p: { a: 0, k: [0, 0] },
+              r: { a: 0, k: 8 },
+            },
+            {
+              ty: "fl",
+              nm: "fill",
+              c: { a: 0, k: [0.4, 0.96, 0.84, 1] },
+              o: { a: 0, k: 100 },
+            },
+            {
+              ty: "tr",
+              p: { a: 0, k: [0, 0] },
+              a: { a: 0, k: [0, 0] },
+              s: { a: 0, k: [100, 100] },
+              r: { a: 0, k: 0 },
+              o: { a: 0, k: 100 },
+            },
           ],
         },
       ],
@@ -122,6 +152,65 @@ export const fixtures: GoldenFixture[] = [
           },
           children: [],
         },
+      ],
+    },
+  },
+  {
+    kind: "exact",
+    id: "effect-showcase",
+    description:
+      "Seeded procedural effect nodes render deterministically across the core effect catalog.",
+    frame: 18,
+    scene: {
+      schemaVersion: 0,
+      width: 640,
+      height: 360,
+      fps: 30,
+      duration: 60,
+      assets: {},
+      nodes: [
+        {
+          id: "background",
+          type: "div",
+          from: 0,
+          duration: 60,
+          style: {
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(145deg, #08111f 0%, #172554 100%)",
+          },
+          children: [],
+        },
+        ...(
+          [
+            ["cartoonBurst", 0, 0, ["#facc15", "#fb7185"]],
+            ["confettiBurst", 1, 0, ["#38bdf8", "#f472b6", "#facc15"]],
+            ["cloudPop", 2, 0, ["#ffffff", "#bae6fd"]],
+            ["speedLines", 0, 1, ["#ffffff", "#facc15"]],
+            ["neonAura", 1, 1, ["#22d3ee", "#c084fc"]],
+            ["scribbleCircle", 2, 1, ["#facc15", "#ffffff"]],
+          ] as const
+        ).map(([effect, column, row, colors], index) => ({
+          id: `effect-${index + 1}`,
+          type: "effect" as const,
+          effect,
+          from: 0,
+          duration: 60,
+          style: {
+            position: "absolute" as const,
+            left: column * 208 + 8,
+            top: row * 172 + 8,
+            width: 192,
+            height: 156,
+          },
+          params: {
+            seed: 100 + index,
+            intensity: "high" as const,
+            colors: [...colors],
+            scope: "frame" as const,
+          },
+          children: [],
+        })),
       ],
     },
   },

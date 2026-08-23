@@ -29,11 +29,13 @@ type Asset = {
 ```ts
 type SceneNode = {
   id: string; // unique across the whole scene
-  type: "div" | "text" | "img" | "video" | "audio" | "lottie";
+  type: "div" | "text" | "img" | "video" | "audio" | "lottie" | "effect";
   text?: string; // required when type is "text"
-  assetId?: string; // required when type is "img", "video", or "audio"
+  assetId?: string; // required for img, video, audio, and lottie nodes
+  effect?: SceneEffectName; // required when type is "effect"
+  params?: SceneEffectParams; // bounded effect parameters
   videoStartTime?: number; // video nodes only: source trim offset in seconds (default 0)
-  playbackRate?: number; // video nodes only: speed multiplier (default 1)
+  playbackRate?: number; // video and lottie nodes: speed multiplier (default 1)
   audioStartTime?: number; // audio nodes only: source trim offset in seconds (default 0)
   volume?: number; // audio and video nodes: gain 0..1 (default 1)
   volumeEnvelope?: VolumeEnvelopePoint[]; // audio and video nodes: node-local gain automation
@@ -73,6 +75,49 @@ lottieFrame = clamp((localFrame / scene.fps) * playbackRate * doc.fr, 0, doc.op 
 ```
 
 Scenes outlasting the animation hold its last frame. Two guards enforce the determinism contract at asset load: documents containing **expressions** (embedded JavaScript; may call `Date`/`random`) or **image layers / external images** are rejected with the reason — v0 renders self-contained vector documents only. Rendering lottie assets requires the optional peer dependency `lottie-web` (scenes without lottie assets never load it).
+
+### Effects
+
+An `effect` node is a bounded deterministic procedural layer. It uses normal
+node timing, layout, transforms, opacity, filters, z-index, animation, parent
+clipping, and selection semantics:
+
+```json
+{
+  "id": "celebration",
+  "type": "effect",
+  "effect": "confettiBurst",
+  "from": 60,
+  "duration": 45,
+  "style": {
+    "position": "absolute",
+    "inset": 0
+  },
+  "params": {
+    "seed": 42,
+    "intensity": "high",
+    "colors": ["#facc15", "#38bdf8", "#fb7185"]
+  }
+}
+```
+
+General effects: `cartoonBurst`, `confettiBurst`, `cloudPop`, `speedLines`,
+`neonAura`, and `scribbleCircle`.
+
+Audio-reactive effects: `spectrumBars`, `cassetteVuMeter`, `waveformLine`,
+`mirrorBars`, `circularSpectrum`, `neonWaveform`, `pulseRings`,
+`particleGalaxy`, `albumCoverPulse`, `audioBlob`, `starfieldTunnel`,
+`equalizerGrid`, `liquidGradient`, `kaleidoscope`, `vinylRecord`,
+`audioTerrain`, `lightningArc`, and `minimalLineArt`. These require
+`params.audioAssetId` referencing an audio asset. Asset resolution analyzes
+only audio assets used by active effect definitions and caches a compact,
+deterministic spectrum for preview and export.
+
+Effect parameters are intentionally bounded and schema-validated. Supported
+controls include intensity, seed, colors, particle count, direction, density,
+stroke/radius, wobble/pulse/scale/spread/softness/glow, text/frame scope,
+audio and cover asset ids, bar count, sensitivity, and smoothing. Unknown
+parameters fail validation rather than silently changing renderer behavior.
 
 ### Audio
 
@@ -141,6 +186,9 @@ Validation is intentionally stricter than implementation: a property may validat
 | `boxShadow`                                      |    ✅     |   —    |   ✅   | `<x> <y> [blur] <color>`; rides the background fill (no background → no shadow); no `inset`/spread                                                                                        |
 | `filter`                                         |    ✅     |   —    |   ✅   | chain of `brightness`/`contrast`/`saturate`/`grayscale`/`sepia`/`invert`/`opacity` (number or `%`), `hue-rotate(deg)`, `blur(px)`; per draw call, not composited subtree; no-op in Safari |
 | `zIndex`                                         |    ✅     |   —    |   ✅   | integer; reorders painting among siblings (ascending, document order ties); never affects layout                                                                                          |
+| `maxLines`, `minFontSize`                        |    ✅     |   ✅   |   ✅   | bound text layout and the minimum size used by shrink fitting                                                                                                                             |
+| `textFit`, `textOverflow`                        |    ✅     |   ✅   |   ✅   | `wrap`, `shrink`, or `truncate`; overflow may clip or append an ellipsis                                                                                                                  |
+| `imageRendering`, `pixelSize`                    |    ✅     |   —    |   ✅   | normal or deliberately pixelated image/video/Lottie rendering with a bounded low-resolution staging size                                                                                  |
 
 ✅ implemented · ⚠️ partial (see note) · 📋 validated only, planned · — not applicable
 
@@ -224,6 +272,9 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 - Every key in `scene.assets` equals that asset's `id`.
 - `text` nodes require a `text` string.
 - `img` and `video` nodes require an `assetId` pointing at `scene.assets`.
+- `lottie` nodes require a Lottie asset; effect nodes require a supported
+  effect name.
+- Audio-reactive effects require `params.audioAssetId`.
 - Unknown style properties are rejected, with a message explaining the curated-subset policy.
 
 `parseScene(input)` throws `SceneValidationError` (with structured `issues`); `validateScene(input)` returns `{ ok: true, scene }` or `{ ok: false, errors: string[] }` with messages like:

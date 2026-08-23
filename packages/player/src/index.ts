@@ -5,6 +5,7 @@ import {
   renderStill,
   resolveAssets,
   type ResolvedAssets,
+  type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import { WebAudioPreview, type AudioPreview } from "./audio.js";
 
@@ -36,7 +37,9 @@ export class FrameClock {
     loop?: boolean;
   }) {
     if (options.fps <= 0 || !Number.isFinite(options.fps)) {
-      throw new Error(`FrameClock fps must be a positive number, got ${options.fps}.`);
+      throw new Error(
+        `FrameClock fps must be a positive number, got ${options.fps}.`,
+      );
     }
     if (
       !Number.isInteger(options.durationInFrames) ||
@@ -163,8 +166,11 @@ export class Player {
   private renderedFrame = -1;
   private rafHandle: number | null = null;
   private rendering = false;
+  private assetsReleased = false;
   private disposed = false;
   private audio: AudioPreview | null = null;
+  private audioReadyPromise: Promise<void> = Promise.resolve();
+  private readonly textMeasureCache: TextMeasureCache = new Map();
 
   /** @internal — use createPlayer(). */
   constructor(
@@ -206,6 +212,17 @@ export class Player {
 
   set loop(value: boolean) {
     this.clock.loop = value;
+  }
+
+  /**
+   * Resolves once the audio preview is attached, or once the player knows
+   * there will be none (silent scene, unsupported environment, mix failure).
+   * The mix is prepared off the critical path, so the first frame paints
+   * before sound exists; playback started earlier joins the audio clock the
+   * moment it attaches. Await this when audio must be live before play().
+   */
+  get audioReady(): Promise<void> {
+    return this.audioReadyPromise;
   }
 
   on(event: PlayerEvent, listener: (frame: number) => void): () => void {
@@ -269,14 +286,30 @@ export class Player {
     this.audio?.dispose();
     this.audio = null;
 
-    if (this.ownsAssets && this.assets) {
-      disposeAssets(this.assets);
+    if (!this.rendering) {
+      this.releaseOwnedAssets();
     }
   }
 
   /** @internal — wired by createPlayer() after load() decides audibility. */
   attachAudio(audio: AudioPreview): void {
+    if (this.disposed) {
+      audio.dispose();
+      return;
+    }
+
     this.audio = audio;
+
+    // The mix finished while playback was already running: join it at the
+    // current position instead of staying silent until the next play().
+    if (this.clock.playing) {
+      audio.start(this.clock.frameAt(this.now()).frame / this.scene.fps);
+    }
+  }
+
+  /** @internal — wired by createPlayer(). */
+  setAudioReady(ready: Promise<void>): void {
+    this.audioReadyPromise = ready;
   }
 
   /** @internal — first paint from createPlayer(). */
@@ -357,31 +390,56 @@ export class Player {
     this.rendering = true;
 
     try {
-      if (this.assets) {
-        await prepareFrame(this.scene, frame, this.assets);
-      }
+      const resolvedScene = this.assets
+        ? await prepareFrame(this.scene, frame, this.assets)
+        : undefined;
 
       if (this.disposed) {
         return;
       }
 
-      renderStill(this.context, this.scene, frame, { assets: this.assets });
+      renderStill(this.context, this.scene, frame, {
+        assets: this.assets,
+        resolvedScene,
+        textMeasureCache: this.textMeasureCache,
+      });
       this.renderedFrame = frame;
       this.emit("frame", frame);
+    } catch (error) {
+      if (!this.disposed) {
+        throw error;
+      }
     } finally {
       this.rendering = false;
+
+      if (this.disposed) {
+        this.releaseOwnedAssets();
+      }
     }
   }
 
+  private releaseOwnedAssets(): void {
+    if (!this.ownsAssets || !this.assets || this.assetsReleased) {
+      return;
+    }
+
+    this.assetsReleased = true;
+    disposeAssets(this.assets);
+  }
+
   private emit(event: PlayerEvent, frame: number): void {
-    for (const listener of this.listeners.get(event) ?? []) {
+    const listeners = Array.from(this.listeners.get(event) ?? []);
+
+    for (const listener of listeners) {
       listener(frame);
     }
   }
 
   private assertAlive(): void {
     if (this.disposed) {
-      throw new Error("Player is disposed; create a new one with createPlayer().");
+      throw new Error(
+        "Player is disposed; create a new one with createPlayer().",
+      );
     }
   }
 }
@@ -394,23 +452,36 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
   const scene = parseScene(options.scene);
   const needsAssets = Object.keys(scene.assets).length > 0;
   const ownsAssets = options.assets === undefined && needsAssets;
-  const assets = options.assets ?? (needsAssets ? await resolveAssets(scene) : undefined);
+  const assets =
+    options.assets ?? (needsAssets ? await resolveAssets(scene) : undefined);
 
   const player = new Player(scene, options, assets, ownsAssets);
 
   // Best-effort audio preview: attach only when the scene actually has
-  // something audible, so silent scenes never touch AudioContext.
+  // something audible, so silent scenes never touch AudioContext. The mix
+  // runs concurrently with the first paint and attaches whenever it lands —
+  // decoding a long soundtrack must never delay the first visible frame.
   if (options.audio !== false) {
     const audio =
       options.audio ??
       (WebAudioPreview.supported() ? new WebAudioPreview() : null);
 
     if (audio) {
-      if (await audio.load(scene, assets)) {
-        player.attachAudio(audio);
-      } else {
-        audio.dispose();
-      }
+      player.setAudioReady(
+        audio
+          .load(scene, assets)
+          .then((audible) => {
+            if (audible) {
+              player.attachAudio(audio);
+            } else {
+              audio.dispose();
+            }
+          })
+          .catch(() => {
+            // Preview audio is best-effort; the export mixes its own.
+            audio.dispose();
+          }),
+      );
     }
   }
 

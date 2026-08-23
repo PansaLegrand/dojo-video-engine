@@ -13,6 +13,7 @@
       "create-motionforge": ["packages/create-motionforge/src/index.ts"],
       "@motionforge/presets": ["packages/presets/src/index.ts"],
       "@motionforge/presets/catalog": ["packages/presets/src/catalog.ts"],
+      "@motionforge/presets/macros": ["packages/presets/src/macros.ts"],
       "@motionforge/showcase": ["packages/showcase/src/index.ts"],
       "@motionforge/renderer-canvas2d": [
         "packages/renderer-canvas2d/src/index.ts"

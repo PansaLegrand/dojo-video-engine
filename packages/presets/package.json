@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/presets",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Pure animation presets and caption generators that compile to motionforge scene data.",
   "keywords": [
     "motionforge",
@@ -30,6 +30,10 @@
     "./catalog": {
       "types": "./dist/catalog.d.ts",
       "import": "./dist/catalog.js"
+    },
+    "./macros": {
+      "types": "./dist/macros.d.ts",
+      "import": "./dist/macros.js"
     }
   },
   "files": [
@@ -51,7 +55,8 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/schema": "workspace:*"
+    "@motionforge/schema": "workspace:*",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

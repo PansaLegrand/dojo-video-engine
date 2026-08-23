@@ -53,6 +53,8 @@ export const supportedStyleKeys = [
   "textBackgroundRadius",
   "objectFit",
   "objectPosition",
+  "imageRendering",
+  "pixelSize",
 ] as const;
 
 export type SupportedStyleKey = (typeof supportedStyleKeys)[number];
@@ -124,6 +126,8 @@ export const styleSchema = z
       .enum(["contain", "cover", "fill", "none", "scale-down"])
       .optional(),
     objectPosition: z.string().optional(),
+    imageRendering: z.enum(["auto", "pixelated"]).optional(),
+    pixelSize: z.number().min(1).max(256).optional(),
   })
   .strict({
     message:
@@ -260,6 +264,98 @@ export const volumeEnvelopeSchema = z
 
 export type VolumeEnvelope = z.infer<typeof volumeEnvelopeSchema>;
 
+export const effectNames = [
+  "cartoonBurst",
+  "confettiBurst",
+  "cloudPop",
+  "speedLines",
+  "neonAura",
+  "scribbleCircle",
+  "spectrumBars",
+  "cassetteVuMeter",
+  "waveformLine",
+  "mirrorBars",
+  "circularSpectrum",
+  "neonWaveform",
+  "pulseRings",
+  "particleGalaxy",
+  "albumCoverPulse",
+  "audioBlob",
+  "starfieldTunnel",
+  "equalizerGrid",
+  "liquidGradient",
+  "kaleidoscope",
+  "vinylRecord",
+  "audioTerrain",
+  "lightningArc",
+  "minimalLineArt",
+] as const;
+
+// Effects that read per-frame audio spectra. resolveAssets() analyzes only the
+// audio assets referenced by these, and each requires params.audioAssetId.
+export const audioReactiveEffectNames = [
+  "spectrumBars",
+  "cassetteVuMeter",
+  "waveformLine",
+  "mirrorBars",
+  "circularSpectrum",
+  "neonWaveform",
+  "pulseRings",
+  "particleGalaxy",
+  "albumCoverPulse",
+  "audioBlob",
+  "starfieldTunnel",
+  "equalizerGrid",
+  "liquidGradient",
+  "kaleidoscope",
+  "vinylRecord",
+  "audioTerrain",
+  "lightningArc",
+  "minimalLineArt",
+] as const;
+
+export function isAudioReactiveEffect(
+  effect: string | undefined,
+): effect is (typeof audioReactiveEffectNames)[number] {
+  return (audioReactiveEffectNames as readonly string[]).includes(effect ?? "");
+}
+
+export const effectParamsSchema = z
+  .object({
+    intensity: z.enum(["low", "medium", "high"]).optional(),
+    seed: z.number().int().nonnegative().optional(),
+    colors: z.array(z.string().min(1)).min(1).max(8).optional(),
+    particleCount: z.number().int().min(1).max(240).optional(),
+    shockwave: z.boolean().optional(),
+    emoji: z.string().min(1).max(12).optional(),
+    direction: z
+      .enum(["left", "right", "up", "down", "in", "out", "diagonal"])
+      .optional(),
+    density: z.enum(["low", "medium", "high"]).optional(),
+    loops: z.number().int().min(1).max(8).optional(),
+    strokeWidth: z.number().min(1).max(80).optional(),
+    radius: z.number().positive().optional(),
+    wobble: z.number().min(0).max(1).optional(),
+    pulse: z.number().min(0).max(1).optional(),
+    scale: z.number().min(0.1).max(4).optional(),
+    spread: z.number().min(0).max(1).optional(),
+    softness: z.number().min(0).max(1).optional(),
+    glow: z.number().min(0).max(1).optional(),
+    scope: z.enum(["text", "frame"]).optional(),
+    audioAssetId: z.string().min(1).optional(),
+    coverAssetId: z.string().min(1).optional(),
+    barCount: z.number().int().min(8).max(128).optional(),
+    sensitivity: z.number().min(0.2).max(10).optional(),
+    smoothing: z.boolean().optional(),
+  })
+  .strict({
+    message:
+      "Unsupported effect param. Use the documented params for this MotionForge effect preset.",
+  });
+
+export type SceneEffectName = (typeof effectNames)[number];
+export type SceneEffectParams = z.infer<typeof effectParamsSchema>;
+
 export const assetSchema = z.object({
   id: z.string().min(1),
   type: z.enum(["image", "video", "audio", "font", "lottie"]),
@@ -270,9 +366,13 @@ export type SceneAsset = z.infer<typeof assetSchema>;
 
 export type SceneNodeInput = {
   id: string;
-  type: "div" | "text" | "img" | "video" | "audio" | "lottie";
+  type: "div" | "text" | "img" | "video" | "audio" | "lottie" | "effect";
   text?: string;
   assetId?: string;
+  /** Effect nodes: named procedural visual preset rendered by the effect renderer. */
+  effect?: SceneEffectName;
+  /** Effect nodes: preset-specific parameters. */
+  params?: SceneEffectParams;
   /** Video nodes: source trim offset in seconds (source footage has its own timebase, independent of scene fps). */
   videoStartTime?: number;
   /** Video and lottie nodes: playback speed multiplier (1 = natural speed). */
@@ -306,9 +406,19 @@ export const sceneNodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
   z
     .object({
       id: z.string().min(1),
-      type: z.enum(["div", "text", "img", "video", "audio", "lottie"]),
+      type: z.enum([
+        "div",
+        "text",
+        "img",
+        "video",
+        "audio",
+        "lottie",
+        "effect",
+      ]),
       text: z.string().optional(),
       assetId: z.string().optional(),
+      effect: z.enum(effectNames).optional(),
+      params: effectParamsSchema.optional(),
       videoStartTime: z.number().nonnegative().optional(),
       playbackRate: z.number().positive().optional(),
       audioStartTime: z.number().nonnegative().optional(),
@@ -327,6 +437,42 @@ export const sceneNodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
           code: z.ZodIssueCode.custom,
           path: ["text"],
           message: "Text nodes require a `text` string.",
+        });
+      }
+
+      if (node.type === "effect" && !node.effect) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["effect"],
+          message: "Effect nodes require an `effect` preset name.",
+        });
+      }
+
+      if (
+        node.type === "effect" &&
+        isAudioReactiveEffect(node.effect) &&
+        !node.params?.audioAssetId
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["params", "audioAssetId"],
+          message: `${node.effect} requires params.audioAssetId so preview and export analyze the same audio asset.`,
+        });
+      }
+
+      if (node.type !== "effect" && node.effect !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["effect"],
+          message: `effect only applies to effect nodes; remove it from this ${node.type} node.`,
+        });
+      }
+
+      if (node.type !== "effect" && node.params !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["params"],
+          message: `params only applies to effect nodes; remove it from this ${node.type} node.`,
         });
       }
 
@@ -514,16 +660,20 @@ export function validateScene(
 
   return {
     ok: false,
-    errors: result.error.issues.map(
-      (issue) => `${issue.path.join(".") || "scene"}: ${issue.message}`,
-    ),
+    errors: result.error.issues.map(formatSceneIssue),
   };
 }
 
+function formatSceneIssue(issue: z.ZodIssue): string {
+  const keys =
+    issue.code === z.ZodIssueCode.unrecognized_keys
+      ? ` Unsupported key(s): ${issue.keys.join(", ")}.`
+      : "";
+  return `${issue.path.join(".") || "scene"}: ${issue.message}${keys}`;
+}
+
 function formatSceneIssues(issues: z.ZodIssue[]): string {
-  return issues
-    .map((issue) => `${issue.path.join(".") || "scene"}: ${issue.message}`)
-    .join("\n");
+  return issues.map(formatSceneIssue).join("\n");
 }
 
 /**

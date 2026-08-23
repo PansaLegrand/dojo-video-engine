@@ -1,5 +1,50 @@
 # Progress
 
+## 2026-08-23 (0.4 production reconciliation and source-of-truth gate)
+
+### Changed
+
+- Reconciled the reusable MotionForge changes proven in DojoClip's production
+  consumer back into the standalone open-source packages: effect nodes, 24
+  procedural/audio-reactive effects, agent macros and intents, shared effect
+  normalization, sequential video decoding, player audio/lifecycle hardening,
+  and export frame-loop optimizations.
+- Kept the reconciliation engine-only. No authentication, database, billing,
+  storage, queue, or product UI code was introduced, and the DojoClip
+  repository was not modified.
+- Fixed standalone integration boundaries surfaced by the merge: NodeNext ESM
+  specifiers, effect-node exhaustiveness in authoring/CLI code, player mock
+  return types, and the presets macro package export/dependency.
+- Completed the public builder surface for the new node union with core
+  `lottie()` / `effect()` builders and authoring `lottieAsset()`,
+  `lottieClip()`, and `effectLayer()` helpers.
+- Synchronized all nine public packages at 0.4.0 and added
+  `pnpm check:contracts` for version, changelog, internal dependency, and
+  browser-engine boundary enforcement. Filled missing package-local MIT
+  licenses and made README/license presence part of the contract gate.
+- Added `effect-showcase`, a seeded pinned-Chromium exact-pixel fixture covering
+  the six general procedural effects.
+- Added the v1 base-engine roadmap and source-of-truth integration policy, and
+  updated README, scene-format, agent, package, and Remotion comparison docs.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 518 unit tests, contract/determinism
+  lint, production builds, six long-resource checks, pixel/media/audio goldens,
+  ten browser E2E checks, CLI/starter smoke, and all nine package dry-runs
+  passed.
+- `pnpm verify:clean` — packed all nine 0.4.0 packages, installed the generated
+  starter from tarballs in a temporary clean project, then validated, inspected,
+  and built it successfully.
+
+### Notes
+
+- The open-source side is ready to be authoritative. Upgrading the commercial
+  downstream consumer is a separate guarded step after a tag or exact commit
+  is selected and the application runs its own acceptance suite.
+- Scene v1 and the extension kernel are deliberately the next milestones;
+  additional named effects should not expand the core switch indefinitely.
+
 This is the living project log. Every meaningful implementation slice should record what changed, how it was tested, and what remains uncertain.
 
 ## 2026-06-19 (core engine RC6: long-scene resource confidence)

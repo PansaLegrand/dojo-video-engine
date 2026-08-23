@@ -91,6 +91,135 @@ describe("scene schema", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("accepts effect nodes with bounded preset params", () => {
+    const result = validateScene({
+      schemaVersion: 0,
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 90,
+      nodes: [
+        {
+          id: "burst",
+          type: "effect",
+          effect: "cartoonBurst",
+          from: 12,
+          duration: 24,
+          style: {
+            position: "absolute",
+            left: 760,
+            top: 360,
+            width: 400,
+            height: 300,
+          },
+          params: {
+            intensity: "high",
+            seed: 42,
+            particleCount: 96,
+            colors: ["#fff3a3", "#ff7a18", "#ef233c"],
+            shockwave: true,
+            emoji: "!",
+          },
+        },
+        {
+          id: "cloud",
+          type: "effect",
+          effect: "cloudPop",
+          duration: 30,
+          params: {
+            density: "high",
+            direction: "diagonal",
+            loops: 3,
+            strokeWidth: 12,
+            radius: 48,
+            wobble: 0.4,
+            pulse: 0.8,
+            scale: 1.35,
+            spread: 0.65,
+            softness: 0.75,
+            glow: 0.5,
+            scope: "text",
+          },
+        },
+        {
+          id: "spectrum",
+          type: "effect",
+          effect: "spectrumBars",
+          params: {
+            audioAssetId: "music",
+            barCount: 64,
+            sensitivity: 1.25,
+            smoothing: true,
+            colors: ["#00e676", "#7c3aed", "#ffffff"],
+          },
+        },
+      ],
+      assets: {
+        music: { id: "music", type: "audio", src: "music.mp3" },
+      },
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects malformed effect nodes", () => {
+    const missingPreset = validateScene({
+      schemaVersion: 0,
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 90,
+      nodes: [{ id: "burst", type: "effect" }],
+    });
+
+    expect(missingPreset.ok).toBe(false);
+    expect(missingPreset.ok ? "" : missingPreset.errors.join("\n")).toContain(
+      "Effect nodes require an `effect` preset name",
+    );
+
+    const misplacedParams = validateScene({
+      schemaVersion: 0,
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 90,
+      nodes: [
+        {
+          id: "title",
+          type: "text",
+          text: "Hello",
+          params: { intensity: "high" },
+        },
+      ],
+    });
+
+    expect(misplacedParams.ok).toBe(false);
+    expect(
+      misplacedParams.ok ? "" : misplacedParams.errors.join("\n"),
+    ).toContain("params only applies to effect nodes");
+
+    const unsupportedParams = validateScene({
+      schemaVersion: 0,
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 90,
+      nodes: [
+        {
+          id: "aura",
+          type: "effect",
+          effect: "neonAura",
+          params: { blurAmount: 0.5 },
+        },
+      ],
+    });
+
+    expect(unsupportedParams.ok).toBe(false);
+    expect(
+      unsupportedParams.ok ? "" : unsupportedParams.errors.join("\n"),
+    ).toContain("Unsupported key(s): blurAmount");
+  });
+
   it("rejects invalid bounded text controls", () => {
     const result = validateScene({
       schemaVersion: 0,
@@ -488,6 +617,22 @@ describe("scene schema", () => {
     expect(validateScene(sceneWith("blur(4deg)")).ok).toBe(false);
     expect(validateScene(sceneWith("url(#svg-filter)")).ok).toBe(false);
     expect(validateScene(sceneWith("")).ok).toBe(false);
+  });
+
+  it("accepts deterministic media image rendering modes", () => {
+    const sceneWith = (imageRendering: string, pixelSize = 12) => ({
+      schemaVersion: 0,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [{ id: "n", type: "div", style: { imageRendering, pixelSize } }],
+    });
+
+    expect(validateScene(sceneWith("auto")).ok).toBe(true);
+    expect(validateScene(sceneWith("pixelated")).ok).toBe(true);
+    expect(validateScene(sceneWith("crisp-edges")).ok).toBe(false);
+    expect(validateScene(sceneWith("pixelated", 0)).ok).toBe(false);
   });
 
   it("accepts integer zIndex and rejects fractional values", () => {

@@ -7,11 +7,14 @@ import {
   bg,
   captionTrack,
   defineAssets,
+  effectLayer,
   fadeUp,
   frames,
   image,
   imageAsset,
   imageOverlay,
+  lottieAsset,
+  lottieClip,
   makeScene,
   parseSrt,
   parseVtt,
@@ -127,6 +130,47 @@ describe("@motionforge/authoring", () => {
       audioStartTime: 10,
       volume: 0.25,
     });
+  });
+
+  it("authors Lottie clips and deterministic effect layers", () => {
+    const sticker = lottieAsset("sticker", publicAsset("assets/sticker.json"));
+    const scene = makeScene({
+      size: "square",
+      fps: 30,
+      duration: seconds(2),
+      children: [
+        lottieClip(sticker, {
+          id: "sticker-node",
+          playbackRate: 1.5,
+          objectFit: "contain",
+        }),
+        effectLayer("confettiBurst", {
+          id: "celebration",
+          params: { seed: 7, intensity: "high" },
+        }),
+      ],
+    });
+
+    expect(validateScene(scene)).toMatchObject({ ok: true });
+    expect(scene.assets.sticker).toMatchObject({
+      id: "sticker",
+      type: "lottie",
+      src: "/assets/sticker.json",
+    });
+    expect(scene.nodes).toMatchObject([
+      {
+        id: "sticker-node",
+        type: "lottie",
+        assetId: "sticker",
+        playbackRate: 1.5,
+      },
+      {
+        id: "celebration",
+        type: "effect",
+        effect: "confettiBurst",
+        params: { seed: 7, intensity: "high" },
+      },
+    ]);
   });
 
   it("builds audio overlays with asset registration and role defaults", () => {

@@ -31,6 +31,7 @@ export interface AudioPreview {
 export class WebAudioPreview implements AudioPreview {
   private context: AudioContext | undefined;
   private buffer: AudioBuffer | null = null;
+  private adoptedBuffer = false;
   private source: AudioBufferSourceNode | null = null;
   private startedAtContextTime = 0;
   private startOffset = 0;
@@ -42,13 +43,35 @@ export class WebAudioPreview implements AudioPreview {
     return typeof AudioContext !== "undefined";
   }
 
+  /**
+   * Reuses a mix produced by an earlier preview (read from `mixedBuffer`),
+   * so load() skips decoding and mixing entirely. Callers own cache
+   * invalidation: adopt only when the scene's audible content is unchanged.
+   */
+  adoptMixedBuffer(buffer: AudioBuffer | null): void {
+    this.buffer = buffer;
+    this.adoptedBuffer = true;
+  }
+
+  /**
+   * The mixed scene audio after load() (null when the scene is silent).
+   * AudioBuffers are context-independent, so callers may cache this across
+   * players and hand it to a new preview via adoptMixedBuffer().
+   */
+  get mixedBuffer(): AudioBuffer | null {
+    return this.buffer;
+  }
+
   async load(
     scene: Scene,
     assets: ResolvedAssets | undefined,
   ): Promise<boolean> {
-    this.buffer = assets
-      ? await mixSceneAudio(scene, assets, 0, scene.duration - 1)
-      : null;
+    if (!this.adoptedBuffer) {
+      this.buffer = assets
+        ? await mixSceneAudio(scene, assets, 0, scene.duration - 1)
+        : null;
+    }
+
     return this.buffer !== null;
   }
 

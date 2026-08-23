@@ -1,5 +1,9 @@
 # Roadmap
 
+The current base-engine path to a stable v1 contract is tracked in
+[`v1-roadmap.md`](v1-roadmap.md). This document retains the completed M0 and
+chat/editor development history.
+
 Each slice follows the working practice: code + tests + docs + a `progress.md` entry, landed as one commit. motionforge is an independent open-source engine first. Downstream products are reference consumers for requirements and validation, not owners of the roadmap.
 
 ## Done — weeks 1–2 (static + time-based media)

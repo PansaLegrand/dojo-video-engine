@@ -25,6 +25,34 @@ if (!result.ok) {
 }
 ```
 
+### Effect nodes
+
+MotionForge supports bounded procedural visual layers through `effect` nodes.
+They use the same timing, style, animation, selection, and timeline semantics as
+other visual nodes:
+
+```json
+{
+  "id": "boom",
+  "type": "effect",
+  "effect": "cartoonBurst",
+  "from": 24,
+  "duration": 30,
+  "style": {
+    "position": "absolute",
+    "left": 240,
+    "top": 620,
+    "width": 600,
+    "height": 420
+  },
+  "params": { "intensity": "high", "seed": 42, "emoji": "!" }
+}
+```
+
+`effect` nodes are the stable scene-JSON contract for renderer-native and
+extension-backed effects. LLMs and editors should emit semantic effect names
+and bounded params, not raw Canvas or shader code.
+
 ### JSON Schema
 
 For tools and agents that want to validate scenes without running code, the package exports a JSON Schema (draft-07) and ships it as `scene.schema.json`:

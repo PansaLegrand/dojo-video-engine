@@ -4,11 +4,13 @@ import {
   resolveAssets,
   type AudioClip,
   type ResolvedAssets,
+  type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
-import { evaluateKeyframes } from "@motionforge/core";
+import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
 import type { Scene, SceneNode, VolumeEnvelope } from "@motionforge/schema";
 import {
-  AudioBufferSource,
+  AudioSample,
+  AudioSampleSource,
   BufferTarget,
   CanvasSource,
   getFirstEncodableAudioCodec,
@@ -31,6 +33,11 @@ export type ExportVideoOptions = {
   scene: Scene;
   signal?: AbortSignal;
   onProgress?: (progress: RenderFrameSequenceProgress) => void;
+  /**
+   * Minimum milliseconds between progress callbacks. The final frame always
+   * reports. Defaults to per-frame progress for backwards compatibility.
+   */
+  progressIntervalMs?: number;
   /** First scene frame to export (default 0). */
   startFrame?: number;
   /** Last scene frame to export, inclusive (default scene.duration - 1). */
@@ -172,6 +179,9 @@ export function mixAudioSegments(
     const outSamples = Math.ceil(
       (sourceLength / segment.sampleRate) * sampleRate,
     );
+    // Precomputed once per segment (not per channel, not per sample):
+    // keyframe evaluation per output sample dominated the whole mix.
+    const gains = segmentEnvelopeGains(segment, outSamples, sampleRate);
 
     for (let channel = 0; channel < channelCount; channel += 1) {
       const target = output[channel];
@@ -195,19 +205,11 @@ export function mixAudioSegments(
         const t = sourcePosition - lower;
         const lowerValue = source[lower] ?? 0;
         const upperValue = source[upper] ?? 0;
-        const envelopeGain =
-          segment.volumeEnvelope && segment.envelopeFps
-            ? evaluateVolumeEnvelope(
-                segment.volumeEnvelope,
-                ((segment.envelopeStartTime ?? 0) + index / sampleRate) *
-                  segment.envelopeFps,
-              )
-            : 1;
         target[outIndex] =
           (target[outIndex] ?? 0) +
           (lowerValue + (upperValue - lowerValue) * t) *
             segment.volume *
-            envelopeGain;
+            (gains ? (gains[index] ?? 1) : 1);
       }
     }
   }
@@ -227,6 +229,56 @@ export function evaluateVolumeEnvelope(
 ): number {
   const value = evaluateKeyframes(envelope ?? [], frame);
   return typeof value === "number" ? value : 1;
+}
+
+/**
+ * Envelope gains are evaluated at block edges and interpolated within the
+ * block (~2.7 ms at 48 kHz) instead of per sample. Linear ramps stay exact;
+ * eased ramps deviate by less than the easing curvature across 128 samples,
+ * far below audibility for volume automation.
+ */
+const ENVELOPE_BLOCK_SAMPLES = 128;
+
+/**
+ * Per-output-sample envelope gains for a segment, or null when the segment
+ * has no envelope. Edges are sampled at the first and last sample of each
+ * block so envelopes that clamp at their final keyframe inside a block keep
+ * their exact endpoint values.
+ */
+function segmentEnvelopeGains(
+  segment: AudioSegment,
+  outSamples: number,
+  sampleRate: number,
+): Float32Array | null {
+  const envelope = segment.volumeEnvelope;
+  const fps = segment.envelopeFps;
+
+  if (!envelope || !fps || outSamples <= 0) {
+    return null;
+  }
+
+  const startTime = segment.envelopeStartTime ?? 0;
+  const gains = new Float32Array(outSamples);
+
+  for (let block = 0; block < outSamples; block += ENVELOPE_BLOCK_SAMPLES) {
+    const end = Math.min(outSamples, block + ENVELOPE_BLOCK_SAMPLES);
+    const first = evaluateVolumeEnvelope(
+      envelope,
+      (startTime + block / sampleRate) * fps,
+    );
+    const last = evaluateVolumeEnvelope(
+      envelope,
+      (startTime + (end - 1) / sampleRate) * fps,
+    );
+    const span = end - 1 - block;
+
+    for (let index = block; index < end; index += 1) {
+      gains[index] =
+        span === 0 ? first : first + ((last - first) * (index - block)) / span;
+    }
+  }
+
+  return gains;
 }
 
 export type RenderFrameSequenceProgress = {
@@ -256,9 +308,16 @@ export type RenderFrameSequenceOptions = {
     context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
     scene: Scene,
     frame: number,
+    resolvedScene?: ResolvedScene,
+    textMeasureCache?: TextMeasureCache,
   ) => void;
   onFrame?: (frame: RenderedSequenceFrame) => void | Promise<void>;
   onProgress?: (progress: RenderFrameSequenceProgress) => void;
+  /**
+   * Minimum milliseconds between progress callbacks. Defaults to 0 so callers
+   * that need per-frame progress keep the historical behavior.
+   */
+  progressIntervalMs?: number;
 };
 
 export type RenderFrameSequenceResult = {
@@ -294,19 +353,36 @@ export async function renderFrameSequence(
       context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
       scene: Scene,
       frame: number,
-    ) => renderStill(context, scene, frame, { assets: options.assets }));
+      resolvedScene?: ResolvedScene,
+      textMeasureCache?: TextMeasureCache,
+    ) =>
+      renderStill(context, scene, frame, {
+        assets: options.assets,
+        resolvedScene,
+        textMeasureCache,
+      }));
   let renderedFrames = 0;
+  let lastProgressAt = 0;
+  const textMeasureCache: TextMeasureCache = new Map();
 
   for (let frame = startFrame; frame <= endFrame; frame += 1) {
     throwIfAborted(options.signal);
 
+    let resolvedScene: ResolvedScene | undefined;
+
     if (options.assets) {
       // Stages decoded video frames for this scene frame; no-op for scenes
       // without video assets.
-      await prepareFrame(options.scene, frame, options.assets);
+      resolvedScene = await prepareFrame(options.scene, frame, options.assets);
     }
 
-    renderFrame(options.context, options.scene, frame);
+    renderFrame(
+      options.context,
+      options.scene,
+      frame,
+      resolvedScene,
+      textMeasureCache,
+    );
 
     const rendered: RenderedSequenceFrame = {
       frame,
@@ -318,10 +394,24 @@ export async function renderFrameSequence(
     await options.onFrame?.(rendered);
 
     renderedFrames += 1;
-    options.onProgress?.({
-      ...rendered,
-      totalFrames,
-    });
+    if (options.onProgress) {
+      const progress = {
+        ...rendered,
+        totalFrames,
+      };
+      const progressIntervalMs = options.progressIntervalMs ?? 0;
+      const now = performance.now();
+      const isFinalFrame = frame === endFrame;
+
+      if (
+        progressIntervalMs <= 0 ||
+        isFinalFrame ||
+        now - lastProgressAt >= progressIntervalMs
+      ) {
+        lastProgressAt = now;
+        options.onProgress(progress);
+      }
+    }
   }
 
   return {
@@ -376,7 +466,7 @@ export async function exportVideo(
   const startFrame = options.startFrame ?? 0;
   const endFrame = options.endFrame ?? scene.duration - 1;
   const hasAudio = sceneHasAudibleContent(scene, assets, startFrame, endFrame);
-  let audioSource: AudioBufferSource | null = null;
+  let audioSource: AudioSampleSource | null = null;
   let audioCodec: AudioCodec | null = null;
 
   if (hasAudio) {
@@ -394,7 +484,10 @@ export async function exportVideo(
       );
     }
 
-    audioSource = new AudioBufferSource({
+    // AudioSampleSource over AudioBufferSource: samples are built from raw
+    // Float32Arrays, so the whole export runs in workers, where AudioBuffer
+    // does not exist.
+    audioSource = new AudioSampleSource({
       codec: audioCodec,
       bitrate: QUALITY_HIGH,
     });
@@ -420,6 +513,7 @@ export async function exportVideo(
         await source.add(timestampUs / 1_000_000, frameDuration);
       },
       onProgress: options.onProgress,
+      progressIntervalMs: options.progressIntervalMs,
     });
 
     if (audioSource) {
@@ -434,10 +528,37 @@ export async function exportVideo(
       );
 
       for (const [chunkStart, chunkEnd] of ranges) {
-        const chunk =
-          (await mixSceneAudio(scene, assets, chunkStart, chunkEnd)) ??
-          silentBuffer(chunkStart, chunkEnd, scene.fps);
-        await audioSource.add(chunk);
+        const mixed = await mixSceneAudioData(
+          scene,
+          assets,
+          chunkStart,
+          chunkEnd,
+        );
+        const sampleCount = Math.max(
+          1,
+          Math.round(
+            ((chunkEnd - chunkStart + 1) / scene.fps) * MIX_SAMPLE_RATE,
+          ),
+        );
+        // Planar f32 layout: all of channel 0, then all of channel 1. An
+        // absent mix leaves the zero-filled buffer — explicit silence.
+        const data = new Float32Array(sampleCount * MIX_CHANNELS);
+
+        if (mixed) {
+          mixed.channels.forEach((channel, index) => {
+            data.set(channel.subarray(0, sampleCount), index * sampleCount);
+          });
+        }
+
+        const sample = new AudioSample({
+          data,
+          format: "f32-planar",
+          numberOfChannels: MIX_CHANNELS,
+          sampleRate: MIX_SAMPLE_RATE,
+          timestamp: (chunkStart - startFrame) / scene.fps,
+        });
+        await audioSource.add(sample);
+        sample.close();
       }
     }
 
@@ -540,33 +661,25 @@ function sceneHasAudibleContent(
   return false;
 }
 
-function silentBuffer(
-  chunkStart: number,
-  chunkEnd: number,
-  fps: number,
-): AudioBuffer {
-  return new AudioBuffer({
-    numberOfChannels: MIX_CHANNELS,
-    length: Math.max(
-      1,
-      Math.round(((chunkEnd - chunkStart + 1) / fps) * MIX_SAMPLE_RATE),
-    ),
-    sampleRate: MIX_SAMPLE_RATE,
-  });
-}
+/** Mixed PCM for a frame range: one Float32Array per output channel. */
+export type MixedAudioData = {
+  channels: Float32Array<ArrayBuffer>[];
+  sampleRate: number;
+};
 
 /**
  * Decodes and mixes every audible node (audio nodes and video-node
- * soundtracks) into a single AudioBuffer covering the frame range, or null
- * when the scene has nothing audible. Exported so the player's audio
- * preview plays the exact mix the export muxes.
+ * soundtracks) into raw per-channel PCM covering the frame range, or null
+ * when the range has nothing audible. Environment-free (no AudioBuffer), so
+ * it runs identically on the main thread and in workers; the export encodes
+ * this directly and the player preview wraps it via mixSceneAudio().
  */
-export async function mixSceneAudio(
+export async function mixSceneAudioData(
   scene: Scene,
   assets: ResolvedAssets,
   startFrame: number,
   endFrame: number,
-): Promise<AudioBuffer | null> {
+): Promise<MixedAudioData | null> {
   const placements = collectAudioPlacements(scene);
 
   if (placements.length === 0) {
@@ -664,13 +777,32 @@ export async function mixSceneAudio(
     return null;
   }
 
+  return { channels: mixed, sampleRate: MIX_SAMPLE_RATE };
+}
+
+/**
+ * mixSceneAudioData() packaged as a Web Audio AudioBuffer for playback.
+ * DOM/AudioContext environments only — workers must use mixSceneAudioData().
+ */
+export async function mixSceneAudio(
+  scene: Scene,
+  assets: ResolvedAssets,
+  startFrame: number,
+  endFrame: number,
+): Promise<AudioBuffer | null> {
+  const mixed = await mixSceneAudioData(scene, assets, startFrame, endFrame);
+
+  if (!mixed) {
+    return null;
+  }
+
   const buffer = new AudioBuffer({
-    numberOfChannels: MIX_CHANNELS,
-    length,
-    sampleRate: MIX_SAMPLE_RATE,
+    numberOfChannels: mixed.channels.length,
+    length: mixed.channels[0]?.length ?? 1,
+    sampleRate: mixed.sampleRate,
   });
 
-  mixed.forEach((data, channel) => {
+  mixed.channels.forEach((data, channel) => {
     buffer.copyToChannel(data, channel);
   });
 

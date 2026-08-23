@@ -2,6 +2,8 @@ import type {
   Scene,
   SceneAnimation,
   SceneAsset,
+  SceneEffectName,
+  SceneEffectParams,
   SceneNode,
   SceneStyle,
   VolumeEnvelope,
@@ -10,10 +12,14 @@ import {
   audio,
   composition,
   div,
+  effect,
   img,
+  lottie,
   text,
   video,
   type AudioNodeOptions,
+  type EffectNodeOptions,
+  type LottieNodeOptions,
   type NodeOptions,
   type VideoNodeOptions,
 } from "@motionforge/core";
@@ -137,6 +143,14 @@ export type VideoClipOptions = MediaOptions & {
   trimStart?: TimeValue;
   playbackRate?: number;
   volume?: number;
+};
+
+export type LottieClipOptions = MediaOptions & {
+  playbackRate?: number;
+};
+
+export type EffectLayerOptions = VisualOptions & {
+  params?: SceneEffectParams;
 };
 
 export type AudioTrackOptions = AuthorTimingOptions & {
@@ -275,6 +289,10 @@ export function videoAsset(id: string, src: string): AuthorAsset<"video"> {
 
 export function audioAsset(id: string, src: string): AuthorAsset<"audio"> {
   return makeAsset(id, "audio", src);
+}
+
+export function lottieAsset(id: string, src: string): AuthorAsset<"lottie"> {
+  return makeAsset(id, "lottie", src);
 }
 
 export function defineAssets(
@@ -469,6 +487,52 @@ export function videoClip(
         ...nodeOptions,
         volume: options.volume,
       } as VideoNodeOptions & { volume?: number });
+
+      for (const animation of options.enter ?? []) {
+        node.animate(animation.property, animation.frames);
+      }
+
+      return node;
+    },
+  };
+}
+
+export function lottieClip(
+  asset: AssetReference<"lottie">,
+  options: LottieClipOptions = {},
+): AuthorNode {
+  return {
+    assets: assetsFromReference(asset),
+    toNode(fps, scene) {
+      const node = lottie(assetIdFromReference(asset), {
+        ...timedNodeOptions(options, fps),
+        playbackRate: options.playbackRate,
+        style: mediaStyle(scene, options),
+      });
+
+      for (const animation of options.enter ?? []) {
+        node.animate(animation.property, animation.frames);
+      }
+
+      return node;
+    },
+  };
+}
+
+export function effectLayer(
+  name: SceneEffectName,
+  options: EffectLayerOptions = {},
+): AuthorNode {
+  return {
+    toNode(fps, scene) {
+      const node = effect(name, {
+        ...timedNodeOptions(options, fps),
+        params: options.params,
+        style: {
+          ...defaultVisualStyle(scene),
+          ...options.style,
+        },
+      });
 
       for (const animation of options.enter ?? []) {
         node.animate(animation.property, animation.frames);
@@ -693,9 +757,17 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
       });
       break;
     case "lottie":
-      throw new Error(
-        "Authoring cannot adapt lottie preset nodes until core exposes a lottie builder.",
-      );
+      builder = lottie(requiredAssetId(node), {
+        ...baseOptions,
+        playbackRate: node.playbackRate,
+      } as LottieNodeOptions);
+      break;
+    case "effect":
+      builder = effect(requiredEffectName(node), {
+        ...baseOptions,
+        params: node.params,
+      } as EffectNodeOptions);
+      break;
     default:
       throw new Error(
         `Unsupported scene node type: ${node.type satisfies never}`,
@@ -721,6 +793,14 @@ function requiredAssetId(node: SceneNode): string {
   }
 
   return node.assetId;
+}
+
+function requiredEffectName(node: SceneNode): NonNullable<SceneNode["effect"]> {
+  if (!node.effect) {
+    throw new Error(`Effect node "${node.id}" is missing effect.`);
+  }
+
+  return node.effect;
 }
 
 function collectAuthorNodeAssets(nodes: readonly AuthorNode[] = []) {

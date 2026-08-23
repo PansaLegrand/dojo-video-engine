@@ -486,6 +486,29 @@ describe("caption template catalog", () => {
     ).toBe(true);
   });
 
+  it("highlights color-shift captions with pink text and no word background", () => {
+    const captions = styledCaptions(words, {
+      fps: 30,
+      template: "colorShift",
+      idPrefix: "color-shift-demo",
+    });
+    const firstWord = captions.children?.[0]?.children?.[0];
+    const colorAnimation = firstWord?.animations?.find(
+      (entry) => entry.property === "color",
+    );
+
+    expect(firstWord?.style?.color).toBe("#ffffff");
+    expect(firstWord?.style?.textBackgroundColor).toBeUndefined();
+    expect(
+      colorAnimation?.frames.some((frame) => frame.value === "#ff4fa3"),
+    ).toBe(true);
+    expect(
+      firstWord?.animations?.some(
+        (entry) => entry.property === "textBackgroundColor",
+      ),
+    ).toBe(false);
+  });
+
   it("keeps one-word punch templates compatible with tiktok-style timing", () => {
     const captions = styledCaptions(words, {
       fps: 30,

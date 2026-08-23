@@ -175,6 +175,86 @@ export function pulse(
   ];
 }
 
+/**
+ * Merges keyframe tracks that target the same property into one track each.
+ *
+ * The scene evaluator applies tracks in order with last-write-wins per
+ * property, and a track holds its first value before its first frame — so an
+ * exit track like fadeOut (which holds `1` from frame 0) silently masks an
+ * earlier entrance track's 0 → 1 ramp for the whole timeline. Merging keeps
+ * enter + exit combinations (popIn + fadeOut) composing the way authors mean.
+ *
+ * Merge rule per property, in track order: drop the later track's leading
+ * frames that sit at/before the earlier result's last frame while holding the
+ * earlier result's final value (pure hold artifacts), then append. If a real
+ * overlap remains, the later track wins from its first kept frame onward.
+ */
+export function mergeAnimationsByProperty(
+  animations: SceneAnimation[],
+): SceneAnimation[] {
+  const order: string[] = [];
+  const byProperty = new Map<string, SceneAnimation[]>();
+
+  for (const entry of animations) {
+    const group = byProperty.get(entry.property);
+
+    if (group) {
+      group.push(entry);
+    } else {
+      order.push(entry.property);
+      byProperty.set(entry.property, [entry]);
+    }
+  }
+
+  return order.map((property) => {
+    const group = byProperty.get(property) ?? [];
+
+    if (group.length === 1) {
+      return group[0] as SceneAnimation;
+    }
+
+    const frames = group
+      .map((entry) => entry.frames)
+      .reduce((merged, next) => mergeKeyframeTracks(merged, next));
+
+    return { kind: "keyframes" as const, property, frames };
+  });
+}
+
+function mergeKeyframeTracks(
+  earlier: SceneAnimation["frames"],
+  later: SceneAnimation["frames"],
+): SceneAnimation["frames"] {
+  if (earlier.length === 0) {
+    return later;
+  }
+
+  if (later.length === 0) {
+    return earlier;
+  }
+
+  const lastEarlier = earlier[earlier.length - 1];
+  let laterKept = [...later];
+
+  while (
+    laterKept.length > 0 &&
+    lastEarlier &&
+    (laterKept[0] as { frame: number }).frame <= lastEarlier.frame &&
+    (laterKept[0] as { value: unknown }).value === lastEarlier.value
+  ) {
+    laterKept = laterKept.slice(1);
+  }
+
+  if (laterKept.length === 0) {
+    return earlier;
+  }
+
+  const firstLater = laterKept[0] as { frame: number };
+  const earlierKept = earlier.filter((entry) => entry.frame < firstLater.frame);
+
+  return [...earlierKept, ...laterKept];
+}
+
 export type MediaLookCategory =
   | "natural"
   | "social"
@@ -2152,7 +2232,8 @@ export const videoOverlayTemplates = {
   },
   videoBadge: {
     name: "Video Badge",
-    description: "Compact rounded video label for proof, avatars, or live marks.",
+    description:
+      "Compact rounded video label for proof, avatars, or live marks.",
     category: "editorial",
     placement: "topLeft",
     box: { widthRatio: 0.24, heightRatio: 0.14 },
@@ -3079,10 +3160,10 @@ export const captionTemplates = {
       textStroke: "5px rgba(2,6,23,0.9)",
     },
     highlightStyle: {
-      color: "#facc15",
+      color: "#ff4fa3",
       scale: 1.08,
       fontWeight: 900,
-      textShadow: "0px 0px 14px rgba(250,204,21,0.55)",
+      textShadow: "0px 0px 14px rgba(255,79,163,0.55)",
     },
   },
 } satisfies Record<string, CaptionTemplate>;
@@ -3318,7 +3399,9 @@ function parseSubtitleCues(
       continue;
     }
 
-    const textLines = lines.slice(timingIndex + 1).filter((line) => line !== "");
+    const textLines = lines
+      .slice(timingIndex + 1)
+      .filter((line) => line !== "");
     const cueLabel =
       timingIndex > 0 && lines[timingIndex - 1]?.trim()
         ? lines[timingIndex - 1]?.trim()
@@ -3332,14 +3415,18 @@ function parseSubtitleCues(
     const endRaw = endWithSettings?.trim().split(/\s+/)[0];
 
     if (!startRaw || !endRaw) {
-      throw new Error(`${options.format} cue ${cueLabel} has an invalid time range.`);
+      throw new Error(
+        `${options.format} cue ${cueLabel} has an invalid time range.`,
+      );
     }
 
     const startMs = parseSubtitleTimestamp(startRaw.trim(), options.format);
     const endMs = parseSubtitleTimestamp(endRaw.trim(), options.format);
 
     if (endMs <= startMs) {
-      throw new Error(`${options.format} cue ${cueLabel} must end after it starts.`);
+      throw new Error(
+        `${options.format} cue ${cueLabel} must end after it starts.`,
+      );
     }
 
     segments.push({
@@ -3350,7 +3437,9 @@ function parseSubtitleCues(
   }
 
   if (segments.length === 0) {
-    throw new Error(`${options.format} input did not contain any subtitle cues.`);
+    throw new Error(
+      `${options.format} input did not contain any subtitle cues.`,
+    );
   }
 
   return segments;
@@ -3385,7 +3474,9 @@ function parseSubtitleTimestamp(
   const milliseconds = Number(match[4]);
 
   if (minutes > 59 || seconds > 59) {
-    throw new Error(`${format} timestamp "${input}" has invalid minutes or seconds.`);
+    throw new Error(
+      `${format} timestamp "${input}" has invalid minutes or seconds.`,
+    );
   }
 
   return ((hours * 60 + minutes) * 60 + seconds) * 1000 + milliseconds;
@@ -3419,7 +3510,9 @@ function normalizeSubtitleSegments(
 
       return { text, startMs, endMs };
     })
-    .filter((segment): segment is NormalizedSubtitleSegment => segment !== null);
+    .filter(
+      (segment): segment is NormalizedSubtitleSegment => segment !== null,
+    );
 }
 
 function subtitleSegmentTimeMs(
@@ -3567,7 +3660,8 @@ function subtitleTextSafetyStyle(
     textFit: options.textFit ?? "shrink",
     textOverflow: options.textOverflow ?? "ellipsis",
     maxLines: options.maxLines ?? 2,
-    minFontSize: options.minFontSize ?? Math.max(16, Math.round(fontSize * 0.5)),
+    minFontSize:
+      options.minFontSize ?? Math.max(16, Math.round(fontSize * 0.5)),
   };
 }
 
@@ -3887,11 +3981,83 @@ function captionSegment(words: CaptionWord[]): CaptionSegment {
   };
 }
 
+/**
+ * Characters from scripts written without inter-word spaces (Han, kana,
+ * full-width forms, Thai/Lao/Khmer/Myanmar). Hangul is NOT here — Korean
+ * uses spaces. Used to join ASR word tokens back into natural text: CJK
+ * ASR emits per-character/per-token "words", and joining those with " "
+ * would render 你 好 世 界 instead of 你好世界.
+ */
+const spacelessScriptPattern =
+  // Built via RegExp so the es5-target app tsconfig accepts the u flag.
+  new RegExp(
+    "[\\u2E80-\\u303F\\u3040-\\u30FF\\u31F0-\\u31FF\\u3400-\\u4DBF\\u4E00-\\u9FFF" +
+      "\\uF900-\\uFAFF\\uFE30-\\uFE4F\\uFF00-\\uFF9F\\u{20000}-\\u{2FA1F}" +
+      "\\u0E00-\\u0EFF\\u1000-\\u109F\\u1780-\\u17FF]",
+    "u",
+  );
+
+function lastGrapheme(text: string): string {
+  const clusters = Array.from(text);
+  return clusters[clusters.length - 1] ?? "";
+}
+
+function firstGrapheme(text: string): string {
+  return Array.from(text)[0] ?? "";
+}
+
+/**
+ * Joins caption word tokens with script-aware spacing: a space separates two
+ * tokens unless both boundary characters belong to spaceless scripts, so
+ * Chinese/Japanese/Thai read naturally while Latin runs (and mixed
+ * CJK-Latin boundaries) keep their spaces.
+ */
+export function joinCaptionWords(tokens: string[]): string {
+  let result = "";
+
+  for (const raw of tokens) {
+    const token = raw.trim();
+
+    if (!token) {
+      continue;
+    }
+
+    if (result === "") {
+      result = token;
+      continue;
+    }
+
+    const omitSpace =
+      spacelessScriptPattern.test(lastGrapheme(result)) &&
+      spacelessScriptPattern.test(firstGrapheme(token));
+
+    result += omitSpace ? token : ` ${token}`;
+  }
+
+  return result.replace(/\s+([,.;:!?])/g, "$1");
+}
+
+/**
+ * True when the text is dominated by spaceless-script characters — callers
+ * use it to size caption segments by tokens-per-line appropriately (a CJK
+ * "word" is roughly a character, so lines need more tokens).
+ */
+export function isSpacelessScriptText(text: string): boolean {
+  const clusters = Array.from(text).filter((char) => !/\s/.test(char));
+
+  if (clusters.length === 0) {
+    return false;
+  }
+
+  const spaceless = clusters.filter((char) =>
+    spacelessScriptPattern.test(char),
+  ).length;
+
+  return spaceless / clusters.length > 0.5;
+}
+
 function captionSegmentText(words: CaptionWord[]): string {
-  return words
-    .map((entry) => entry.word.trim())
-    .join(" ")
-    .replace(/\s+([,.;:!?])/g, "$1");
+  return joinCaptionWords(words.map((entry) => entry.word));
 }
 
 function strictFrames(frames: Keyframes): Keyframes {
@@ -3938,3 +4104,17 @@ export {
   type StaggerOptions,
   type TimelinePosition,
 } from "./timeline.js";
+
+export {
+  canonicalEffectParamKey,
+  canonicalEffectParamKeys,
+  effectParamAliases,
+  normalizeEffectColorsValue,
+  normalizeEffectDirectionValue,
+  normalizeEffectLevelValue,
+  normalizeEffectParamValue,
+  normalizeEffectScaleValue,
+  normalizeEffectScopeValue,
+  normalizeEffectUnitValue,
+  numericEffectParamKeys,
+} from "./effect-params.js";

@@ -19,8 +19,11 @@ player.dispose();
 
 - **Wall-clock time exists only in the clock.** `FrameClock` maps `performance.now()` to integer frames anchored at the last play/seek; rendering stays the engine's pure `(scene, frame)` function. Playback at 30 fps shows the same pixels as export at 30 fps.
 - **Latest frame wins.** The loop awaits `prepareFrame()` (video decode) per displayed frame. If a decode is slow, the next tick re-reads the clock and skips ahead — no stale-frame queue, no tearing.
+- **First paint does not wait for audio.** Preview audio mixing begins alongside
+  the initial render. If it finishes after playback starts, it joins at the
+  current scene position instead of delaying the visible player.
 - **Injectable time and scheduler.** `now`, `requestFrame`, and `cancelFrame` are constructor options, so the full play/pause/seek/ended/loop behavior is unit-tested in Node with a fake driver — no timers, no flake.
-- **Asset ownership is explicit.** Pass `assets` and you own their lifetime (the playground shares one resolution between preview and export); omit them and the player resolves on create and releases on `dispose()`.
+- **Asset ownership is explicit.** Pass `assets` and you own their lifetime (the playground shares one resolution between preview and export); omit them and the player resolves on create and releases on `dispose()`. Disposal waits for an in-flight asynchronous frame preparation before releasing owned decoders.
 
 Events: `frame`, `play`, `pause`, `ended` (non-looping playback pauses on the final frame). `currentFrame` is the last rendered frame.
 

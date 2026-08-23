@@ -1,6 +1,72 @@
 # Changelog
 
-All publishable packages (`@motionforge/schema`, `@motionforge/core`, `@motionforge/renderer-canvas2d`, `@motionforge/export`, `@motionforge/presets`, `@motionforge/player`) version together.
+All public packages version together, including the engine, authoring, CLI, and
+starter packages.
+
+## 0.4.0 — 2026-08-23
+
+The production reconciliation release: reusable engine improvements proven in
+DojoClip's Video Agent are now part of the open-source source of truth.
+
+### @motionforge/schema
+
+- Added deterministic `effect` nodes with a bounded parameter contract and 24
+  built-in effect names, including six general motion effects and 18
+  audio-reactive visualizers.
+- Added audio-reactive asset validation and stricter patch normalization for
+  effect parameters and node properties.
+- Regenerated the shipped JSON Schema from the reconciled runtime contract.
+
+### @motionforge/renderer-canvas2d
+
+- Added deterministic procedural rendering for impact, confetti, cloud,
+  speed-line, aura, annotation, waveform, spectrum, particle, tunnel, vinyl,
+  terrain, gradient, and other audio-reactive effects.
+- Added compact, cached audio-spectrum analysis for only the assets referenced
+  by audio-reactive nodes.
+- Replaced repeated random-access video seeks with per-node sequential decode
+  cursors and bounded canvas pools; inactive cursors are disposed explicitly.
+- Added pixelated media rendering and hardened text, transform, filter, media,
+  Lottie, and resource-lifecycle behavior.
+
+### @motionforge/player and @motionforge/export
+
+- Player creation no longer waits for the whole preview audio mix before
+  painting its first frame; late audio joins the current playback position.
+- Owned assets are not disposed while an asynchronous frame render is still in
+  flight.
+- Export now reuses resolved frame evaluation and text-measure caches, reduces
+  progress callback pressure, and keeps encoder backpressure explicit.
+
+### @motionforge/presets
+
+- Added the schema-backed macro registry and `expandMacroNodes()` /
+  `expandMacroNodeInput()` APIs for agent-friendly, compact scene authoring.
+- Added media, text, caption, subtitle, transition, countdown, Lottie, B-roll,
+  emphasis, lower-third, title-card, callout, kinetic-text, progress-bar, and
+  chapter-transition macros.
+- Added layout and text-role intents plus shared effect-parameter
+  normalization. Macro metadata generates an agent prompt guide from the same
+  registered definitions used at runtime.
+
+### @motionforge/core and @motionforge/authoring
+
+- Added complete builder coverage for the reconciled node union through
+  `lottie()` and `effect()` in core.
+- Added seconds-first `lottieAsset()`, `lottieClip()`, and `effectLayer()`
+  helpers, including adaptation of preset-produced Lottie/effect nodes.
+
+### Tooling and governance
+
+- Added a package-contract gate that enforces synchronized public package
+  versions, changelog coverage, internal workspace dependency policy, and
+  browser-engine dependency boundaries; every public tarball now carries its
+  own README and MIT license.
+- CLI inspection now reports effect nodes and effect capability usage.
+- Added a pinned-Chromium pixel golden covering all six core procedural motion
+  effects in one seeded scene.
+- Documented the standalone repository as the authoritative source and updated
+  the Remotion comparison for current client-side rendering support.
 
 ## 0.3.0 — 2026-06-11
 

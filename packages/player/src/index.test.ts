@@ -1,9 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createPlayer, FrameClock } from "./index.js";
+import {
+  disposeAssets,
+  prepareFrame,
+  resolveAssets,
+  type ResolvedAssets,
+} from "@motionforge/renderer-canvas2d";
+
+vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@motionforge/renderer-canvas2d")>();
+
+  return {
+    ...actual,
+    disposeAssets: vi.fn(actual.disposeAssets),
+    prepareFrame: vi.fn(actual.prepareFrame),
+    resolveAssets: vi.fn(actual.resolveAssets),
+  };
+});
 
 describe("FrameClock", () => {
-  const clock = (overrides: Partial<{ fps: number; durationInFrames: number; loop: boolean }> = {}) =>
-    new FrameClock({ fps: 30, durationInFrames: 90, ...overrides });
+  const clock = (
+    overrides: Partial<{
+      fps: number;
+      durationInFrames: number;
+      loop: boolean;
+    }> = {},
+  ) => new FrameClock({ fps: 30, durationInFrames: 90, ...overrides });
 
   it("maps elapsed wall time to frames while playing", () => {
     const c = clock();
@@ -67,9 +90,15 @@ describe("FrameClock", () => {
   });
 
   it("rejects invalid fps and duration", () => {
-    expect(() => new FrameClock({ fps: 0, durationInFrames: 10 })).toThrow(/fps/);
-    expect(() => new FrameClock({ fps: 30, durationInFrames: 0 })).toThrow(/durationInFrames/);
-    expect(() => new FrameClock({ fps: 30, durationInFrames: 1.5 })).toThrow(/durationInFrames/);
+    expect(() => new FrameClock({ fps: 0, durationInFrames: 10 })).toThrow(
+      /fps/,
+    );
+    expect(() => new FrameClock({ fps: 30, durationInFrames: 0 })).toThrow(
+      /durationInFrames/,
+    );
+    expect(() => new FrameClock({ fps: 30, durationInFrames: 1.5 })).toThrow(
+      /durationInFrames/,
+    );
   });
 });
 
@@ -227,6 +256,65 @@ describe("Player", () => {
     expect(driver.pending).toBe(0);
     expect(() => player.play()).toThrow(/disposed/);
   });
+
+  it("defers owned asset disposal while a frame render is in flight", async () => {
+    const driver = fakeDriver();
+    const ownedAssetScene = {
+      ...testScene,
+      assets: {
+        clip: { id: "clip", type: "video" as const, src: "blob:fake" },
+      },
+    };
+    const assets: ResolvedAssets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+    const disposeAssetsMock = vi.mocked(disposeAssets);
+    const prepareFrameMock = vi.mocked(prepareFrame);
+    const resolveAssetsMock = vi.mocked(resolveAssets);
+    let finishFrame!: () => void;
+    const resolvedFrame = (
+      frame: number,
+    ): Awaited<ReturnType<typeof prepareFrame>> => ({
+      ...ownedAssetScene,
+      schemaVersion: 0,
+      frame,
+      nodes: [],
+    });
+
+    disposeAssetsMock.mockClear();
+    resolveAssetsMock.mockResolvedValueOnce(assets);
+    prepareFrameMock
+      .mockResolvedValueOnce(resolvedFrame(0))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFrame = () => resolve(resolvedFrame(1));
+          }),
+      );
+
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: ownedAssetScene,
+      now: driver.now,
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+
+    player.play();
+    const renderPromise = driver.step(34);
+    player.dispose();
+
+    expect(disposeAssetsMock).not.toHaveBeenCalled();
+    finishFrame();
+    await renderPromise;
+    expect(disposeAssetsMock).toHaveBeenCalledWith(assets);
+  });
 });
 
 /** Records calls; position is settable to simulate the audio clock. */
@@ -262,6 +350,7 @@ describe("Player audio preview", () => {
       requestFrame: driver.requestFrame,
       cancelFrame: driver.cancelFrame,
     });
+    await player.audioReady;
 
     await player.seek(3);
     player.play();
@@ -290,6 +379,7 @@ describe("Player audio preview", () => {
       requestFrame: driver.requestFrame,
       cancelFrame: driver.cancelFrame,
     });
+    await player.audioReady;
 
     player.play();
     await player.seek(6);
@@ -309,6 +399,7 @@ describe("Player audio preview", () => {
       requestFrame: driver.requestFrame,
       cancelFrame: driver.cancelFrame,
     });
+    await player.audioReady;
 
     player.play();
     // Wall clock advances one frame, but the audio clock reports frame 7 —
@@ -331,11 +422,81 @@ describe("Player audio preview", () => {
       requestFrame: driver.requestFrame,
       cancelFrame: driver.cancelFrame,
     });
+    await player.audioReady;
 
     player.play();
     player.pause();
     // load() said inaudible: the preview was disposed, never started.
     expect(audio.calls).toEqual(["dispose"]);
     player.dispose();
+  });
+
+  it("does not block the first frame on the mix and joins playback on attach", async () => {
+    const driver = fakeDriver();
+    const calls: string[] = [];
+    let finishLoad!: (audible: boolean) => void;
+    const preview = {
+      load: () =>
+        new Promise<boolean>((resolve) => {
+          finishLoad = resolve;
+        }),
+      start: (at: number) => void calls.push(`start@${at.toFixed(3)}`),
+      stop: () => void calls.push("stop"),
+      position: () => null,
+      dispose: () => void calls.push("dispose"),
+    };
+
+    // createPlayer resolves (first frame painted) while the mix is pending.
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      audio: preview,
+      now: driver.now,
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+    expect(player.currentFrame).toBe(0);
+
+    // Play three frames silently, then the mix lands mid-playback.
+    player.play();
+    await driver.step(3000 / 30);
+    expect(calls).toEqual([]);
+
+    finishLoad(true);
+    await player.audioReady;
+    expect(calls.length).toBe(1);
+    expect(calls[0]).toMatch(/^start@/);
+    player.dispose();
+    expect(calls).toContain("dispose");
+  });
+
+  it("disposes a late-arriving audio preview when the player is already disposed", async () => {
+    const driver = fakeDriver();
+    const calls: string[] = [];
+    let finishLoad!: (audible: boolean) => void;
+    const preview = {
+      load: () =>
+        new Promise<boolean>((resolve) => {
+          finishLoad = resolve;
+        }),
+      start: () => void calls.push("start"),
+      stop: () => void calls.push("stop"),
+      position: () => null,
+      dispose: () => void calls.push("dispose"),
+    };
+
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      audio: preview,
+      now: driver.now,
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+
+    player.dispose();
+    finishLoad(true);
+    await player.audioReady;
+    expect(calls).toEqual(["dispose"]);
   });
 });

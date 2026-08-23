@@ -2,6 +2,8 @@ import {
   type Scene,
   type SceneAnimation,
   type SceneAsset,
+  type SceneEffectName,
+  type SceneEffectParams,
   type SceneNode,
   type SceneStyle,
   type VolumeEnvelope,
@@ -41,6 +43,28 @@ export type AudioNodeOptions = Omit<NodeOptions, "style"> & {
   volumeEnvelope?: VolumeEnvelope;
   /** Wrap source playback through the node's active window. */
   loop?: boolean;
+};
+
+export type LottieNodeOptions = NodeOptions & {
+  /** Playback speed multiplier (1 = natural speed). */
+  playbackRate?: number;
+};
+
+export type EffectNodeOptions = NodeOptions & {
+  /** Bounded effect-specific parameters from the scene contract. */
+  params?: SceneEffectParams;
+};
+
+type InternalNodeOptions = NodeOptions & {
+  text?: string;
+  videoStartTime?: number;
+  playbackRate?: number;
+  audioStartTime?: number;
+  volume?: number;
+  volumeEnvelope?: VolumeEnvelope;
+  loop?: boolean;
+  effect?: SceneEffectName;
+  params?: SceneEffectParams;
 };
 
 type IdCounter = { next: number };
@@ -90,17 +114,15 @@ export class NodeBuilder {
   private readonly volume?: number;
   private readonly volumeEnvelope?: VolumeEnvelope;
   private readonly loop?: boolean;
+  private readonly effect?: SceneEffectName;
+  private readonly params?: SceneEffectParams;
   private from: number;
   private duration?: number;
   private readonly style: SceneStyle;
   private readonly animations: SceneAnimation[] = [];
   private readonly childBuilders: NodeBuilder[] = [];
 
-  constructor(
-    type: SceneNode["type"],
-    options: VideoNodeOptions &
-      AudioNodeOptions & { text?: string; style?: SceneStyle } = {},
-  ) {
+  constructor(type: SceneNode["type"], options: InternalNodeOptions = {}) {
     this.type = type;
     this.id = options.id;
     this.text = options.text;
@@ -111,6 +133,8 @@ export class NodeBuilder {
     this.volume = options.volume;
     this.volumeEnvelope = options.volumeEnvelope;
     this.loop = options.loop;
+    this.effect = options.effect;
+    this.params = options.params;
     this.from = options.from ?? 0;
     this.duration = options.duration;
     this.style = options.style ?? {};
@@ -159,6 +183,8 @@ export class NodeBuilder {
       volume: this.volume,
       volumeEnvelope: this.volumeEnvelope,
       loop: this.loop,
+      effect: this.effect,
+      params: this.params,
       from: this.from,
       duration: this.duration,
       style: this.style,
@@ -196,6 +222,24 @@ export function audio(
   options: AudioNodeOptions = {},
 ): NodeBuilder {
   return new NodeBuilder("audio", { ...options, assetId });
+}
+
+export function lottie(
+  assetId: string,
+  options: LottieNodeOptions = {},
+): NodeBuilder {
+  return new NodeBuilder("lottie", { ...options, assetId });
+}
+
+export function effect(
+  name: SceneEffectName,
+  options: EffectNodeOptions = {},
+): NodeBuilder {
+  return new NodeBuilder("effect", {
+    ...options,
+    effect: name,
+    params: options.params,
+  });
 }
 
 export type ResolvedNode = Omit<SceneNode, "children"> & {
@@ -242,6 +286,10 @@ function evaluateNode(
     if (animation.kind === "keyframes") {
       const value = evaluateKeyframes(animation.frames, localFrame);
       if (value !== undefined) {
+        if (animation.property === "transform" && typeof value !== "string") {
+          continue;
+        }
+
         (style as Record<string, unknown>)[animation.property] = value;
       }
     }
@@ -353,11 +401,18 @@ export function parseTransform(value: string): TransformFunction[] | null {
 
   const functions: TransformFunction[] = [];
 
-  for (const match of trimmed.matchAll(pattern)) {
+  const matches = Array.from(trimmed.matchAll(pattern));
+
+  for (let matchIndex = 0; matchIndex < matches.length; matchIndex += 1) {
+    const match = matches[matchIndex];
+    if (!match) {
+      continue;
+    }
+
     const name = match[1];
     const rawArgs = (match[2] ?? "")
       .split(",")
-      .map((arg) => arg.trim())
+      .map((arg: string) => arg.trim())
       .filter((arg) => arg !== "");
     const args: Array<{ value: number; unit: "px" | "%" | "deg" | "" }> = [];
 
@@ -844,7 +899,11 @@ export function prepareTextLines(
 
   if (options.textOverflow === "ellipsis" && visible.length > 0) {
     const lastIndex = visible.length - 1;
-    visible[lastIndex] = ellipsizeLine(visible[lastIndex] ?? "", maxWidth, measure);
+    visible[lastIndex] = ellipsizeLine(
+      visible[lastIndex] ?? "",
+      maxWidth,
+      measure,
+    );
   }
 
   return visible;
@@ -863,7 +922,12 @@ export function prepareTextLayout(
     textOverflow: options.textOverflow,
   };
   const makeLines = (size: number) =>
-    prepareTextLines(text, maxWidth, (line) => measure(line, size), baseOptions);
+    prepareTextLines(
+      text,
+      maxWidth,
+      (line) => measure(line, size),
+      baseOptions,
+    );
   const makeLayout = (size: number): PreparedTextLayout => ({
     fontSize: size,
     lines: makeLines(size),
@@ -874,12 +938,16 @@ export function prepareTextLayout(
     return makeLayout(fontSize);
   }
 
-  const minFontSize = Math.max(1, Math.min(fontSize, options.minFontSize ?? 12));
+  const minFontSize = Math.max(
+    1,
+    Math.min(fontSize, options.minFontSize ?? 12),
+  );
   const fits = (size: number): boolean => {
     const lines = makeLines(size);
     const lineHeight = resolveLineHeight(options.lineHeight, size);
     const heightFits =
-      options.height === undefined || lines.length * lineHeight <= options.height;
+      options.height === undefined ||
+      lines.length * lineHeight <= options.height;
     const widthFits = lines.every((line) => measure(line, size) <= maxWidth);
 
     return heightFits && widthFits;
@@ -1191,7 +1259,8 @@ function estimateNodeWidth(
     return (node.text ?? " ")
       .split("\n")
       .reduce(
-        (longest, line) => Math.max(longest, measure(line, node.style, fontSize)),
+        (longest, line) =>
+          Math.max(longest, measure(line, node.style, fontSize)),
         0,
       );
   }

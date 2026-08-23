@@ -45,9 +45,11 @@ Golden tests render fixture scenes in the Playwright-pinned Chromium and hash th
 
 ### Package layout
 
-- `packages/*` is publishable library code; `apps/*` and `tools/*` are private. Nothing in `packages/*` may depend on Node-only APIs — these packages run in the browser.
+- Public packages live in `packages/*`; `apps/*` and `tools/*` are private. The browser-engine packages (`schema`, `core`, `renderer-*`, `export`, `player`, `presets`, and `authoring`) may not depend on Node-only or application-framework APIs. The CLI and starter packages are intentionally Node-based entry points.
 - Dependency direction: `schema` ← `core` ← `renderer-*`, `export`. The schema package depends on nothing but zod.
 - Every publishable package ships `dist` only (with tests and buildinfo excluded), plus its own `README.md` and `LICENSE`.
+- The standalone repository is authoritative. Read [`docs/source-of-truth.md`](docs/source-of-truth.md) before integrating changes from a downstream application.
+- `pnpm check:contracts` enforces synchronized public package versions and browser-engine dependency boundaries.
 
 ### Tests
 

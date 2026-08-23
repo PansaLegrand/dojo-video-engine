@@ -90,6 +90,146 @@ Available templates: `titleCard`, `lowerThird`, `quoteCard`, `statCallout`, `ann
 
 All templates accept `id`, `from`, `duration`, `accentColor`, container `style`, per-slot style overrides such as `titleStyle`, and `enter` animations. Pass `enter: false` for a static overlay.
 
+## Agent macro registry
+
+The `@motionforge/presets/macros` entry point accepts compact, semantic nodes
+and expands them into normal validated scene nodes. This is the preferred
+authoring surface for agents and other structured generators:
+
+```ts
+import {
+  expandMacroNodes,
+  macroNames,
+  macroPromptGuide,
+} from "@motionforge/presets/macros";
+
+const result = expandMacroNodes(
+  [
+    {
+      macro: "lowerThird",
+      title: "Ada Lovelace",
+      subtitle: "Analyst",
+      from: 30,
+      duration: 120,
+      palette: "slate",
+    },
+  ],
+  { width: 1080, height: 1920, fps: 30, duration: 180, assets: {} },
+);
+```
+
+The registry currently includes effect, text-effect, lower-third, title-card,
+callout, kinetic-text, progress-bar, chapter-transition, Lottie, emphasis,
+B-roll, text/image/video/audio overlay, transition, subtitle, caption, and
+countdown macros. `macroPromptGuide()` derives agent documentation from the
+same definitions and parameter schemas used at runtime, preventing prompt and
+implementation drift.
+
+Macros are authoring sugar, not a second renderer contract. Expanded output is
+ordinary scene data that can be patched, validated, stored, previewed, and
+exported by the existing engine.
+
+## Countdown macro
+
+Use the countdown macro for numeric countdowns. `duration` is the total
+countdown window in frames, while `framesPerNumber` controls each beat when a
+total duration is not supplied:
+
+```json
+{
+  "macro": "countdown",
+  "start": 3,
+  "end": 1,
+  "duration": 90
+}
+```
+
+`finale` is optional; blank finale text is treated as omitted.
+
+## Effect macros
+
+Use `effectOverlay` for one standalone procedural layer. The catalog is grouped
+by intent so chat agents do not need to hand-author particle layers:
+
+| Category        | Preset           | Use for                                           |
+| --------------- | ---------------- | ------------------------------------------------- |
+| Impact          | `cartoonBurst`   | explosions, boom hits, spark bursts, emoji impact |
+| Celebration     | `confettiBurst`  | confetti, celebration, reward moments             |
+| Text atmosphere | `cloudPop`       | cartoon clouds or smoke around text               |
+| Comic motion    | `speedLines`     | manga speed lines and directional energy          |
+| Glow            | `neonAura`       | glowing boxes, text aura, pulse outlines          |
+| Annotation      | `scribbleCircle` | hand-drawn circles and emphasis marks             |
+
+```json
+{
+  "macro": "effectOverlay",
+  "effect": "confettiBurst",
+  "from": 60,
+  "duration": 45,
+  "intensity": "high",
+  "colors": ["#facc15", "#38bdf8", "#fb7185"]
+}
+```
+
+The macro expands to one selectable `effect` node. For editable headline text
+with an effect around it, use `textEffect`; it expands to a tiny group with one
+effect child and one normal text child:
+
+```json
+{
+  "macro": "textEffect",
+  "template": "cloudPop",
+  "text": "WOW",
+  "from": 30,
+  "duration": 60,
+  "intensity": "high"
+}
+```
+
+Available `textEffect` templates: `cloudPop`, `neonAura`, `scribbleCircle`,
+`speedLines`, and `stickerBurst`. The renderer owns the procedural drawing, so
+agents can keep scenes compact and editable.
+
+Use `accents` when several effects should hug the same editable headline:
+
+```json
+{
+  "macro": "textEffect",
+  "template": "cloudPop",
+  "accents": ["neonAura", "speedLines"],
+  "text": "WOW",
+  "duration": 90,
+  "softness": 0.75,
+  "glow": 0.7
+}
+```
+
+Text effect children receive `scope: "text"` so the renderer draws aura,
+clouds, speed lines, and scribbles around the word instead of as full-frame
+decorative layers.
+
+Common bounded effect params: `intensity`, `colors`, `seed`, `particleCount`,
+`emoji`, `direction` (`left`, `right`, `up`, `down`, `in`, `out`,
+`diagonal`), `density`, `loops`, `strokeWidth`, `radius`, `wobble`, `pulse`
+(`0..1`), `scale` (`0.1..4`), `spread` (`0..1`), `softness` (`0..1`), and
+`glow` (`0..1`).
+
+Phase 1C keeps the vocabulary deliberately small:
+
+| Intent                            | Canonical param |
+| --------------------------------- | --------------- |
+| bigger/smaller effect             | `scale`         |
+| wider/narrower particles or lines | `spread`        |
+| softer/cloudier puff              | `softness`      |
+| stronger neon aura                | `glow`          |
+| text-hugging effect               | `scope: "text"` |
+| pulsing aura/ring                 | `pulse`         |
+| more confetti/sparks              | `particleCount` |
+
+Chat agents should use these canonical names. The macro normalizer accepts
+common aliases such as `size`, `blur`, `particles`, and `glowIntensity`, but
+canonical params are the stable scene contract.
+
 ## Media look presets
 
 Named looks return plain `SceneStyle` fragments, so they compose with image/video helpers and layout presets:

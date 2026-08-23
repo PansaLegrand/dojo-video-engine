@@ -95,6 +95,44 @@ You can still pass an existing asset id when assets are defined elsewhere:
 videoClip("clip", { trimStart: seconds(5) });
 ```
 
+## Lottie and procedural effects
+
+Lottie assets and deterministic effect layers use the same seconds-first
+timing and scene-data output:
+
+```ts
+import {
+  effectLayer,
+  lottieAsset,
+  lottieClip,
+  makeScene,
+  publicAsset,
+  seconds,
+} from "@motionforge/authoring";
+
+const sticker = lottieAsset("sparkle", publicAsset("assets/sparkle.json"));
+
+export default makeScene({
+  size: "portrait",
+  duration: seconds(4),
+  children: [
+    lottieClip(sticker, {
+      at: seconds(0.5),
+      duration: seconds(3),
+      objectFit: "contain",
+    }),
+    effectLayer("confettiBurst", {
+      at: seconds(1),
+      duration: seconds(1.5),
+      params: { seed: 42, intensity: "high" },
+    }),
+  ],
+});
+```
+
+Both helpers emit normal `lottie` / `effect` scene nodes. Effects remain
+seeded and schema-bounded; no imperative drawing code enters the scene.
+
 ## Image Overlays
 
 Use `imageOverlay()` for logos, stickers, watermarks, product shots, and avatars:
@@ -241,9 +279,9 @@ For larger `.srt`, `.vtt`, or transcript files, keep them beside your source cod
 
 Stable for 0.x integrations:
 
-- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `image()`, `videoClip()`, and `audioTrack()`.
+- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, and `audioTrack()`.
 - Overlay/media helpers: `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `subtitleTrack()`, `captionTrack()`, and aliases `subtitles` / `captions`.
-- Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, and `defineAssets()`.
+- Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `lottieAsset()`, and `defineAssets()`.
 - Re-exported preset helpers for common authoring flows, including motion presets, subtitle parsers/templates, overlay template metadata, safe-area helpers, and `audioFadeEnvelope()`.
 
 Experimental before 1.0:

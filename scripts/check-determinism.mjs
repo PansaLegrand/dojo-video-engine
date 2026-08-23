@@ -25,6 +25,9 @@ const allowlist = {
   // The player's frame clock is the documented wall-clock boundary; the call
   // site is an injectable default (`now` option), never the render path.
   "packages/player/src/index.ts": ["performance.now"],
+  // Export uses wall-clock time only to throttle observer progress callbacks;
+  // frame evaluation, timestamps, encoded pixels, and audio remain frame-based.
+  "packages/export/src/index.ts": ["performance.now"],
 };
 
 const failures = [];
@@ -54,7 +57,9 @@ function scan(dir) {
       }
 
       const line = source.slice(0, match.index).split("\n").length;
-      failures.push(`${rel}:${line} uses ${call}() — banned in the render path (determinism contract)`);
+      failures.push(
+        `${rel}:${line} uses ${call}() — banned in the render path (determinism contract)`,
+      );
     }
   }
 }
