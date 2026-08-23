@@ -65,6 +65,7 @@ const browserEnginePackages = [
   "authoring",
   "core",
   "export",
+  "extensions",
   "player",
   "presets",
   "renderer-canvas2d",

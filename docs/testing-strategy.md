@@ -33,6 +33,7 @@ The gate script lives at `scripts/release-gate.mjs`; clean-machine verification 
 | Image/media styling   | `objectFit`, rounded image clipping, filter, z-index, border, shadow                                                     | Exact frame hash                    | `pnpm golden:test`    |
 | Lottie                | Source-frame seeking and playback-rate mapping for self-contained vector JSON                                            | Exact frame hash                    | `pnpm golden:test`    |
 | Procedural effects    | Seeded general-effect catalog renders identically                                                                        | Exact frame hash                    | `pnpm golden:test`    |
+| Extension kernel      | Versioned registry resolution, per-frame preparation, and Canvas2D adapter output                                        | Exact frame hash                    | `pnpm golden:test`    |
 | Scene migration       | Legacy v0 effect scene migrates to pixels identical to canonical v1                                                      | Cross-version frame hash            | `pnpm golden:test`    |
 | Export smoke          | Browser `exportVideo()` creates a plausible MP4 with `ftyp`, expected frame count, and codec metadata                    | Browser encode assertion            | `pnpm golden:test`    |
 | Video media           | Synthetic clip trim, playbackRate, preview pixel correctness, export/decode round trip                                   | Browser encode/decode assertion     | `pnpm golden:test`    |
@@ -60,6 +61,7 @@ Exact hash fixtures store both JSON snapshots and PNG baselines under `fixtures/
 - Layout changes need at least one geometric assertion.
 - Animation changes need deterministic numeric assertions.
 - Renderer changes need either a unit-level contract test or a golden/probe fixture.
+- Extension changes need registry/preflight unit coverage and a renderer golden for pixel-visible adapters.
 - Export changes need capability/failure-path tests plus a browser encode/decode assertion when the behavior depends on WebCodecs, media decoding, muxing, or AAC output.
 - Preset and authoring helpers should test emitted scene data, then rely on golden/showcase coverage for renderer-visible behavior.
 - App/editor behavior should get a focused unit test for pure planning logic and a Playwright smoke only when the browser workflow is the product contract.

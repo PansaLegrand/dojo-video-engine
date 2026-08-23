@@ -15,6 +15,14 @@ import {
   type Scene,
   type SceneStyle,
 } from "@motionforge/schema";
+import {
+  createExtensionRegistry,
+  preflightExtensions,
+  type ExtensionRegistry,
+  type ExtensionPreflightIssue,
+  type ExtensionSceneNode,
+  type ResolvedExtensionNode,
+} from "@motionforge/extensions";
 
 // Re-exported so existing imports keep working; the implementation moved to
 // @motionforge/core where layout uses it for intrinsic text sizing.
@@ -39,6 +47,54 @@ export type RenderOptions = {
   textMeasureCache?: TextMeasureCache;
 };
 
+export type ResolveAssetsOptions = {
+  /** Trusted definitions available to extension nodes in this scene. */
+  extensions?: ExtensionRegistry;
+  /** Reject definitions that cannot execute in a worker host. */
+  worker?: boolean;
+  signal?: AbortSignal;
+};
+
+export type Canvas2DExtensionDrawContext<
+  P = unknown,
+  ExtensionAssets = unknown,
+  ExtensionFrame = unknown,
+> = {
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  scene: Scene;
+  node: ResolvedNode & ExtensionSceneNode;
+  box: LayoutBox;
+  params: P;
+  resolvedAssets: ExtensionAssets;
+  preparedFrame: ExtensionFrame;
+  sceneFrame: number;
+  localFrame: number;
+  sceneFps: number;
+};
+
+export type Canvas2DExtensionAdapter<
+  P = unknown,
+  ExtensionAssets = unknown,
+  ExtensionFrame = unknown,
+> = {
+  draw(
+    context: Canvas2DExtensionDrawContext<P, ExtensionAssets, ExtensionFrame>,
+  ): void;
+};
+
+export type ResolvedCanvas2DExtensionNode = Omit<
+  ResolvedExtensionNode,
+  "rendererAdapter"
+> & {
+  adapter: Canvas2DExtensionAdapter;
+  resolvedAssets: unknown;
+};
+
+export type PreparedExtensionFrame = {
+  sceneFrame: number;
+  value: unknown;
+};
+
 export type TextMeasureCache = Map<string, number>;
 
 export type Canvas2DPreflightIssue = {
@@ -49,6 +105,7 @@ export type Canvas2DPreflightIssue = {
     | "font_loading_unavailable"
     | "image_decoder_unavailable"
     | "lottie_requires_dom"
+    | "extension_adapter_invalid"
     | "video_decoder_unavailable";
   message: string;
 };
@@ -63,9 +120,15 @@ export type Canvas2DPreflightResult = {
     audioDecoder: boolean;
     fontLoading: boolean;
     domLottie: boolean;
+    extensions: boolean;
   };
-  issues: Canvas2DPreflightIssue[];
+  issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue>;
 };
+
+export type Canvas2DPreflightOptions = Pick<
+  ResolveAssetsOptions,
+  "extensions" | "worker"
+>;
 
 /**
  * Checks environment capabilities before asset loading or frame preparation.
@@ -75,6 +138,7 @@ export type Canvas2DPreflightResult = {
 export function preflightCanvas2D(
   sceneInput: unknown,
   globalObject: Partial<typeof globalThis> = globalThis,
+  options: Canvas2DPreflightOptions = {},
 ): Canvas2DPreflightResult {
   const scene = parseScene(sceneInput);
   const inspection = inspectScene(scene);
@@ -91,7 +155,7 @@ export function preflightCanvas2D(
       (globalObject as Partial<typeof globalThis> & { fonts?: FontFaceSet })
         .fonts),
   );
-  const issues: Canvas2DPreflightIssue[] = [];
+  const issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue> = [];
 
   if (!hasCanvas) {
     issues.push({
@@ -138,6 +202,21 @@ export function preflightCanvas2D(
         "The current Lottie adapter requires a DOM canvas; render this scene on the main thread or omit Lottie assets.",
     });
   }
+  const extensionPreflight = preflightExtensions(
+    scene,
+    options.extensions ?? createExtensionRegistry(),
+    { renderer: "canvas2d", worker: options.worker },
+  );
+  issues.push(...extensionPreflight.issues);
+  for (const resolvedNode of extensionPreflight.nodes) {
+    if (!isCanvas2DExtensionAdapter(resolvedNode.rendererAdapter)) {
+      issues.push({
+        severity: "error",
+        code: "extension_adapter_invalid",
+        message: `Extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} declares canvas2d support but its adapter has no draw(context) function.`,
+      });
+    }
+  }
 
   return {
     ok: !issues.some((issue) => issue.severity === "error"),
@@ -149,6 +228,7 @@ export function preflightCanvas2D(
       audioDecoder: inspection.assets.audio > 0,
       fontLoading: inspection.assets.font > 0,
       domLottie: inspection.capabilities.hasLottie,
+      extensions: inspection.capabilities.hasExtensions,
     },
     issues,
   };
@@ -248,7 +328,42 @@ export type ResolvedAssets = {
    * nodes active in the frame so idle nodes never hold a decoder.
    */
   videoCursors?: Map<string, VideoPlaybackCursor>;
+  /** Validated definitions and node-scoped resources for extension nodes. */
+  extensionNodes?: Map<string, ResolvedCanvas2DExtensionNode>;
+  /** Node-local values staged by extension prepareFrame hooks. */
+  extensionFrames?: Map<string, PreparedExtensionFrame>;
 };
+
+function assertNotAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    throw signal.reason instanceof Error
+      ? signal.reason
+      : new Error("MotionForge asset resolution was aborted.");
+  }
+}
+
+function parseCanvas2DExtensionAdapter(
+  value: unknown,
+  resolvedNode: ResolvedExtensionNode,
+): Canvas2DExtensionAdapter {
+  if (!isCanvas2DExtensionAdapter(value)) {
+    throw new Error(
+      `Extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} declares canvas2d support but its adapter has no draw(context) function.`,
+    );
+  }
+  return value as Canvas2DExtensionAdapter;
+}
+
+function isCanvas2DExtensionAdapter(
+  value: unknown,
+): value is Canvas2DExtensionAdapter {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "draw" in value &&
+    typeof value.draw === "function"
+  );
+}
 
 /**
  * Yields decoded frames in presentation order starting at a timestamp; the
@@ -379,8 +494,30 @@ const registeredFonts = new Map<string, FontFace>();
  * options.assets. Throws with the failing asset id and src on any failure;
  * a scene never renders with silently missing media.
  */
-export async function resolveAssets(scene: Scene): Promise<ResolvedAssets> {
+export async function resolveAssets(
+  scene: Scene,
+  options: ResolveAssetsOptions = {},
+): Promise<ResolvedAssets> {
   const parsed = parseScene(scene);
+  assertNotAborted(options.signal);
+  const extensionPreflight = preflightExtensions(
+    parsed,
+    options.extensions ?? createExtensionRegistry(),
+    { renderer: "canvas2d", worker: options.worker },
+  );
+  if (!extensionPreflight.ok) {
+    throw new Error(
+      `Canvas2D extension preflight failed:\n${extensionPreflight.issues
+        .map((issue) => `- [${issue.code}] ${issue.message}`)
+        .join("\n")}`,
+    );
+  }
+  const extensionAdapters = new Map(
+    extensionPreflight.nodes.map((resolvedNode) => [
+      resolvedNode.node.id,
+      parseCanvas2DExtensionAdapter(resolvedNode.rendererAdapter, resolvedNode),
+    ]),
+  );
   const images = new Map<string, ImageBitmap>();
   const fonts = new Map<string, FontFace>();
   const videos = new Map<string, VideoClip>();
@@ -389,6 +526,7 @@ export async function resolveAssets(scene: Scene): Promise<ResolvedAssets> {
 
   await Promise.all(
     Object.values(parsed.assets).map(async (asset) => {
+      assertNotAborted(options.signal);
       try {
         if (asset.type === "image") {
           const response = await fetchAsset(asset.src);
@@ -408,6 +546,45 @@ export async function resolveAssets(scene: Scene): Promise<ResolvedAssets> {
           { cause },
         );
       }
+    }),
+  );
+
+  const assetDefinitions = new Map(Object.entries(parsed.assets));
+  const extensionNodes = new Map<string, ResolvedCanvas2DExtensionNode>();
+  await Promise.all(
+    extensionPreflight.nodes.map(async (resolvedNode) => {
+      assertNotAborted(options.signal);
+      const adapter = extensionAdapters.get(resolvedNode.node.id);
+      if (!adapter) {
+        throw new Error(
+          `Canvas2D extension adapter for node "${resolvedNode.node.id}" disappeared after preflight.`,
+        );
+      }
+      const resolvedAssets = resolvedNode.definition.resolveAssets
+        ? await Promise.resolve(
+            resolvedNode.definition.resolveAssets({
+              scene: parsed,
+              node: resolvedNode.node,
+              params: resolvedNode.params,
+              requirements: resolvedNode.requirements,
+              assets: assetDefinitions,
+              signal: options.signal,
+            }),
+          ).catch((cause: unknown) => {
+            throw new Error(
+              `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
+              { cause },
+            );
+          })
+        : undefined;
+      extensionNodes.set(resolvedNode.node.id, {
+        node: resolvedNode.node,
+        definition: resolvedNode.definition,
+        params: resolvedNode.params,
+        requirements: resolvedNode.requirements,
+        adapter,
+        resolvedAssets,
+      });
     }),
   );
 
@@ -443,6 +620,8 @@ export async function resolveAssets(scene: Scene): Promise<ResolvedAssets> {
     audioSpectra,
     lotties,
     lottieFrames: new Map(),
+    extensionNodes,
+    extensionFrames: new Map(),
   };
 }
 
@@ -451,6 +630,16 @@ export async function resolveAssets(scene: Scene): Promise<ResolvedAssets> {
  * audio inputs). Call when a scene's assets are no longer needed.
  */
 export function disposeAssets(assets: ResolvedAssets): void {
+  const disposalErrors: unknown[] = [];
+  Array.from(assets.extensionNodes?.values() ?? []).forEach((runtime) => {
+    try {
+      runtime.definition.disposeAssets?.(runtime.resolvedAssets);
+    } catch (error) {
+      disposalErrors.push(error);
+    }
+  });
+  assets.extensionNodes?.clear();
+  assets.extensionFrames?.clear();
   Array.from(assets.videoCursors?.values() ?? []).forEach((cursor) => {
     void cursor.dispose();
   });
@@ -474,6 +663,13 @@ export function disposeAssets(assets: ResolvedAssets): void {
   assets.audioSpectra?.clear();
   assets.lotties.clear();
   assets.lottieFrames.clear();
+
+  if (disposalErrors.length > 0) {
+    throw new AggregateError(
+      disposalErrors,
+      "One or more MotionForge extension resources failed to dispose.",
+    );
+  }
 }
 
 function collectSpectrumAssetIds(nodes: Scene["nodes"]): Set<string> {
@@ -727,7 +923,11 @@ export async function prepareFrame(
   const parsed = parseScene(scene);
   const resolved = evaluateScene(parsed, frame);
 
-  if (assets.videos.size === 0 && assets.lotties.size === 0) {
+  if (
+    assets.videos.size === 0 &&
+    assets.lotties.size === 0 &&
+    (assets.extensionNodes?.size ?? 0) === 0
+  ) {
     return resolved;
   }
 
@@ -739,6 +939,42 @@ export async function prepareFrame(
   const activeCursorKeys = new Set<string>();
 
   const visit = (node: ResolvedNode): void => {
+    if (node.type === "extension" && node.extension) {
+      const runtime = assets.extensionNodes?.get(node.id);
+      if (!runtime) {
+        throw new Error(
+          `Scene draws extension node "${node.id}" but it was not resolved. Call resolveAssets(scene, { extensions }) first.`,
+        );
+      }
+
+      if (runtime.definition.prepareFrame) {
+        tasks.push(
+          Promise.resolve(
+            runtime.definition.prepareFrame({
+              scene: parsed,
+              node: node as ResolvedNode & ExtensionSceneNode,
+              params: runtime.params,
+              resolvedAssets: runtime.resolvedAssets,
+              frame: resolved.frame,
+              localFrame: node.localFrame,
+            }),
+          )
+            .then((value) => {
+              (assets.extensionFrames ??= new Map()).set(node.id, {
+                sceneFrame: resolved.frame,
+                value,
+              });
+            })
+            .catch((cause: unknown) => {
+              throw new Error(
+                `Failed to prepare extension ${node.extension?.name}@${runtime.definition.version} for node "${node.id}" at frame ${resolved.frame}: ${cause instanceof Error ? cause.message : String(cause)}`,
+                { cause },
+              );
+            }),
+        );
+      }
+    }
+
     if (node.type === "video" && node.assetId) {
       const assetId = node.assetId;
       const clip = assets.videos.get(assetId);
@@ -1131,6 +1367,7 @@ export function renderStill(
     drawBox(
       context,
       box,
+      scene,
       options.assets,
       layout.frame,
       scene.fps,
@@ -1217,6 +1454,7 @@ function sortByZIndex(boxes: LayoutBox[]): LayoutBox[] {
 function drawBox(
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   box: LayoutBox,
+  scene: Scene,
   assets: ResolvedAssets | undefined,
   sceneFrame: number,
   sceneFps: number,
@@ -1279,13 +1517,67 @@ function drawBox(
     drawEffect(context, box, node, assets, sceneFps);
   }
 
+  if (node.type === "extension" && node.extension) {
+    drawExtension(context, box, scene, node, assets, sceneFrame, sceneFps);
+  }
+
   drawBorder(context, box, style);
 
   for (const child of sortByZIndex(box.children)) {
-    drawBox(context, child, assets, sceneFrame, sceneFps, textMeasureCache);
+    drawBox(
+      context,
+      child,
+      scene,
+      assets,
+      sceneFrame,
+      sceneFps,
+      textMeasureCache,
+    );
   }
 
   context.restore();
+}
+
+function drawExtension(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  scene: Scene,
+  node: LayoutBox["node"],
+  assets: ResolvedAssets | undefined,
+  sceneFrame: number,
+  sceneFps: number,
+): void {
+  const runtime = assets?.extensionNodes?.get(node.id);
+  if (!runtime) {
+    throw new Error(
+      `Scene draws extension node "${node.id}" but it is not in the resolved assets. Call resolveAssets(scene, { extensions }) and pass the result to renderStill.`,
+    );
+  }
+
+  const prepared = assets?.extensionFrames?.get(node.id);
+  if (runtime.definition.prepareFrame && !prepared) {
+    throw new Error(
+      `Extension node "${node.id}" has no prepared frame. Await prepareFrame(scene, frame, assets) before renderStill.`,
+    );
+  }
+  if (prepared && prepared.sceneFrame !== sceneFrame) {
+    throw new Error(
+      `Extension node "${node.id}" has data prepared for scene frame ${prepared.sceneFrame}, but frame ${sceneFrame} is being rendered. Await prepareFrame(scene, ${sceneFrame}, assets) first.`,
+    );
+  }
+
+  runtime.adapter.draw({
+    context,
+    scene,
+    node: node as ResolvedNode & ExtensionSceneNode,
+    box,
+    params: runtime.params,
+    resolvedAssets: runtime.resolvedAssets,
+    preparedFrame: prepared?.value,
+    sceneFrame,
+    localFrame: node.localFrame,
+    sceneFps,
+  });
 }
 
 /**

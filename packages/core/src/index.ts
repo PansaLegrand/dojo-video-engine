@@ -4,6 +4,7 @@ import {
   type SceneAsset,
   type SceneEffectName,
   type SceneEffectParams,
+  type SceneExtensionDescriptor,
   type SceneNode,
   type SceneStyle,
   type VolumeEnvelope,
@@ -55,6 +56,11 @@ export type EffectNodeOptions = NodeOptions & {
   params?: SceneEffectParams;
 };
 
+export type ExtensionNodeOptions = NodeOptions & {
+  /** Trusted host extension identity and JSON-only parameters. */
+  extension: SceneExtensionDescriptor;
+};
+
 type InternalNodeOptions = NodeOptions & {
   text?: string;
   videoStartTime?: number;
@@ -65,6 +71,7 @@ type InternalNodeOptions = NodeOptions & {
   loop?: boolean;
   effect?: SceneEffectName;
   params?: SceneEffectParams;
+  extension?: SceneExtensionDescriptor;
 };
 
 type IdCounter = { next: number };
@@ -116,6 +123,7 @@ export class NodeBuilder {
   private readonly loop?: boolean;
   private readonly effect?: SceneEffectName;
   private readonly params?: SceneEffectParams;
+  private readonly extension?: SceneExtensionDescriptor;
   private from: number;
   private duration?: number;
   private readonly style: SceneStyle;
@@ -135,6 +143,7 @@ export class NodeBuilder {
     this.loop = options.loop;
     this.effect = options.effect;
     this.params = options.params;
+    this.extension = options.extension;
     this.from = options.from ?? 0;
     this.duration = options.duration;
     this.style = options.style ?? {};
@@ -185,6 +194,7 @@ export class NodeBuilder {
       loop: this.loop,
       effect: this.effect,
       params: this.params,
+      extension: this.extension,
       from: this.from,
       duration: this.duration,
       style: this.style,
@@ -240,6 +250,10 @@ export function effect(
     effect: name,
     params: options.params,
   });
+}
+
+export function extension(options: ExtensionNodeOptions): NodeBuilder {
+  return new NodeBuilder("extension", options);
 }
 
 export type ResolvedNode = Omit<SceneNode, "children"> & {

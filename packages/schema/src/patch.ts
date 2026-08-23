@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   animationSchema,
   assetSchema,
+  extensionDescriptorSchema,
   parseScene,
   sceneNodeSchema,
   sceneSchema,
@@ -42,6 +43,10 @@ const setNodePropsOp = z.object({
       assetId: z.string().min(1).nullable().optional(),
       effect: z.string().min(1).nullable().optional(),
       params: z.record(z.unknown()).nullable().optional(),
+      extension: z
+        .lazy(() => extensionDescriptorSchema)
+        .nullable()
+        .optional(),
       videoStartTime: z.number().nonnegative().nullable().optional(),
       playbackRate: z.number().positive().nullable().optional(),
       audioStartTime: z.number().nonnegative().nullable().optional(),

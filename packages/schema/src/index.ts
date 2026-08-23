@@ -356,6 +356,54 @@ export const effectParamsSchema = z
 export type SceneEffectName = (typeof effectNames)[number];
 export type SceneEffectParams = z.infer<typeof effectParamsSchema>;
 
+const extensionNamePattern = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const extensionVersionPattern =
+  /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+export type SceneJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | SceneJsonValue[]
+  | { [key: string]: SceneJsonValue };
+
+/** JSON-only values accepted in agent-authored extension parameters. */
+export const jsonValueSchema: z.ZodType<SceneJsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number().finite(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(jsonValueSchema),
+  ]),
+);
+
+export const extensionDescriptorSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .max(191)
+      .regex(
+        extensionNamePattern,
+        "Extension names must be stable namespaced identifiers using letters, numbers, dot, slash, underscore, or hyphen.",
+      ),
+    version: z
+      .string()
+      .regex(
+        extensionVersionPattern,
+        "Extension versions must be exact semantic versions such as 1.0.0 or 1.0.0-beta.1.",
+      ),
+    params: z.record(jsonValueSchema),
+  })
+  .strict();
+
+export type SceneExtensionDescriptor = z.infer<
+  typeof extensionDescriptorSchema
+>;
+
 export const assetSchema = z.object({
   id: z.string().min(1),
   type: z.enum(["image", "video", "audio", "font", "lottie"]),
@@ -366,13 +414,23 @@ export type SceneAsset = z.infer<typeof assetSchema>;
 
 export type SceneNodeInput = {
   id: string;
-  type: "div" | "text" | "img" | "video" | "audio" | "lottie" | "effect";
+  type:
+    | "div"
+    | "text"
+    | "img"
+    | "video"
+    | "audio"
+    | "lottie"
+    | "effect"
+    | "extension";
   text?: string;
   assetId?: string;
   /** Effect nodes: named procedural visual preset rendered by the effect renderer. */
   effect?: SceneEffectName;
   /** Effect nodes: preset-specific parameters. */
   params?: SceneEffectParams;
+  /** Trusted host extension reference and JSON-only parameters. */
+  extension?: SceneExtensionDescriptor;
   /** Video nodes: source trim offset in seconds (source footage has its own timebase, independent of scene fps). */
   videoStartTime?: number;
   /** Video and lottie nodes: playback speed multiplier (1 = natural speed). */
@@ -402,11 +460,11 @@ export type SceneNodeInput = {
 
 export type SceneNode = SceneNodeInput;
 
-export const sceneNodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
-  z
-    .object({
-      id: z.string().min(1),
-      type: z.enum([
+function createSceneNodeSchema(
+  includeExtensions: boolean,
+): z.ZodType<SceneNodeInput> {
+  const nodeTypeSchema = includeExtensions
+    ? z.enum([
         "div",
         "text",
         "img",
@@ -414,168 +472,203 @@ export const sceneNodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
         "audio",
         "lottie",
         "effect",
-      ]),
-      text: z.string().optional(),
-      assetId: z.string().optional(),
-      effect: z.enum(effectNames).optional(),
-      params: effectParamsSchema.optional(),
-      videoStartTime: z.number().nonnegative().optional(),
-      playbackRate: z.number().positive().optional(),
-      audioStartTime: z.number().nonnegative().optional(),
-      volume: z.number().min(0).max(1).optional(),
-      volumeEnvelope: volumeEnvelopeSchema.optional(),
-      loop: z.boolean().optional(),
-      from: z.number().int().default(0),
-      duration: z.number().int().positive().optional(),
-      style: styleSchema.default({}),
-      animations: z.array(animationSchema).default([]),
-      children: z.array(sceneNodeSchema).default([]),
-    })
-    .superRefine((node, ctx) => {
-      if (node.type === "text" && typeof node.text !== "string") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["text"],
-          message: "Text nodes require a `text` string.",
-        });
-      }
-
-      if (node.type === "effect" && !node.effect) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["effect"],
-          message: "Effect nodes require an `effect` preset name.",
-        });
-      }
-
-      if (
-        node.type === "effect" &&
-        isAudioReactiveEffect(node.effect) &&
-        !node.params?.audioAssetId
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["params", "audioAssetId"],
-          message: `${node.effect} requires params.audioAssetId so preview and export analyze the same audio asset.`,
-        });
-      }
-
-      if (node.type !== "effect" && node.effect !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["effect"],
-          message: `effect only applies to effect nodes; remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (node.type !== "effect" && node.params !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["params"],
-          message: `params only applies to effect nodes; remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (
-        (node.type === "img" ||
-          node.type === "video" ||
-          node.type === "audio" ||
-          node.type === "lottie") &&
-        !node.assetId
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["assetId"],
-          message: `${node.type} nodes require an assetId that points at scene.assets.`,
-        });
-      }
-
-      if (node.type !== "video" && node.videoStartTime !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["videoStartTime"],
-          message: `videoStartTime only applies to video nodes; remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (
-        node.type !== "video" &&
-        node.type !== "lottie" &&
-        node.playbackRate !== undefined
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["playbackRate"],
-          message: `playbackRate only applies to video and lottie nodes; remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (node.type !== "audio" && node.audioStartTime !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["audioStartTime"],
-          message: `audioStartTime only applies to audio nodes; video nodes trim picture and sound together via videoStartTime. Remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (
-        node.type !== "audio" &&
-        node.type !== "video" &&
-        (node.volume !== undefined || node.volumeEnvelope !== undefined)
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: node.volume !== undefined ? ["volume"] : ["volumeEnvelope"],
-          message: `volume and volumeEnvelope only apply to audio and video nodes; remove them from this ${node.type} node.`,
-        });
-      }
-
-      if (node.type !== "audio" && node.loop !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["loop"],
-          message: `loop only applies to audio nodes; remove it from this ${node.type} node.`,
-        });
-      }
-
-      if (node.type === "audio") {
-        if (Object.keys(node.style ?? {}).length > 0) {
+        "extension",
+      ])
+    : z.enum(["div", "text", "img", "video", "audio", "lottie", "effect"]);
+  const nodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
+    z
+      .object({
+        id: z.string().min(1),
+        type: nodeTypeSchema,
+        text: z.string().optional(),
+        assetId: z.string().optional(),
+        effect: z.enum(effectNames).optional(),
+        params: effectParamsSchema.optional(),
+        extension: includeExtensions
+          ? extensionDescriptorSchema.optional()
+          : z.never().optional(),
+        videoStartTime: z.number().nonnegative().optional(),
+        playbackRate: z.number().positive().optional(),
+        audioStartTime: z.number().nonnegative().optional(),
+        volume: z.number().min(0).max(1).optional(),
+        volumeEnvelope: volumeEnvelopeSchema.optional(),
+        loop: z.boolean().optional(),
+        from: z.number().int().default(0),
+        duration: z.number().int().positive().optional(),
+        style: styleSchema.default({}),
+        animations: z.array(animationSchema).default([]),
+        children: z.array(nodeSchema).default([]),
+      })
+      .superRefine((node, ctx) => {
+        if (node.type === "text" && typeof node.text !== "string") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ["style"],
+            path: ["text"],
+            message: "Text nodes require a `text` string.",
+          });
+        }
+
+        if (node.type === "effect" && !node.effect) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["effect"],
+            message: "Effect nodes require an `effect` preset name.",
+          });
+        }
+
+        if (
+          node.type === "effect" &&
+          isAudioReactiveEffect(node.effect) &&
+          !node.params?.audioAssetId
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["params", "audioAssetId"],
+            message: `${node.effect} requires params.audioAssetId so preview and export analyze the same audio asset.`,
+          });
+        }
+
+        if (node.type !== "effect" && node.effect !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["effect"],
+            message: `effect only applies to effect nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type !== "effect" && node.params !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["params"],
+            message: `params only applies to effect nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type === "extension" && !node.extension) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["extension"],
             message:
-              "Audio nodes are not visual; remove style (timeline placement uses from/duration).",
+              "Extension nodes require an extension descriptor with name, exact version, and params.",
           });
         }
 
-        if ((node.children ?? []).length > 0) {
+        if (node.type !== "extension" && node.extension !== undefined) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ["children"],
-            message: "Audio nodes cannot have children.",
+            path: ["extension"],
+            message: `extension only applies to extension nodes; remove it from this ${node.type} node.`,
           });
         }
 
-        if ((node.animations ?? []).length > 0) {
+        if (
+          (node.type === "img" ||
+            node.type === "video" ||
+            node.type === "audio" ||
+            node.type === "lottie") &&
+          !node.assetId
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ["animations"],
-            message:
-              "Audio nodes do not support animations yet; use volume or volumeEnvelope for sound gain.",
+            path: ["assetId"],
+            message: `${node.type} nodes require an assetId that points at scene.assets.`,
           });
         }
-      }
-    }),
-);
 
-const sceneDocumentFields = {
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
-  fps: z.number().int().positive(),
-  duration: z.number().int().positive(),
-  assets: z.record(assetSchema).default({}),
-  nodes: z.array(sceneNodeSchema).default([]),
-};
+        if (node.type !== "video" && node.videoStartTime !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["videoStartTime"],
+            message: `videoStartTime only applies to video nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (
+          node.type !== "video" &&
+          node.type !== "lottie" &&
+          node.playbackRate !== undefined
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["playbackRate"],
+            message: `playbackRate only applies to video and lottie nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type !== "audio" && node.audioStartTime !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["audioStartTime"],
+            message: `audioStartTime only applies to audio nodes; video nodes trim picture and sound together via videoStartTime. Remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (
+          node.type !== "audio" &&
+          node.type !== "video" &&
+          (node.volume !== undefined || node.volumeEnvelope !== undefined)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: node.volume !== undefined ? ["volume"] : ["volumeEnvelope"],
+            message: `volume and volumeEnvelope only apply to audio and video nodes; remove them from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type !== "audio" && node.loop !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["loop"],
+            message: `loop only applies to audio nodes; remove it from this ${node.type} node.`,
+          });
+        }
+
+        if (node.type === "audio") {
+          if (Object.keys(node.style ?? {}).length > 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["style"],
+              message:
+                "Audio nodes are not visual; remove style (timeline placement uses from/duration).",
+            });
+          }
+
+          if ((node.children ?? []).length > 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["children"],
+              message: "Audio nodes cannot have children.",
+            });
+          }
+
+          if ((node.animations ?? []).length > 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["animations"],
+              message:
+                "Audio nodes do not support animations yet; use volume or volumeEnvelope for sound gain.",
+            });
+          }
+        }
+      }),
+  );
+
+  return nodeSchema;
+}
+
+export const sceneNodeSchema = createSceneNodeSchema(true);
+const legacySceneNodeSchema = createSceneNodeSchema(false);
+
+function sceneDocumentFields(nodeSchema: z.ZodType<SceneNodeInput>) {
+  return {
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    fps: z.number().int().positive(),
+    duration: z.number().int().positive(),
+    assets: z.record(assetSchema).default({}),
+    nodes: z.array(nodeSchema).default([]),
+  };
+}
 
 type SceneDocumentForValidation = {
   assets: Record<string, SceneAsset>;
@@ -687,12 +780,18 @@ function validateSceneDocument(
 
 /** Legacy 0.4-and-earlier scene document, accepted only through migration. */
 export const legacySceneV0Schema = z
-  .object({ schemaVersion: z.literal(0), ...sceneDocumentFields })
+  .object({
+    schemaVersion: z.literal(0),
+    ...sceneDocumentFields(legacySceneNodeSchema),
+  })
   .superRefine(validateSceneDocument);
 
 /** Current canonical Scene v1 document. */
 export const sceneSchema = z
-  .object({ schemaVersion: z.literal(1), ...sceneDocumentFields })
+  .object({
+    schemaVersion: z.literal(1),
+    ...sceneDocumentFields(sceneNodeSchema),
+  })
   .superRefine(validateSceneDocument);
 
 export type LegacySceneV0 = z.infer<typeof legacySceneV0Schema>;

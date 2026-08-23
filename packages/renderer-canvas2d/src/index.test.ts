@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { sampleScene } from "@motionforge/core";
 import {
+  createExtensionRegistry,
+  defineExtension,
+} from "@motionforge/extensions";
+import { z } from "zod";
+import {
   computeObjectFit,
+  disposeAssets,
   lottieSourceFrame,
   parseBorder,
   parseBoxShadow,
@@ -9,7 +15,10 @@ import {
   parseTextBackground,
   parseTextStroke,
   preflightCanvas2D,
+  prepareFrame,
   renderStill,
+  resolveAssets,
+  type Canvas2DExtensionAdapter,
   validateLottieDocument,
   VideoPlaybackCursor,
   videoSourceTime,
@@ -78,8 +87,72 @@ describe("Canvas2D preflight", () => {
         audioDecoder: true,
         fontLoading: true,
         domLottie: true,
+        extensions: false,
       },
     });
+  });
+
+  it("includes extension registry compatibility in Canvas2D preflight", () => {
+    const extensionScene = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [
+        {
+          id: "grid",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { columns: 8 },
+          },
+        },
+      ],
+    };
+    const environment = {
+      OffscreenCanvas: class {},
+    } as unknown as Partial<typeof globalThis>;
+    const missing = preflightCanvas2D(extensionScene, environment);
+    expect(missing.issues.map((issue) => issue.code)).toContain(
+      "extension_not_installed",
+    );
+
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.grid",
+        version: "1.0.0",
+        paramsSchema: z.object({ columns: z.number().int() }),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+      }),
+    ]);
+    expect(
+      preflightCanvas2D(extensionScene, environment, { extensions: registry }),
+    ).toMatchObject({
+      ok: true,
+      requirements: { extensions: true },
+      issues: [],
+    });
+
+    const malformedRegistry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.grid",
+        version: "1.0.0",
+        paramsSchema: z.object({ columns: z.number().int() }),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: {} },
+      }),
+    ]);
+    expect(
+      preflightCanvas2D(extensionScene, environment, {
+        extensions: malformedRegistry,
+      }).issues.map((issue) => issue.code),
+    ).toContain("extension_adapter_invalid");
   });
 });
 
@@ -127,6 +200,105 @@ describe("renderStill", () => {
     };
 
     expect(() => renderStill(context, scene as never, 0)).not.toThrow();
+  });
+
+  it("runs the extension resolve, prepare, draw, and dispose lifecycle", async () => {
+    const events: string[] = [];
+    const draws: Array<{ color: string; phase: number; width: number }> = [];
+    const adapter: Canvas2DExtensionAdapter = {
+      draw: ({ box, params, preparedFrame, resolvedAssets }) => {
+        draws.push({
+          color: (params as { color: string }).color,
+          phase: preparedFrame as number,
+          width:
+            box.width + (resolvedAssets as { widthOffset: number }).widthOffset,
+        });
+        events.push("draw");
+      },
+    };
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.grid",
+        version: "1.0.0",
+        paramsSchema: z.object({ color: z.string() }),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: adapter },
+        resolveAssets: () => {
+          events.push("resolve");
+          return { widthOffset: 5 };
+        },
+        prepareFrame: ({ localFrame }) => {
+          events.push(`prepare:${localFrame}`);
+          return localFrame;
+        },
+        disposeAssets: () => {
+          events.push("dispose");
+        },
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 60,
+      fps: 30,
+      duration: 10,
+      assets: {},
+      nodes: [
+        {
+          id: "grid",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { color: "#22d3ee" },
+          },
+          style: { width: 40, height: 20 },
+        },
+      ],
+    };
+    const context = {
+      globalAlpha: 1,
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    const resolvedScene = await prepareFrame(scene as never, 3, assets);
+    renderStill(context, scene as never, 3, { assets, resolvedScene });
+    disposeAssets(assets);
+
+    expect(events).toEqual(["resolve", "prepare:3", "draw", "dispose"]);
+    expect(draws).toEqual([{ color: "#22d3ee", phase: 3, width: 45 }]);
+  });
+
+  it("fails before rendering when an extension is not installed", async () => {
+    const scene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 60,
+      fps: 30,
+      duration: 10,
+      assets: {},
+      nodes: [
+        {
+          id: "missing",
+          type: "extension",
+          extension: {
+            name: "com.example.missing",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+
+    await expect(resolveAssets(scene as never)).rejects.toThrow(
+      /extension_not_installed/,
+    );
   });
 });
 

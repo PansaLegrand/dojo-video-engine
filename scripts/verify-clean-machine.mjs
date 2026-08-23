@@ -15,6 +15,7 @@ const createBin = join(
 const publishablePackages = [
   "packages/schema",
   "packages/core",
+  "packages/extensions",
   "packages/renderer-canvas2d",
   "packages/export",
   "packages/player",

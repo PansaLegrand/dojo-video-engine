@@ -25,8 +25,8 @@ best foundation for generated, editable, template-driven 2D video.
 | Milestone            | Outcome                                                                        | Status                                       |
 | -------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
 | 0. Source of truth   | Reconcile the production engine, synchronize versions, enforce boundaries      | Committed in 0.4; downstream upgrade pending |
-| 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Complete in 0.5 working tree                 |
-| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Next                                         |
+| 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Committed in 0.5                             |
+| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Complete in 0.6 working tree                 |
 | 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Planned                                      |
 | 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Planned                                      |
 | 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                      |
@@ -74,19 +74,31 @@ Exit criteria:
 
 ## Milestone 2 — extension kernel
 
-Define a versioned extension contract with:
+Delivered in the 0.6 working tree:
 
-- a stable name and version;
-- a parameter schema and generated JSON Schema;
-- asset discovery/resolution hooks;
-- optional per-frame preparation;
-- deterministic draw behavior;
+- accepted RFC 0003 for the data/code trust boundary and lifecycle;
+- stable names, exact versions, and explicit compatibility aliases;
+- Zod parameter schemas plus generated JSON Schema discovery manifests;
+- JSON-only Scene v1 extension descriptors, builder and patch support;
+- typed asset discovery, async resolution, per-frame preparation, drawing,
+  and disposal through the Canvas2D renderer;
 - worker and renderer capability declarations;
-- preflight errors for missing or incompatible extensions.
+- typed preflight errors for missing/incompatible definitions, invalid params
+  or assets, and unsupported renderer/worker combinations;
+- player and export registry forwarding through the shared rendering path;
+- unit coverage plus a pinned-browser pixel golden for the full lifecycle.
 
-Move stylistic effects into official extension packs once the contract proves
-it can preserve current scene determinism. Models emit extension names and
-bounded JSON parameters, never executable source.
+Exit criteria:
+
+- [x] models emit extension identity and bounded JSON, never executable source;
+- [x] missing or incompatible host code fails before any extension hook runs;
+- [x] preview and export consume the same resolved extension resources;
+- [x] extension pixels are deterministic and golden-tested;
+- [x] extension metadata is discoverable without executing scene-provided code.
+
+Moving existing stylistic effects into official packs remains a later,
+separately versioned migration. The kernel is proven without changing current
+effect pixels or invalidating existing scenes.
 
 ## Milestone 3 — visual primitives
 

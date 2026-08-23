@@ -17,12 +17,14 @@ export type SceneInspection = {
   assets: { total: number } & Record<SceneAsset["type"], number>;
   nodes: { total: number; root: number } & Record<SceneNode["type"], number>;
   effects: Partial<Record<SceneEffectName, number>>;
+  extensions: Record<string, number>;
   capabilities: {
     hasVisuals: boolean;
     hasAudio: boolean;
     hasVideo: boolean;
     hasLottie: boolean;
     hasEffects: boolean;
+    hasExtensions: boolean;
     hasAudioReactiveEffects: boolean;
     hasFonts: boolean;
     hasAnimations: boolean;
@@ -52,8 +54,10 @@ export function inspectScene(input: unknown): SceneInspection {
     audio: 0,
     lottie: 0,
     effect: 0,
+    extension: 0,
   };
   const effects: SceneInspection["effects"] = {};
+  const extensions: SceneInspection["extensions"] = {};
   let hasAnimations = false;
   let hasVolumeAutomation = false;
   let hasLoopedAudio = false;
@@ -72,6 +76,10 @@ export function inspectScene(input: unknown): SceneInspection {
       if (node.effect) {
         effects[node.effect] = (effects[node.effect] ?? 0) + 1;
         hasAudioReactiveEffects ||= isAudioReactiveEffect(node.effect);
+      }
+      if (node.extension) {
+        const key = `${node.extension.name}@${node.extension.version}`;
+        extensions[key] = (extensions[key] ?? 0) + 1;
       }
       hasAnimations ||= (node.animations ?? []).length > 0;
       hasVolumeAutomation ||= node.volumeEnvelope !== undefined;
@@ -92,6 +100,7 @@ export function inspectScene(input: unknown): SceneInspection {
     assets,
     nodes,
     effects,
+    extensions,
     capabilities: {
       hasVisuals:
         nodes.div +
@@ -99,12 +108,14 @@ export function inspectScene(input: unknown): SceneInspection {
           nodes.img +
           nodes.video +
           nodes.lottie +
-          nodes.effect >
+          nodes.effect +
+          nodes.extension >
         0,
       hasAudio: nodes.audio > 0 || nodes.video > 0 || assets.audio > 0,
       hasVideo: nodes.video > 0 || assets.video > 0,
       hasLottie: nodes.lottie > 0 || assets.lottie > 0,
       hasEffects: nodes.effect > 0,
+      hasExtensions: nodes.extension > 0,
       hasAudioReactiveEffects,
       hasFonts: assets.font > 0,
       hasAnimations,

@@ -4,6 +4,7 @@ import type {
   SceneAsset,
   SceneEffectName,
   SceneEffectParams,
+  SceneExtensionDescriptor,
   SceneNode,
   SceneStyle,
   VolumeEnvelope,
@@ -13,12 +14,14 @@ import {
   composition,
   div,
   effect,
+  extension,
   img,
   lottie,
   text,
   video,
   type AudioNodeOptions,
   type EffectNodeOptions,
+  type ExtensionNodeOptions,
   type LottieNodeOptions,
   type NodeOptions,
   type VideoNodeOptions,
@@ -152,6 +155,8 @@ export type LottieClipOptions = MediaOptions & {
 export type EffectLayerOptions = VisualOptions & {
   params?: SceneEffectParams;
 };
+
+export type ExtensionLayerOptions = VisualOptions;
 
 export type AudioTrackOptions = AuthorTimingOptions & {
   trimStart?: TimeValue;
@@ -543,6 +548,30 @@ export function effectLayer(
   };
 }
 
+export function extensionLayer(
+  descriptor: SceneExtensionDescriptor,
+  options: ExtensionLayerOptions = {},
+): AuthorNode {
+  return {
+    toNode(fps, scene) {
+      const node = extension({
+        ...timedNodeOptions(options, fps),
+        extension: descriptor,
+        style: {
+          ...defaultVisualStyle(scene),
+          ...options.style,
+        },
+      });
+
+      for (const animation of options.enter ?? []) {
+        node.animate(animation.property, animation.frames);
+      }
+
+      return node;
+    },
+  };
+}
+
 export function audioTrack(
   asset: AssetReference<"audio">,
   options: AudioTrackOptions = {},
@@ -768,6 +797,12 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
         params: node.params,
       } as EffectNodeOptions);
       break;
+    case "extension":
+      builder = extension({
+        ...baseOptions,
+        extension: requiredExtensionDescriptor(node),
+      } as ExtensionNodeOptions);
+      break;
     default:
       throw new Error(
         `Unsupported scene node type: ${node.type satisfies never}`,
@@ -801,6 +836,16 @@ function requiredEffectName(node: SceneNode): NonNullable<SceneNode["effect"]> {
   }
 
   return node.effect;
+}
+
+function requiredExtensionDescriptor(
+  node: SceneNode,
+): SceneExtensionDescriptor {
+  if (!node.extension) {
+    throw new Error(`Extension node "${node.id}" is missing extension.`);
+  }
+
+  return node.extension;
 }
 
 function collectAuthorNodeAssets(nodes: readonly AuthorNode[] = []) {

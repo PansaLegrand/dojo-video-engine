@@ -8,6 +8,7 @@ import {
   captionTrack,
   defineAssets,
   effectLayer,
+  extensionLayer,
   fadeUp,
   frames,
   image,
@@ -171,6 +172,36 @@ describe("@motionforge/authoring", () => {
         params: { seed: 7, intensity: "high" },
       },
     ]);
+  });
+
+  it("authors versioned extension layers as scene data", () => {
+    const scene = makeScene({
+      size: "landscape",
+      fps: 30,
+      duration: seconds(2),
+      children: [
+        extensionLayer(
+          {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { columns: 8, color: "#22d3ee" },
+          },
+          { id: "grid", at: seconds(0.5), duration: seconds(1) },
+        ),
+      ],
+    });
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "grid",
+      type: "extension",
+      from: 15,
+      duration: 30,
+      extension: {
+        name: "com.example.grid",
+        version: "1.0.0",
+        params: { columns: 8, color: "#22d3ee" },
+      },
+    });
   });
 
   it("builds audio overlays with asset registration and role defaults", () => {

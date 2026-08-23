@@ -4,6 +4,7 @@ import {
   resolveAssets,
   type AudioClip,
   type ResolvedAssets,
+  type ResolveAssetsOptions,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
@@ -57,6 +58,10 @@ export type ExportVideoOptions = {
    * itself before the frame loop.
    */
   assets?: ResolvedAssets;
+  /** Trusted extension definitions used when resolving extension nodes. */
+  extensions?: ResolveAssetsOptions["extensions"];
+  /** Require every extension definition to support worker execution. */
+  worker?: boolean;
   /**
    * Audio is mixed and fed to the encoder in windows of this many seconds
    * (default 10), so audio memory stays flat regardless of scene length.
@@ -451,7 +456,13 @@ export async function exportVideo(
     );
   }
 
-  const assets = options.assets ?? (await resolveAssets(scene));
+  const assets =
+    options.assets ??
+    (await resolveAssets(scene, {
+      extensions: options.extensions,
+      worker: options.worker,
+      signal: options.signal,
+    }));
   const { canvas, context } = createExportCanvas(scene.width, scene.height);
   const output = new Output({ format, target: new BufferTarget() });
   const source = new CanvasSource(canvas, {

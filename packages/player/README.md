@@ -15,6 +15,10 @@ await player.seek(45);
 player.dispose();
 ```
 
+For extension scenes, pass the host registry as `extensions`; pass
+`worker: true` when the player runs in a worker and definitions must declare
+worker compatibility.
+
 ## Design
 
 - **Wall-clock time exists only in the clock.** `FrameClock` maps `performance.now()` to integer frames anchored at the last play/seek; rendering stays the engine's pure `(scene, frame)` function. Playback at 30 fps shows the same pixels as export at 30 fps.
@@ -24,6 +28,7 @@ player.dispose();
   current scene position instead of delaying the visible player.
 - **Injectable time and scheduler.** `now`, `requestFrame`, and `cancelFrame` are constructor options, so the full play/pause/seek/ended/loop behavior is unit-tested in Node with a fake driver — no timers, no flake.
 - **Asset ownership is explicit.** Pass `assets` and you own their lifetime (the playground shares one resolution between preview and export); omit them and the player resolves on create and releases on `dispose()`. Disposal waits for an in-flight asynchronous frame preparation before releasing owned decoders.
+- **Extension ownership follows assets.** An internally resolved registry runs resolve/prepare/draw/dispose through the same player lifecycle; caller-provided `assets` remain caller-owned.
 
 Events: `frame`, `play`, `pause`, `ended` (non-looping playback pauses on the final frame). `currentFrame` is the last rendered frame.
 

@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: M0 complete](https://img.shields.io/badge/status-M0%20complete-brightgreen.svg)](docs/m0-roadmap.md)
-[![Version: 0.5.0](https://img.shields.io/badge/version-0.5.0-blue.svg)](CHANGELOG.md)
+[![Status: M2 complete](https://img.shields.io/badge/status-M2%20complete-brightgreen.svg)](docs/v1-roadmap.md)
+[![Version: 0.6.0](https://img.shields.io/badge/version-0.6.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -63,6 +63,8 @@ flowchart TB
     adapters --> SCENE["scene document — the canonical video<br/><b>@motionforge/schema</b> · Zod validation + JSON Schema"]
 
     SCENE --> CORE["<b>@motionforge/core</b><br/>builder API · keyframe evaluator · layout pass"]
+    SCENE -. "versioned descriptors" .-> EXT["<b>@motionforge/extensions</b><br/>trusted versioned adapters · preflight · lifecycle"]
+    EXT --> R2D
     CORE --> R2D["<b>@motionforge/renderer-canvas2d</b><br/>deterministic still-frame renderer"]
     R2D --> PLAYER["<b>@motionforge/player</b><br/>play · pause · seek · audio preview"]
     PLAYER --> PREVIEW["apps/chat + playground previews<br/><i>scrub any frame</i>"]
@@ -76,6 +78,7 @@ flowchart TB
 | [`create-motionforge`](packages/create-motionforge)            | Starter project generator                           | ✅ working |
 | [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export        | ✅ working |
 | [`@motionforge/core`](packages/core)                           | Builder API, keyframe evaluator, layout pass        | ✅ working |
+| [`@motionforge/extensions`](packages/extensions)               | Versioned deterministic renderer extension kernel   | ✅ working |
 | [`@motionforge/renderer-canvas2d`](packages/renderer-canvas2d) | Canvas2D reference renderer                         | ✅ working |
 | [`@motionforge/export`](packages/export)                       | In-browser MP4 export (WebCodecs + mediabunny)      | ✅ working |
 | [`@motionforge/presets`](packages/presets)                     | Motion presets, agent macros, captions, timelines   | ✅ working |
@@ -327,6 +330,12 @@ Release 0.5 establishes canonical Scene v1. Legacy v0 documents migrate
 deterministically through `parseScene()` / `migrateScene()`, typed asset
 references fail before rendering, and inspection, lint, and Canvas runtime
 preflight APIs provide machine-readable readiness checks.
+
+Release 0.6 adds the trusted extension kernel. Scene JSON carries only an
+exact versioned identity and validated params; host-installed definitions own
+asset resolution, per-frame preparation, Canvas2D drawing, and disposal. The
+player and exporter share the same registry-backed path, and a pinned-browser
+golden holds extension output to the engine's pixel-determinism contract.
 
 Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
 

@@ -75,7 +75,8 @@
                   "video",
                   "audio",
                   "lottie",
-                  "effect"
+                  "effect",
+                  "extension"
                 ]
               },
               "text": {
@@ -243,6 +244,58 @@
                     "type": "boolean"
                   }
                 },
+                "additionalProperties": false
+              },
+              "extension": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)(?:-(?:0|[1-9]\\d*|[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+                  },
+                  "params": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": {
+                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "version",
+                  "params"
+                ],
                 "additionalProperties": false
               },
               "videoStartTime": {

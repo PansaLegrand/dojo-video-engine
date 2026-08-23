@@ -40,6 +40,10 @@ async function run(currentMode: GoldenMode): Promise<void> {
       alias: {
         "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
         "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
+        "@motionforge/extensions": resolve(
+          rootDir,
+          "packages/extensions/src/index.ts",
+        ),
         "@motionforge/presets": resolve(
           rootDir,
           "packages/presets/src/index.ts",
@@ -79,10 +83,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
     const failures: string[] = [];
 
     for (const fixture of fixtures) {
-      const rendered = await page.evaluate(
-        ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
-        { scene: fixture.scene, frame: fixture.frame },
-      );
+      const rendered = await renderFrame(page, fixture.scene, fixture.frame);
 
       if (fixture.kind === "exact") {
         const snapshot = snapshotFrame(fixture, rendered);
@@ -147,18 +148,12 @@ async function runLegacyMigrationChecks(page: Page): Promise<string[]> {
     return ["scene-v0-migration: missing effect-showcase fixture"];
   }
 
-  const current = await page.evaluate(
-    ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
-    { scene: fixture.scene, frame: fixture.frame },
-  );
+  const current = await renderFrame(page, fixture.scene, fixture.frame);
   const legacyScene = {
     ...fixture.scene,
     schemaVersion: 0,
   } as unknown as typeof fixture.scene;
-  const legacy = await page.evaluate(
-    ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
-    { scene: legacyScene, frame: fixture.frame },
-  );
+  const legacy = await renderFrame(page, legacyScene, fixture.frame);
   const currentHash = hashFrame(current);
   const legacyHash = hashFrame(legacy);
 
@@ -185,8 +180,8 @@ async function runExportSmokeTest(page: Page): Promise<string[]> {
   }
 
   const exported = await page.evaluate(
-    (scene) => window.renderGoldenExport(scene),
-    fixture.scene,
+    (sceneJson) => window.renderGoldenExport(JSON.parse(sceneJson)),
+    JSON.stringify(fixture.scene),
   );
 
   const failures: string[] = [];
@@ -310,10 +305,7 @@ async function writeFramePng(
   path: string,
   fixture: Extract<GoldenFixture, { kind: "exact" }>,
 ): Promise<void> {
-  const pngBase64 = await page.evaluate(
-    ({ scene, frame }) => window.renderGoldenFramePng(scene, frame),
-    { scene: fixture.scene, frame: fixture.frame },
-  );
+  const pngBase64 = await renderFramePng(page, fixture.scene, fixture.frame);
 
   await writeBase64File(path, pngBase64);
 }
@@ -329,9 +321,10 @@ async function writeFailureArtifacts(
   const receivedPath = resolve(diffDir, `${fixture.id}.received.png`);
   const diffPath = resolve(diffDir, `${fixture.id}.diff.png`);
 
-  const receivedBase64 = await page.evaluate(
-    ({ scene, frame }) => window.renderGoldenFramePng(scene, frame),
-    { scene: fixture.scene, frame: fixture.frame },
+  const receivedBase64 = await renderFramePng(
+    page,
+    fixture.scene,
+    fixture.frame,
   );
   await writeBase64File(receivedPath, receivedBase64);
 
@@ -349,6 +342,30 @@ async function writeFailureArtifacts(
   }
 
   return artifacts;
+}
+
+async function renderFrame(
+  page: Page,
+  scene: GoldenFixture["scene"],
+  frame: number,
+): Promise<RenderedFrame> {
+  return page.evaluate(
+    ({ sceneJson, requestedFrame }) =>
+      window.renderGoldenFrame(JSON.parse(sceneJson), requestedFrame),
+    { sceneJson: JSON.stringify(scene), requestedFrame: frame },
+  );
+}
+
+async function renderFramePng(
+  page: Page,
+  scene: GoldenFixture["scene"],
+  frame: number,
+): Promise<string> {
+  return page.evaluate(
+    ({ sceneJson, requestedFrame }) =>
+      window.renderGoldenFramePng(JSON.parse(sceneJson), requestedFrame),
+    { sceneJson: JSON.stringify(scene), requestedFrame: frame },
+  );
 }
 
 async function readBaselinePng(

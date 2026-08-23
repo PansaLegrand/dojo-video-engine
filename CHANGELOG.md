@@ -3,6 +3,47 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.6.0 — 2026-08-24
+
+The extension-kernel release: trusted host applications can add deterministic,
+versioned renderer capabilities while scenes remain portable, validated JSON.
+
+### @motionforge/extensions
+
+- Added the public extension package with `defineExtension()`,
+  `createExtensionRegistry()`, exact-version resolution, and explicit
+  `compatibleVersions` aliases. Duplicate and ambiguous registrations fail
+  loudly instead of silently changing old scene pixels.
+- Added parameter validation, generated JSON Schema discovery metadata,
+  renderer/worker declarations, typed asset requirements, async resolution,
+  per-frame preparation, and deterministic disposal hooks.
+- Added `preflightExtensions()` with typed errors for absent/incompatible
+  definitions, invalid parameters/assets, unsupported renderers, and
+  worker-incompatible extensions.
+
+### Scene, renderer, player, and export
+
+- Scene v1 now supports JSON-only `extension` nodes carrying a stable name,
+  exact semantic version, and bounded parameters. Functions and other
+  non-JSON parameter values are rejected; executable code remains host-owned.
+- Added the `extension()` core builder, patch support, inspection counts,
+  extension capability reporting, and generated Scene JSON Schema coverage.
+- Canvas2D now preflights the registry before loading, resolves node-scoped
+  resources once, prepares optional frame data, invokes typed draw adapters,
+  validates staged-frame freshness, and disposes extension resources.
+- Player and export accept an extension registry and worker policy and pass
+  them through the shared resolution/render path, preserving preview/export
+  parity.
+
+### Testing and documentation
+
+- Accepted [RFC 0003](docs/rfcs/0003-extension-kernel.md), documenting
+  versioning, trust boundaries, lifecycle, determinism, and rejected designs.
+- Added registry/preflight/schema/builder/lifecycle unit coverage and a
+  pinned-Chromium pixel golden that exercises resolve → prepare → draw.
+- Added `@motionforge/extensions` to package, dependency-boundary,
+  clean-install, and release gates.
+
 ## 0.5.0 — 2026-08-23
 
 The Scene v1 compatibility release: MotionForge now has a canonical versioned

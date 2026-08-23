@@ -207,6 +207,22 @@ importers:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/extensions:
+    dependencies:
+      '@motionforge/schema':
+        specifier: workspace:*
+        version: link:../schema
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
+      zod-to-json-schema:
+        specifier: ^3.25.2
+        version: 3.25.2(zod@3.25.76)
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/player:
     dependencies:
       '@motionforge/export':
@@ -241,6 +257,9 @@ importers:
       '@motionforge/core':
         specifier: workspace:*
         version: link:../core
+      '@motionforge/extensions':
+        specifier: workspace:*
+        version: link:../extensions
       '@motionforge/schema':
         specifier: workspace:*
         version: link:../schema
@@ -254,6 +273,9 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
 
   packages/schema:
     dependencies:
@@ -308,6 +330,9 @@ importers:
       '@motionforge/export':
         specifier: workspace:*
         version: link:../../packages/export
+      '@motionforge/extensions':
+        specifier: workspace:*
+        version: link:../../packages/extensions
       '@motionforge/presets':
         specifier: workspace:*
         version: link:../../packages/presets
@@ -335,6 +360,9 @@ importers:
       vite:
         specifier: ^7.3.5
         version: 7.3.5(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       typescript:
         specifier: ^5.9.3

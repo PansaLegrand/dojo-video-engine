@@ -129,6 +129,40 @@ export type GoldenFixture = ExactGoldenFixture | ProbeGoldenFixture;
 export const fixtures: GoldenFixture[] = [
   {
     kind: "exact",
+    id: "extension-checker",
+    description:
+      "A versioned extension runs validated params and per-frame preparation through Canvas2D.",
+    frame: 7,
+    scene: {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [
+        {
+          id: "checker",
+          type: "extension",
+          from: 0,
+          duration: 30,
+          extension: {
+            name: "dev.motionforge.golden-checker",
+            version: "1.0.0",
+            params: {
+              background: "#0f172a",
+              foreground: "#22d3ee",
+              cellSize: 24,
+            },
+          },
+          style: { width: "100%", height: "100%" },
+          children: [],
+        },
+      ],
+    },
+  },
+  {
+    kind: "exact",
     id: "paint-gradient",
     description: "Solid layout box with vertical gradient background.",
     frame: 0,

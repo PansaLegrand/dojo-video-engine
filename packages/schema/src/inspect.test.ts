@@ -32,6 +32,15 @@ describe("scene inspection", () => {
             },
           ],
         },
+        {
+          id: "grid",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { columns: 8 },
+          },
+        },
       ],
     });
 
@@ -39,13 +48,15 @@ describe("scene inspection", () => {
       schemaVersion: 1,
       durationSeconds: 3,
       assets: { total: 2, audio: 1, font: 1 },
-      nodes: { total: 2, root: 2, text: 1, effect: 1 },
+      nodes: { total: 3, root: 3, text: 1, effect: 1, extension: 1 },
       effects: { spectrumBars: 1 },
+      extensions: { "com.example.grid@1.0.0": 1 },
       capabilities: {
         hasEffects: true,
         hasAudioReactiveEffects: true,
         hasFonts: true,
         hasAnimations: true,
+        hasExtensions: true,
       },
     });
   });

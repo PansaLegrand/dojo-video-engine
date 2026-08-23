@@ -1,4 +1,5 @@
 import { exportVideo } from "@motionforge/export";
+import { goldenExtensionRegistry } from "./extensions.js";
 import {
   disposeAssets,
   prepareFrame,
@@ -78,7 +79,9 @@ window.renderGoldenFrame = async (
     throw new Error("Canvas2D is unavailable in the golden harness.");
   }
 
-  const assets = await resolveAssets(scene);
+  const assets = await resolveAssets(scene, {
+    extensions: goldenExtensionRegistry,
+  });
   await prepareFrame(scene, frame, assets);
   renderStill(context, scene, frame, { assets });
 
@@ -435,7 +438,9 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
     ],
   };
 
-  const assets = await resolveAssets(scene);
+  const assets = await resolveAssets(scene, {
+    extensions: goldenExtensionRegistry,
+  });
   const exportStart = performance.now();
   // 0.4s chunks force the chunked mix path (4 windows over 1.5s, with the
   // tone start crossing a chunk boundary); the RMS/alignment checks below
@@ -726,7 +731,9 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
 
 /** Exports a scene to MP4 and returns the file as base64 (for saving to disk). */
 window.renderGoldenExportFile = async (scene: Scene) => {
-  const assets = await resolveAssets(scene);
+  const assets = await resolveAssets(scene, {
+    extensions: goldenExtensionRegistry,
+  });
   const { blob, codec, audioCodec, totalFrames } = await exportVideo({
     scene,
     assets,
@@ -763,7 +770,9 @@ window.renderGoldenFramePng = async (
     throw new Error("Canvas2D unavailable");
   }
 
-  const assets = await resolveAssets(scene);
+  const assets = await resolveAssets(scene, {
+    extensions: goldenExtensionRegistry,
+  });
   await prepareFrame(scene, frame, assets);
   renderStill(context, scene, frame, { assets });
   disposeAssets(assets);

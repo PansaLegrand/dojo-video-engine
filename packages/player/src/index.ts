@@ -1,10 +1,11 @@
-import { parseScene, type Scene } from "@motionforge/schema";
+import { inspectScene, parseScene, type Scene } from "@motionforge/schema";
 import {
   disposeAssets,
   prepareFrame,
   renderStill,
   resolveAssets,
   type ResolvedAssets,
+  type ResolveAssetsOptions,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import { WebAudioPreview, type AudioPreview } from "./audio.js";
@@ -130,6 +131,10 @@ export type PlayerOptions = {
    * dispose() releases them; when provided, the caller owns their lifetime.
    */
   assets?: ResolvedAssets;
+  /** Trusted extension definitions used when resolving extension nodes. */
+  extensions?: ResolveAssetsOptions["extensions"];
+  /** Require every extension definition to support worker execution. */
+  worker?: boolean;
   loop?: boolean;
   /**
    * Audio preview. Defaults to a WebAudioPreview when the environment has
@@ -450,10 +455,19 @@ export class Player {
  */
 export async function createPlayer(options: PlayerOptions): Promise<Player> {
   const scene = parseScene(options.scene);
-  const needsAssets = Object.keys(scene.assets).length > 0;
+  const inspection = inspectScene(scene);
+  const needsAssets =
+    Object.keys(scene.assets).length > 0 ||
+    inspection.capabilities.hasExtensions;
   const ownsAssets = options.assets === undefined && needsAssets;
   const assets =
-    options.assets ?? (needsAssets ? await resolveAssets(scene) : undefined);
+    options.assets ??
+    (needsAssets
+      ? await resolveAssets(scene, {
+          extensions: options.extensions,
+          worker: options.worker,
+        })
+      : undefined);
 
   const player = new Player(scene, options, assets, ownsAssets);
 

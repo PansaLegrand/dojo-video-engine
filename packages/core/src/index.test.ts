@@ -4,6 +4,7 @@ import {
   cubicBezierEasing,
   div,
   effect,
+  extension,
   evaluateKeyframes,
   evaluateScene,
   layoutScene,
@@ -55,6 +56,36 @@ describe("builder", () => {
       "text-1",
       "text-2",
     ]);
+  });
+
+  it("builds versioned extension nodes", () => {
+    const scene = composition({
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+    })
+      .children(
+        extension({
+          id: "grid",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { columns: 8 },
+          },
+        }),
+      )
+      .toJSON();
+
+    expect(scene.nodes[0]).toMatchObject({
+      id: "grid",
+      type: "extension",
+      extension: {
+        name: "com.example.grid",
+        version: "1.0.0",
+        params: { columns: 8 },
+      },
+    });
   });
 
   it("reflects builder mutations made after attaching to a parent", () => {

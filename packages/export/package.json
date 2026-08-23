@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/export",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Browser-native video export surface (WebCodecs) for motionforge scenes.",
   "keywords": [
     "motionforge",

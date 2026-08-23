@@ -1,5 +1,43 @@
 # Progress
 
+## 2026-08-24 (0.6 versioned extension kernel)
+
+### Changed
+
+- Accepted RFC 0003 and added `@motionforge/extensions` with trusted
+  definitions, exact-version registries, explicit compatibility aliases,
+  parameter JSON Schema manifests, and typed preflight issues.
+- Added JSON-only Scene v1 `extension` nodes, core and seconds-first authoring
+  builders, patch support, inspection counts/capabilities, and generated Scene
+  JSON Schema coverage.
+- Integrated extension asset discovery/resolution, optional per-frame
+  preparation, typed Canvas2D drawing, staged-frame validation, and disposal
+  into the shared renderer lifecycle.
+- Added player/export registry and worker-policy forwarding so preview and
+  export use the same installed definitions and resources.
+- Added unit coverage across schema, patches, builders, registries, preflight,
+  and renderer lifecycle, plus a pinned-browser exact-pixel extension golden.
+- Synchronized all ten public packages at 0.6.0 and included the extension
+  package in dependency-boundary, pack, release, and clean-machine gates.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 541 unit tests, package/determinism/schema/
+  migration lint, production builds, six long-resource checks, extension and
+  existing pixel/media/audio goldens, ten browser E2E checks, CLI/starter
+  smoke, and all ten 0.6.0 package dry-runs passed.
+- `pnpm verify:clean` — packed and installed all ten 0.6.0 packages in a
+  temporary starter, then validated, migrated, inspected, linted, and built
+  the project successfully outside the monorepo.
+
+### Notes
+
+- Existing built-in effects remain schema-native in 0.6. Moving them into an
+  official extension pack requires a separately versioned pixel-compatible
+  migration and is not part of the kernel release.
+- The commercial DojoClip repository remains untouched; downstream adoption
+  stays a separate guarded upgrade.
+
 ## 2026-08-23 (0.5 Scene v1 compatibility and preflight contract)
 
 ### Changed

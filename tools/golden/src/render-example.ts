@@ -34,10 +34,7 @@ const server = await createServer({
     alias: {
       "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
       "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
-      "@motionforge/presets": resolve(
-        rootDir,
-        "packages/presets/src/index.ts",
-      ),
+      "@motionforge/presets": resolve(rootDir, "packages/presets/src/index.ts"),
       "@motionforge/showcase": resolve(
         rootDir,
         "packages/showcase/src/index.ts",
@@ -68,8 +65,8 @@ try {
 
   const started = performance.now();
   const exported = await page.evaluate(
-    (input) => window.renderGoldenExportFile(input),
-    scene,
+    (sceneJson) => window.renderGoldenExportFile(JSON.parse(sceneJson)),
+    JSON.stringify(scene),
   );
   const elapsed = performance.now() - started;
 
@@ -85,8 +82,9 @@ try {
   for (const frameArg of frameArgs) {
     const frame = Number.parseInt(frameArg, 10);
     const png = await page.evaluate(
-      ({ input, at }) => window.renderGoldenFramePng(input, at),
-      { input: scene, at: frame },
+      ({ sceneJson, at }) =>
+        window.renderGoldenFramePng(JSON.parse(sceneJson), at),
+      { sceneJson: JSON.stringify(scene), at: frame },
     );
     const pngPath = target.replace(/\.mp4$/, `-f${frame}.png`);
     await writeFile(pngPath, Buffer.from(png, "base64"));

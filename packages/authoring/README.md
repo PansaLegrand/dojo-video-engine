@@ -133,6 +133,11 @@ export default makeScene({
 Both helpers emit normal `lottie` / `effect` scene nodes. Effects remain
 seeded and schema-bounded; no imperative drawing code enters the scene.
 
+For a host-installed capability, use
+`extensionLayer({ name, version, params }, options)`. It emits a normal
+JSON-only `extension` node with seconds-first timing; the application still
+supplies the trusted registry to preview and export.
+
 ## Image Overlays
 
 Use `imageOverlay()` for logos, stickers, watermarks, product shots, and avatars:
@@ -279,7 +284,7 @@ For larger `.srt`, `.vtt`, or transcript files, keep them beside your source cod
 
 Stable for 0.x integrations:
 
-- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, and `audioTrack()`.
+- Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, `extensionLayer()`, and `audioTrack()`.
 - Overlay/media helpers: `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `subtitleTrack()`, `captionTrack()`, and aliases `subtitles` / `captions`.
 - Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `lottieAsset()`, and `defineAssets()`.
 - Re-exported preset helpers for common authoring flows, including motion presets, subtitle parsers/templates, overlay template metadata, safe-area helpers, and `audioFadeEnvelope()`.

@@ -26,7 +26,7 @@ const { blob, codec, totalFrames } = await exportVideo({
 // blob is a video/mp4 Blob ready to download or upload.
 ```
 
-Options: `startFrame`/`endFrame` export a sub-range, `signal` aborts cleanly, `bitrate` takes bits/s or a mediabunny `Quality` preset, `codecs` restricts codec choice (by default the first MP4-compatible codec this browser can encode is used — AVC where available, falling back to VP9/AV1 in Chromium-only builds), and `assets` accepts pre-resolved assets from `resolveAssets()` — when omitted, `exportVideo()` resolves the scene's assets itself before the frame loop.
+Options: `startFrame`/`endFrame` export a sub-range, `signal` aborts cleanly, `bitrate` takes bits/s or a mediabunny `Quality` preset, `codecs` restricts codec choice (by default the first MP4-compatible codec this browser can encode is used — AVC where available, falling back to VP9/AV1 in Chromium-only builds), `extensions` supplies trusted versioned definitions (`worker: true` enforces worker-compatible definitions), and `assets` accepts pre-resolved assets from `resolveAssets()` — when omitted, `exportVideo()` resolves the scene's assets itself before the frame loop.
 
 Audio is mixed into the MP4 in windows (`audioChunkSeconds`, default 10 s), so long exports avoid one whole-scene PCM buffer. Decoded source clips are still opened through the explicit asset resolver; call `disposeAssets(assets)` when reusing/resolving assets yourself.
 

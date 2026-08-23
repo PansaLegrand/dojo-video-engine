@@ -65,12 +65,16 @@ unused-asset conditions.
     "video": 0,
     "audio": 0,
     "lottie": 0,
-    "effect": 0
+    "effect": 0,
+    "extension": 0
   },
+  "effects": {},
+  "extensions": {},
   "capabilities": {
     "hasVisuals": true,
     "hasAudio": false,
     "hasEffects": false,
+    "hasExtensions": false,
     "requiresBrowserExport": true
   }
 }

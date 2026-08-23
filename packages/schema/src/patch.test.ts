@@ -187,6 +187,45 @@ describe("applyScenePatch", () => {
     expect(errors[0]?.message).toContain("Unsupported key(s): blurAmount");
   });
 
+  it("updates extension identity and JSON params transactionally", () => {
+    const scene = applied(
+      [
+        {
+          op: "setNodeProps",
+          id: "grid",
+          props: {
+            extension: {
+              name: "com.example.grid",
+              version: "2.0.0",
+              params: { columns: 12 },
+            },
+          },
+        },
+      ],
+      {
+        ...baseScene(),
+        nodes: [
+          ...baseScene().nodes,
+          {
+            id: "grid",
+            type: "extension",
+            extension: {
+              name: "com.example.grid",
+              version: "1.0.0",
+              params: { columns: 8 },
+            },
+          },
+        ],
+      },
+    );
+
+    expect(scene.nodes.find((node) => node.id === "grid")?.extension).toEqual({
+      name: "com.example.grid",
+      version: "2.0.0",
+      params: { columns: 12 },
+    });
+  });
+
   it("sets and deletes audio loop props", () => {
     const scene = applied(
       [

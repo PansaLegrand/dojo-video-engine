@@ -57,9 +57,17 @@ other visual nodes:
 }
 ```
 
-`effect` nodes are the stable scene-JSON contract for renderer-native and
-extension-backed effects. LLMs and editors should emit semantic effect names
-and bounded params, not raw Canvas or shader code.
+`effect` nodes are the stable scene-JSON contract for built-in procedural
+visuals. LLMs and editors should emit semantic effect names and bounded params,
+not raw Canvas or shader code.
+
+### Extension nodes
+
+Trusted host capabilities use `extension` nodes containing only
+`{name, version, params}`. Versions are exact, params must be JSON, and the
+host supplies executable definitions through `@motionforge/extensions`.
+Missing definitions or incompatible versions fail during renderer preflight;
+scene documents never contain functions, module URLs, or shader source.
 
 ### JSON Schema
 
@@ -82,11 +90,11 @@ See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/mai
 
 Stable for 0.x integrations:
 
-- `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, and `VolumeEnvelope` types.
+- `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, `SceneExtensionDescriptor`, `SceneJsonValue`, and `VolumeEnvelope` types.
 - `CURRENT_SCENE_VERSION`, `parseScene()`, `validateScene()`, `migrateScene()`, `SceneValidationError`, `sceneJsonSchema()`, and `legacySceneV0JsonSchema()`.
 - `inspectScene()` for stable feature summaries and `lintScene()` for valid-but-suspicious scene warnings.
 - Scene patch APIs: `applyScenePatch()`, `scenePatchSchema`, `sceneOpSchema`, `ScenePatch`, `SceneOp`, and `ApplyScenePatchResult`.
-- Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
+- Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `extensionDescriptorSchema`, `jsonValueSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
 
 Experimental before 1.0:
 

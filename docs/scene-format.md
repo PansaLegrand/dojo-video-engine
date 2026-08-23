@@ -35,11 +35,20 @@ type Asset = {
 ```ts
 type SceneNode = {
   id: string; // unique across the whole scene
-  type: "div" | "text" | "img" | "video" | "audio" | "lottie" | "effect";
+  type:
+    | "div"
+    | "text"
+    | "img"
+    | "video"
+    | "audio"
+    | "lottie"
+    | "effect"
+    | "extension";
   text?: string; // required when type is "text"
   assetId?: string; // required for img, video, audio, and lottie nodes
   effect?: SceneEffectName; // required when type is "effect"
   params?: SceneEffectParams; // bounded effect parameters
+  extension?: SceneExtensionDescriptor; // required when type is "extension"
   videoStartTime?: number; // video nodes only: source trim offset in seconds (default 0)
   playbackRate?: number; // video and lottie nodes: speed multiplier (default 1)
   audioStartTime?: number; // audio nodes only: source trim offset in seconds (default 0)
@@ -52,6 +61,20 @@ type SceneNode = {
   animations?: SceneAnimation[];
   children?: SceneNode[];
 };
+
+type SceneExtensionDescriptor = {
+  name: string; // stable namespaced identity
+  version: string; // exact semantic version
+  params: Record<string, JsonValue>; // data only; never functions or code
+};
+
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
 type VolumeEnvelopePoint = {
   frame: number; // node-local frame, strictly increasing
@@ -124,6 +147,37 @@ controls include intensity, seed, colors, particle count, direction, density,
 stroke/radius, wobble/pulse/scale/spread/softness/glow, text/frame scope,
 audio and cover asset ids, bar count, sensitivity, and smoothing. Unknown
 parameters fail validation rather than silently changing renderer behavior.
+
+### Extensions
+
+An `extension` node lets a trusted host add a renderer capability without
+putting executable code in the scene:
+
+```json
+{
+  "id": "brand-grid",
+  "type": "extension",
+  "extension": {
+    "name": "com.example.brand-grid",
+    "version": "1.0.0",
+    "params": { "color": "#22d3ee", "columns": 8 }
+  },
+  "style": { "position": "absolute", "inset": 0 }
+}
+```
+
+The descriptor contains JSON only. The application installs the matching
+trusted definition in an `ExtensionRegistry` and passes it to preview/export.
+The definition validates params, declares renderer and worker support, may
+discover typed scene assets, resolves resources once, optionally prepares
+node-local frame data, and draws through a renderer-owned adapter. Missing or
+incompatible definitions fail during preflight; a renderer never silently
+skips an extension node.
+
+Exact versions preserve old scene pixels. A newer implementation may serve an
+older descriptor only when it explicitly lists that exact version in
+`compatibleVersions`. See [RFC 0003](rfcs/0003-extension-kernel.md) and the
+[`@motionforge/extensions`](../packages/extensions) package.
 
 ### Audio
 
@@ -279,7 +333,7 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 - `text` nodes require a `text` string.
 - `img` and `video` nodes require an `assetId` pointing at `scene.assets`.
 - `lottie` nodes require a Lottie asset; effect nodes require a supported
-  effect name.
+  effect name; extension nodes require a name, exact version, and JSON params.
 - Audio-reactive effects require `params.audioAssetId`.
 - Unknown style properties are rejected, with a message explaining the curated-subset policy.
 

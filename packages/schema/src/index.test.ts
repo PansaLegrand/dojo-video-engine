@@ -244,6 +244,124 @@ describe("scene schema", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("accepts data-only extension descriptors and rejects misplaced fields", () => {
+    const valid = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "grid",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.2.0",
+            params: { columns: 8, color: "#22d3ee" },
+          },
+        },
+      ],
+    });
+    expect(valid.ok).toBe(true);
+
+    const legacyExtension = validateScene({
+      schemaVersion: 0,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "grid",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    });
+    expect(legacyExtension.ok).toBe(false);
+
+    const missing = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [{ id: "grid", type: "extension" }],
+    });
+    expect(missing.ok ? "" : missing.errors.join("\n")).toContain(
+      "Extension nodes require an extension descriptor",
+    );
+
+    const misplaced = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "box",
+          type: "div",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    });
+    expect(misplaced.ok ? "" : misplaced.errors.join("\n")).toContain(
+      "extension only applies to extension nodes",
+    );
+
+    const executable = validateScene({
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "unsafe",
+          type: "extension",
+          extension: {
+            name: "com.example.grid",
+            version: "1.0.0",
+            params: { draw: () => undefined },
+          },
+        },
+      ],
+    });
+    expect(executable.ok).toBe(false);
+
+    for (const version of ["1.0", "01.0.0", "1.0.0-01"]) {
+      const result = validateScene({
+        schemaVersion: 1,
+        width: 320,
+        height: 180,
+        fps: 30,
+        duration: 30,
+        nodes: [
+          {
+            id: `bad-${version}`,
+            type: "extension",
+            extension: {
+              name: "com.example.grid",
+              version,
+              params: {},
+            },
+          },
+        ],
+      });
+      expect(result.ok, version).toBe(false);
+    }
+  });
+
   it("rejects malformed effect nodes", () => {
     const missingPreset = validateScene({
       schemaVersion: 1,

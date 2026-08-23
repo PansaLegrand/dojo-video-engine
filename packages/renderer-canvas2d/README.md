@@ -44,22 +44,36 @@ from the node's bounded seed, never from `Math.random()`.
 The pinned-browser `effect-showcase` golden fixture covers the six general
 effects. Audio-spectrum math and all effect dispatch paths are unit-tested.
 
+### Versioned extensions
+
+Pass a trusted `ExtensionRegistry` with
+`resolveAssets(scene, { extensions: registry })` for scenes containing
+`extension` nodes. Resolution preflights identity, exact version, params,
+assets, renderer support, and optional worker support before any extension
+hook runs. `prepareFrame()` stages per-frame extension data, `renderStill()`
+invokes the Canvas2D adapter, and `disposeAssets()` releases node resources.
+
+Adapters receive resolved layout geometry and node-local time through
+`Canvas2DExtensionDrawContext`. Scene JSON never carries a draw function.
+
 ### Runtime preflight
 
-Call `preflightCanvas2D(scene)` before resolving assets when the host may run
-in browsers, workers, or server-like environments. It combines declared scene
-features with Canvas, image/video/audio decoder, font, and current DOM-Lottie
+Call `preflightCanvas2D(scene, environment, { extensions, worker })` before
+resolving assets when the host may run in browsers, workers, or server-like
+environments. It combines declared scene features with Canvas,
+image/video/audio decoder, font, current DOM-Lottie, and extension-registry
 requirements and returns typed issues without fetching media.
 
 ## API Stability
 
 Stable for 0.x integrations:
 
-- `resolveAssets(scene)`, `prepareFrame(scene, frame, assets)`, `renderStill(context, scene, frame, options)`, and `disposeAssets(assets)`.
+- `resolveAssets(scene, options)`, `prepareFrame(scene, frame, assets)`, `renderStill(context, scene, frame, options)`, and `disposeAssets(assets)`.
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
 - `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime capability checks.
+- `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
 
 Experimental before 1.0:
 
