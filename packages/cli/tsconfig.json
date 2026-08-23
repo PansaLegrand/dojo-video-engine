@@ -8,6 +8,7 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../agent-tools" },
     { "path": "../schema" },
     { "path": "../presets" },
     { "path": "../player" },

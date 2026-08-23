@@ -1,5 +1,32 @@
 # Progress
 
+## 2026-08-24 (0.11 stable agent tools)
+
+### Changed
+
+- Accepted RFC 0008 and added the public `@motionforge/agent-tools` package.
+- Added stable validate/migrate/inspect/lint/patch/diff/discovery APIs and
+  generated JSON Schema function-calling descriptors.
+- Added browser still/contact-sheet rendering plus export plan/preflight/MP4
+  wrappers over the production runtime.
+- Added runtime-derived motion, macro, extension, schema, effect, and export
+  capability discovery.
+- Added CLI `diff` and `capabilities` commands and browser still/contact checks.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 593 unit tests, contract/determinism/schema/
+  migration lint, production builds, seven resource checks, all browser
+  pixel/media/audio/export/tool checks, ten E2E checks, CLI/starter smoke, and
+  all eleven 0.11.0 package dry-runs passed.
+- `pnpm verify:clean` packed/installed all eleven 0.11.0 packages and built an
+  external starter that consumes the CLI's agent-tools dependency.
+
+### Notes
+
+- Capability metadata is derived from live registries; no duplicate prompt
+  catalog becomes authoritative.
+
 ## 2026-08-24 (0.10 worker and streaming export)
 
 ### Changed

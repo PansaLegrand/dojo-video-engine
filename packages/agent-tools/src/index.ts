@@ -1,0 +1,496 @@
+import { z, type ZodType } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import {
+  applyScenePatch,
+  effectNames,
+  inspectScene,
+  lintScene,
+  migrateScene,
+  parseScene,
+  supportedStyleKeys,
+  validateScene,
+  type Scene,
+  type ScenePatch,
+} from "@motionforge/schema";
+import {
+  motionPresetDefinitions,
+  type MotionPresetDefinition,
+} from "@motionforge/presets";
+import { macroNames, macroPromptGuide } from "@motionforge/presets/macros";
+import {
+  createExtensionRegistry,
+  type ExtensionRegistry,
+} from "@motionforge/extensions";
+import {
+  disposeAssets,
+  prepareFrame,
+  renderStill,
+  resolveAssets,
+  type ResolveAssetsOptions,
+  type ResolvedAssets,
+} from "@motionforge/renderer-canvas2d";
+import {
+  detectExportCapability,
+  estimateExport,
+  exportVideo,
+  preflightExport,
+  type ExportVideoOptions,
+  type ExportVideoResult,
+} from "@motionforge/export";
+
+export type SceneChange = {
+  kind: "add" | "remove" | "change";
+  path: Array<string | number>;
+  before?: unknown;
+  after?: unknown;
+};
+
+export type SceneDiff = {
+  equal: boolean;
+  summary: { added: number; removed: number; changed: number };
+  changes: SceneChange[];
+};
+
+export function diffScenes(
+  beforeInput: unknown,
+  afterInput: unknown,
+): SceneDiff {
+  const before = parseScene(beforeInput);
+  const after = parseScene(afterInput);
+  const changes: SceneChange[] = [];
+  diffValue(before, after, [], changes);
+  return {
+    equal: changes.length === 0,
+    summary: {
+      added: changes.filter((change) => change.kind === "add").length,
+      removed: changes.filter((change) => change.kind === "remove").length,
+      changed: changes.filter((change) => change.kind === "change").length,
+    },
+    changes,
+  };
+}
+
+function diffValue(
+  before: unknown,
+  after: unknown,
+  path: Array<string | number>,
+  changes: SceneChange[],
+): void {
+  if (Object.is(before, after)) return;
+  if (Array.isArray(before) && Array.isArray(after)) {
+    if (isIdArray(before) && isIdArray(after)) {
+      const beforeOrder = before.map((value) => value.id);
+      const afterOrder = after.map((value) => value.id);
+      if (JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)) {
+        changes.push({
+          kind: "change",
+          path: [...path, "$order"],
+          before: beforeOrder,
+          after: afterOrder,
+        });
+      }
+      const beforeMap = new Map(before.map((value) => [value.id, value]));
+      const afterMap = new Map(after.map((value) => [value.id, value]));
+      const ids = Array.from(
+        new Set([...beforeMap.keys(), ...afterMap.keys()]),
+      ).sort();
+      ids.forEach((id) =>
+        diffOptional(
+          beforeMap.get(id),
+          afterMap.get(id),
+          [...path, id],
+          changes,
+        ),
+      );
+      return;
+    }
+    const length = Math.max(before.length, after.length);
+    for (let index = 0; index < length; index += 1) {
+      diffOptional(before[index], after[index], [...path, index], changes);
+    }
+    return;
+  }
+  if (isRecord(before) && isRecord(after)) {
+    const keys = Array.from(
+      new Set([...Object.keys(before), ...Object.keys(after)]),
+    ).sort();
+    keys.forEach((key) =>
+      diffOptional(before[key], after[key], [...path, key], changes),
+    );
+    return;
+  }
+  changes.push({ kind: "change", path, before, after });
+}
+
+function diffOptional(
+  before: unknown,
+  after: unknown,
+  path: Array<string | number>,
+  changes: SceneChange[],
+): void {
+  if (before === undefined && after !== undefined) {
+    changes.push({ kind: "add", path, after });
+  } else if (before !== undefined && after === undefined) {
+    changes.push({ kind: "remove", path, before });
+  } else {
+    diffValue(before, after, path, changes);
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isIdArray(
+  value: unknown[],
+): value is Array<Record<string, unknown> & { id: string }> {
+  return value.every(
+    (entry) => isRecord(entry) && typeof entry.id === "string",
+  );
+}
+
+export type CapabilityCatalog = ReturnType<typeof discoverCapabilities>;
+
+export function discoverCapabilities(
+  options: {
+    extensions?: ExtensionRegistry;
+    globalObject?: Partial<typeof globalThis>;
+  } = {},
+) {
+  const extensions = options.extensions ?? createExtensionRegistry();
+  const globalObject = options.globalObject ?? globalThis;
+  return {
+    scene: {
+      schemaVersion: 1,
+      nodeTypes: [
+        "div",
+        "text",
+        "img",
+        "video",
+        "audio",
+        "lottie",
+        "effect",
+        "extension",
+        "shape",
+      ],
+      styleKeys: [...supportedStyleKeys],
+      effects: [...effectNames],
+    },
+    motionPresets: motionPresetDefinitions.map(motionPresetManifest),
+    macros: {
+      names: macroNames(),
+      promptGuide: macroPromptGuide(),
+    },
+    extensions: extensions.manifests(),
+    export: detectExportCapability(globalObject),
+  };
+}
+
+function motionPresetManifest(definition: MotionPresetDefinition) {
+  return {
+    name: definition.name,
+    label: definition.label,
+    description: definition.description,
+    category: definition.category,
+    thumbnail: definition.thumbnail,
+    paramsSchema: zodToJsonSchema(definition.paramsSchema, {
+      target: "jsonSchema7",
+      $refStrategy: "none",
+    }),
+  };
+}
+
+type Canvas = HTMLCanvasElement | OffscreenCanvas;
+
+function createCanvas(width: number, height: number): Canvas {
+  if (typeof OffscreenCanvas !== "undefined")
+    return new OffscreenCanvas(width, height);
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+  throw new Error(
+    "Still/contact-sheet rendering needs OffscreenCanvas or document.createElement.",
+  );
+}
+
+export async function renderSceneStill(options: {
+  scene: unknown;
+  frame: number;
+  assets?: ResolvedAssets;
+  resolve?: ResolveAssetsOptions;
+}): Promise<Canvas> {
+  const scene = parseScene(options.scene);
+  const canvas = createCanvas(scene.width, scene.height);
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas2D unavailable.");
+  const ownsAssets = options.assets === undefined;
+  const assets =
+    options.assets ?? (await resolveAssets(scene, options.resolve));
+  try {
+    const resolvedScene = await prepareFrame(scene, options.frame, assets);
+    renderStill(context, scene, options.frame, { assets, resolvedScene });
+  } finally {
+    if (ownsAssets) disposeAssets(assets);
+  }
+  return canvas;
+}
+
+export async function renderContactSheet(options: {
+  scene: unknown;
+  frames: number[];
+  columns?: number;
+  cellWidth?: number;
+  assets?: ResolvedAssets;
+  resolve?: ResolveAssetsOptions;
+}): Promise<Canvas> {
+  const scene = parseScene(options.scene);
+  if (options.frames.length === 0)
+    throw new Error("Contact sheet needs at least one frame.");
+  const columns = Math.max(1, Math.floor(options.columns ?? 4));
+  const cellWidth = Math.max(1, Math.floor(options.cellWidth ?? 320));
+  const cellHeight = Math.max(
+    1,
+    Math.round((cellWidth * scene.height) / scene.width),
+  );
+  const rows = Math.ceil(options.frames.length / columns);
+  const canvas = createCanvas(cellWidth * columns, cellHeight * rows);
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas2D unavailable.");
+  const frameCanvas = createCanvas(scene.width, scene.height);
+  const frameContext = frameCanvas.getContext("2d");
+  if (!frameContext) throw new Error("Canvas2D unavailable.");
+  const ownsAssets = options.assets === undefined;
+  const assets =
+    options.assets ?? (await resolveAssets(scene, options.resolve));
+  try {
+    for (let index = 0; index < options.frames.length; index += 1) {
+      const frame = options.frames[index] ?? 0;
+      const resolvedScene = await prepareFrame(scene, frame, assets);
+      renderStill(frameContext, scene, frame, { assets, resolvedScene });
+      context.drawImage(
+        frameCanvas,
+        (index % columns) * cellWidth,
+        Math.floor(index / columns) * cellHeight,
+        cellWidth,
+        cellHeight,
+      );
+    }
+  } finally {
+    if (ownsAssets) disposeAssets(assets);
+  }
+  return canvas;
+}
+
+export async function exportSceneVideo(
+  options: ExportVideoOptions,
+): Promise<ExportVideoResult> {
+  return exportVideo(options);
+}
+
+export type AgentToolDefinition = {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+};
+
+type RegisteredTool = AgentToolDefinition & {
+  execute(input: unknown): unknown | Promise<unknown>;
+};
+
+function tool(
+  name: string,
+  description: string,
+  schema: ZodType,
+  execute: (input: unknown) => unknown | Promise<unknown>,
+): RegisteredTool {
+  return {
+    name,
+    description,
+    inputSchema: zodToJsonSchema(schema, {
+      target: "jsonSchema7",
+      $refStrategy: "none",
+    }) as Record<string, unknown>,
+    execute,
+  };
+}
+
+export class AgentToolRegistry {
+  private readonly tools: Map<string, RegisteredTool>;
+
+  constructor(tools: RegisteredTool[]) {
+    this.tools = new Map(tools.map((entry) => [entry.name, entry]));
+  }
+
+  list(): AgentToolDefinition[] {
+    return Array.from(this.tools.values())
+      .map(({ execute: _execute, ...definition }) => definition)
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async call(name: string, input: unknown): Promise<unknown> {
+    const entry = this.tools.get(name);
+    if (!entry)
+      throw new Error(
+        `Unknown MotionForge agent tool ${JSON.stringify(name)}.`,
+      );
+    return entry.execute(input);
+  }
+}
+
+export function createAgentToolRegistry(
+  options: {
+    extensions?: ExtensionRegistry;
+    globalObject?: Partial<typeof globalThis>;
+  } = {},
+): AgentToolRegistry {
+  const sceneSchema = z.object({ scene: z.unknown() });
+  return new AgentToolRegistry([
+    tool(
+      "motionforge.validate",
+      "Validate and normalize a scene.",
+      sceneSchema,
+      (input) => validateScene(sceneSchema.parse(input).scene),
+    ),
+    tool(
+      "motionforge.migrate",
+      "Migrate a scene to canonical Scene v1.",
+      sceneSchema,
+      (input) => migrateScene(sceneSchema.parse(input).scene),
+    ),
+    tool(
+      "motionforge.inspect",
+      "Inspect scene capabilities and resource declarations.",
+      sceneSchema,
+      (input) => inspectScene(sceneSchema.parse(input).scene),
+    ),
+    tool(
+      "motionforge.lint",
+      "Find valid-but-suspicious scene data.",
+      sceneSchema,
+      (input) => lintScene(sceneSchema.parse(input).scene),
+    ),
+    tool(
+      "motionforge.patch",
+      "Apply a transactional id-addressed scene patch.",
+      z.object({ scene: z.unknown(), patch: z.unknown() }),
+      (input) => {
+        const parsed = z
+          .object({ scene: z.unknown(), patch: z.unknown() })
+          .parse(input);
+        return applyScenePatch(parsed.scene, parsed.patch);
+      },
+    ),
+    tool(
+      "motionforge.diff",
+      "Produce a stable semantic scene diff.",
+      z.object({ before: z.unknown(), after: z.unknown() }),
+      (input) => {
+        const parsed = z
+          .object({ before: z.unknown(), after: z.unknown() })
+          .parse(input);
+        return diffScenes(parsed.before, parsed.after);
+      },
+    ),
+    tool(
+      "motionforge.capabilities",
+      "Discover scene, preset, macro, extension, and export capabilities.",
+      z.object({}),
+      () => discoverCapabilities(options),
+    ),
+    tool(
+      "motionforge.export.estimate",
+      "Estimate export work and output size.",
+      sceneSchema,
+      (input) => estimateExport(parseScene(sceneSchema.parse(input).scene)),
+    ),
+    tool(
+      "motionforge.export.preflight",
+      "Preflight renderer, resource, worker, and encoder capabilities.",
+      sceneSchema,
+      (input) =>
+        preflightExport(
+          parseScene(sceneSchema.parse(input).scene),
+          options.globalObject ?? globalThis,
+          { extensions: options.extensions },
+        ),
+    ),
+    tool(
+      "motionforge.render.still",
+      "Render one scene frame to a browser canvas.",
+      z.object({ scene: z.unknown(), frame: z.number().int().nonnegative() }),
+      (input) => {
+        const parsed = z
+          .object({ scene: z.unknown(), frame: z.number().int().nonnegative() })
+          .parse(input);
+        return renderSceneStill({
+          scene: parsed.scene,
+          frame: parsed.frame,
+          resolve: { extensions: options.extensions },
+        });
+      },
+    ),
+    tool(
+      "motionforge.render.contactSheet",
+      "Render selected frames into a browser contact-sheet canvas.",
+      z.object({
+        scene: z.unknown(),
+        frames: z.array(z.number().int().nonnegative()).min(1),
+        columns: z.number().int().positive().optional(),
+        cellWidth: z.number().int().positive().optional(),
+      }),
+      (input) => {
+        const parsed = z
+          .object({
+            scene: z.unknown(),
+            frames: z.array(z.number().int().nonnegative()).min(1),
+            columns: z.number().int().positive().optional(),
+            cellWidth: z.number().int().positive().optional(),
+          })
+          .parse(input);
+        return renderContactSheet({
+          scene: parsed.scene,
+          frames: parsed.frames,
+          columns: parsed.columns,
+          cellWidth: parsed.cellWidth,
+          resolve: { extensions: options.extensions },
+        });
+      },
+    ),
+    tool(
+      "motionforge.export",
+      "Export a scene to an MP4 Blob in a WebCodecs runtime.",
+      z.object({
+        scene: z.unknown(),
+        startFrame: z.number().int().nonnegative().optional(),
+        endFrame: z.number().int().nonnegative().optional(),
+      }),
+      (input) => {
+        const parsed = z
+          .object({
+            scene: z.unknown(),
+            startFrame: z.number().int().nonnegative().optional(),
+            endFrame: z.number().int().nonnegative().optional(),
+          })
+          .parse(input);
+        return exportVideo({
+          scene: parseScene(parsed.scene),
+          startFrame: parsed.startFrame,
+          endFrame: parsed.endFrame,
+          extensions: options.extensions,
+        });
+      },
+    ),
+  ]);
+}
+
+export {
+  applyScenePatch,
+  inspectScene,
+  lintScene,
+  migrateScene,
+  validateScene,
+};
+export type { Scene, ScenePatch };

@@ -38,8 +38,16 @@ async function run(currentMode: GoldenMode): Promise<void> {
     // stale or missing dist build.
     resolve: {
       alias: {
+        "@motionforge/presets/macros": resolve(
+          rootDir,
+          "packages/presets/src/macros.ts",
+        ),
         "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
         "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
+        "@motionforge/agent-tools": resolve(
+          rootDir,
+          "packages/agent-tools/src/index.ts",
+        ),
         "@motionforge/extensions": resolve(
           rootDir,
           "packages/extensions/src/index.ts",
@@ -132,6 +140,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
     failures.push(...(await runExportSmokeTest(page)));
     failures.push(...(await runVideoChecks(page)));
     failures.push(...(await runAudioChecks(page)));
+    failures.push(...(await runAgentToolChecks(page)));
 
     if (failures.length > 0) {
       throw new Error(`Golden failures:\n${failures.join("\n\n")}`);
@@ -256,6 +265,16 @@ async function runAudioChecks(page: Page): Promise<string[]> {
     }
   }
 
+  return failures;
+}
+
+async function runAgentToolChecks(page: Page): Promise<string[]> {
+  const checks = await page.evaluate(() => window.runGoldenAgentToolChecks());
+  const failures: string[] = [];
+  for (const check of checks) {
+    if (check.pass) console.log(`ok tools: ${check.label} (${check.detail})`);
+    else failures.push(`tools: ${check.label} failed — ${check.detail}`);
+  }
   return failures;
 }
 

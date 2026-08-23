@@ -30,8 +30,8 @@ best foundation for generated, editable, template-driven 2D video.
 | 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Committed in 0.7                             |
 | 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Committed in 0.8                             |
 | 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Committed in 0.9                             |
-| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Complete in 0.10 working tree                |
-| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                      |
+| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Committed in 0.10                            |
+| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Complete in 0.11 working tree                |
 | 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                      |
 
 ## Milestone 0 — authoritative open-source engine
@@ -171,10 +171,17 @@ RFC 0007 defines the single-pipeline orchestration and output-target contract.
 
 ## Milestone 7 — agent tools
 
-Publish stable tools for scene inspection, capability discovery, validation,
-linting, patching, diffing, migration, still rendering, contact sheets, and
-export. Agents should discover the macro/extension catalog from runtime
-metadata rather than receiving a hand-maintained monolithic prompt.
+Delivered in the 0.11 working tree through `@motionforge/agent-tools`:
+
+- validation, migration, inspection, lint, and transactional patch tools;
+- stable id-aware semantic diffs with explicit order changes;
+- runtime-derived schema/effect/motion/macro/extension/export discovery;
+- still rendering, contact sheets, export estimation/preflight, and MP4 export;
+- generated JSON Schema function-calling descriptors and execution registry;
+- CLI diff and capabilities commands;
+- browser checks for production still/contact rendering.
+
+RFC 0008 defines tool naming, compatibility, discovery, and result contracts.
 
 ## Milestone 8 — 1.0 release gate
 

@@ -16,6 +16,8 @@ motionforge print src/video.ts
 motionforge migrate src/video.ts
 motionforge inspect src/video.ts
 motionforge lint src/video.ts
+motionforge diff before.ts after.ts
+motionforge capabilities
 motionforge dev src/video.ts
 ```
 
@@ -89,13 +91,17 @@ unused-asset conditions.
 }
 ```
 
+`diff` produces the stable id-aware semantic diff from
+`@motionforge/agent-tools`. `capabilities` prints runtime-derived schema,
+motion-preset, macro, extension, and export capability metadata.
+
 `dev` starts MotionForge Studio for the scene module. The studio validates the source, renders it on Canvas2D, exposes a frame scrubber and JSON inspector, and enables browser MP4 export when WebCodecs is available.
 
 ## API Stability
 
 Stable for 0.x integrations:
 
-- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge lint`, and `motionforge dev`.
+- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge lint`, `motionforge diff`, `motionforge capabilities`, and `motionforge dev`.
 - Programmatic helpers: `executeCli()`, `runCli()`, `inspectScene()`, `CliResult`, `CliIo`, and `SceneInspection`.
 - Scene module loading contract: JSON files, JS/ESM modules, TypeScript modules through `tsx`, default export or named `scene`, and scene-returning functions/promises.
 

@@ -10,6 +10,7 @@
       "@motionforge/authoring": ["packages/authoring/src/index.ts"],
       "@motionforge/cli": ["packages/cli/src/index.ts"],
       "@motionforge/core": ["packages/core/src/index.ts"],
+      "@motionforge/agent-tools": ["packages/agent-tools/src/index.ts"],
       "@motionforge/extensions": ["packages/extensions/src/index.ts"],
       "create-motionforge": ["packages/create-motionforge/src/index.ts"],
       "@motionforge/presets": ["packages/presets/src/index.ts"],

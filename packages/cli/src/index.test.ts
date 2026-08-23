@@ -258,6 +258,43 @@ describe("@motionforge/cli", () => {
     }
   });
 
+  it("diffs two scenes and exposes runtime capabilities", async () => {
+    const dir = await tempDir();
+    try {
+      const beforePath = join(dir, "before.json");
+      const afterPath = join(dir, "after.json");
+      const before = {
+        schemaVersion: 1,
+        width: 320,
+        height: 180,
+        fps: 30,
+        duration: 30,
+        nodes: [{ id: "title", type: "text", text: "Before" }],
+      };
+      await writeFile(beforePath, JSON.stringify(before));
+      await writeFile(
+        afterPath,
+        JSON.stringify({
+          ...before,
+          nodes: [{ id: "title", type: "text", text: "After" }],
+        }),
+      );
+      const diff = await executeCli(["diff", beforePath, afterPath]);
+      expect(diff.exitCode).toBe(0);
+      expect(JSON.parse(diff.stdout)).toMatchObject({
+        equal: false,
+        summary: { changed: 1 },
+      });
+      const capabilities = await executeCli(["capabilities"]);
+      expect(JSON.parse(capabilities.stdout)).toMatchObject({
+        scene: { schemaVersion: 1 },
+        motionPresets: expect.any(Array),
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("loads TypeScript scene modules through the CLI loader", async () => {
     const dir = await tempDir();
 

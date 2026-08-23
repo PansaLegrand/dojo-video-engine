@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/cli",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Command-line validation and inspection tools for MotionForge scene modules.",
   "keywords": [
     "motionforge",
@@ -48,6 +48,7 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@motionforge/agent-tools": "workspace:*",
     "@motionforge/export": "workspace:*",
     "@motionforge/player": "workspace:*",
     "@motionforge/presets": "workspace:*",

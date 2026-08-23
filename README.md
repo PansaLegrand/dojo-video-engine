@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: M6 complete](https://img.shields.io/badge/status-M6%20complete-brightgreen.svg)](docs/v1-roadmap.md)
-[![Version: 0.10.0](https://img.shields.io/badge/version-0.10.0-blue.svg)](CHANGELOG.md)
+[![Status: M7 complete](https://img.shields.io/badge/status-M7%20complete-brightgreen.svg)](docs/v1-roadmap.md)
+[![Version: 0.11.0](https://img.shields.io/badge/version-0.11.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -71,23 +71,24 @@ flowchart TB
     R2D --> EXPORT["<b>@motionforge/export</b><br/>frame sequence loop → WebCodecs"]
 ```
 
-| Package                                                        | What it does                                        | Status     |
-| -------------------------------------------------------------- | --------------------------------------------------- | ---------- |
-| [`@motionforge/authoring`](packages/authoring)                 | Seconds-first TypeScript authoring helpers          | ✅ working |
-| [`@motionforge/cli`](packages/cli)                             | Validate, print, and preview scene modules          | ✅ working |
-| [`create-motionforge`](packages/create-motionforge)            | Starter project generator                           | ✅ working |
-| [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export        | ✅ working |
-| [`@motionforge/core`](packages/core)                           | Builder API, keyframe evaluator, layout pass        | ✅ working |
-| [`@motionforge/extensions`](packages/extensions)               | Versioned deterministic renderer extension kernel   | ✅ working |
-| [`@motionforge/renderer-canvas2d`](packages/renderer-canvas2d) | Canvas2D reference renderer                         | ✅ working |
-| [`@motionforge/export`](packages/export)                       | In-browser MP4 export (WebCodecs + mediabunny)      | ✅ working |
-| [`@motionforge/presets`](packages/presets)                     | Motion presets, agent macros, captions, timelines   | ✅ working |
-| [`@motionforge/player`](packages/player)                       | Real-time playback, seeking, audio-synced preview   | ✅ working |
-| [`@motionforge/showcase`](packages/showcase)                   | Private shared scenes for playground/docs/examples  | ✅ working |
-| [`apps/chat`](apps/chat)                                       | Next.js chat + manual editor reference app          | ✅ working |
-| [`apps/playground`](apps/playground)                           | Vite showcase playground + agent console            | ✅ working |
-| [`tools/golden`](tools/golden)                                 | Pixel goldens, E2E, benchmarks, render helpers      | ✅ working |
-| [`tools/agent-eval`](tools/agent-eval)                         | Private mechanical eval harness for LLM scene edits | ✅ working |
+| Package                                                        | What it does                                           | Status     |
+| -------------------------------------------------------------- | ------------------------------------------------------ | ---------- |
+| [`@motionforge/authoring`](packages/authoring)                 | Seconds-first TypeScript authoring helpers             | ✅ working |
+| [`@motionforge/cli`](packages/cli)                             | Validate, print, and preview scene modules             | ✅ working |
+| [`create-motionforge`](packages/create-motionforge)            | Starter project generator                              | ✅ working |
+| [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export           | ✅ working |
+| [`@motionforge/core`](packages/core)                           | Builder API, keyframe evaluator, layout pass           | ✅ working |
+| [`@motionforge/agent-tools`](packages/agent-tools)             | Agent validation, diff, discovery, render/export tools | ✅ working |
+| [`@motionforge/extensions`](packages/extensions)               | Versioned deterministic renderer extension kernel      | ✅ working |
+| [`@motionforge/renderer-canvas2d`](packages/renderer-canvas2d) | Canvas2D reference renderer                            | ✅ working |
+| [`@motionforge/export`](packages/export)                       | In-browser MP4 export (WebCodecs + mediabunny)         | ✅ working |
+| [`@motionforge/presets`](packages/presets)                     | Motion presets, agent macros, captions, timelines      | ✅ working |
+| [`@motionforge/player`](packages/player)                       | Real-time playback, seeking, audio-synced preview      | ✅ working |
+| [`@motionforge/showcase`](packages/showcase)                   | Private shared scenes for playground/docs/examples     | ✅ working |
+| [`apps/chat`](apps/chat)                                       | Next.js chat + manual editor reference app             | ✅ working |
+| [`apps/playground`](apps/playground)                           | Vite showcase playground + agent console               | ✅ working |
+| [`tools/golden`](tools/golden)                                 | Pixel goldens, E2E, benchmarks, render helpers         | ✅ working |
+| [`tools/agent-eval`](tools/agent-eval)                         | Private mechanical eval harness for LLM scene edits    | ✅ working |
 
 ## MotionForge vs Remotion: Agent-Native Alternative
 
@@ -354,6 +355,10 @@ ducking/limiting audio, and chunked preview audio for long projects.
 Release 0.10 adds worker/headless export orchestration, cancellation/progress
 messaging, export estimates/preflight, and streamed WritableStream output while
 retaining the same renderer, mixer, and MP4 muxer.
+
+Release 0.11 publishes the stable agent tool surface: validation through
+export, semantic diffs, runtime-derived capability catalogs, browser stills and
+contact sheets, JSON Schema function descriptors, and CLI diff/discovery.
 
 Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
 

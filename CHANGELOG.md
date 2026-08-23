@@ -3,6 +3,30 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.11.0 — 2026-08-24
+
+The agent-tools release: MotionForge's complete generation/edit/render/export
+workflow is available through one stable public package and function-calling
+registry.
+
+### @motionforge/agent-tools
+
+- Added validation, migration, inspection, lint, patch, semantic diff, and
+  runtime capability discovery APIs.
+- Added browser still and contact-sheet rendering plus export estimate,
+  preflight, and MP4 wrappers over the production engine path.
+- Added `createAgentToolRegistry()` with stable names/descriptions and generated
+  draft-07 input JSON Schemas.
+- Capability discovery is derived from schema, motion preset, macro, installed
+  extension, and export runtime registries.
+
+### CLI and verification
+
+- Added `motionforge diff <before> <after>` and `motionforge capabilities`.
+- Added id-addressed/order-aware diff tests, registry execution tests, and
+  browser checks for painted stills and contact-sheet layout.
+- Accepted [RFC 0008](docs/rfcs/0008-agent-tools.md).
+
 ## 0.10.0 — 2026-08-24
 
 The export-runtime release: buffered, streamed, worker, and headless exports

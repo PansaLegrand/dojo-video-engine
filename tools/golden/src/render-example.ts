@@ -32,6 +32,14 @@ const server = await createServer({
   logLevel: "error",
   resolve: {
     alias: {
+      "@motionforge/presets/macros": resolve(
+        rootDir,
+        "packages/presets/src/macros.ts",
+      ),
+      "@motionforge/agent-tools": resolve(
+        rootDir,
+        "packages/agent-tools/src/index.ts",
+      ),
       "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
       "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
       "@motionforge/presets": resolve(rootDir, "packages/presets/src/index.ts"),

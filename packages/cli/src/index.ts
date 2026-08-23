@@ -4,6 +4,7 @@ import {
   migrateScene,
   validateScene,
 } from "@motionforge/schema";
+import { diffScenes, discoverCapabilities } from "@motionforge/agent-tools";
 import { loadSceneModule } from "./loader.js";
 import { createStudioServer, type StudioServerOptions } from "./studio.js";
 
@@ -27,6 +28,8 @@ Usage:
   motionforge migrate <scene-module>
   motionforge inspect <scene-module>
   motionforge lint <scene-module>
+  motionforge diff <before-scene-module> <after-scene-module>
+  motionforge capabilities
   motionforge dev <scene-module> [--host <host>] [--port <port>]
 
 Scene modules may be .json, .js, .mjs, .cjs, .ts, .mts, or .cts files.
@@ -62,6 +65,48 @@ export async function executeCli(argv: string[]): Promise<CliResult> {
 
   if (command === "dev") {
     return await executeDevCommand(modulePath, rest);
+  }
+
+  if (command === "capabilities") {
+    if (modulePath || rest.length > 0) {
+      return {
+        exitCode: 2,
+        stdout: "",
+        stderr: "Usage: motionforge capabilities\n",
+      };
+    }
+    return {
+      exitCode: 0,
+      stdout: `${JSON.stringify(discoverCapabilities(), null, 2)}\n`,
+      stderr: "",
+    };
+  }
+
+  if (command === "diff") {
+    const afterPath = rest[0];
+    if (!modulePath || !afterPath || rest.length !== 1) {
+      return {
+        exitCode: 2,
+        stdout: "",
+        stderr:
+          "Usage: motionforge diff <before-scene-module> <after-scene-module>\n",
+      };
+    }
+    try {
+      const before = await loadSceneModule(modulePath);
+      const after = await loadSceneModule(afterPath);
+      return {
+        exitCode: 0,
+        stdout: `${JSON.stringify(diffScenes(before, after), null, 2)}\n`,
+        stderr: "",
+      };
+    } catch (error) {
+      return {
+        exitCode: 1,
+        stdout: "",
+        stderr: `${error instanceof Error ? error.message : String(error)}\n`,
+      };
+    }
   }
 
   if (

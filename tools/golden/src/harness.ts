@@ -1,4 +1,5 @@
 import { exportVideo, exportVideoToStream } from "@motionforge/export";
+import { renderContactSheet, renderSceneStill } from "@motionforge/agent-tools";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
   disposeAssets,
@@ -65,8 +66,52 @@ declare global {
     }) => Promise<BenchmarkResult>;
     runGoldenVideoChecks: () => Promise<VideoCheck[]>;
     runGoldenAudioChecks: () => Promise<VideoCheck[]>;
+    runGoldenAgentToolChecks: () => Promise<VideoCheck[]>;
   }
 }
+
+window.runGoldenAgentToolChecks = async (): Promise<VideoCheck[]> => {
+  const scene: Scene = {
+    schemaVersion: 1,
+    width: 160,
+    height: 90,
+    fps: 30,
+    duration: 30,
+    assets: {},
+    nodes: [
+      {
+        id: "card",
+        type: "div",
+        style: {
+          width: "100%",
+          height: "100%",
+          background: "linear-gradient(135deg, #22d3ee, #7c3aed)",
+        },
+      },
+    ],
+  };
+  const still = await renderSceneStill({ scene, frame: 0 });
+  const sheet = await renderContactSheet({
+    scene,
+    frames: [0, 10, 20],
+    columns: 2,
+    cellWidth: 80,
+  });
+  const stillContext = still.getContext("2d");
+  const alpha = stillContext?.getImageData(80, 45, 1, 1).data[3] ?? 0;
+  return [
+    {
+      label: "still renderer returns painted pixels",
+      pass: still.width === 160 && still.height === 90 && alpha === 255,
+      detail: `${still.width}x${still.height}, alpha ${alpha}`,
+    },
+    {
+      label: "contact sheet lays out requested frames",
+      pass: sheet.width === 160 && sheet.height === 90,
+      detail: `${sheet.width}x${sheet.height}`,
+    },
+  ];
+};
 
 window.renderGoldenFrame = async (
   scene: Scene,

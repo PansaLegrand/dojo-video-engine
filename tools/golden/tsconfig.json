@@ -8,6 +8,7 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../../packages/agent-tools" },
     { "path": "../../packages/schema" },
     { "path": "../../packages/core" },
     { "path": "../../packages/extensions" },

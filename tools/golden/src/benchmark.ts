@@ -24,14 +24,26 @@ const server = await createServer({
   root: harnessDir,
   logLevel: "error",
   resolve: {
-    alias: Object.fromEntries(
-      ["schema", "core", "presets", "showcase", "renderer-canvas2d", "export"].map(
-        (name) => [
+    alias: {
+      "@motionforge/presets/macros": resolve(
+        rootDir,
+        "packages/presets/src/macros.ts",
+      ),
+      ...Object.fromEntries(
+        [
+          "agent-tools",
+          "schema",
+          "core",
+          "presets",
+          "showcase",
+          "renderer-canvas2d",
+          "export",
+        ].map((name) => [
           `@motionforge/${name}`,
           resolve(rootDir, `packages/${name}/src/index.ts`),
-        ],
+        ]),
       ),
-    ),
+    },
   },
   server: { host: "127.0.0.1", port: 0, strictPort: false },
 });
@@ -53,16 +65,21 @@ try {
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "load" });
 
-  console.log(`benchmark: ${width}x${height} @ ${fps}fps, ${seconds}s (${seconds * fps} frames)\n`);
+  console.log(
+    `benchmark: ${width}x${height} @ ${fps}fps, ${seconds}s (${seconds * fps} frames)\n`,
+  );
 
   const result = (await page.evaluate(
     (options) => window.runGoldenBenchmark(options),
     { width, height, fps, seconds },
   )) as BenchmarkResult;
 
-  const pad = (value: string | number, width: number) => String(value).padStart(width);
+  const pad = (value: string | number, width: number) =>
+    String(value).padStart(width);
 
-  console.log("stage                                   frames   total ms   ms/frame   output KiB");
+  console.log(
+    "stage                                   frames   total ms   ms/frame   output KiB",
+  );
   for (const stage of result.stages) {
     console.log(
       `${stage.label.padEnd(40)}${pad(stage.frames, 6)} ${pad(stage.totalMs, 10)} ${pad(stage.msPerFrame, 10)} ${pad(stage.outputKiB, 12)}`,
