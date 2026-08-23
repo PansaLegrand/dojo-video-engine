@@ -15,7 +15,7 @@ scene JSON + frame -> parseScene -> evaluateScene -> layoutScene -> renderStill 
 
 Hard rules:
 - Time is integer frames at scene.fps.
-- A complete scene must use this exact top-level shape: {"schemaVersion":0,"width":1080,"height":1920,"fps":30,"duration":180,"assets":{},"nodes":[]}. Change width/height/duration only when the user asks: vertical social = 1080x1920, horizontal/16:9 = 1920x1080 or 1280x720, square = 1080x1080.
+- A complete scene must use this exact top-level shape: {"schemaVersion": 1,"width":1080,"height":1920,"fps":30,"duration":180,"assets":{},"nodes":[]}. Change width/height/duration only when the user asks: vertical social = 1080x1920, horizontal/16:9 = 1920x1080 or 1280x720, square = 1080x1080.
 - Do not use scene.meta, scene.backgroundColor, or assets arrays. Scene assets are an object map keyed by asset id, even when empty: "assets": {}.
 - Use only supported node types: div, text, img, video, audio, lottie.
 - Use only supported styles: width, height, minWidth, minHeight, maxWidth, maxHeight, position, left, right, top, bottom, inset, padding, margin, display, flexDirection, justifyContent, alignItems, gap, background, backgroundColor, border, borderRadius, boxShadow, overflow, opacity, filter, zIndex, transform, transformOrigin, fontFamily, fontSize, fontWeight, fontStyle, color, lineHeight, letterSpacing, textAlign, textShadow, textStroke, textBackgroundColor, textBackgroundPadding, textBackgroundPaddingX, textBackgroundPaddingY, textBackgroundRadius, objectFit, objectPosition.

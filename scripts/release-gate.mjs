@@ -61,7 +61,7 @@ async function runSmokeChecks() {
     await writeFile(
       scenePath,
       JSON.stringify({
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 320,
         height: 180,
         fps: 30,
@@ -87,7 +87,15 @@ async function runSmokeChecks() {
       await readFile(join(dir, "gate-video", "package.json"), "utf8"),
     );
 
-    for (const script of ["dev", "validate", "print", "inspect", "build"]) {
+    for (const script of [
+      "dev",
+      "validate",
+      "print",
+      "migrate",
+      "inspect",
+      "lint",
+      "build",
+    ]) {
       if (!packageJson.scripts?.[script]) {
         throw new Error(`Starter package.json is missing script "${script}".`);
       }

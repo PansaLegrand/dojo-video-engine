@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyScenePatch, closestIds, type ScenePatch } from "./patch.js";
 
 const baseScene = () => ({
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1080,
   height: 1920,
   fps: 30,

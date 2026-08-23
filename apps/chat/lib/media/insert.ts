@@ -82,7 +82,7 @@ export function createDefaultSceneForAsset(asset: LocalMediaAsset): Scene {
   const duration = durationFramesForAsset(asset, defaultFps);
 
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: size.width,
     height: size.height,
     fps: defaultFps,

@@ -268,7 +268,7 @@ function createSceneForAsset(asset: VisualMediaAsset): Scene {
   );
 
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: size.width,
     height: size.height,
     fps: defaultFps,

@@ -3,7 +3,7 @@
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status: M0 complete](https://img.shields.io/badge/status-M0%20complete-brightgreen.svg)](docs/m0-roadmap.md)
-[![Version: 0.4.0](https://img.shields.io/badge/version-0.4.0-blue.svg)](CHANGELOG.md)
+[![Version: 0.5.0](https://img.shields.io/badge/version-0.5.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -267,7 +267,9 @@ Validate or inspect a scene module with the CLI:
 ```sh
 motionforge validate src/video.ts
 motionforge print src/video.ts
+motionforge migrate src/video.ts
 motionforge inspect src/video.ts
+motionforge lint src/video.ts
 motionforge dev src/video.ts
 ```
 
@@ -320,6 +322,11 @@ open-source source of truth. The engine renders images, frame-accurate video,
 audio, Lottie, deterministic procedural effects, and audio-reactive
 visualizers. Preview and export share one in-browser pipeline, while the
 presets package adds schema-backed macros for compact agent authoring.
+
+Release 0.5 establishes canonical Scene v1. Legacy v0 documents migrate
+deterministically through `parseScene()` / `migrateScene()`, typed asset
+references fail before rendering, and inspection, lint, and Canvas runtime
+preflight APIs provide machine-readable readiness checks.
 
 Current known limits: preview audio is best-effort and mixed into one cached buffer per scene, large source videos are fetched as whole blobs for deterministic decode, and hosted web-app deployment is intentionally not wired from this repo right now.
 

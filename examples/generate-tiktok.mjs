@@ -13,7 +13,7 @@ const words = [
 ];
 
 const scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1080,
   height: 1920,
   fps: 30,

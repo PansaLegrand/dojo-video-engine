@@ -47,7 +47,7 @@ function validScene(
   assets: Record<string, unknown> = {},
 ): void {
   const result = validateScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: ctx.width,
     height: ctx.height,
     fps: ctx.fps,
@@ -1420,7 +1420,7 @@ describe("emphasis macro", () => {
       ),
     );
     const validation = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: ctx.width,
       height: ctx.height,
       fps: ctx.fps,
@@ -1749,7 +1749,7 @@ describe("bRoll macro", () => {
       ),
     );
     const validation = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: ctx.width,
       height: ctx.height,
       fps: ctx.fps,

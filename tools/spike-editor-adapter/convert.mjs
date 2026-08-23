@@ -355,7 +355,7 @@ const ordered = [...overlays].sort(
 const nodes = ordered.map(convertOverlay).filter(Boolean);
 
 const scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width,
   height,
   fps: template.fps ?? FPS,

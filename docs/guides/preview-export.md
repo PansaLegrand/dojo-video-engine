@@ -18,10 +18,11 @@ Studio provides:
 - generated JSON inspector
 - browser MP4 export when WebCodecs is available
 
-Use `motionforge validate` and `motionforge print` in CI or scripts:
+Use validation, lint, and canonical printing in CI or scripts:
 
 ```sh
 motionforge validate src/video.ts
+motionforge lint src/video.ts
 motionforge print src/video.ts > scene.json
 ```
 

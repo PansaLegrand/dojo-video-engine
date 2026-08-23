@@ -57,7 +57,7 @@ describe("local media asset helpers", () => {
 
   it("builds a compact manifest with scene usage state", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,

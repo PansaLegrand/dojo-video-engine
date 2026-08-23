@@ -16,6 +16,7 @@ scene JSON + frame -> parseScene -> evaluateScene (keyframes) -> layoutScene (bo
 ## Hard rules
 
 - Never use wall-clock time or unseeded randomness in anything that feeds rendering.
+- Emit `schemaVersion: 1` for new scenes. Legacy v0 input is accepted only through deterministic migration; never invent a future version.
 - Only use style properties from the support matrix (docs/scene-format.md). Unknown properties fail validation — this is intentional; do not work around it.
 - Prefer data keyframes over imperative per-frame code.
 - After editing a scene, re-validate with `validateScene()` and read the errors; they state the path, the problem, and the fix.
@@ -24,7 +25,7 @@ scene JSON + frame -> parseScene -> evaluateScene (keyframes) -> layoutScene (bo
 
 ```json
 {
-  "schemaVersion": 0,
+  "schemaVersion": 1,
   "width": 1080,
   "height": 1920,
   "fps": 30,
@@ -80,16 +81,16 @@ Text is multi-line: explicit `\n` always breaks; words wrap to the node's box wi
 
 ```txt
 nodes.1.id: Duplicate node id "title". Node ids must be unique across the scene so tools can patch and diff nodes reliably.
-nodes.0.style: Unsupported style property. motionforge v0 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or custom draw nodes.
+nodes.0.style: Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.
 nodes.2.assetId: img nodes require an assetId that points at scene.assets.
 ```
 
 ## APIs
 
-- `@motionforge/schema`: `parseScene(json)` (throws `SceneValidationError`), `validateScene(json)` (returns `{ ok, scene | errors }`), `sceneJsonSchema()` (JSON Schema draft-07; also shipped as `scene.schema.json`).
+- `@motionforge/schema`: `parseScene(json)` / `validateScene(json)` normalize valid v0 or v1 input to canonical Scene v1; `migrateScene(json)` also returns source/target version and migration ids; `sceneSchema` is strict v1; `inspectScene()` reports features; `lintScene()` reports valid-but-suspicious warnings; `sceneJsonSchema()` is the canonical draft-07 schema shipped as `scene.schema.json`.
 - `@motionforge/schema` patches: **edit scenes with `applyScenePatch(scene, patch)` instead of re-emitting whole documents.** A patch is an ordered op list addressed by node id: `{op:"setStyle",id,style}` (merge; null deletes a key), `{op:"setText",id,text}`, `{op:"retime",id,from?,duration?}`, `{op:"setAnimations",id,animations}` (whole-list replace), `{op:"insertNode",node,parentId?,beforeId?}` (node needs a unique id — namespace yours, e.g. `caption-7`), `{op:"removeNode",id}`, `{op:"moveNode",id,parentId?,beforeId?}`, `{op:"setAsset",asset}`, `{op:"removeAsset",id}` (rejected while nodes reference it), `{op:"setSceneMeta",width?,height?,fps?,duration?}`. Application is transactional and pure: any failing op rejects the whole patch with `{opIndex, message}` errors (misspelled ids get closest-id suggestions) and the input scene is untouched. Re-validate nothing yourself — the patched document is fully revalidated for you.
 - `@motionforge/core`: `composition()`, `div()`, `text()`, `img()`, `video()` builders → `.toJSON()`; `evaluateScene(scene, frame)`, `layoutScene(resolved)`.
-- `@motionforge/renderer-canvas2d`: `resolveAssets(scene)` → `ResolvedAssets` (async, once per scene); `prepareFrame(scene, frame, assets)` (async, per frame, stages video frames); `renderStill(ctx2d, scene, frame, { assets })`; `disposeAssets(assets)`; `computeObjectFit()` and `videoSourceTime()` for geometry/timing math.
+- `@motionforge/renderer-canvas2d`: `preflightCanvas2D(scene)` reports runtime requirements before loading; `resolveAssets(scene)` → `ResolvedAssets` (async, once per scene); `prepareFrame(scene, frame, assets)` (async, per frame, stages video frames); `renderStill(ctx2d, scene, frame, { assets })`; `disposeAssets(assets)`; `computeObjectFit()` and `videoSourceTime()` for geometry/timing math.
 - `@motionforge/presets`: pure helpers compiling intent to scene data — `popIn`/`fadeUp`/`slideIn(direction)`/`pulse(options)` → keyframe arrays; `tiktokCaptions(words, { fps, highlightIndices })` and `karaokeCaptions(words, { fps })` turn ASR word timestamps (`{ word, startMs, endMs }[]`) into timed caption nodes. Prefer these over hand-writing animation JSON.
 - `@motionforge/presets/macros`: `expandMacroNodes()` and `expandMacroNodeInput()` compile semantic macro nodes into ordinary scene data; `macroNames()` lists registered capabilities and `macroPromptGuide()` derives agent documentation from the runtime registry. Prefer macros for designed overlays, effects, B-roll, captions, subtitles, transitions, and countdowns.
 - `@motionforge/authoring`: use `makeScene()`, `seconds()`, `publicAsset()`, and high-level nodes for programmer-facing scene modules. Use `textBox()` for prompt/CMS/user copy that may be long; it emits bounded text with safe-area placement, shrink fit, ellipsis, `maxLines`, and `minFontSize`. Use `parseSrt()` or `parseVtt()` plus `subtitleTrack(segments, { template })` for SRT/WebVTT/transcript cues. Use `captionTrack(words, { template })` for ASR word timings. These helpers still compile to ordinary validated scene nodes.

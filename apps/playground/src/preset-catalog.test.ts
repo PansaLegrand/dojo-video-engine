@@ -4,7 +4,7 @@ import { buildPresetPatchExample, presetCatalog } from "./preset-catalog.js";
 
 function sceneWithMedia(): Scene {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,

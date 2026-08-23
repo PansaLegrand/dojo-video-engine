@@ -3,12 +3,23 @@ import { applyScenePatch, type Scene } from "@motionforge/schema";
 import { createInspectorPatch } from "./inspector-patches";
 
 const scene: Scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1080,
   height: 1920,
   fps: 30,
   duration: 120,
-  assets: {},
+  assets: {
+    "video-asset": {
+      id: "video-asset",
+      type: "video",
+      src: "video.mp4",
+    },
+    "voice-asset": {
+      id: "voice-asset",
+      type: "audio",
+      src: "voice.mp3",
+    },
+  },
   nodes: [
     {
       id: "title",
@@ -166,9 +177,9 @@ describe("createInspectorPatch", () => {
 
     if (sourceStart.ok) {
       const applied = applyScenePatch(scene, sourceStart.patch);
-      expect(applied.ok ? applied.scene.nodes[1]?.videoStartTime : undefined).toBe(
-        2.5,
-      );
+      expect(
+        applied.ok ? applied.scene.nodes[1]?.videoStartTime : undefined,
+      ).toBe(2.5);
     }
   });
 

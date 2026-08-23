@@ -44,6 +44,13 @@ from the node's bounded seed, never from `Math.random()`.
 The pinned-browser `effect-showcase` golden fixture covers the six general
 effects. Audio-spectrum math and all effect dispatch paths are unit-tested.
 
+### Runtime preflight
+
+Call `preflightCanvas2D(scene)` before resolving assets when the host may run
+in browsers, workers, or server-like environments. It combines declared scene
+features with Canvas, image/video/audio decoder, font, and current DOM-Lottie
+requirements and returns typed issues without fetching media.
+
 ## API Stability
 
 Stable for 0.x integrations:
@@ -52,6 +59,7 @@ Stable for 0.x integrations:
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
+- `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime capability checks.
 
 Experimental before 1.0:
 

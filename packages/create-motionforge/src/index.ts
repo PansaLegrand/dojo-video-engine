@@ -1,4 +1,4 @@
-import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 
 export type CreateMotionforgeOptions = {
@@ -12,7 +12,19 @@ export type CreateMotionforgeResult = {
   files: string[];
 };
 
-const packageVersion = "0.3.0";
+const packageVersion = await readOwnPackageVersion();
+
+async function readOwnPackageVersion(): Promise<string> {
+  const manifest = JSON.parse(
+    await readFile(new URL("../package.json", import.meta.url), "utf8"),
+  ) as { version?: unknown };
+
+  if (typeof manifest.version !== "string" || !manifest.version) {
+    throw new Error("create-motionforge package.json has no valid version.");
+  }
+
+  return manifest.version;
+}
 
 export async function createMotionforgeProject(
   targetDir: string,
@@ -134,7 +146,9 @@ function packageJson(projectName: string) {
         dev: "motionforge dev src/video.ts",
         validate: "motionforge validate src/video.ts",
         print: "motionforge print src/video.ts",
+        migrate: "motionforge migrate src/video.ts",
         inspect: "motionforge inspect src/video.ts",
+        lint: "motionforge lint src/video.ts",
         build: "tsc -p tsconfig.json && motionforge validate src/video.ts",
       },
       dependencies: {

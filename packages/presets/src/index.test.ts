@@ -45,13 +45,54 @@ import {
 } from "./index.js";
 
 function sceneWith(...nodes: SceneNode[]): Scene {
+  const assets: Scene["assets"] = {};
+  const collectAssets = (items: SceneNode[]): void => {
+    for (const node of items) {
+      if (node.assetId) {
+        const type =
+          node.type === "img"
+            ? "image"
+            : node.type === "video"
+              ? "video"
+              : node.type === "audio"
+                ? "audio"
+                : node.type === "lottie"
+                  ? "lottie"
+                  : null;
+        if (type) {
+          assets[node.assetId] = {
+            id: node.assetId,
+            type,
+            src: `${node.assetId}.${type}`,
+          };
+        }
+      }
+      if (node.params?.audioAssetId) {
+        assets[node.params.audioAssetId] = {
+          id: node.params.audioAssetId,
+          type: "audio",
+          src: `${node.params.audioAssetId}.audio`,
+        };
+      }
+      if (node.params?.coverAssetId) {
+        assets[node.params.coverAssetId] = {
+          id: node.params.coverAssetId,
+          type: "image",
+          src: `${node.params.coverAssetId}.image`,
+        };
+      }
+      collectAssets(node.children ?? []);
+    }
+  };
+  collectAssets(nodes);
+
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
     duration: 180,
-    assets: {},
+    assets,
     nodes: [
       {
         id: "background",
@@ -132,7 +173,7 @@ describe("media look presets", () => {
   it("returns schema-valid styles for image and video nodes", () => {
     for (const [key] of mediaLookEntries) {
       const result = validateScene({
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 1080,
         height: 1920,
         fps: 30,
@@ -266,7 +307,7 @@ describe("clip layout presets", () => {
   it("returns schema-valid styles for media nodes", () => {
     for (const [key] of clipLayoutEntries) {
       const result = validateScene({
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 1080,
         height: 1920,
         fps: 30,

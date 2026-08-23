@@ -4,11 +4,17 @@ The scene document is the stable contract between humans, framework adapters, ag
 
 A machine-readable JSON Schema for this format ships with the schema package at [`packages/schema/scene.schema.json`](../packages/schema/scene.schema.json) and is exported at runtime as `sceneJsonSchema()`. The JSON Schema covers structure; the cross-field invariants listed below are enforced by `parseScene` / `validateScene`.
 
+Scene v1 is canonical. `sceneSchema` accepts v1 only, while `parseScene()`,
+`validateScene()`, and `migrateScene()` also accept valid legacy v0 documents
+and normalize them to v1 without mutating the input. Unknown/future versions
+fail loudly. The compatibility contract is defined in
+[RFC 0002](rfcs/0002-scene-v1.md).
+
 ## Top level
 
 ```ts
 type Scene = {
-  schemaVersion: 0; // current format version, bumped on breaking changes
+  schemaVersion: 1; // current format version, bumped on breaking changes
   width: number; // positive integer, pixels
   height: number; // positive integer, pixels
   fps: number; // positive integer, frames per second
@@ -74,7 +80,7 @@ A `lottie` node draws a [Lottie](https://airbnb.io/lottie/) vector animation (a 
 lottieFrame = clamp((localFrame / scene.fps) * playbackRate * doc.fr, 0, doc.op - doc.ip - 1)
 ```
 
-Scenes outlasting the animation hold its last frame. Two guards enforce the determinism contract at asset load: documents containing **expressions** (embedded JavaScript; may call `Date`/`random`) or **image layers / external images** are rejected with the reason — v0 renders self-contained vector documents only. Rendering lottie assets requires the optional peer dependency `lottie-web` (scenes without lottie assets never load it).
+Scenes outlasting the animation hold its last frame. Two guards enforce the determinism contract at asset load: documents containing **expressions** (embedded JavaScript; may call `Date`/`random`) or **image layers / external images** are rejected with the reason — the current adapter renders self-contained vector documents only. Rendering lottie assets requires the optional peer dependency `lottie-web` (scenes without lottie assets never load it).
 
 ### Effects
 
@@ -281,7 +287,7 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 
 ```txt
 nodes.0.children.1.id: Duplicate node id "title". Node ids must be unique across the scene so tools can patch and diff nodes reliably.
-nodes.0.style: Unsupported style property. motionforge v0 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or custom draw nodes.
+nodes.0.style: Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.
 ```
 
 ## Complete example
@@ -290,7 +296,7 @@ A 4-second, 30 fps vertical scene: gradient background, centered title that fade
 
 ```json
 {
-  "schemaVersion": 0,
+  "schemaVersion": 1,
   "width": 1080,
   "height": 1920,
   "fps": 30,
@@ -360,4 +366,8 @@ A 4-second, 30 fps vertical scene: gradient background, centered title that fade
 
 ## Versioning
 
-`schemaVersion` is `0` while the format is pre-M0 and may change without migration tooling. From `1` onward, breaking format changes bump the version and ship with documented migrations.
+`schemaVersion: 1` is the current canonical contract. `parseScene()`,
+`validateScene()`, and `migrateScene()` accept valid legacy v0 documents and
+normalize them to v1 without mutating the input. Breaking format changes bump
+the version and ship with a documented deterministic migration. See
+[RFC 0002](rfcs/0002-scene-v1.md).

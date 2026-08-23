@@ -56,7 +56,7 @@ The chat app is currently a JSON scene plus JSON patch loop. It does not use MCP
 ```json
 {
   "scene": {
-    "schemaVersion": 0,
+    "schemaVersion": 1,
     "width": 1080,
     "height": 1920,
     "fps": 30,

@@ -104,7 +104,7 @@ describe("FrameClock", () => {
 
 // A scene with no assets so the player needs no DOM beyond the 2d context.
 const testScene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 100,
   height: 100,
   fps: 30,
@@ -282,7 +282,7 @@ describe("Player", () => {
       frame: number,
     ): Awaited<ReturnType<typeof prepareFrame>> => ({
       ...ownedAssetScene,
-      schemaVersion: 0,
+      schemaVersion: 1,
       frame,
       nodes: [],
     });

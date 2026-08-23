@@ -34,11 +34,16 @@ describe("create-motionforge", () => {
         dev: "motionforge dev src/video.ts",
         validate: "motionforge validate src/video.ts",
         print: "motionforge print src/video.ts",
+        migrate: "motionforge migrate src/video.ts",
         inspect: "motionforge inspect src/video.ts",
+        lint: "motionforge lint src/video.ts",
       });
+      const ownPackage = JSON.parse(
+        await readFile(new URL("../package.json", import.meta.url), "utf8"),
+      ) as { version: string };
       expect(packageJson.dependencies).toMatchObject({
-        "@motionforge/authoring": "^0.3.0",
-        "@motionforge/cli": "^0.3.0",
+        "@motionforge/authoring": `^${ownPackage.version}`,
+        "@motionforge/cli": `^${ownPackage.version}`,
       });
 
       await expect(

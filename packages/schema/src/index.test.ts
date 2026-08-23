@@ -1,10 +1,92 @@
 import { describe, expect, it } from "vitest";
-import { parseScene, sceneJsonSchema, validateScene } from "./index.js";
+import {
+  CURRENT_SCENE_VERSION,
+  legacySceneV0JsonSchema,
+  migrateScene,
+  parseScene,
+  sceneJsonSchema,
+  sceneSchema,
+  validateScene,
+} from "./index.js";
 
 describe("scene schema", () => {
+  it("migrates legacy v0 scenes to canonical v1 without mutation", () => {
+    const legacy = {
+      schemaVersion: 0,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      assets: {},
+      nodes: [{ id: "background", type: "div" }],
+    } as const;
+    const snapshot = structuredClone(legacy);
+
+    const first = migrateScene(legacy);
+    const second = migrateScene(legacy);
+
+    expect(first).toMatchObject({
+      fromVersion: 0,
+      toVersion: CURRENT_SCENE_VERSION,
+      migrations: ["scene-v0-to-v1"],
+      scene: { schemaVersion: 1 },
+    });
+    expect(second).toEqual(first);
+    expect(second.scene).toBe(first.scene);
+    expect(legacy).toEqual(snapshot);
+    expect(parseScene(legacy)).toBe(first.scene);
+  });
+
+  it("keeps current v1 migration idempotent and rejects future versions", () => {
+    const current = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      assets: {},
+      nodes: [],
+    } as const;
+    const migrated = migrateScene(current);
+
+    expect(migrated).toMatchObject({
+      fromVersion: 1,
+      toVersion: 1,
+      migrations: [],
+    });
+    expect(migrateScene(migrated.scene).scene).toBe(migrated.scene);
+
+    const future = validateScene({ ...current, schemaVersion: 2 });
+    expect(future.ok).toBe(false);
+    expect(future.ok ? "" : future.errors.join("\n")).toContain(
+      "Unsupported scene schemaVersion 2",
+    );
+  });
+
+  it("keeps the current schema strict while exposing legacy structure", () => {
+    const legacy = {
+      schemaVersion: 0,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+      assets: {},
+      nodes: [],
+    };
+
+    expect(sceneSchema.safeParse(legacy).success).toBe(false);
+    expect(validateScene(legacy)).toMatchObject({
+      ok: true,
+      scene: { schemaVersion: 1 },
+    });
+    expect(JSON.stringify(legacySceneV0JsonSchema())).toContain(
+      '"schemaVersion":{"type":"number","const":0}',
+    );
+  });
+
   it("parses a minimal scene", () => {
     const scene = parseScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -18,7 +100,7 @@ describe("scene schema", () => {
 
   it("rejects unsupported style properties", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -42,7 +124,7 @@ describe("scene schema", () => {
 
   it("accepts caption text styling shorthands", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -68,7 +150,7 @@ describe("scene schema", () => {
 
   it("accepts bounded text controls", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -93,7 +175,7 @@ describe("scene schema", () => {
 
   it("accepts effect nodes with bounded preset params", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -164,7 +246,7 @@ describe("scene schema", () => {
 
   it("rejects malformed effect nodes", () => {
     const missingPreset = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -178,7 +260,7 @@ describe("scene schema", () => {
     );
 
     const misplacedParams = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -199,7 +281,7 @@ describe("scene schema", () => {
     ).toContain("params only applies to effect nodes");
 
     const unsupportedParams = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -220,9 +302,64 @@ describe("scene schema", () => {
     ).toContain("Unsupported key(s): blurAmount");
   });
 
+  it("validates node and effect asset references before rendering", () => {
+    const base = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 60,
+    } as const;
+
+    const missing = validateScene({
+      ...base,
+      assets: {},
+      nodes: [{ id: "clip", type: "video", assetId: "missing" }],
+    });
+    expect(missing.ok ? "" : missing.errors.join("\n")).toContain(
+      'references missing asset "missing"',
+    );
+
+    const wrongMediaType = validateScene({
+      ...base,
+      assets: {
+        picture: { id: "picture", type: "image", src: "picture.png" },
+      },
+      nodes: [{ id: "clip", type: "video", assetId: "picture" }],
+    });
+    expect(wrongMediaType.ok ? "" : wrongMediaType.errors.join("\n")).toContain(
+      'requires a video asset, but "picture" is image',
+    );
+
+    const wrongEffectType = validateScene({
+      ...base,
+      assets: {
+        picture: { id: "picture", type: "image", src: "picture.png" },
+        music: { id: "music", type: "audio", src: "music.mp3" },
+      },
+      nodes: [
+        {
+          id: "spectrum",
+          type: "effect",
+          effect: "spectrumBars",
+          params: { audioAssetId: "picture", coverAssetId: "music" },
+        },
+      ],
+    });
+    const effectErrors = wrongEffectType.ok
+      ? ""
+      : wrongEffectType.errors.join("\n");
+    expect(effectErrors).toContain(
+      'requires an audio asset, but "picture" is image',
+    );
+    expect(effectErrors).toContain(
+      'requires an image asset, but "music" is audio',
+    );
+  });
+
   it("rejects invalid bounded text controls", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -252,7 +389,7 @@ describe("scene schema", () => {
 
   it("rejects duplicate node ids anywhere in the tree", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -274,7 +411,7 @@ describe("scene schema", () => {
 
   it("rejects keyframes that are not strictly increasing", () => {
     const result = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -305,7 +442,7 @@ describe("scene schema", () => {
 
   it("accepts trim and rate on video nodes, rejects them elsewhere", () => {
     const valid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -325,7 +462,7 @@ describe("scene schema", () => {
     expect(valid.ok).toBe(true);
 
     const invalid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -341,7 +478,7 @@ describe("scene schema", () => {
 
   it("accepts volume on video nodes, rejects audio-only fields correctly", () => {
     const valid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -353,7 +490,7 @@ describe("scene schema", () => {
     expect(valid.ok).toBe(true);
 
     const audioTrimOnVideo = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -370,7 +507,7 @@ describe("scene schema", () => {
     ).toContain("videoStartTime");
 
     const volumeOnDiv = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -386,7 +523,7 @@ describe("scene schema", () => {
 
   it("accepts mixer-visible volume envelopes on audio and video nodes only", () => {
     const valid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -420,7 +557,7 @@ describe("scene schema", () => {
     expect(valid.ok).toBe(true);
 
     const invalidTarget = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -440,7 +577,7 @@ describe("scene schema", () => {
     );
 
     const invalidOrder = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -467,7 +604,7 @@ describe("scene schema", () => {
 
   it("accepts audio loop flags only on audio nodes", () => {
     const valid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -487,7 +624,7 @@ describe("scene schema", () => {
     expect(valid.ok).toBe(true);
 
     const invalid = validateScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -511,7 +648,7 @@ describe("scene schema", () => {
 
   it("validates lottie nodes: assetId required, playbackRate allowed", () => {
     const base = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -551,7 +688,7 @@ describe("scene schema", () => {
 
   it("accepts easing expressions and rejects malformed ones", () => {
     const sceneWith = (easing: string) => ({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -589,7 +726,7 @@ describe("scene schema", () => {
 
   it("validates filter expressions and rejects unknown filter functions", () => {
     const sceneWith = (filter: string) => ({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -621,7 +758,7 @@ describe("scene schema", () => {
 
   it("accepts deterministic media image rendering modes", () => {
     const sceneWith = (imageRendering: string, pixelSize = 12) => ({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -637,7 +774,7 @@ describe("scene schema", () => {
 
   it("accepts integer zIndex and rejects fractional values", () => {
     const sceneWith = (zIndex: number) => ({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -652,7 +789,7 @@ describe("scene schema", () => {
 
   it("re-parsing a parsed scene is an identity no-op", () => {
     const scene = parseScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,

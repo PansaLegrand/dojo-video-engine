@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 0,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 120,
+  "assets": {
+    "cover": { "id": "cover", "type": "image", "src": "cover.png" },
+    "clip": { "id": "clip", "type": "video", "src": "clip.mp4" },
+    "music": { "id": "music", "type": "audio", "src": "music.mp3" },
+    "sticker": { "id": "sticker", "type": "lottie", "src": "sticker.json" }
+  },
+  "nodes": [
+    {
+      "id": "clip",
+      "type": "video",
+      "assetId": "clip",
+      "from": 0,
+      "duration": 120,
+      "style": { "width": "100%", "height": "100%", "objectFit": "cover" }
+    },
+    {
+      "id": "sticker",
+      "type": "lottie",
+      "assetId": "sticker",
+      "from": 12,
+      "duration": 60,
+      "style": {
+        "position": "absolute",
+        "right": 32,
+        "top": 32,
+        "width": 160,
+        "height": 160
+      }
+    },
+    {
+      "id": "visualizer",
+      "type": "effect",
+      "effect": "albumCoverPulse",
+      "params": {
+        "audioAssetId": "music",
+        "coverAssetId": "cover",
+        "seed": 42
+      },
+      "from": 0,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "left": 32,
+        "bottom": 32,
+        "width": 240,
+        "height": 180
+      }
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "text": "Scene migration",
+      "from": 15,
+      "duration": 90,
+      "style": {
+        "position": "absolute",
+        "left": 320,
+        "right": 320,
+        "bottom": 48,
+        "fontSize": 48,
+        "color": "#ffffff",
+        "textAlign": "center"
+      }
+    }
+  ]
+}

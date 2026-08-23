@@ -10,7 +10,7 @@ import {
 describe("deriveEditorLayers", () => {
   it("flattens scene nodes into document-order editor layers", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,
@@ -131,7 +131,7 @@ describe("deriveEditorLayers", () => {
 
   it("clips derived layer duration to the parent visible range", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,
@@ -167,7 +167,7 @@ describe("deriveEditorLayers", () => {
 
   it("collects descendants from the flattened tree", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 25,
@@ -214,7 +214,7 @@ describe("deriveEditorLayers", () => {
 describe("editor layer helpers", () => {
   it("finds layers and formats image node types for display", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 25,

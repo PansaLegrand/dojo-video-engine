@@ -45,7 +45,7 @@ export function findPresetGalleryScene(
 
 function baseScene(title: string, nodes: SceneNode[]): Scene {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1600,
     height: 900,
     fps: 30,

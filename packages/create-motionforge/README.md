@@ -9,6 +9,7 @@ pnpm create motionforge hello-video
 cd hello-video
 pnpm install
 pnpm validate
+pnpm lint
 pnpm dev
 ```
 
@@ -32,7 +33,7 @@ Add images, video, audio, fonts, or Lottie JSON under `public/assets`. Reference
 Stable for 0.x integrations:
 
 - CLI usage through package managers: `npm create motionforge@latest <name>` or `pnpm create motionforge <name>`.
-- Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `dev`, `validate`, `print`, `inspect`, and `build`.
+- Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `dev`, `validate`, `print`, `migrate`, `inspect`, `lint`, and `build`.
 - Programmatic generator entry points: `createMotionforgeProject()`, `helpText()`, `CreateMotionforgeOptions`, and `CreateMotionforgeResult`.
 
 Experimental before 1.0:

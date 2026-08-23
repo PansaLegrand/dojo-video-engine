@@ -30,6 +30,8 @@ Agents working in a filesystem should generate a scene module and run:
 ```sh
 motionforge validate src/video.ts
 motionforge print src/video.ts
+motionforge lint src/video.ts
+motionforge inspect src/video.ts
 motionforge dev src/video.ts
 ```
 

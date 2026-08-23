@@ -7,6 +7,9 @@ Testing is part of the design, not a cleanup phase. Each engine slice should lan
 - `pnpm typecheck`: strict TypeScript across every workspace package.
 - `pnpm test`: Vitest unit tests for schema, core, renderer, presets, authoring, player, export helpers, chat, and app utilities.
 - `pnpm build`: package builds plus app production builds where packages define them.
+- `pnpm check:contracts`: synchronized package versions, changelog coverage, package files, internal dependency policy, and browser-engine boundaries.
+- `pnpm check:schema`: built Zod Scene v1 schema must byte-match the committed JSON Schema artifact.
+- `pnpm check:migrations`: every committed v0 fixture must migrate without mutation to its paired canonical v1 fixture, and v1 must remain idempotent.
 - `pnpm golden:test`: Playwright-pinned Chromium renders fixture scenes, checks golden-frame hashes/probes, runs browser MP4 export smoke, and decodes exported video/audio for media assertions.
 - `pnpm e2e`: launches the real playground, verifies canvas paint, playback controls, patch validation/application, audio scene playback, Lottie playback, and console cleanliness.
 
@@ -29,6 +32,8 @@ The gate script lives at `scripts/release-gate.mjs`; clean-machine verification 
 | Text baseline         | Embedded font, stroke, fitted text background, shadow presence, explicit newlines, wrapping, auto-height                 | Exact hash or probe                 | `pnpm golden:test`    |
 | Image/media styling   | `objectFit`, rounded image clipping, filter, z-index, border, shadow                                                     | Exact frame hash                    | `pnpm golden:test`    |
 | Lottie                | Source-frame seeking and playback-rate mapping for self-contained vector JSON                                            | Exact frame hash                    | `pnpm golden:test`    |
+| Procedural effects    | Seeded general-effect catalog renders identically                                                                        | Exact frame hash                    | `pnpm golden:test`    |
+| Scene migration       | Legacy v0 effect scene migrates to pixels identical to canonical v1                                                      | Cross-version frame hash            | `pnpm golden:test`    |
 | Export smoke          | Browser `exportVideo()` creates a plausible MP4 with `ftyp`, expected frame count, and codec metadata                    | Browser encode assertion            | `pnpm golden:test`    |
 | Video media           | Synthetic clip trim, playbackRate, preview pixel correctness, export/decode round trip                                   | Browser encode/decode assertion     | `pnpm golden:test`    |
 | Audio media           | Audio node export codec, audio track presence, scene-duration coverage, silence before node start, audible static volume | Browser encode/decode RMS assertion | `pnpm golden:test`    |
@@ -51,6 +56,7 @@ Exact hash fixtures store both JSON snapshots and PNG baselines under `fixtures/
 ## Slice Rules
 
 - Schema changes need valid and invalid examples.
+- Schema-version changes need paired migration fixtures and idempotence/non-mutation checks.
 - Layout changes need at least one geometric assertion.
 - Animation changes need deterministic numeric assertions.
 - Renderer changes need either a unit-level contract test or a golden/probe fixture.
@@ -62,7 +68,6 @@ Exact hash fixtures store both JSON snapshots and PNG baselines under `fixtures/
 
 - Ducking is still future mixer work; when it ships, add both unit windows and browser RMS checks before marking AX5 complete.
 - Long-scene preview audio still uses a whole-scene Web Audio buffer. Export is chunked; preview can move to a chunked/custom `AudioPreview` backend when real long-editor workloads require it.
-- Clean-machine package verification is not yet automated outside the monorepo.
 - `pnpm verify:clean -- --keep` preserves the temp starter for manual Studio/browser-export checks.
 
 ## Verification Template

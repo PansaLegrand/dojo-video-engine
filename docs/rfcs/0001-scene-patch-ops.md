@@ -16,22 +16,31 @@ A patch is an ordered list of operations addressed by **node id** (never by arra
 type ScenePatch = SceneOp[];
 
 type SceneOp =
-  | { op: "setStyle"; id: string; style: Partial<SceneStyle> }        // merge; null value deletes a key
-  | { op: "setText"; id: string; text: string }                       // text nodes only
-  | { op: "retime"; id: string; from?: number; duration?: number }    // either or both
+  | { op: "setStyle"; id: string; style: Partial<SceneStyle> } // merge; null value deletes a key
+  | { op: "setText"; id: string; text: string } // text nodes only
+  | { op: "retime"; id: string; from?: number; duration?: number } // either or both
   | { op: "setAnimations"; id: string; animations: SceneAnimation[] } // whole-list replace
   | { op: "insertNode"; node: SceneNode; parentId?: string; beforeId?: string }
-  | { op: "removeNode"; id: string }                                  // subtree removal
+  | { op: "removeNode"; id: string } // subtree removal
   | { op: "moveNode"; id: string; parentId?: string; beforeId?: string }
-  | { op: "setAsset"; asset: SceneAsset }                             // add or replace by asset.id
-  | { op: "removeAsset"; id: string }                                 // rejects while nodes reference it
-  | { op: "setSceneMeta"; width?: number; height?: number; fps?: number; duration?: number };
+  | { op: "setAsset"; asset: SceneAsset } // add or replace by asset.id
+  | { op: "removeAsset"; id: string } // rejects while nodes reference it
+  | {
+      op: "setSceneMeta";
+      width?: number;
+      height?: number;
+      fps?: number;
+      duration?: number;
+    };
 
 // @motionforge/schema (new exports)
-function applyScenePatch(scene: unknown, patch: ScenePatch):
+function applyScenePatch(
+  scene: unknown,
+  patch: ScenePatch,
+):
   | { ok: true; scene: Scene }
   | { ok: false; errors: Array<{ opIndex: number; message: string }> };
-const scenePatchSchema: z.ZodType<ScenePatch>;   // + JSON Schema artifact for tool definitions
+const scenePatchSchema: z.ZodType<ScenePatch>; // + JSON Schema artifact for tool definitions
 ```
 
 Decisions and rationale:
@@ -56,14 +65,17 @@ The "closest existing ids" hint matters: misspelled ids are the predicted top LL
 
 ### Versioning
 
-A patch targets `schemaVersion: 0` documents. When the scene format gains version 1, patches carry an optional `schemaVersion` guard so stored patches fail loudly rather than apply to a document shape they never saw.
+A patch targets a canonical `schemaVersion: 1` scene. Legacy input must first
+pass through `parseScene()` / `migrateScene()`. A future stored-patch envelope
+may add an explicit schema-version guard; the current transactional operation
+array remains intentionally minimal.
 
 ## Eval harness (design)
 
 Lives in `tools/agent-eval` (not shipped). Three task suites, each scored mechanically — no LLM judging:
 
 1. **Generate** — prompt + `llms.txt` → scene JSON. Score: `validateScene` pass rate; secondary, scene renders without throwing and a per-task structural assertion (e.g. "has a text node containing 'SALE'", "duration == 150").
-2. **Edit** — scene + instruction → patch. Score: `applyScenePatch` ok-rate; assertion on the result (e.g. fontSize strictly increased, untouched nodes deep-equal — the *don't-break-the-rest* check whole-document editing can't give).
+2. **Edit** — scene + instruction → patch. Score: `applyScenePatch` ok-rate; assertion on the result (e.g. fontSize strictly increased, untouched nodes deep-equal — the _don't-break-the-rest_ check whole-document editing can't give).
 3. **Repair** — invalid scene + validator errors → patch fixing them. Scores the error-message quality as much as the model.
 
 Each case: `{ id, suite, input, prompt, assert(scene): string[] }`. Runner reports pass/fail per case with token counts, so prompt and `llms.txt` changes are measurable ("validation failure rate dropped from 18% to 6%"). Provider-agnostic: any chat endpoint; cases and assertions are the asset.

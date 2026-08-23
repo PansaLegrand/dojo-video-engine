@@ -208,7 +208,7 @@ function mediaAssets(): ChatMediaAssetManifestItem[] {
 
 function existingScene(): Scene {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,

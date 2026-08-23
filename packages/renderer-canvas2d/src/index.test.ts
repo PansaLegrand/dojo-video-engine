@@ -8,6 +8,7 @@ import {
   parseLinearGradient,
   parseTextBackground,
   parseTextStroke,
+  preflightCanvas2D,
   renderStill,
   validateLottieDocument,
   VideoPlaybackCursor,
@@ -17,6 +18,70 @@ import {
 
 // Deterministic fake measurer: every character is 10px wide.
 const measure = (line: string): number => line.length * 10;
+
+describe("Canvas2D preflight", () => {
+  const mediaScene = {
+    schemaVersion: 1,
+    width: 320,
+    height: 180,
+    fps: 30,
+    duration: 30,
+    assets: {
+      picture: { id: "picture", type: "image", src: "picture.png" },
+      clip: { id: "clip", type: "video", src: "clip.mp4" },
+      music: { id: "music", type: "audio", src: "music.mp3" },
+      font: { id: "font", type: "font", src: "font.woff2" },
+      sticker: { id: "sticker", type: "lottie", src: "sticker.json" },
+    },
+    nodes: [
+      { id: "picture", type: "img", assetId: "picture" },
+      { id: "clip", type: "video", assetId: "clip" },
+      { id: "music", type: "audio", assetId: "music" },
+      { id: "sticker", type: "lottie", assetId: "sticker" },
+    ],
+  };
+
+  it("reports missing runtime capabilities before loading assets", () => {
+    const result = preflightCanvas2D(mediaScene, {});
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toEqual([
+      "canvas_unavailable",
+      "image_decoder_unavailable",
+      "video_decoder_unavailable",
+      "audio_decoder_unavailable",
+      "font_loading_unavailable",
+      "lottie_requires_dom",
+    ]);
+  });
+
+  it("accepts an environment satisfying the scene's declared requirements", () => {
+    const environment = {
+      OffscreenCanvas: class {},
+      createImageBitmap: () => undefined,
+      VideoDecoder: class {},
+      AudioDecoder: class {},
+      FontFace: class {},
+      document: {
+        createElement: () => ({}),
+        fonts: {},
+      },
+    } as unknown as Partial<typeof globalThis>;
+
+    expect(preflightCanvas2D(mediaScene, environment)).toMatchObject({
+      ok: true,
+      issues: [],
+      requirements: {
+        canvas: true,
+        imageDecoder: true,
+        videoDecoder: true,
+        audioDecoder: true,
+        fontLoading: true,
+        domLottie: true,
+      },
+    });
+  });
+});
 
 describe("renderStill", () => {
   it("exports a callable browser renderer", () => {
@@ -36,7 +101,7 @@ describe("renderStill", () => {
       rotate: () => undefined,
     } as unknown as CanvasRenderingContext2D;
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -178,7 +243,7 @@ describe("computeObjectFit", () => {
 describe("renderStill with image nodes", () => {
   it("fails loudly when an img node has no resolved asset", () => {
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -229,7 +294,7 @@ describe("renderStill with effect nodes", () => {
       measureText: (line: string) => ({ width: line.length * 10 }),
     } as unknown as CanvasRenderingContext2D;
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 400,
       height: 400,
       fps: 30,
@@ -299,7 +364,7 @@ describe("renderStill with effect nodes", () => {
       "scribbleCircle",
     ];
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 500,
       height: 500,
       fps: 30,
@@ -359,7 +424,7 @@ describe("renderStill with effect nodes", () => {
     const values = new Uint8Array(128);
     values.fill(255);
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -581,7 +646,7 @@ describe("videoSourceTime", () => {
 describe("renderStill with video nodes", () => {
   it("fails loudly when no frame was staged via prepareFrame", () => {
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -636,7 +701,7 @@ describe("renderStill with video nodes", () => {
 
     try {
       const scene = {
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 100,
         height: 100,
         fps: 30,
@@ -709,7 +774,7 @@ describe("renderStill bounded text", () => {
   it("draws only maxLines and ellipsizes the final visible line", () => {
     const drawn: string[] = [];
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -756,7 +821,7 @@ describe("renderStill bounded text", () => {
   it("draws shrink-fit text with the resolved smaller font", () => {
     const drawnFonts: string[] = [];
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -860,7 +925,7 @@ describe("zIndex paint order", () => {
   it("paints siblings in ascending zIndex order, document order for ties", () => {
     const fills: string[] = [];
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,

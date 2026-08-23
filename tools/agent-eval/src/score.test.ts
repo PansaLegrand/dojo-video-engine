@@ -23,7 +23,7 @@ describe("scoreReply — generate suite", () => {
 
   it("passes a correct scene", () => {
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,
@@ -49,14 +49,14 @@ describe("scoreReply — generate suite", () => {
   });
 
   it("fails an invalid scene with validator messages", () => {
-    const result = scoreReply(genCase, '{"schemaVersion":0,"width":1080}');
+    const result = scoreReply(genCase, '{"schemaVersion": 1,"width":1080}');
     expect(result.pass).toBe(false);
     expect(result.failures.join("\n")).toContain("validateScene");
   });
 
   it("fails a valid scene that misses the assertion", () => {
     const scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,

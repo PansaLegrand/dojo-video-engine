@@ -22,17 +22,17 @@ best foundation for generated, editable, template-driven 2D video.
 
 ## Milestones
 
-| Milestone            | Outcome                                                                        | Status                                                                    |
-| -------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| 0. Source of truth   | Reconcile the production engine, synchronize versions, enforce boundaries      | Open-source side complete in 0.4 working tree; downstream upgrade pending |
-| 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Next                                                                      |
-| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Planned                                                                   |
-| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Planned                                                                   |
-| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Planned                                                                   |
-| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                                                   |
-| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                                                   |
-| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                                                   |
-| 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                                                   |
+| Milestone            | Outcome                                                                        | Status                                       |
+| -------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| 0. Source of truth   | Reconcile the production engine, synchronize versions, enforce boundaries      | Committed in 0.4; downstream upgrade pending |
+| 1. Scene v1          | Stable schema, migrations, compatibility and preflight contracts               | Complete in 0.5 working tree                 |
+| 2. Extension kernel  | Versioned, schema-backed deterministic renderer extensions                     | Next                                         |
+| 3. Visual primitives | Shape/path, clip/mask, compositing, richer layout and text                     | Planned                                      |
+| 4. Animation system  | Serializable sequences, repeat/yoyo, stagger, motion paths and curated presets | Planned                                      |
+| 5. Media and audio   | Lazy/streaming sources, proxies, decoder budgets, richer audio graph           | Planned                                      |
+| 6. Export runtime    | Worker export, cancellation, streaming output and cloud adapter                | Planned                                      |
+| 7. Agent tools       | Inspect, lint, patch, diff, contact sheet, capability and migration tools      | Planned                                      |
+| 8. 1.0 hardening     | Cross-browser, fuzz, performance, package and migration release gates          | Planned                                      |
 
 ## Milestone 0 — authoritative open-source engine
 
@@ -53,22 +53,24 @@ application QA. The reconciliation does not modify the SaaS repository.
 
 ## Milestone 1 — Scene v1
 
-Deliverables:
+Delivered in the 0.5 working tree:
 
-- an RFC for `schemaVersion: 1` and compatibility guarantees;
-- deterministic `migrateScene()` from v0;
-- formal asset, timing, parent clipping, animation and patch semantics;
-- `inspectScene()`, `lintScene()` and render-capability preflight;
-- validation of all asset/effect references before asset resolution;
-- generated JSON Schema parity enforced in CI;
-- a fixture corpus proving v0 → v1 → parse round trips.
+- accepted RFC 0002 for `schemaVersion: 1` and compatibility guarantees;
+- deterministic, cached, non-mutating `migrateScene()` from v0;
+- strict canonical v1 schema with backward-compatible parse/validate APIs;
+- typed asset and effect reference validation before resolution;
+- shared `inspectScene()` and `lintScene()` APIs;
+- Canvas2D environment preflight for Canvas, decoder, font, and Lottie needs;
+- generated JSON Schema parity and paired v0/v1 migration fixture gates;
+- canonical v1 examples, fixtures, prompts, builders, starter, and docs;
+- CLI `migrate` and `lint` commands.
 
 Exit criteria:
 
-- old scenes migrate without visual change;
-- stored v1 scenes remain loadable across minor releases;
-- breaking changes require a new schema version and migration;
-- malformed references fail before preview/export begins.
+- [x] old scenes migrate without visual change;
+- [x] stored v1 scenes remain loadable across minor releases;
+- [x] breaking changes require a new schema version and migration;
+- [x] malformed references fail before preview/export begins.
 
 ## Milestone 2 — extension kernel
 

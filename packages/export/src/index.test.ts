@@ -13,7 +13,7 @@ import {
 } from "./index.js";
 
 const scene: Scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 320,
   height: 180,
   fps: 30,
@@ -224,7 +224,7 @@ describe("exportVideo", () => {
 describe("collectAudioPlacements", () => {
   it("returns absolute windows clipped by ancestors", () => {
     const placements = collectAudioPlacements({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,
@@ -266,7 +266,7 @@ describe("collectAudioPlacements", () => {
 
   it("includes video nodes and reports head clipping via framesIntoNode", () => {
     const placements = collectAudioPlacements({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 100,
       height: 100,
       fps: 30,

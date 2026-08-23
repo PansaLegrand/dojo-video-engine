@@ -1,5 +1,43 @@
 # Progress
 
+## 2026-08-23 (0.5 Scene v1 compatibility and preflight contract)
+
+### Changed
+
+- Accepted RFC 0002 and made `schemaVersion: 1` canonical across builders,
+  authoring, fixtures, examples, prompts, verification scenes, and docs.
+- Added cached, deterministic, non-mutating v0 migration through
+  `migrateScene()`. `parseScene()` and `validateScene()` remain backward
+  compatible, while `sceneSchema` and the shipped JSON Schema are strict v1.
+- Added early typed reference validation for image, video, audio, Lottie,
+  audio-reactive, and cover-image asset references.
+- Moved stable scene inspection into `@motionforge/schema`, added `lintScene()`
+  editorial warnings, and added Canvas2D runtime preflight for Canvas, decoder,
+  font, and current DOM-Lottie requirements.
+- Added `motionforge migrate` / `motionforge lint`, exposed both in generated
+  starters, and removed the starter generator's hard-coded package version.
+- Added paired v0/v1 migration fixtures plus generated-schema and migration
+  parity checks to the normal lint/release gate.
+- Updated the testing strategy, package docs, CLI guides, agent contract, Scene
+  Format, roadmap, and changelog for the v1 contract.
+
+### Tested
+
+- `pnpm release:full` — typecheck, 529 unit tests, package/determinism/schema/
+  migration lint, production builds, six long-resource checks, pixel/media/
+  audio and v0→v1 parity goldens, ten browser E2E checks, CLI/starter smoke,
+  and all nine 0.5.0 package dry-runs passed.
+- `pnpm verify:clean` — packed and installed all nine 0.5.0 packages in a
+  temporary starter, then validated, migrated, inspected, linted, and built the
+  project successfully outside the monorepo.
+
+### Notes
+
+- The v0 → v1 migration intentionally changes only the version after normal
+  validation/defaulting, and the pinned-browser golden hashes remain unchanged.
+- Downstream application adoption remains a separate guarded change; the
+  DojoClip repository is still untouched.
+
 ## 2026-08-23 (0.4 production reconciliation and source-of-truth gate)
 
 ### Changed

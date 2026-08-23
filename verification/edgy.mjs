@@ -79,7 +79,7 @@ const scenes = {};
       style: { position: "absolute", left: 0, width: "100%", top: 1180, height: 60, fontSize: 42, color: "#9fb3c8", textAlign: "center", letterSpacing: 6 },
       animations: fadeUp({ durationInFrames: 16 }) },
   ];
-  scenes["edgy-kinetic-typography"] = { schemaVersion: 0, width: 1080, height: 1920, fps: 60, duration: lines.length * per + 90, assets: {}, nodes };
+  scenes["edgy-kinetic-typography"] = { schemaVersion: 1, width: 1080, height: 1920, fps: 60, duration: lines.length * per + 90, assets: {}, nodes };
 }
 
 // === B. App promo: phone mockup with sliding screens (1080x1920 @30) ========
@@ -105,7 +105,7 @@ const scenes = {};
   tl.stagger(["feat-1", "feat-2", "feat-3"], (i) => slideIn(i % 2 ? "right" : "left", { durationInFrames: 12 }), { after: "promo-title", overlap: 4, every: 8 });
   const anims = tl.compile();
   scenes["edgy-app-promo"] = {
-    schemaVersion: 0, width: 1080, height: 1920, fps: 30, duration: 210, assets: {},
+    schemaVersion: 1, width: 1080, height: 1920, fps: 30, duration: 210, assets: {},
     nodes: [
       { id: "bg", type: "div", style: { width: "100%", height: "100%", background: "linear-gradient(160deg, #131a2a 0%, #1d2c3a 60%, #16222e 100%)" } },
       { id: "blob-a", type: "div", from: 0, duration: 210,
@@ -161,7 +161,7 @@ const scenes = {};
     { label: "layout", value: 23, color: "#118ab2" },
   ];
   scenes["edgy-animated-chart"] = {
-    schemaVersion: 0, width: 1280, height: 720, fps: 30, duration: 150, assets: {},
+    schemaVersion: 1, width: 1280, height: 720, fps: 30, duration: 150, assets: {},
     nodes: [
       { id: "bg", type: "div", style: { width: "100%", height: "100%", backgroundColor: "#0d141c" } },
       { id: "title", type: "text", text: "Where the milliseconds go", from: 0, duration: 150,
@@ -218,7 +218,7 @@ const scenes = {};
   ];
   const words = ["FOUR", "ON", "THE", "FLOOR"];
   scenes["edgy-beat-edit"] = {
-    schemaVersion: 0, width: 720, height: 1280, fps: 30, duration: 240,
+    schemaVersion: 1, width: 720, height: 1280, fps: 30, duration: 240,
     assets: {
       photo: { id: "photo", type: "image", src: PHOTO },
       kit: { id: "kit", type: "audio", src: beatTrack8s() },
@@ -257,7 +257,7 @@ const scenes = {};
 
 // === E. Cinematic title (1920x1080 @24, Ken Burns + letterbox) ==============
 scenes["edgy-cinematic-title"] = {
-  schemaVersion: 0, width: 1920, height: 1080, fps: 24, duration: 168,
+  schemaVersion: 1, width: 1920, height: 1080, fps: 24, duration: 168,
   assets: { photo: { id: "photo", type: "image", src: PHOTO } },
   nodes: [
     { id: "bg", type: "div", style: { width: "100%", height: "100%", backgroundColor: "#000000" } },
@@ -299,7 +299,7 @@ scenes["edgy-cinematic-title"] = {
       children: [{ id: `${id}-tag-text`, type: "text", text: label, style: { width: "100%", height: 22, fontSize: 18, color: "#66f5d7", textAlign: "center" } }] },
   ];
   scenes["edgy-multicam"] = {
-    schemaVersion: 0, width: 1280, height: 720, fps: 30, duration: 150,
+    schemaVersion: 1, width: 1280, height: 720, fps: 30, duration: 150,
     assets: { clip: { id: "clip", type: "video", src: CLIP } },
     nodes: [
       { id: "bg", type: "div", style: { width: "100%", height: "100%", backgroundColor: "#05070b" } },

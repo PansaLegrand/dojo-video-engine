@@ -120,7 +120,7 @@ function checkManyNodeScene() {
     children: [],
   }));
   const scene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps: 30,

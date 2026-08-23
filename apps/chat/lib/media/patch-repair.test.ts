@@ -263,7 +263,7 @@ describe("repairMediaPatch", () => {
 
 function baseScene(): Scene {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1280,
     height: 720,
     fps: 30,

@@ -112,7 +112,9 @@ Use `captionTrack()` instead when ASR gives word-level timings such as `{ word, 
 pnpm dev       # Studio preview
 pnpm validate  # schema validation
 pnpm print     # formatted generated scene JSON
+pnpm migrate   # migration metadata and canonical Scene v1
 pnpm inspect   # scene metadata and capability JSON
+pnpm lint      # valid-but-suspicious scene warnings
 pnpm build     # TypeScript check + validation
 ```
 
@@ -122,7 +124,9 @@ The raw CLI commands are:
 motionforge dev src/video.ts
 motionforge validate src/video.ts
 motionforge print src/video.ts
+motionforge migrate src/video.ts
 motionforge inspect src/video.ts
+motionforge lint src/video.ts
 ```
 
 Scene modules may be `.json`, `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, or `.cts`. They can export a scene object, a function returning a scene, or a promise.

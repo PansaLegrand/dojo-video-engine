@@ -3,6 +3,49 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## 0.5.0 — 2026-08-23
+
+The Scene v1 compatibility release: MotionForge now has a canonical versioned
+document, deterministic legacy migration, early reference validation, and
+machine-readable inspection/preflight APIs.
+
+### @motionforge/schema
+
+- `schemaVersion: 1` is canonical. Builders, examples, fixtures, prompts, and
+  generated documents now emit Scene v1.
+- Added `migrateScene()` and `CURRENT_SCENE_VERSION`. Valid v0 documents are
+  normalized to v1 without mutation; current scenes migrate idempotently, and
+  future versions fail loudly.
+- Kept `parseScene()` / `validateScene()` backward-compatible with v0 while
+  making `sceneSchema` strict v1. Added `legacySceneV0Schema` and
+  `legacySceneV0JsonSchema()` for ingestion tooling.
+- Added cross-field reference validation for image, video, audio, Lottie,
+  audio-reactive, and cover-image asset references, including expected-type
+  diagnostics before rendering begins.
+- Added `inspectScene()` for stable node/asset/effect capabilities and
+  `lintScene()` for valid-but-suspicious timing, visibility, animation, audio,
+  and unused-asset warnings.
+
+### @motionforge/renderer-canvas2d
+
+- Added `preflightCanvas2D()` with typed Canvas, image/video/audio decoder,
+  font-loading, and DOM-Lottie requirements. Unsupported environments can now
+  fail before fetching or decoding assets.
+- Confirmed through the complete golden suite that v0 → v1 migration changes
+  no rendered pixels, media timing, audio, or exported MP4 behavior.
+
+### CLI, starter, and tooling
+
+- Added `motionforge migrate` and `motionforge lint`; CLI inspection now uses
+  the shared schema inspection API.
+- Starter projects expose migrate/lint scripts, and `create-motionforge`
+  derives dependency versions from its own package manifest instead of a
+  drift-prone source constant.
+- Added generated JSON Schema parity checking to the standard lint/release
+  gate.
+- Accepted [RFC 0002](docs/rfcs/0002-scene-v1.md) defining compatibility,
+  migration, referential validation, inspection, and future-version rules.
+
 ## 0.4.0 — 2026-08-23
 
 The production reconciliation release: reusable engine improvements proven in

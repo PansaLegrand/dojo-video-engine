@@ -57,7 +57,7 @@ function findText(scene: Scene, includes: string) {
 }
 
 const editBase: Scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1080,
   height: 1920,
   fps: 30,
@@ -113,7 +113,7 @@ const editBase: Scene = {
 } as Scene;
 
 const mediaEditBase: Scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1280,
   height: 720,
   fps: 30,

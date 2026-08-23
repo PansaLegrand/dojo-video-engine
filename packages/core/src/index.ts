@@ -92,7 +92,7 @@ export class SceneBuilder {
     const counter: IdCounter = { next: 0 };
 
     return parseScene({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: this.options.width,
       height: this.options.height,
       fps: this.options.fps,

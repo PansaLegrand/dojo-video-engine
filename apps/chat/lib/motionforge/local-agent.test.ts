@@ -481,7 +481,7 @@ describe("local motionforge agent", () => {
         summary: "Added uploaded video.",
       },
       {
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 1280,
         height: 720,
         fps: 30,
@@ -516,7 +516,7 @@ describe("local motionforge agent", () => {
 
   it("repairs model patch ops that put timing inside setNodeProps", () => {
     const scene: Scene = {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,
@@ -609,7 +609,7 @@ describe("local motionforge agent", () => {
     );
 
     expect(result.scene).toMatchObject({
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 1080,
       height: 1920,
       fps: 30,
@@ -648,7 +648,7 @@ describe("local motionforge agent", () => {
     const result = normalizeModelOutput(
       {
         scene: {
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1080,
           height: 1920,
           fps: 30,
@@ -719,7 +719,7 @@ describe("local motionforge agent", () => {
     const result = normalizeModelOutput(
       {
         scene: {
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1080,
           height: 1920,
           fps: 30,
@@ -773,7 +773,7 @@ describe("local motionforge agent", () => {
     const result = normalizeModelOutput(
       {
         scene: {
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1080,
           height: 1920,
           fps: 30,
@@ -823,7 +823,7 @@ describe("local motionforge agent", () => {
     const result = normalizeModelOutput(
       {
         scene: {
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1080,
           height: 1920,
           fps: 30,

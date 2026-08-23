@@ -131,7 +131,7 @@ export const styleSchema = z
   })
   .strict({
     message:
-      "Unsupported style property. motionforge v0 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or custom draw nodes.",
+      "Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.",
   });
 
 export type SceneStyle = z.infer<typeof styleSchema>;
@@ -568,51 +568,145 @@ export const sceneNodeSchema: z.ZodType<SceneNodeInput> = z.lazy(() =>
     }),
 );
 
-export const sceneSchema = z
-  .object({
-    schemaVersion: z.literal(0),
-    width: z.number().int().positive(),
-    height: z.number().int().positive(),
-    fps: z.number().int().positive(),
-    duration: z.number().int().positive(),
-    assets: z.record(assetSchema).default({}),
-    nodes: z.array(sceneNodeSchema).default([]),
-  })
-  .superRefine((scene, ctx) => {
-    for (const [id, asset] of Object.entries(scene.assets)) {
-      if (id !== asset.id) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["assets", id],
-          message: `Asset map key "${id}" must match asset.id "${asset.id}".`,
-        });
-      }
+const sceneDocumentFields = {
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  fps: z.number().int().positive(),
+  duration: z.number().int().positive(),
+  assets: z.record(assetSchema).default({}),
+  nodes: z.array(sceneNodeSchema).default([]),
+};
+
+type SceneDocumentForValidation = {
+  assets: Record<string, SceneAsset>;
+  nodes: SceneNodeInput[];
+};
+
+const nodeAssetTypes: Partial<
+  Record<SceneNodeInput["type"], SceneAsset["type"]>
+> = {
+  img: "image",
+  video: "video",
+  audio: "audio",
+  lottie: "lottie",
+};
+
+function validateSceneDocument(
+  scene: SceneDocumentForValidation,
+  ctx: z.RefinementCtx,
+): void {
+  for (const [id, asset] of Object.entries(scene.assets)) {
+    if (id !== asset.id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["assets", id],
+        message: `Asset map key "${id}" must match asset.id "${asset.id}".`,
+      });
+    }
+  }
+
+  const seenNodeIds = new Set<string>();
+
+  const validateAssetReference = (
+    assetId: string,
+    expectedType: SceneAsset["type"],
+    path: Array<string | number>,
+    owner: string,
+  ): void => {
+    const asset = scene.assets[assetId];
+    if (!asset) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: `${owner} references missing asset "${assetId}". Add it to scene.assets or update the reference.`,
+      });
+      return;
     }
 
-    const seenNodeIds = new Set<string>();
-
-    const visit = (
-      nodes: SceneNodeInput[],
-      path: Array<string | number>,
-    ): void => {
-      nodes.forEach((node, index) => {
-        if (seenNodeIds.has(node.id)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [...path, index, "id"],
-            message: `Duplicate node id "${node.id}". Node ids must be unique across the scene so tools can patch and diff nodes reliably.`,
-          });
-        }
-
-        seenNodeIds.add(node.id);
-        visit(node.children ?? [], [...path, index, "children"]);
+    if (asset.type !== expectedType) {
+      const article =
+        expectedType === "audio" || expectedType === "image" ? "an" : "a";
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: `${owner} requires ${article} ${expectedType} asset, but "${assetId}" is ${asset.type}. Use a ${expectedType} asset or change the node/effect.`,
       });
-    };
+    }
+  };
 
-    visit(scene.nodes, ["nodes"]);
-  });
+  const visit = (
+    nodes: SceneNodeInput[],
+    path: Array<string | number>,
+  ): void => {
+    nodes.forEach((node, index) => {
+      const nodePath = [...path, index];
+      if (seenNodeIds.has(node.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [...nodePath, "id"],
+          message: `Duplicate node id "${node.id}". Node ids must be unique across the scene so tools can patch and diff nodes reliably.`,
+        });
+      }
 
+      seenNodeIds.add(node.id);
+
+      const expectedAssetType = nodeAssetTypes[node.type];
+      if (node.assetId && expectedAssetType) {
+        validateAssetReference(
+          node.assetId,
+          expectedAssetType,
+          [...nodePath, "assetId"],
+          `${node.type} node "${node.id}"`,
+        );
+      }
+
+      if (node.type === "effect" && node.params?.audioAssetId) {
+        validateAssetReference(
+          node.params.audioAssetId,
+          "audio",
+          [...nodePath, "params", "audioAssetId"],
+          `${node.effect ?? "audio-reactive"} effect "${node.id}"`,
+        );
+      }
+
+      if (node.type === "effect" && node.params?.coverAssetId) {
+        validateAssetReference(
+          node.params.coverAssetId,
+          "image",
+          [...nodePath, "params", "coverAssetId"],
+          `${node.effect ?? "cover"} effect "${node.id}"`,
+        );
+      }
+
+      visit(node.children ?? [], [...nodePath, "children"]);
+    });
+  };
+
+  visit(scene.nodes, ["nodes"]);
+}
+
+/** Legacy 0.4-and-earlier scene document, accepted only through migration. */
+export const legacySceneV0Schema = z
+  .object({ schemaVersion: z.literal(0), ...sceneDocumentFields })
+  .superRefine(validateSceneDocument);
+
+/** Current canonical Scene v1 document. */
+export const sceneSchema = z
+  .object({ schemaVersion: z.literal(1), ...sceneDocumentFields })
+  .superRefine(validateSceneDocument);
+
+export type LegacySceneV0 = z.infer<typeof legacySceneV0Schema>;
 export type Scene = z.infer<typeof sceneSchema>;
+export type SceneInput = Scene | LegacySceneV0;
+
+export const CURRENT_SCENE_VERSION = 1 as const;
+
+export type SceneMigrationResult = {
+  scene: Scene;
+  fromVersion: 0 | 1;
+  toVersion: typeof CURRENT_SCENE_VERSION;
+  migrations: readonly string[];
+};
 
 export class SceneValidationError extends Error {
   constructor(readonly issues: z.ZodIssue[]) {
@@ -622,45 +716,131 @@ export class SceneValidationError extends Error {
 }
 
 /**
- * Objects previously produced by parseScene/validateScene. Re-parsing one of
- * these is a no-op, so frame loops can call parseScene per frame without
- * paying for validation each time. Parsed scenes must be treated as
- * immutable — mutating one bypasses re-validation by design.
+ * Objects previously normalized by parseScene/validateScene/migrateScene.
+ * Re-parsing the same input object returns its cached canonical v1 scene, so
+ * frame loops never pay for validation or legacy migration more than once.
+ * Parsed scenes must be treated as immutable — mutating one bypasses
+ * re-validation by design.
  */
-const parsedScenes = new WeakSet<object>();
+const normalizedScenes = new WeakMap<object, SceneMigrationResult>();
+
+type SafeSceneMigrationResult =
+  | { ok: true; result: SceneMigrationResult }
+  | { ok: false; issues: z.ZodIssue[] };
+
+function safeMigrateScene(input: unknown): SafeSceneMigrationResult {
+  if (typeof input === "object" && input !== null) {
+    const cached = normalizedScenes.get(input);
+    if (cached) {
+      return { ok: true, result: cached };
+    }
+  }
+
+  const version =
+    typeof input === "object" && input !== null && "schemaVersion" in input
+      ? (input as { schemaVersion?: unknown }).schemaVersion
+      : undefined;
+
+  if (version === 0) {
+    const legacy = legacySceneV0Schema.safeParse(input);
+    if (!legacy.success) {
+      return { ok: false, issues: legacy.error.issues };
+    }
+
+    const migrated = sceneSchema.safeParse({
+      ...legacy.data,
+      schemaVersion: CURRENT_SCENE_VERSION,
+    });
+    if (!migrated.success) {
+      return { ok: false, issues: migrated.error.issues };
+    }
+
+    return {
+      ok: true,
+      result: {
+        scene: migrated.data,
+        fromVersion: 0,
+        toVersion: CURRENT_SCENE_VERSION,
+        migrations: ["scene-v0-to-v1"],
+      },
+    };
+  }
+
+  if (version === CURRENT_SCENE_VERSION) {
+    const current = sceneSchema.safeParse(input);
+    return current.success
+      ? {
+          ok: true,
+          result: {
+            scene: current.data,
+            fromVersion: CURRENT_SCENE_VERSION,
+            toVersion: CURRENT_SCENE_VERSION,
+            migrations: [],
+          },
+        }
+      : { ok: false, issues: current.error.issues };
+  }
+
+  return {
+    ok: false,
+    issues: [
+      {
+        code: z.ZodIssueCode.custom,
+        path: ["schemaVersion"],
+        message:
+          version === undefined
+            ? `Scene schemaVersion is required. Use ${CURRENT_SCENE_VERSION} for new scenes or 0 for automatic migration.`
+            : `Unsupported scene schemaVersion ${JSON.stringify(version)}. This build supports canonical version ${CURRENT_SCENE_VERSION} and migration from version 0.`,
+      },
+    ],
+  };
+}
+
+function cacheNormalizedScene(
+  input: unknown,
+  result: SceneMigrationResult,
+): void {
+  normalizedScenes.set(result.scene, {
+    scene: result.scene,
+    fromVersion: CURRENT_SCENE_VERSION,
+    toVersion: CURRENT_SCENE_VERSION,
+    migrations: [],
+  });
+  if (typeof input === "object" && input !== null) {
+    normalizedScenes.set(input, result);
+  }
+}
+
+/**
+ * Validates and deterministically migrates a legacy v0 or current v1 scene to
+ * canonical Scene v1. The input is never mutated.
+ */
+export function migrateScene(input: unknown): SceneMigrationResult {
+  const migrated = safeMigrateScene(input);
+  if (!migrated.ok) {
+    throw new SceneValidationError(migrated.issues);
+  }
+
+  cacheNormalizedScene(input, migrated.result);
+  return migrated.result;
+}
 
 export function parseScene(input: unknown): Scene {
-  if (typeof input === "object" && input !== null && parsedScenes.has(input)) {
-    return input as Scene;
-  }
-
-  const result = sceneSchema.safeParse(input);
-
-  if (!result.success) {
-    throw new SceneValidationError(result.error.issues);
-  }
-
-  parsedScenes.add(result.data);
-  return result.data;
+  return migrateScene(input).scene;
 }
 
 export function validateScene(
   input: unknown,
 ): { ok: true; scene: Scene } | { ok: false; errors: string[] } {
-  if (typeof input === "object" && input !== null && parsedScenes.has(input)) {
-    return { ok: true, scene: input as Scene };
-  }
-
-  const result = sceneSchema.safeParse(input);
-
-  if (result.success) {
-    parsedScenes.add(result.data);
-    return { ok: true, scene: result.data };
+  const migrated = safeMigrateScene(input);
+  if (migrated.ok) {
+    cacheNormalizedScene(input, migrated.result);
+    return { ok: true, scene: migrated.result.scene };
   }
 
   return {
     ok: false,
-    errors: result.error.issues.map(formatSceneIssue),
+    errors: migrated.issues.map(formatSceneIssue),
   };
 }
 
@@ -689,6 +869,14 @@ export function sceneJsonSchema(): Record<string, unknown> {
   }) as Record<string, unknown>;
 }
 
+/** Structural JSON Schema for legacy v0 ingestion and migration tooling. */
+export function legacySceneV0JsonSchema(): Record<string, unknown> {
+  return zodToJsonSchema(legacySceneV0Schema, {
+    name: "MotionforgeSceneV0",
+    target: "jsonSchema7",
+  }) as Record<string, unknown>;
+}
+
 export {
   applyScenePatch,
   closestIds,
@@ -699,3 +887,11 @@ export {
   type ScenePatch,
   type ScenePatchError,
 } from "./patch.js";
+
+export {
+  inspectScene,
+  lintScene,
+  type SceneInspection,
+  type SceneLintIssue,
+  type SceneLintResult,
+} from "./inspect.js";

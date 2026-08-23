@@ -13,7 +13,7 @@ npm install @motionforge/schema
 ## Usage
 
 ```ts
-import { parseScene, validateScene } from "@motionforge/schema";
+import { migrateScene, parseScene, validateScene } from "@motionforge/schema";
 
 // Throws SceneValidationError with readable messages on invalid input.
 const scene = parseScene(sceneJson);
@@ -23,7 +23,15 @@ const result = validateScene(sceneJson);
 if (!result.ok) {
   console.error(result.errors);
 }
+
+// Inspect migration metadata while importing a persisted v0 document.
+const migration = migrateScene(legacyJson);
+console.log(migration.fromVersion, migration.scene.schemaVersion); // 0, 1
 ```
+
+`sceneSchema` is strict canonical v1. `parseScene()`, `validateScene()`, and
+`migrateScene()` also accept valid legacy v0 documents and return canonical v1
+without mutating the input. Future/unknown versions fail loudly.
 
 ### Effect nodes
 
@@ -63,7 +71,10 @@ import { sceneJsonSchema } from "@motionforge/schema";
 const jsonSchema = sceneJsonSchema();
 ```
 
-The JSON Schema covers structure; cross-field invariants (unique node ids, asset key = asset id, per-node-type requirements) are enforced by `parseScene` / `validateScene`.
+The JSON Schema covers canonical v1 structure; cross-field invariants (unique
+node ids, asset key = asset id, and typed node/effect asset references) are
+enforced by `parseScene` / `validateScene`. Ingestion tools can obtain the
+legacy structure from `legacySceneV0JsonSchema()`.
 
 See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/main/docs/scene-format.md) for the full document shape and the style support matrix.
 
@@ -72,9 +83,10 @@ See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/mai
 Stable for 0.x integrations:
 
 - `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, and `VolumeEnvelope` types.
-- `parseScene()`, `validateScene()`, `SceneValidationError`, and `sceneJsonSchema()`.
+- `CURRENT_SCENE_VERSION`, `parseScene()`, `validateScene()`, `migrateScene()`, `SceneValidationError`, `sceneJsonSchema()`, and `legacySceneV0JsonSchema()`.
+- `inspectScene()` for stable feature summaries and `lintScene()` for valid-but-suspicious scene warnings.
 - Scene patch APIs: `applyScenePatch()`, `scenePatchSchema`, `sceneOpSchema`, `ScenePatch`, `SceneOp`, and `ApplyScenePatchResult`.
-- Zod schemas for tool builders and validators: `sceneSchema`, `sceneNodeSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
+- Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
 
 Experimental before 1.0:
 

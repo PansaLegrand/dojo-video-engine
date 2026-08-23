@@ -133,7 +133,7 @@ export const fixtures: GoldenFixture[] = [
     description: "Solid layout box with vertical gradient background.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -162,7 +162,7 @@ export const fixtures: GoldenFixture[] = [
       "Seeded procedural effect nodes render deterministically across the core effect catalog.",
     frame: 18,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 640,
       height: 360,
       fps: 30,
@@ -221,7 +221,7 @@ export const fixtures: GoldenFixture[] = [
       "Absolute positioning resolves left, right, bottom, height, and padding.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -266,7 +266,7 @@ export const fixtures: GoldenFixture[] = [
     description: "Numeric keyframes resolve opacity at the requested frame.",
     frame: 15,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -321,7 +321,7 @@ export const fixtures: GoldenFixture[] = [
       "Flex layout centers a fixed-size child inside a padded parent.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -367,7 +367,7 @@ export const fixtures: GoldenFixture[] = [
     description: "Text and text shadow render without exact glyph hashing.",
     frame: 12,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -426,7 +426,7 @@ export const fixtures: GoldenFixture[] = [
       "backgroundColor keyframes interpolate in RGBA space (red to blue at the midpoint).",
     frame: 15,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -479,7 +479,7 @@ export const fixtures: GoldenFixture[] = [
       "space-between distributes leftover main-axis space; stretch fills the cross axis for unsized children.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -537,7 +537,7 @@ export const fixtures: GoldenFixture[] = [
       "transformOrigin moves the rotation pivot away from the box center.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -583,7 +583,7 @@ export const fixtures: GoldenFixture[] = [
       "img nodes draw resolved image assets: contain letterboxes, cover crops with objectPosition, fill stretches under a borderRadius clip.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -668,7 +668,7 @@ export const fixtures: GoldenFixture[] = [
       "linear-gradient supports any stop count, deg angles through the box center, and omitted positions distributed evenly.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -716,7 +716,7 @@ export const fixtures: GoldenFixture[] = [
       "overflow: hidden clips children to the border box, following borderRadius; the sibling without overflow still paints outside.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -810,7 +810,7 @@ export const fixtures: GoldenFixture[] = [
       "Transform lists with matching functions tween smoothly; cubic-bezier and spring easings shape the motion. Sampled mid-tween.",
     frame: 8,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -926,7 +926,7 @@ export const fixtures: GoldenFixture[] = [
       "Text rendered with a font asset hashes exactly: the embedded font removes system-font platform variance. The asset id is the font-family name.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -984,7 +984,7 @@ export const fixtures: GoldenFixture[] = [
       "Stroked text paints the outline before the fill using an embedded font.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -1039,7 +1039,7 @@ export const fixtures: GoldenFixture[] = [
       "Caption text draws a measured per-line background behind stroked glyphs.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 360,
       height: 220,
       fps: 30,
@@ -1099,7 +1099,7 @@ export const fixtures: GoldenFixture[] = [
       "Explicit \\n breaks text into lines spaced by lineHeight; italic and letterSpacing apply.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -1170,7 +1170,7 @@ export const fixtures: GoldenFixture[] = [
       "Text wider than its box wraps by measured word width into multiple lines.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -1239,7 +1239,7 @@ export const fixtures: GoldenFixture[] = [
       "Text without an explicit height gets its intrinsic wrapped height: a top-anchored block starts at `top` instead of centering in the parent, and a bottom-anchored block sits just above `bottom`.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -1346,7 +1346,7 @@ export const fixtures: GoldenFixture[] = [
       "zIndex reorders sibling painting (negative behind, positive in front of document order); border strokes inside the box following borderRadius; boxShadow rides the background fill; a grayscale+brightness filter desaturates an img node.",
     frame: 0,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,
@@ -1479,7 +1479,7 @@ export const fixtures: GoldenFixture[] = [
       "A lottie node renders frame-exact: at scene frame 20 the document's rectangle is mid-travel and mid-rotation, drawn under objectFit contain; a second node at 2x rate shows a later animation frame at the same scene frame.",
     frame: 20,
     scene: {
-      schemaVersion: 0,
+      schemaVersion: 1,
       width: 320,
       height: 180,
       fps: 30,

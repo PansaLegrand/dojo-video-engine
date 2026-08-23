@@ -13,7 +13,9 @@ npm install -D @motionforge/cli
 ```sh
 motionforge validate src/video.ts
 motionforge print src/video.ts
+motionforge migrate src/video.ts
 motionforge inspect src/video.ts
+motionforge lint src/video.ts
 motionforge dev src/video.ts
 ```
 
@@ -31,6 +33,11 @@ export default makeScene({
 ```
 
 `validate` exits `0` when the scene is valid and `1` when validation fails. `print` validates first, then writes formatted scene JSON to stdout.
+
+`migrate` writes a migration result containing the canonical v1 scene, source
+and target versions, and applied migration ids. `lint` writes machine-readable
+warnings for valid-but-suspicious timing, visibility, audio, animation, and
+unused-asset conditions.
 
 `inspect` validates first, then writes machine-readable scene metadata:
 
@@ -57,11 +64,13 @@ export default makeScene({
     "img": 1,
     "video": 0,
     "audio": 0,
-    "lottie": 0
+    "lottie": 0,
+    "effect": 0
   },
   "capabilities": {
     "hasVisuals": true,
     "hasAudio": false,
+    "hasEffects": false,
     "requiresBrowserExport": true
   }
 }
@@ -73,7 +82,7 @@ export default makeScene({
 
 Stable for 0.x integrations:
 
-- CLI commands: `motionforge validate`, `motionforge print`, `motionforge inspect`, and `motionforge dev`.
+- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge lint`, and `motionforge dev`.
 - Programmatic helpers: `executeCli()`, `runCli()`, `inspectScene()`, `CliResult`, `CliIo`, and `SceneInspection`.
 - Scene module loading contract: JSON files, JS/ESM modules, TypeScript modules through `tsx`, default export or named `scene`, and scene-returning functions/promises.
 

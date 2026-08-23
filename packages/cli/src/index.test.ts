@@ -29,6 +29,67 @@ describe("@motionforge/cli", () => {
     }
   });
 
+  it("migrates legacy v0 scenes and reports the migration", async () => {
+    const dir = await tempDir();
+
+    try {
+      const scenePath = join(dir, "legacy.json");
+      await writeFile(
+        scenePath,
+        JSON.stringify({ ...validScene(), schemaVersion: 0 }),
+      );
+
+      const result = await executeCli(["migrate", scenePath]);
+      const migration = JSON.parse(result.stdout) as {
+        fromVersion: number;
+        toVersion: number;
+        migrations: string[];
+        scene: { schemaVersion: number };
+      };
+
+      expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
+      expect(migration).toMatchObject({
+        fromVersion: 0,
+        toVersion: 1,
+        migrations: ["scene-v0-to-v1"],
+        scene: { schemaVersion: 1 },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("lints valid but suspicious scene data", async () => {
+    const dir = await tempDir();
+
+    try {
+      const scenePath = join(dir, "lint.json");
+      await writeFile(
+        scenePath,
+        JSON.stringify({
+          ...validScene(),
+          assets: {
+            unused: { id: "unused", type: "image", src: "unused.png" },
+          },
+        }),
+      );
+
+      const result = await executeCli(["lint", scenePath]);
+      const lint = JSON.parse(result.stdout) as {
+        issueCount: number;
+        issues: Array<{ code: string }>;
+      };
+
+      expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
+      expect(lint).toMatchObject({
+        issueCount: 1,
+        issues: [{ code: "unused_asset" }],
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("prints normalized scene JSON from a JavaScript scene module", async () => {
     const dir = await tempDir();
 
@@ -45,7 +106,7 @@ describe("@motionforge/cli", () => {
       expect(result, result.stderr).toMatchObject({ exitCode: 0 });
       expect(result.stderr).toBe("");
       expect(printed).toMatchObject({
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 1080,
         height: 1920,
         fps: 30,
@@ -66,7 +127,7 @@ describe("@motionforge/cli", () => {
       await writeFile(
         scenePath,
         JSON.stringify({
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1920,
           height: 1080,
           fps: 24,
@@ -130,7 +191,7 @@ describe("@motionforge/cli", () => {
 
       expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
       expect(inspected).toMatchObject({
-        schemaVersion: 0,
+        schemaVersion: 1,
         width: 1920,
         height: 1080,
         fps: 24,
@@ -173,7 +234,7 @@ describe("@motionforge/cli", () => {
       await writeFile(
         scenePath,
         JSON.stringify({
-          schemaVersion: 0,
+          schemaVersion: 1,
           width: 1080,
           height: 1920,
           fps: 30,
@@ -204,7 +265,7 @@ describe("@motionforge/cli", () => {
         scenePath,
         [
           "export default {",
-          "  schemaVersion: 0,",
+          "  schemaVersion: 1,",
           "  width: 1080,",
           "  height: 1920,",
           "  fps: 30,",
@@ -299,7 +360,7 @@ describe("@motionforge/cli", () => {
 
 function validScene() {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,

@@ -210,12 +210,18 @@ describe("createDefaultSceneForAsset", () => {
 
 function baseScene(): Scene {
   return {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
     duration: 120,
-    assets: {},
+    assets: {
+      existing_image: {
+        id: "existing_image",
+        type: "image",
+        src: "existing.png",
+      },
+    },
     nodes: [
       {
         id: "image-1-node",

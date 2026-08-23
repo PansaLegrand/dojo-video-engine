@@ -105,7 +105,7 @@ window.runGoldenVideoChecks = async (): Promise<VideoCheck[]> => {
   const fps = 30;
 
   const sourceScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps,
@@ -137,7 +137,7 @@ window.runGoldenVideoChecks = async (): Promise<VideoCheck[]> => {
   const clipUrl = URL.createObjectURL(clipBlob);
 
   const compositeScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps,
@@ -407,7 +407,7 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
   const toneUrl = URL.createObjectURL(buildToneWav(1.0, 440));
 
   const scene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps: 30,
@@ -509,7 +509,7 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
   // audio: silent head, tone in the clip's window. The video node is the
   // only audio source in the composite scene.
   const sourceScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps: 30,
@@ -537,7 +537,7 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
   const clipUrl = URL.createObjectURL(clipBlob);
 
   const compositeScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps: 30,
@@ -615,7 +615,7 @@ window.runGoldenAudioChecks = async (): Promise<VideoCheck[]> => {
   // Keep the three tones separated so decoded RMS windows can prove static
   // volume, envelope gain, and source wrapping independently.
   const automationScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 320,
     height: 180,
     fps: 30,
@@ -885,7 +885,7 @@ window.runGoldenBenchmark = async ({ width, height, fps, seconds }) => {
   // Stage 1 — synthesize "footage": full-frame animated gradient + a moving
   // box + text, so the encoder sees real per-frame change at every pixel row.
   const sourceScene: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps,
@@ -954,7 +954,7 @@ window.runGoldenBenchmark = async ({ width, height, fps, seconds }) => {
 
   // Stage 2 — one full-frame video node + caption (decode + composite + encode).
   const oneVideo: Scene = {
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps,

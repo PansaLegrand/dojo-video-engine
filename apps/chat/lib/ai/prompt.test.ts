@@ -29,7 +29,7 @@ describe("buildMotionforgeSystemPrompt", () => {
   it("spells out the canonical scene and animation shape", () => {
     const prompt = buildMotionforgeSystemPrompt(null);
 
-    expect(prompt).toContain('"schemaVersion":0');
+    expect(prompt).toContain('"schemaVersion": 1');
     expect(prompt).toContain("horizontal/16:9 = 1920x1080 or 1280x720");
     expect(prompt).toContain("Do not use scene.meta");
     expect(prompt).toContain('even when empty: "assets": {}');

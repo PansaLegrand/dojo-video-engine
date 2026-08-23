@@ -47,7 +47,7 @@ export function introScene(): Scene {
 
 export function tiktokCaptionScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -131,7 +131,7 @@ export function tiktokCaptionScene(): Scene {
 
 export function karaokeCaptionScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -405,7 +405,7 @@ function countdownText(label: string, index: number): SceneNode {
 
 export function launchInfoDisplayScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -642,7 +642,7 @@ export function launchInfoDisplayScene(): Scene {
 
 export function timedTextOverlayScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -928,7 +928,7 @@ function stressTextCard(
 
 export function textStressGalleryScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -1243,7 +1243,7 @@ https://motionforge.dev/docs/examples/generated/subtitle-stress-gallery.json?sou
   );
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 1080,
     height: 1920,
     fps: 30,
@@ -1538,7 +1538,7 @@ export function imageOverlayStressGalleryScene(): Scene {
   const duration = 120;
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps,
@@ -1813,7 +1813,7 @@ export function videoOverlayStressGalleryScene(): Scene {
   const assetId = "video-overlay-source";
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps,
@@ -2222,7 +2222,7 @@ export function audioSyncPulseScene(): Scene {
   });
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 720,
     height: 720,
     fps: 30,
@@ -2420,7 +2420,7 @@ export function lottieBadgeDataUrl(): string {
 
 export function lottieStickerScene(): Scene {
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width: 720,
     height: 720,
     fps: 30,

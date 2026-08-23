@@ -6,7 +6,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 0
+          "const": 1
         },
         "width": {
           "type": "integer",

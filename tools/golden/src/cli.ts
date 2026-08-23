@@ -127,6 +127,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
       }
     }
 
+    failures.push(...(await runLegacyMigrationChecks(page)));
     failures.push(...(await runExportSmokeTest(page)));
     failures.push(...(await runVideoChecks(page)));
     failures.push(...(await runAudioChecks(page)));
@@ -138,6 +139,37 @@ async function run(currentMode: GoldenMode): Promise<void> {
     await browser?.close();
     await closeServer(server);
   }
+}
+
+async function runLegacyMigrationChecks(page: Page): Promise<string[]> {
+  const fixture = fixtures.find((entry) => entry.id === "effect-showcase");
+  if (!fixture) {
+    return ["scene-v0-migration: missing effect-showcase fixture"];
+  }
+
+  const current = await page.evaluate(
+    ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
+    { scene: fixture.scene, frame: fixture.frame },
+  );
+  const legacyScene = {
+    ...fixture.scene,
+    schemaVersion: 0,
+  } as unknown as typeof fixture.scene;
+  const legacy = await page.evaluate(
+    ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
+    { scene: legacyScene, frame: fixture.frame },
+  );
+  const currentHash = hashFrame(current);
+  const legacyHash = hashFrame(legacy);
+
+  if (currentHash !== legacyHash) {
+    return [
+      `scene-v0-migration: expected migrated pixels ${currentHash}, received ${legacyHash}`,
+    ];
+  }
+
+  console.log(`ok scene-v0-migration ${legacyHash}`);
+  return [];
 }
 
 /**

@@ -38,7 +38,9 @@ try {
 
   await run("pnpm", ["install"], { cwd: projectDir });
   await run("pnpm", ["validate"], { cwd: projectDir });
+  await run("pnpm", ["migrate"], { cwd: projectDir });
   await run("pnpm", ["inspect"], { cwd: projectDir });
+  await run("pnpm", ["lint"], { cwd: projectDir });
   await run("pnpm", ["build"], { cwd: projectDir });
 
   console.log("\nclean-machine verification ok");

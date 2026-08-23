@@ -128,7 +128,7 @@ export function createSceneFromInstruction(instruction: string): Scene {
   const choreography = createFirstDraftChoreography();
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps: 30,
@@ -587,7 +587,7 @@ function createSubtitleTemplateGalleryScene(): Scene {
   const duration = 150;
 
   return parseScene({
-    schemaVersion: 0,
+    schemaVersion: 1,
     width,
     height,
     fps,

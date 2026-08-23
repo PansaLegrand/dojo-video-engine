@@ -9,6 +9,7 @@ import {
   type ResolvedScene,
 } from "@motionforge/core";
 import {
+  inspectScene,
   parseScene,
   isAudioReactiveEffect,
   type Scene,
@@ -39,6 +40,119 @@ export type RenderOptions = {
 };
 
 export type TextMeasureCache = Map<string, number>;
+
+export type Canvas2DPreflightIssue = {
+  severity: "error" | "warning";
+  code:
+    | "audio_decoder_unavailable"
+    | "canvas_unavailable"
+    | "font_loading_unavailable"
+    | "image_decoder_unavailable"
+    | "lottie_requires_dom"
+    | "video_decoder_unavailable";
+  message: string;
+};
+
+export type Canvas2DPreflightResult = {
+  ok: boolean;
+  renderer: "canvas2d";
+  requirements: {
+    canvas: boolean;
+    imageDecoder: boolean;
+    videoDecoder: boolean;
+    audioDecoder: boolean;
+    fontLoading: boolean;
+    domLottie: boolean;
+  };
+  issues: Canvas2DPreflightIssue[];
+};
+
+/**
+ * Checks environment capabilities before asset loading or frame preparation.
+ * This is intentionally synchronous: codec-specific negotiation remains the
+ * exporter's job, while obvious unsupported runtime combinations fail early.
+ */
+export function preflightCanvas2D(
+  sceneInput: unknown,
+  globalObject: Partial<typeof globalThis> = globalThis,
+): Canvas2DPreflightResult {
+  const scene = parseScene(sceneInput);
+  const inspection = inspectScene(scene);
+  const documentObject = globalObject.document;
+  const hasDomCanvas = Boolean(documentObject?.createElement);
+  const hasOffscreenCanvas = "OffscreenCanvas" in globalObject;
+  const hasCanvas = hasDomCanvas || hasOffscreenCanvas;
+  const hasImageDecoder = "createImageBitmap" in globalObject;
+  const hasVideoDecoder = "VideoDecoder" in globalObject;
+  const hasAudioDecoder = "AudioDecoder" in globalObject;
+  const hasFontLoading = Boolean(
+    "FontFace" in globalObject &&
+    (documentObject?.fonts ||
+      (globalObject as Partial<typeof globalThis> & { fonts?: FontFaceSet })
+        .fonts),
+  );
+  const issues: Canvas2DPreflightIssue[] = [];
+
+  if (!hasCanvas) {
+    issues.push({
+      severity: "error",
+      code: "canvas_unavailable",
+      message:
+        "Canvas2D rendering needs OffscreenCanvas or a DOM canvas element.",
+    });
+  }
+  if (inspection.assets.image > 0 && !hasImageDecoder) {
+    issues.push({
+      severity: "error",
+      code: "image_decoder_unavailable",
+      message: "Image assets need createImageBitmap in this renderer.",
+    });
+  }
+  if (inspection.assets.video > 0 && !hasVideoDecoder) {
+    issues.push({
+      severity: "error",
+      code: "video_decoder_unavailable",
+      message: "Video assets need the WebCodecs VideoDecoder API.",
+    });
+  }
+  if (inspection.assets.audio > 0 && !hasAudioDecoder) {
+    issues.push({
+      severity: "error",
+      code: "audio_decoder_unavailable",
+      message: "Audio assets need the WebCodecs AudioDecoder API.",
+    });
+  }
+  if (inspection.assets.font > 0 && !hasFontLoading) {
+    issues.push({
+      severity: "error",
+      code: "font_loading_unavailable",
+      message:
+        "Font assets need FontFace plus document.fonts or a worker FontFaceSet.",
+    });
+  }
+  if (inspection.capabilities.hasLottie && !hasDomCanvas) {
+    issues.push({
+      severity: "error",
+      code: "lottie_requires_dom",
+      message:
+        "The current Lottie adapter requires a DOM canvas; render this scene on the main thread or omit Lottie assets.",
+    });
+  }
+
+  return {
+    ok: !issues.some((issue) => issue.severity === "error"),
+    renderer: "canvas2d",
+    requirements: {
+      canvas: true,
+      imageDecoder: inspection.assets.image > 0,
+      videoDecoder: inspection.assets.video > 0,
+      audioDecoder: inspection.assets.audio > 0,
+      fontLoading: inspection.assets.font > 0,
+      domLottie: inspection.capabilities.hasLottie,
+    },
+    issues,
+  };
+}
 
 /** A decodable video clip opened by resolveAssets(). */
 export type VideoClip = {

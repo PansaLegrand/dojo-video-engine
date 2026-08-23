@@ -3,7 +3,7 @@ import { applyScenePatch, type Scene } from "@motionforge/schema";
 import { createSplitLayerPatch } from "./split-layer";
 
 const scene: Scene = {
-  schemaVersion: 0,
+  schemaVersion: 1,
   width: 1280,
   height: 720,
   fps: 30,
