@@ -1,5 +1,34 @@
 # Progress
 
+## 2026-08-26 (MF7 semantic Layout v2)
+
+### Changed
+
+- Added public `@motionforge/layout` with a flat, bounded Layout Contract v1
+  for stack/row/column, wrapping, grid, overlay, safe areas, intrinsic sizing,
+  grow/shrink, aspect ratios, and sibling constraints compiled to Scene v1.
+- Added deterministic prepared text/media planning, strict font/fallback
+  policies, finite provenance evidence, and stable solver/text budgets.
+- Added versioned `@motionforge/presets/intents` manifests and compatibility
+  compilers for place, safe-area, text-role, media-look, and clip-layout
+  intent.
+- Accepted RFC 0012 and documented source Scene + LayoutPlan retention versus
+  target-specific compiled Scene projections.
+
+### Tested
+
+- `pnpm release:full` passed 1,037 unit tests, fuzz/corpus/resource checks,
+  complete legacy and Layout v2 browser goldens, three browser engines,
+  performance budgets, 10 E2E checks, smoke checks, and 15 package dry-runs.
+- `pnpm verify:clean` packed and installed all 15 public packages and passed
+  runtime imports plus validate/migrate/inspect/lint/build in an external
+  starter.
+
+### Notes
+
+- Existing Scene-v1 layout/pixels remain unchanged; semantic plans are opt-in
+  authoring data and must be retained when responsive reflow is required.
+
 ## 2026-08-24 (1.0 stable release gate)
 
 ### Changed

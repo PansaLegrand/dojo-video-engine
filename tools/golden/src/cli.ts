@@ -56,6 +56,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/extensions/src/index.ts",
         ),
+        "@motionforge/layout": resolve(rootDir, "packages/layout/src/index.ts"),
         "@motionforge/presets": resolve(
           rootDir,
           "packages/presets/src/index.ts",
@@ -156,6 +157,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
     failures.push(...(await runAudioChecks(page)));
     failures.push(...(await runRuntimeParityChecks(page)));
     failures.push(...(await runAgentToolChecks(page)));
+    failures.push(...(await runLayoutV2Checks(page)));
 
     if (failures.length > 0) {
       throw new Error(`Golden failures:\n${failures.join("\n\n")}`);
@@ -331,6 +333,18 @@ async function runAgentToolChecks(page: Page): Promise<string[]> {
   for (const check of checks) {
     if (check.pass) console.log(`ok tools: ${check.label} (${check.detail})`);
     else failures.push(`tools: ${check.label} failed — ${check.detail}`);
+  }
+  return failures;
+}
+
+/** MF7 browser evidence for semantic layout compilation and legacy isolation. */
+async function runLayoutV2Checks(page: Page): Promise<string[]> {
+  const checks = await page.evaluate(() => window.runGoldenLayoutV2Checks());
+  const failures: string[] = [];
+  for (const check of checks) {
+    if (check.pass)
+      console.log(`ok layout-v2: ${check.label} (${check.detail})`);
+    else failures.push(`layout-v2: ${check.label} failed — ${check.detail}`);
   }
   return failures;
 }

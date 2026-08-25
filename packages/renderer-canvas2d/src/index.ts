@@ -4228,6 +4228,7 @@ export function createCanvasTextMetricsProvider(
       measureLine(input) {
         const previousFont = context.font;
         const previousDirection = context.direction;
+        const previousTextBaseline = context.textBaseline;
         const supportsLetterSpacing = "letterSpacing" in context;
         const previousLetterSpacing = supportsLetterSpacing
           ? context.letterSpacing
@@ -4235,6 +4236,10 @@ export function createCanvasTextMetricsProvider(
         try {
           context.font = canvasFont(input.style, input.fontSize);
           context.direction = input.style.direction ?? "inherit";
+          // TextMetrics vertical fields are relative to textBaseline. Display
+          // lists paint text on the middle baseline, so compile-time ink bounds
+          // must measure against that same baseline regardless of caller state.
+          context.textBaseline = "middle";
           if (supportsLetterSpacing) {
             const spacing = readLength(
               input.style.letterSpacing,
@@ -4264,6 +4269,7 @@ export function createCanvasTextMetricsProvider(
         } finally {
           context.font = previousFont;
           context.direction = previousDirection;
+          context.textBaseline = previousTextBaseline;
           if (supportsLetterSpacing) {
             context.letterSpacing = previousLetterSpacing ?? "0px";
           }

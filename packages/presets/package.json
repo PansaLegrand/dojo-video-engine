@@ -31,6 +31,10 @@
       "types": "./dist/catalog.d.ts",
       "import": "./dist/catalog.js"
     },
+    "./intents": {
+      "types": "./dist/intents.d.ts",
+      "import": "./dist/intents.js"
+    },
     "./macros": {
       "types": "./dist/macros.d.ts",
       "import": "./dist/macros.js"

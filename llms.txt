@@ -5,13 +5,18 @@
 ## Mental model
 
 ```txt
-scene JSON + frame -> parseScene -> evaluateScene (keyframes) -> layoutScene (boxes) -> renderStill (Canvas2D) -> pixels
+optional authoring: source Scene + LayoutPlan + target metrics -> compileLayout -> target-specific Scene v1
+rendering:          Scene v1 + frame -> parseScene -> evaluateScene -> layoutScene -> display list -> Canvas2D -> pixels
 ```
 
 - Time is integer frames at `scene.fps`, never wall-clock seconds.
 - A node is active for `[from, from + duration)` in its parent's local timeline; children's clocks restart when the parent appears.
 - Keyframe `frame` values are local to the node and must be strictly increasing (validated). Numeric values interpolate; portable named/hex/RGB/HSL colors interpolate in RGBA space; transform lists (`translate`/`scale`/`rotate`) tween when function sequences and units match; other target-valid scalar strings step. Easing: `linear`, `easeIn`, `easeOut`, `easeInOut`, `cubic-bezier(x1, y1, x2, y2)` (x1/x2 in [0,1]), or `spring(bounce)` (bounce in [0,1); may overshoot mid-tween).
 - Node `id`s are unique across the scene by contract — patch and diff scenes by id.
+- LayoutPlan is opt-in authoring data, not a Scene field. Retain the source
+  Scene plus plan(s) when later responsive reflow is required; the compiled
+  Scene is a target-specific render projection and cannot recover `hug`,
+  `fill`, tracks, or constraints.
 
 ## Hard rules
 
@@ -19,6 +24,9 @@ scene JSON + frame -> parseScene -> evaluateScene (keyframes) -> layoutScene (bo
 - Emit `schemaVersion: 1` for new scenes. Legacy v0 input is accepted only through deterministic migration; never invent a future version.
 - Only use style properties from the support matrix (docs/scene-format.md). Unknown properties fail validation — this is intentional; do not work around it.
 - Prefer data keyframes over imperative per-frame code.
+- Use `@motionforge/layout` for sibling-relative responsive composition rather
+  than asking a model to calculate pixels. Never store a LayoutPlan, resolved
+  layout, or display list inside Scene JSON.
 - After editing a scene, re-validate with `validateScene()` and read the errors; they state the path, the problem, and the fix.
 
 ## Minimal valid scene (JSON)
@@ -104,6 +112,7 @@ nodes.2.assetId: img nodes require an assetId that points at scene.assets.
 - `@motionforge/schema`: `parseScene(json)` / `validateScene(json)` strictly normalize valid v0 or v1 input to canonical Scene v1; unknown keys at any nesting layer fail rather than being stripped. `repairSceneInput(json)` is the explicit tolerant boundary: it removes unknown keys on a clone with diagnostics but never guesses invalid values. `preflightScene(scene, limits)` applies host document/pixel/frame/node/depth/asset/geometry/animation limits without changing canonical validity. `migrateScene(json)` returns source/target version and migration ids; `inspectScene()` reports features; `lintScene()` reports valid-but-suspicious warnings; `sceneJsonSchema()` is the canonical draft-07 schema shipped as `scene.schema.json`. Register `motionforgeJsonSchemaFormats` before compiling that schema; unknown custom formats must not be ignored.
 - `@motionforge/schema` patches: **edit scenes with `applyScenePatch(scene, patch)` instead of re-emitting whole documents.** A patch is an ordered op list addressed by node id: `{op:"setStyle",id,style}` (merge; null deletes a key), `{op:"setText",id,text}`, `{op:"retime",id,from?,duration?}`, `{op:"setAnimations",id,animations}` (whole-list replace), `{op:"insertNode",node,parentId?,beforeId?}` (node needs a unique id — namespace yours, e.g. `caption-7`), `{op:"removeNode",id}`, `{op:"moveNode",id,parentId?,beforeId?}`, `{op:"setAsset",asset}`, `{op:"removeAsset",id}` (rejected while nodes reference it), `{op:"setSceneMeta",width?,height?,fps?,duration?}`. Application is transactional and pure: any failing op rejects the whole patch with `{opIndex, message}` errors (misspelled ids get closest-id suggestions) and the input scene is untouched. Re-validate nothing yourself — the patched document is fully revalidated for you.
 - `@motionforge/core`: `composition()`, `div()`, `text()`, `richText()`, `img()`, `video()`, `shape()`, `extension()` builders → `.toJSON()`; `evaluateScene(scene, frame)`, `layoutScene(resolved)`.
+- `@motionforge/layout`: flat non-recursive Layout Contract v1 plans compile completely to numeric Scene v1. Use `item()` with `stack()`/`row()`/`column()`/`grid()`/`overlay()`, then `compileLayout(sourceScene, plan, options)`; use `tryCompileLayout()` for structured failures. `layoutPlanJsonSchema()` is the conditional draft-07 tool shape, but every host must still call `validateLayoutPlan()` for semantic checks such as duplicate ids. Prepared text defaults to a declared font asset plus `TextMetricsProvider`; media metadata and system-font fallback require explicit policies. Its host-independent cluster rules cover combining marks, supported emoji modifiers/ZWJ/flags, and CRLF, but not every modern Indic conjunct or decomposed Hangul Jamo sequence—prefer precomposed/shaped input there. Results include detached geometry, provenance, diagnostics, stats, and full text-plan evidence. Recompile the retained source Scene + plan for each portrait/square/landscape target; do not edit only the projection and expect responsive intent to survive.
 - `@motionforge/extensions`: trusted hosts use `defineExtension()`, `createExtensionRegistry()`, `preflightExtensions()`, and `extensionManifest()`; registry manifests expose exact versions, renderers, worker support, and parameter JSON Schema for agent capability discovery.
 - `@motionforge/renderer-canvas2d`: `preflightCanvas2D(scene)` reports runtime requirements before loading; `resolveAssets(scene, {extensions?, worker?})` → `ResolvedAssets` (async, once per scene); `prepareFrame(scene, frame, assets)` (async, per frame, stages media/extension data); `renderStill(ctx2d, scene, frame, { assets })`; `disposeAssets(assets)`; `computeObjectFit()` and `videoSourceTime()` for geometry/timing math.
 - `@motionforge/renderer-canvas2d/runtime`: `createCanvas2DSceneRuntime({scene})`, `createCanvas2DRuntimeBackend()`, exact prepared-media metrics, and a serialized legacy asset scope. Use `createPlayerFromRuntime()` plus export `*FromRuntime` helpers instead of retaining borrowed assets.
@@ -112,6 +121,7 @@ nodes.2.assetId: img nodes require an assetId that points at scene.assets.
   display-list JSON, worker messages, or tool results.
 - `@motionforge/presets`: pure helpers compiling intent to scene data — `popIn`/`fadeUp`/`slideIn(direction)`/`pulse(options)` → keyframe arrays; `tiktokCaptions(words, { fps, highlightIndices })` and `karaokeCaptions(words, { fps })` turn ASR word timestamps (`{ word, startMs, endMs }[]`) into timed caption nodes. Prefer these over hand-writing animation JSON.
 - `@motionforge/presets/macros`: `expandMacroNodes()` and `expandMacroNodeInput()` compile semantic macro nodes into ordinary scene data; `macroNames()` lists registered capabilities and `macroPromptGuide()` derives agent documentation from the runtime registry. Prefer macros for designed overlays, effects, B-roll, captions, subtitles, transitions, and countdowns.
+- `@motionforge/presets/intents`: discover established single-node layout sugar with `layoutCompilerManifests()` / `getLayoutCompilerManifest(id)`, then call nonthrowing `compileLayoutIntent({id, params, context})`. Stable ids cover `place`, `safe-area/box`, `text-role/*`, `media-look/*`, and `clip-layout/*`; output is a Scene-v1 style or node wrapper. Use this for one-node roles/placement and `@motionforge/layout` for relationships among sibling nodes.
 - `@motionforge/authoring`: use `makeScene()`, `seconds()`, `publicAsset()`, and high-level nodes for programmer-facing scene modules. Use `textBox()` for prompt/CMS/user copy that may be long; it emits bounded text with safe-area placement, shrink fit, ellipsis, `maxLines`, and `minFontSize`. Use `parseSrt()` or `parseVtt()` plus `subtitleTrack(segments, { template })` for SRT/WebVTT/transcript cues. Use `captionTrack(words, { template })` for ASR word timings. These helpers still compile to ordinary validated scene nodes.
 - `@motionforge/presets` choreography: **never hand-compute frame offsets across nodes — use `timeline()`.** `timeline().add(id, preset, { at? | after?: id, overlap?, gap? }).stagger(ids, preset, { every }).compile()` → `Record<nodeId, animations>`; entries default to starting when the previous ends; `compileToPatch()` emits ready-to-apply `setAnimations` ops for `applyScenePatch`. Offsets are applied as frame-0 holds, so entrance presets keep nodes hidden until their slot. All choreographed nodes must share the same `from`.
 - `@motionforge/player`: `createPlayer({ context, scene, assets?, loop? })` → `Player` with `play()`/`pause()`/`seek(frame)`/`dispose()`, `currentFrame`, and `on("frame" | "play" | "pause" | "ended", cb)`. Wall-clock time exists only in its `FrameClock`; every painted frame is the same pure `renderStill` output as export.
@@ -124,4 +134,5 @@ nodes.2.assetId: img nodes require an assetId that points at scene.assets.
 - [JSON Schema for scenes](packages/schema/scene.schema.json): validate canonical structure, portable values, and animation target/value compatibility with the registered MotionForge format vocabulary.
 - [M0 roadmap](docs/m0-roadmap.md): what is in and out of scope right now.
 - [Testing strategy](docs/testing-strategy.md): how changes must be verified.
+- [Layout v2 authoring contract](docs/mf7-layout-v2.md): semantic plans, policies, source/projection ownership, and evidence.
 - [Contributing and coding standards](CONTRIBUTING.md): determinism rules for the render path.

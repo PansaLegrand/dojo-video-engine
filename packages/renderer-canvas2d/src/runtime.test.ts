@@ -787,7 +787,20 @@ describe("Canvas2D prepared runtime backend", () => {
     const canvas = contextCalls();
     canvas.context.font = "italic 400 11px serif";
     canvas.context.direction = "rtl";
+    canvas.context.textBaseline = "bottom";
     canvas.context.letterSpacing = "3px";
+    canvas.context.measureText = function (
+      this: OffscreenCanvasRenderingContext2D,
+      text: string,
+    ) {
+      return {
+        width: text.length * 10,
+        actualBoundingBoxAscent: this.textBaseline === "middle" ? 8 : 12,
+        // A caller-selected bottom baseline can legitimately report a
+        // negative descent. The provider must canonicalize before validating.
+        actualBoundingBoxDescent: this.textBaseline === "middle" ? 2 : -1,
+      } as TextMetrics;
+    };
     const provider = createCanvasTextMetricsProvider(canvas.context, {
       maxEntries: 2,
       generationKey: "font-revision-7",
@@ -811,6 +824,7 @@ describe("Canvas2D prepared runtime backend", () => {
     });
     expect(canvas.context.font).toBe("italic 400 11px serif");
     expect(canvas.context.direction).toBe("rtl");
+    expect(canvas.context.textBaseline).toBe("bottom");
     expect(canvas.context.letterSpacing).toBe("3px");
   });
 

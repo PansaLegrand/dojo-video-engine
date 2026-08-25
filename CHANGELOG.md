@@ -144,6 +144,28 @@ starter packages.
 - Added a reusable renderer conformance suite and compositing-heavy 1080p/4K
   performance gates with measured scratch allocation/reuse/memory budgets.
 
+### Semantic Layout v2 authoring
+
+- Added the public `@motionforge/layout` package and accepted RFC 0012. Flat,
+  bounded Layout Contract v1 plans compile stack/row/column, wrapping, grid,
+  overlay, safe-area, fill/hug, grow/shrink, track/span, anchor, and sibling
+  constraint intent completely into ordinary numeric Scene v1 geometry.
+- Added strict Zod validation, a conditional draft-07 tool schema, nonthrowing
+  structured compilation, deterministic ordering/errors, host-tightenable
+  item/track/constraint/text/step/coordinate budgets, finite JSON evidence,
+  and portrait/square/landscape plus nested-layout coverage.
+- Added prepared intrinsic media/text metrics with explicit missing-media and
+  font fallback policies. Plain text receives a deterministic final width and
+  height plan with bounded Latin/CJK/supported-emoji/RTL wrapping, fitting, source
+  cluster/ellipsis evidence, and an explicit Scene-v1 projection. Existing
+  Scene-v1 layout and pixels remain isolated from the opt-in compiler.
+- Added stable `@motionforge/presets/intents` discovery and nonthrowing
+  compilation for `place`, safe-area boxes, text roles, media looks, and clip
+  layouts through versioned JSON-safe manifests.
+- Documented the compiled Scene as a target-specific render projection:
+  responsive editors retain the source Scene plus LayoutPlan(s), while player,
+  export, workers, inspection, and storage continue to consume Scene v1.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

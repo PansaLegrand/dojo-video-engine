@@ -46,6 +46,7 @@ const server = await createServer({
       ),
       "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
       "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
+      "@motionforge/layout": resolve(rootDir, "packages/layout/src/index.ts"),
       "@motionforge/presets": resolve(rootDir, "packages/presets/src/index.ts"),
       "@motionforge/showcase": resolve(
         rootDir,

@@ -12,6 +12,7 @@
     { "path": "../../packages/schema" },
     { "path": "../../packages/core" },
     { "path": "../../packages/extensions" },
+    { "path": "../../packages/layout" },
     { "path": "../../packages/presets" },
     { "path": "../../packages/renderer-canvas2d" },
     { "path": "../../packages/runtime" },

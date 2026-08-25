@@ -28,6 +28,7 @@ The browser engine consists of:
 - `@motionforge/schema`
 - `@motionforge/core`
 - `@motionforge/inspection`
+- `@motionforge/layout`
 - `@motionforge/commands`
 - `@motionforge/runtime`
 - `@motionforge/extensions`

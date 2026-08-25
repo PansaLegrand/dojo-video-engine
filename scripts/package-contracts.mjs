@@ -73,6 +73,13 @@ export const publicPackagePolicy = {
       "@motionforge/schema",
     ],
   },
+  "@motionforge/layout": {
+    owner: "Bounded semantic layout authoring and Scene v1 compilation",
+    allowedMotionforgeDependencies: [
+      "@motionforge/core",
+      "@motionforge/schema",
+    ],
+  },
   "@motionforge/player": {
     owner: "Real-time preview and audio-synchronized playback",
     allowedMotionforgeDependencies: [

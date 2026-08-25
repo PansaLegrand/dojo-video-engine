@@ -7,6 +7,17 @@ import {
   type MixedAudioData,
 } from "@motionforge/export";
 import { renderContactSheet, renderSceneStill } from "@motionforge/agent-tools";
+import type { TextMetricsProvider } from "@motionforge/core";
+import {
+  column,
+  compileLayout,
+  grid,
+  item,
+  overlay,
+  segmentLayoutTextGraphemes,
+  type LayoutCompileResult,
+  type LayoutPlan,
+} from "@motionforge/layout";
 import { createPlayerFromRuntime } from "@motionforge/player";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
@@ -23,7 +34,7 @@ import {
   type ScratchSurfacePoolStats,
 } from "@motionforge/renderer-canvas2d";
 import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
-import type { Scene } from "@motionforge/schema";
+import { validateScene, type Scene, type SceneNode } from "@motionforge/schema";
 import {
   ALL_FORMATS,
   AudioBufferSink,
@@ -96,6 +107,7 @@ declare global {
     runGoldenAudioChecks: () => Promise<VideoCheck[]>;
     runGoldenRuntimeParityChecks: () => Promise<VideoCheck[]>;
     runGoldenAgentToolChecks: () => Promise<VideoCheck[]>;
+    runGoldenLayoutV2Checks: () => Promise<VideoCheck[]>;
     runGoldenRendererConformanceChecks: () => Promise<VideoCheck[]>;
   }
 }
@@ -246,6 +258,457 @@ window.runGoldenAgentToolChecks = async (): Promise<VideoCheck[]> => {
     },
   ];
 };
+
+const goldenLayoutFontFamily = "GoldenLayoutInter";
+const goldenLayoutTextMetrics: TextMetricsProvider = {
+  measureLine({ text, fontSize }) {
+    const graphemeCount = segmentLayoutTextGraphemes(text).length;
+    return {
+      width: graphemeCount * fontSize * 0.56,
+      ascent: fontSize * 0.76,
+      descent: fontSize * 0.24,
+      measurement: "exact",
+      reason: "MF7 pinned grapheme metrics v1",
+    };
+  },
+};
+
+const goldenLayoutRootPlan = overlay({
+  items: [
+    item("layout-background", { width: "fill", height: "fill" }),
+    item("stack-panel", {
+      width: "88%",
+      height: "38%",
+      anchor: "top-center",
+      offsetY: "3%",
+    }),
+    item("grid-panel", {
+      width: "88%",
+      height: "45%",
+      anchor: "bottom-center",
+    }),
+    item("overlay-badge", {
+      width: "32%",
+      height: "hug",
+      anchor: "center-right",
+      offsetX: "-4%",
+    }),
+  ],
+});
+
+const goldenLayoutStackPlan = column({
+  containerId: "stack-panel",
+  padding: { x: "5%", y: "6%" },
+  gap: "5%",
+  align: "stretch",
+  items: [
+    item("latin-copy", { width: "fill", height: "hug" }),
+    item("rtl-copy", { width: "fill", height: "hug" }),
+  ],
+});
+
+const goldenLayoutGridPlan = grid({
+  containerId: "grid-panel",
+  columns: [{ size: "fill" }, { size: "fill" }],
+  rows: [{ size: "fill" }, { size: "fill" }],
+  padding: { x: "4%", y: "5%" },
+  gap: "4%",
+  justifyItems: "stretch",
+  alignItems: "center",
+  items: [
+    item("cjk-copy", { width: "fill", height: "hug" }),
+    item("emoji-copy", { width: "fill", height: "hug" }),
+    item("grid-swatch-a", { width: "fill", height: "fill" }),
+    item("grid-swatch-b", { width: "fill", height: "fill" }),
+  ],
+});
+
+const goldenLayoutPlans: readonly LayoutPlan[] = [
+  goldenLayoutRootPlan,
+  goldenLayoutStackPlan,
+  goldenLayoutGridPlan,
+];
+
+const goldenLayoutTargets = [
+  { label: "portrait", width: 360, height: 640 },
+  { label: "square", width: 480, height: 480 },
+  { label: "landscape", width: 640, height: 360 },
+] as const;
+
+/**
+ * MF7 browser gate: one coordinate-free semantic source and plan suite is
+ * compiled for all target shapes, then painted through the real Canvas path.
+ */
+window.runGoldenLayoutV2Checks = async (): Promise<VideoCheck[]> => {
+  const checks: VideoCheck[] = [];
+  const legacyScene = goldenLegacyLayoutOracleScene();
+  const legacySnapshot = JSON.stringify(legacyScene);
+  const legacyBefore = await renderLayoutEvidenceFrame(legacyScene);
+  let primitiveKinds = "";
+
+  for (const target of goldenLayoutTargets) {
+    const source = goldenSemanticLayoutScene(target.width, target.height);
+    const sourceSnapshot = JSON.stringify(source);
+    const results: LayoutCompileResult[] = [];
+    let compiled = source;
+
+    for (const plan of goldenLayoutPlans) {
+      const result = compileLayout(compiled, plan, {
+        textMetrics: goldenLayoutTextMetrics,
+      });
+      results.push(result);
+      compiled = result.scene;
+    }
+
+    primitiveKinds = results.map((result) => result.plan.layout.kind).join(",");
+    const validation = validateScene(compiled);
+    const geometry = checkLayoutEvidenceGeometry(results);
+    const text = checkLayoutEvidenceText(results);
+    const frame = await renderLayoutEvidenceFrame(compiled);
+    const pixels = checkLayoutEvidencePixels(frame);
+
+    checks.push(
+      {
+        label: `${target.label} semantic Scene v1 is valid and bounded`,
+        pass:
+          validation.ok &&
+          geometry.pass &&
+          sourceSnapshot === JSON.stringify(source),
+        detail: validation.ok
+          ? `${geometry.detail}; source unchanged`
+          : validation.errors.join(" | "),
+      },
+      {
+        label: `${target.label} multilingual text has prepared fit evidence`,
+        pass: text.pass,
+        detail: text.detail,
+      },
+      {
+        label: `${target.label} semantic output paints real pixels`,
+        pass: pixels.pass,
+        detail: pixels.detail,
+      },
+    );
+  }
+
+  checks.push({
+    label: "one source plan covers overlay plus nested stack and grid",
+    pass:
+      primitiveKinds === "overlay,stack,grid" &&
+      semanticSourceHasNoChildPixelGeometry(
+        goldenSemanticLayoutScene(360, 640).nodes,
+      ),
+    detail: `${primitiveKinds}; source children use semantic sizes only`,
+  });
+
+  const legacyAfter = await renderLayoutEvidenceFrame(legacyScene);
+  const legacyDifference = frameDifference(legacyBefore, legacyAfter);
+  checks.push({
+    label: "legacy Scene v1 pixels remain byte-exact after Layout v2 use",
+    pass:
+      legacyDifference === null &&
+      legacySnapshot === JSON.stringify(legacyScene),
+    detail:
+      legacyDifference ??
+      `${legacyBefore.width}x${legacyBefore.height} exact RGBA and source JSON`,
+  });
+
+  return checks;
+};
+
+function goldenSemanticLayoutScene(width: number, height: number): Scene {
+  const textStyle = {
+    fontFamily: goldenLayoutFontFamily,
+    fontSize: 16,
+    fontWeight: 700,
+    lineHeight: 1.2,
+    color: "#f8fafc",
+    overflow: "hidden" as const,
+    textFit: "shrink" as const,
+    minFontSize: 10,
+    maxLines: 4,
+    textOverflow: "ellipsis" as const,
+  };
+  return {
+    schemaVersion: 1,
+    width,
+    height,
+    fps: 30,
+    duration: 30,
+    assets: {
+      [goldenLayoutFontFamily]: {
+        id: goldenLayoutFontFamily,
+        type: "font",
+        src: "/fonts/inter-700-latin.woff2",
+      },
+    },
+    nodes: [
+      {
+        id: "layout-background",
+        type: "div",
+        style: {
+          background: "linear-gradient(145deg, #08111f, #172554 55%, #312e81)",
+        },
+      },
+      {
+        id: "stack-panel",
+        type: "div",
+        style: {
+          backgroundColor: "rgba(15,23,42,0.86)",
+          border: "2px solid rgba(103,232,249,0.62)",
+          borderRadius: 18,
+          overflow: "hidden",
+          zIndex: 2,
+        },
+        children: [
+          {
+            id: "latin-copy",
+            type: "text",
+            text: "Deterministic semantic layout keeps a long Latin headline bounded while the same source adapts from portrait to square and landscape video.",
+            style: {
+              ...textStyle,
+              backgroundColor: "rgba(14,116,144,0.32)",
+            },
+          },
+          {
+            id: "rtl-copy",
+            type: "text",
+            text: "مرحبا بالعالم هذا اختبار طويل للتخطيط الحتمي للنص العربي داخل مساحة فيديو آمنة",
+            style: {
+              ...textStyle,
+              direction: "rtl",
+              textAlign: "right",
+              color: "#fde68a",
+            },
+          },
+        ],
+      },
+      {
+        id: "grid-panel",
+        type: "div",
+        style: {
+          backgroundColor: "rgba(30,41,59,0.88)",
+          borderRadius: 18,
+          overflow: "hidden",
+          zIndex: 2,
+        },
+        children: [
+          {
+            id: "cjk-copy",
+            type: "text",
+            text: "这是一个用于验证纵向、方形和横向视频布局的长中文文本示例。",
+            style: {
+              ...textStyle,
+              backgroundColor: "rgba(124,58,237,0.34)",
+            },
+          },
+          {
+            id: "emoji-copy",
+            type: "text",
+            text: "👩🏽‍💻 🚀 🎬 ✨ 🌍 👨‍👩‍👧‍👦 🧭 🎨 📐 ✅",
+            style: {
+              ...textStyle,
+              textAlign: "center",
+              backgroundColor: "rgba(190,24,93,0.3)",
+            },
+          },
+          {
+            id: "grid-swatch-a",
+            type: "div",
+            style: {
+              background:
+                "linear-gradient(135deg, #06b6d4, #2563eb 55%, #7c3aed)",
+              borderRadius: 12,
+            },
+          },
+          {
+            id: "grid-swatch-b",
+            type: "div",
+            style: {
+              background:
+                "radial-gradient(circle at 35% 30%, #fde68a, #f97316 55%, #be123c)",
+              borderRadius: 12,
+            },
+          },
+        ],
+      },
+      {
+        id: "overlay-badge",
+        type: "text",
+        text: "LAYOUT V2",
+        style: {
+          ...textStyle,
+          maxLines: 1,
+          textAlign: "center",
+          color: "#111827",
+          backgroundColor: "#fbbf24",
+          borderRadius: 999,
+          zIndex: 8,
+        },
+      },
+    ],
+  };
+}
+
+function goldenLegacyLayoutOracleScene(): Scene {
+  return {
+    schemaVersion: 1,
+    width: 192,
+    height: 108,
+    fps: 30,
+    duration: 1,
+    assets: {},
+    nodes: [
+      {
+        id: "legacy-background",
+        type: "div",
+        style: {
+          width: "100%",
+          height: "100%",
+          background: "linear-gradient(90deg, #0f172a, #1d4ed8)",
+        },
+      },
+      {
+        id: "legacy-card",
+        type: "div",
+        style: {
+          position: "absolute",
+          left: 34,
+          top: 20,
+          width: 124,
+          height: 68,
+          backgroundColor: "#f59e0b",
+          borderRadius: 14,
+          boxShadow: "0px 8px 22px rgba(0,0,0,0.34)",
+        },
+      },
+    ],
+  };
+}
+
+function checkLayoutEvidenceGeometry(
+  results: LayoutCompileResult[],
+): VideoCheck {
+  let count = 0;
+  for (const result of results) {
+    for (const measurement of result.measurements) {
+      count += 1;
+      const rect = measurement.resolved;
+      const finite = [rect.x, rect.y, rect.width, rect.height].every(
+        Number.isFinite,
+      );
+      const bounded =
+        rect.x >= result.container.x - 1e-6 &&
+        rect.y >= result.container.y - 1e-6 &&
+        rect.x + rect.width <=
+          result.container.x + result.container.width + 1e-6 &&
+        rect.y + rect.height <=
+          result.container.y + result.container.height + 1e-6;
+      if (!finite || !bounded) {
+        return {
+          label: "geometry",
+          pass: false,
+          detail: `${measurement.id} ${JSON.stringify(rect)} outside ${JSON.stringify(result.container)}`,
+        };
+      }
+    }
+  }
+  return {
+    label: "geometry",
+    pass: count >= 10,
+    detail: `${count} bounded boxes`,
+  };
+}
+
+function checkLayoutEvidenceText(results: LayoutCompileResult[]): VideoCheck {
+  const measurements = results
+    .flatMap((result) => result.measurements)
+    .filter((measurement) => measurement.textPlan);
+  const ids = new Set(measurements.map((measurement) => measurement.id));
+  const expected = [
+    "overlay-badge",
+    "latin-copy",
+    "rtl-copy",
+    "cjk-copy",
+    "emoji-copy",
+  ];
+  const fit = measurements.every(
+    (measurement) =>
+      measurement.textPlan?.fit.status !== "impossible" &&
+      (measurement.textPlan?.lines.length ?? 0) > 0 &&
+      measurement.font?.assetId === goldenLayoutFontFamily,
+  );
+  const rtl = measurements.find((measurement) => measurement.id === "rtl-copy")
+    ?.textPlan?.baseDirection;
+  return {
+    label: "text",
+    pass: fit && expected.every((id) => ids.has(id)) && rtl === "rtl",
+    detail: `${measurements.length} planned tracks, RTL ${rtl ?? "missing"}`,
+  };
+}
+
+function checkLayoutEvidencePixels(frame: RenderedFrame): VideoCheck {
+  let opaque = 0;
+  let bright = 0;
+  const colors = new Set<string>();
+  for (let index = 0; index < frame.rgba.length; index += 4) {
+    const red = frame.rgba[index]!;
+    const green = frame.rgba[index + 1]!;
+    const blue = frame.rgba[index + 2]!;
+    const alpha = frame.rgba[index + 3]!;
+    if (alpha > 0) opaque += 1;
+    if (alpha > 0 && red + green + blue > 570) bright += 1;
+    if (index % 64 === 0 && alpha > 0) {
+      colors.add(`${red >> 4}:${green >> 4}:${blue >> 4}`);
+    }
+  }
+  const pixels = frame.width * frame.height;
+  const pass = opaque > pixels * 0.95 && bright > 24 && colors.size >= 8;
+  return {
+    label: "pixels",
+    pass,
+    detail: `${opaque}/${pixels} opaque, ${bright} bright, ${colors.size} sampled colors`,
+  };
+}
+
+function semanticSourceHasNoChildPixelGeometry(nodes: SceneNode[]): boolean {
+  const geometryKeys: Array<keyof NonNullable<SceneNode["style"]>> = [
+    "position",
+    "left",
+    "right",
+    "top",
+    "bottom",
+    "inset",
+    "width",
+    "height",
+  ];
+  const pending = [...nodes];
+  while (pending.length > 0) {
+    const node = pending.pop()!;
+    if (geometryKeys.some((key) => node.style?.[key] !== undefined)) {
+      return false;
+    }
+    pending.push(...(node.children ?? []));
+  }
+  return true;
+}
+
+async function renderLayoutEvidenceFrame(scene: Scene): Promise<RenderedFrame> {
+  const capture = createCaptureContext(scene.width, scene.height);
+  let assets: Awaited<ReturnType<typeof resolveAssets>> | undefined;
+  try {
+    assets = await resolveAssets(scene, {
+      extensions: goldenExtensionRegistry,
+    });
+    await prepareFrame(scene, 0, assets);
+    renderStill(capture.context, scene, 0, { assets });
+    return captureRgba(capture.context, scene.width, scene.height);
+  } finally {
+    if (assets) await disposeAssetsAsync(assets);
+    capture.canvas.width = 1;
+    capture.canvas.height = 1;
+  }
+}
 
 const canvasDisplayListCapabilities = [
   { id: "motionforge.effect", version: "1" },

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.0.0 / MF6",
+  "recordedFor": "MotionForge 1.0.0 / MF7",
   "packages": {
     "@motionforge/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
@@ -109,6 +109,17 @@
       },
       "bin": null
     },
+    "@motionforge/layout": {
+      "owner": "Bounded semantic layout authoring and Scene v1 compilation",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
     "@motionforge/player": {
       "owner": "Canvas preview, playback clock, seeking, and audio synchronization",
       "stability": "stable",
@@ -131,6 +142,10 @@
         "./catalog": {
           "types": "./dist/catalog.d.ts",
           "import": "./dist/catalog.js"
+        },
+        "./intents": {
+          "types": "./dist/intents.d.ts",
+          "import": "./dist/intents.js"
         },
         "./macros": {
           "types": "./dist/macros.d.ts",

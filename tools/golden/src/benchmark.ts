@@ -43,6 +43,7 @@ const server = await createServer({
           "agent-tools",
           "schema",
           "core",
+          "layout",
           "presets",
           "showcase",
           "renderer-canvas2d",

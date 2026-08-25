@@ -15,9 +15,11 @@
       "@motionforge/agent-tools": ["packages/agent-tools/src/index.ts"],
       "@motionforge/extensions": ["packages/extensions/src/index.ts"],
       "@motionforge/inspection": ["packages/inspection/src/index.ts"],
+      "@motionforge/layout": ["packages/layout/src/index.ts"],
       "create-motionforge": ["packages/create-motionforge/src/index.ts"],
       "@motionforge/presets": ["packages/presets/src/index.ts"],
       "@motionforge/presets/catalog": ["packages/presets/src/catalog.ts"],
+      "@motionforge/presets/intents": ["packages/presets/src/intents.ts"],
       "@motionforge/presets/macros": ["packages/presets/src/macros.ts"],
       "@motionforge/showcase": ["packages/showcase/src/index.ts"],
       "@motionforge/renderer-canvas2d": [

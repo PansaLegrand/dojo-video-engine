@@ -85,6 +85,7 @@ flowchart TB
 | [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export           | ✅ working |
 | [`@motionforge/core`](packages/core)                           | Evaluation, layout, display-list compiler              | ✅ working |
 | [`@motionforge/inspection`](packages/inspection)               | Spatial/temporal inspection and diagnostics            | ✅ working |
+| [`@motionforge/layout`](packages/layout)                       | Semantic stack/grid/constraint compiler to Scene v1    | ✅ working |
 | [`@motionforge/commands`](packages/commands)                   | Typed reversible edits and revisioned workspaces       | ✅ working |
 | [`@motionforge/runtime`](packages/runtime)                     | Reusable prepared scenes and lifecycle transactions    | ✅ working |
 | [`@motionforge/agent-tools`](packages/agent-tools)             | Agent validation, diff, discovery, render/export tools | ✅ working |

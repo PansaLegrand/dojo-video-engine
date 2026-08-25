@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-26
-Status: active implementation contract; MF0 through MF6 complete
+Status: active implementation contract; MF0 through MF7 complete
 
 ## Purpose
 
@@ -474,6 +474,10 @@ Exit gate:
 
 ### MF7 — Layout v2 authoring semantics
 
+Implementation status: complete. The accepted decision is
+[RFC 0012](rfcs/0012-layout-v2-authoring.md); the exact contract and release
+evidence are recorded in [the MF7 delivery note](mf7-layout-v2.md).
+
 Commit:
 
 ```text
@@ -785,4 +789,22 @@ than the engine priority.
   63.86/258.83 MiB exact-bucket scratch peaks. Cached, fresh, and replenished
   cache-disabled pixels were byte-identical. All 14 public packages packed,
   and the external packed starter passed runtime imports plus
+  validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF7 complete: accepted RFC 0012 and added the public
+  `@motionforge/layout` package with a
+  flat, bounded Layout Contract v1 that compiles stack/row/column, wrapping,
+  grid, overlay, fill/hug, grow/shrink, safe-area, aspect, and sibling
+  constraints into ordinary Scene v1. Prepared media/text metrics, explicit
+  fallback/font policies, deterministic text projection, strict JSON evidence,
+  stable failures, and every solver budget are covered. The public
+  `@motionforge/presets/intents` entry point now exposes versioned manifests and
+  nonthrowing compilation for place, safe-area, text-role, media-look, and
+  clip-layout intent. The full gate passed 1,037 unit tests, 750 generated
+  Scenes / 2,250 evaluated frames, 28 corpus Scenes, seven resource checks,
+  unchanged legacy pixel/media/audio/export/runtime/tool goldens, the new
+  three-aspect Layout v2 browser matrix, Chromium/Firefox/WebKit, and all 10 E2E
+  checks. The 720p gate peaked at 5.97 ms/frame and 31 MiB heap; cache-hit
+  compositing measured 2.01 ms/frame at 1080p and 1.72 ms/frame at 4K with
+  exact cache-disabled pixels. All 15 public packages packed, and the external
+  packed starter imported runtime entry points and passed
   validate/migrate/inspect/lint/build.

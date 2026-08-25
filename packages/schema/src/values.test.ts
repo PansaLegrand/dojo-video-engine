@@ -15,6 +15,7 @@ import {
   parseConicGradientValue,
   parseEasingValue,
   parseFilterValue,
+  parseFontFamilyListValue,
   parseLinearGradientValue,
   parseObjectPositionValue,
   parseRadialGradientValue,
@@ -196,6 +197,62 @@ describe("portable Canvas font descriptors", () => {
         fontWeightValueSchema.safeParse(weight).success,
         String(weight),
       ).toBe(false);
+    }
+  });
+
+  it("parses exact ids and family lists into detached decoded entries", () => {
+    expect(parseFontFamilyListValue("GoldenSans")).toEqual([
+      { family: "GoldenSans", token: "GoldenSans", quoted: false },
+    ]);
+    expect(
+      parseFontFamilyListValue(
+        `  'Noto Sans SC' , "Name\\, With \\"Quote\\" and \\\\ Slash", 思源黑体, sans-serif  `,
+      ),
+    ).toEqual([
+      {
+        family: "Noto Sans SC",
+        token: "'Noto Sans SC'",
+        quoted: true,
+      },
+      {
+        family: `Name, With "Quote" and \\ Slash`,
+        token: `"Name\\, With \\"Quote\\" and \\\\ Slash"`,
+        quoted: true,
+      },
+      { family: "思源黑体", token: "思源黑体", quoted: false },
+      { family: "sans-serif", token: "sans-serif", quoted: false },
+    ]);
+
+    const first = parseFontFamilyListValue("Inter, serif")!;
+    first[0]!.family = "mutated";
+    expect(parseFontFamilyListValue("Inter, serif")?.[0]?.family).toBe("Inter");
+  });
+
+  it("bounds lists and rejects malformed or unsafe family tokens", () => {
+    expect(
+      parseFontFamilyListValue(
+        Array.from({ length: 32 }, (_, index) => `Font${index}`).join(","),
+      ),
+    ).toHaveLength(32);
+    for (const family of [
+      Array.from({ length: 33 }, (_, index) => `Font${index}`).join(","),
+      "A".repeat(1_025),
+      "Arial,",
+      ",Arial",
+      "Arial,,serif",
+      `""`,
+      `"unterminated`,
+      `"bad\\"`,
+      `"bad\u0000name"`,
+      `"bad\nname"`,
+      `unquoted\\,comma`,
+      `"closed"suffix`,
+    ]) {
+      expect(
+        parseFontFamilyListValue(family),
+        JSON.stringify(family),
+      ).toBeNull();
+      expect(fontFamilyValueSchema.safeParse(family).success).toBe(false);
     }
   });
 });

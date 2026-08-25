@@ -22,6 +22,7 @@
     "@motionforge/core": "workspace:*",
     "@motionforge/export": "workspace:*",
     "@motionforge/extensions": "workspace:*",
+    "@motionforge/layout": "workspace:*",
     "@motionforge/player": "workspace:*",
     "@motionforge/presets": "workspace:*",
     "@motionforge/renderer-canvas2d": "workspace:*",

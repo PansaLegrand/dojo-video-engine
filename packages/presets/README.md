@@ -151,6 +151,60 @@ Macros are authoring sugar, not a second renderer contract. Expanded output is
 ordinary scene data that can be patched, validated, stored, previewed, and
 exported by the existing engine.
 
+## Layout intent compiler manifests
+
+`@motionforge/presets/intents` exposes the versioned, JSON-facing discovery
+boundary behind the existing `place`, `textRole`, media `look`, and clip
+`layout` authoring sugar:
+
+```ts
+import {
+  compileLayoutIntent,
+  getLayoutCompilerManifest,
+  layoutCompilerManifests,
+} from "@motionforge/presets/intents";
+
+const available = layoutCompilerManifests();
+const titleRole = getLayoutCompilerManifest("text-role/title");
+
+const result = compileLayoutIntent({
+  id: "place",
+  params: { anchor: "bottom-center", margin: 32 },
+  context: {
+    composition: { width: 1080, height: 1920 },
+    node: { id: "headline", type: "text", text: "Ship it" },
+    wrapperId: "headline-place",
+    targetType: "text",
+  },
+});
+
+if (!result.ok) {
+  console.error(result.errors); // stable code, path, message, suggestions
+}
+```
+
+Manifest v1 includes a portable draft-07 parameter schema, valid examples,
+compatible node types, required host context, semantic output roles, and the
+Scene style keys owned by each compiler. Returned manifests are detached,
+deeply frozen JSON snapshots, so documentation or form code cannot mutate the
+compiler registry.
+
+Stable names are qualified by family where names could otherwise collide:
+
+- `place` and `safe-area/box`
+- `text-role/display`, `text-role/title`, `text-role/subtitle`,
+  `text-role/body`, `text-role/caption`, and `text-role/label`
+- `media-look/<name>` for every current media look
+- `clip-layout/<name>` for every current clip layout
+
+Compilation is nonthrowing for untrusted agent input and accepts JSON-safe
+values only. Successful results are ordinary Scene v1 styles or a Scene v1
+wrapper node. The dispatcher delegates to the established 1.x helpers, so
+safe-area numbers, place wrapper shape and timing hoisting, typography ramps,
+fixed legacy clip layouts, and caller-style override precedence are unchanged.
+Future adaptive layout-plan compilers can be added under new manifest ids;
+they do not silently redefine an existing preset name.
+
 ## Countdown macro
 
 Use the countdown macro for numeric countdowns. `duration` is the total
@@ -349,6 +403,7 @@ Stable for 1.x integrations:
 - Template helpers that emit plain scene data: `textOverlay()`, `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `transitionOverlay()`, `styledCaptions()`, `subtitleTrack()`, `captionTrack` equivalents, and SRT/VTT parsers.
 - Template catalogs and keys for user-facing choices: caption/subtitle, text overlay, image overlay, video overlay, audio overlay, media look, clip layout, transition, and safe-area helpers.
 - `mediaLook()`, `clipLayout()`, `safeAreaBox()`, `resolveSafeArea()`, and `inferSafeAreaProfile()`.
+- Layout intent discovery and compilation through `layoutCompilerManifests()`, `getLayoutCompilerManifest()`, and nonthrowing `compileLayoutIntent()`.
 
 Evolving additively in 1.x:
 

@@ -286,22 +286,43 @@ export function isColorValue(value: string): boolean {
   return parseColorValue(value) !== null;
 }
 
-export function isFontFamilyValue(value: string): boolean {
+export type ParsedFontFamilyListEntry = {
+  /** Decoded family name without surrounding quotes. */
+  family: string;
+  /** Trimmed source token, including author-provided quotes and escapes. */
+  token: string;
+  quoted: boolean;
+};
+
+/** Parses the bounded Canvas family-list subset into detached stable entries. */
+export function parseFontFamilyListValue(
+  value: string,
+): ParsedFontFamilyListEntry[] | null {
   const trimmed = bounded(value);
-  if (trimmed === null || trimmed.length > 1_024) return false;
+  if (trimmed === null || trimmed.length > 1_024) return null;
   const families = splitFontFamilyList(trimmed);
-  if (!families || families.length > 32) return false;
-  return families.every((family) => {
-    const part = family.trim();
-    if (part.length === 0) return false;
-    const quote = part[0];
+  if (!families || families.length > 32) return null;
+  const entries: ParsedFontFamilyListEntry[] = [];
+  for (const token of families) {
+    if (token.length === 0) return null;
+    const quote = token[0];
     if (quote === '"' || quote === "'") {
-      if (part.at(-1) !== quote || part.length < 3) return false;
-      const content = part.slice(1, -1);
-      return !/[\u0000-\u001f\u007f]/.test(content);
+      if (token.at(-1) !== quote || token.length < 3) return null;
+      const content = token.slice(1, -1);
+      if (/[\u0000-\u001f\u007f]/.test(content)) return null;
+      const family = unescapeQuotedFontFamily(content);
+      if (family === null) return null;
+      entries.push({ family, token, quoted: true });
+      continue;
     }
-    return /^-?[\p{L}\p{N}_][\p{L}\p{N}_ -]*$/u.test(part);
-  });
+    if (!/^-?[\p{L}\p{N}_][\p{L}\p{N}_ -]*$/u.test(token)) return null;
+    entries.push({ family: token, token, quoted: false });
+  }
+  return entries;
+}
+
+export function isFontFamilyValue(value: string): boolean {
+  return parseFontFamilyListValue(value) !== null;
 }
 
 export function isFontWeightString(value: string): boolean {
@@ -1176,6 +1197,22 @@ function splitFontFamilyList(value: string): string[] | null {
   if (quote) return null;
   parts.push(current.trim());
   return parts;
+}
+
+function unescapeQuotedFontFamily(value: string): string | null {
+  let decoded = "";
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index] ?? "";
+    if (char !== "\\") {
+      decoded += char;
+      continue;
+    }
+    const escaped = value[index + 1];
+    if (escaped === undefined) return null;
+    decoded += escaped;
+    index += 1;
+  }
+  return decoded;
 }
 
 function gradientBody(value: string, name: string): string | null {

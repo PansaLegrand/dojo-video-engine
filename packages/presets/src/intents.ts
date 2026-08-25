@@ -1,14 +1,24 @@
 import { z } from "zod";
-import type { SceneNode, SceneStyle } from "@motionforge/schema";
+import {
+  closestIds,
+  sceneNodeSchema,
+  styleSchema,
+  type SceneNode,
+  type SceneStyle,
+} from "@motionforge/schema";
 import {
   clipLayout,
   clipLayouts,
   mediaLook,
   mediaLooks,
   resolveSafeArea,
+  safeAreaBox,
   type ClipLayoutKey,
   type CompositionSize,
   type MediaLookKey,
+  type SafeAreaAnchor,
+  type SafeAreaBoxOptions,
+  type SafeAreaInput,
 } from "./index.js";
 
 /**
@@ -314,4 +324,852 @@ export function resolveMediaIntents(params: {
   }
 
   return { style: merged as SceneStyle };
+}
+
+// ---------------------------------------------------------------------------
+// Versioned discovery and compilation boundary
+
+/**
+ * Version 1 describes compilers that erase authoring intent into ordinary
+ * Scene v1 nodes/styles. The manifest is discovery data, never executable
+ * runtime state and never a second stored scene format.
+ */
+export const LAYOUT_COMPILER_MANIFEST_VERSION = 1 as const;
+
+export type LayoutCompilerManifestVersion =
+  typeof LAYOUT_COMPILER_MANIFEST_VERSION;
+
+export type LayoutCompilerFamily =
+  | "place"
+  | "safe-area"
+  | "text-role"
+  | "media-look"
+  | "clip-layout";
+
+export type LayoutCompilerId =
+  | "place"
+  | "safe-area/box"
+  | `text-role/${TextRole}`
+  | `media-look/${MediaLookKey}`
+  | `clip-layout/${ClipLayoutKey}`;
+
+export type LayoutCompilerNodeType = SceneNode["type"];
+export type LayoutCompilerContextKey = "composition" | "node" | "wrapperId";
+
+export type LayoutCompilerOutputKind = "style" | "node-wrapper";
+
+export type LayoutCompilerManifest = Readonly<{
+  manifestVersion: LayoutCompilerManifestVersion;
+  id: LayoutCompilerId;
+  family: LayoutCompilerFamily;
+  name: string;
+  description: string;
+  category?: string;
+  /** Portable JSON Schema draft-07 for `compileLayoutIntent().params`. */
+  paramsSchema: Readonly<Record<string, unknown>>;
+  examples: readonly Readonly<Record<string, unknown>>[];
+  appliesTo: readonly LayoutCompilerNodeType[];
+  requiredContext: readonly LayoutCompilerContextKey[];
+  output: Readonly<{
+    kind: LayoutCompilerOutputKind;
+    roles: readonly string[];
+    canonicalTarget: "scene-v1";
+    /** Keys supplied by the compiler before caller style overrides. */
+    ownedStyleKeys: readonly string[];
+  }>;
+}>;
+
+export type CompileLayoutIntentContext = {
+  composition?: CompositionSize;
+  /** Required only by the `place` compiler. */
+  node?: SceneNode;
+  /** Required only by the `place` compiler. */
+  wrapperId?: string;
+  /** Optional author override. Existing helper precedence is preserved. */
+  style?: SceneStyle;
+  /** Optional target assertion for hosts compiling by selected-node id. */
+  targetType?: LayoutCompilerNodeType;
+};
+
+export type CompileLayoutIntentRequest = {
+  id: string;
+  params?: unknown;
+  context?: CompileLayoutIntentContext;
+};
+
+export type LayoutCompileIssueCode =
+  | "invalid_request"
+  | "unknown_intent"
+  | "invalid_params"
+  | "missing_context"
+  | "invalid_context"
+  | "unsupported_target"
+  | "non_json_value"
+  | "compile_failed";
+
+export type LayoutCompileIssue = {
+  code: LayoutCompileIssueCode;
+  path: string;
+  message: string;
+  suggestions: string[];
+};
+
+export type LayoutCompileDiagnostic = {
+  code: "layout_intent_compiled";
+  path: "id";
+  message: string;
+};
+
+export type CompiledLayoutIntentValue =
+  | { kind: "style"; style: SceneStyle }
+  | { kind: "node-wrapper"; node: SceneNode };
+
+export type CompileLayoutIntentResult =
+  | {
+      ok: true;
+      id: LayoutCompilerId;
+      value: CompiledLayoutIntentValue;
+      diagnostics: LayoutCompileDiagnostic[];
+    }
+  | { ok: false; errors: LayoutCompileIssue[] };
+
+const draft07 = "http://json-schema.org/draft-07/schema#";
+const allNodeTypes: LayoutCompilerNodeType[] = [
+  "div",
+  "text",
+  "img",
+  "video",
+  "audio",
+  "lottie",
+  "effect",
+  "extension",
+  "shape",
+];
+const visualNodeTypes = allNodeTypes.filter((type) => type !== "audio");
+const mediaIntentNodeTypes: LayoutCompilerNodeType[] = ["div", "img", "video"];
+
+const jsonFiniteNumberSchema = {
+  anyOf: [
+    { type: "number" },
+    { type: "string", pattern: "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$" },
+  ],
+};
+
+const placeParamsJsonSchema = {
+  $schema: draft07,
+  type: "object",
+  properties: {
+    anchor: { type: "string", enum: [...placeAnchors] },
+    margin: {
+      anyOf: [
+        jsonFiniteNumberSchema,
+        {
+          type: "object",
+          properties: {
+            x: jsonFiniteNumberSchema,
+            y: jsonFiniteNumberSchema,
+          },
+          additionalProperties: false,
+        },
+      ],
+    },
+    safeArea: { type: "boolean" },
+    offsetX: jsonFiniteNumberSchema,
+    offsetY: jsonFiniteNumberSchema,
+    zIndex: jsonFiniteNumberSchema,
+  },
+  required: ["anchor"],
+  additionalProperties: false,
+};
+
+const safeAreaAnchors: SafeAreaAnchor[] = [
+  "center",
+  "top",
+  "bottom",
+  "title",
+  "subtitle",
+  "lowerThird",
+  "statCallout",
+];
+const safeAreaProfileNames = ["auto", "vertical", "square", "landscape"];
+const safeAreaInputJsonSchema = {
+  anyOf: [
+    { type: "string", enum: safeAreaProfileNames },
+    { type: "boolean" },
+    jsonFiniteNumberSchema,
+    {
+      type: "object",
+      properties: {
+        x: jsonFiniteNumberSchema,
+        y: jsonFiniteNumberSchema,
+        top: jsonFiniteNumberSchema,
+        right: jsonFiniteNumberSchema,
+        bottom: jsonFiniteNumberSchema,
+        left: jsonFiniteNumberSchema,
+      },
+      additionalProperties: false,
+    },
+  ],
+};
+const safeAreaBoxParamsJsonSchema = {
+  $schema: draft07,
+  type: "object",
+  properties: {
+    anchor: { type: "string", enum: safeAreaAnchors },
+    safeArea: safeAreaInputJsonSchema,
+    width: jsonFiniteNumberSchema,
+    height: jsonFiniteNumberSchema,
+    widthRatio: jsonFiniteNumberSchema,
+    heightRatio: jsonFiniteNumberSchema,
+    align: { type: "string", enum: ["left", "center", "right"] },
+    offsetX: jsonFiniteNumberSchema,
+    offsetY: jsonFiniteNumberSchema,
+  },
+  required: ["anchor"],
+  additionalProperties: false,
+};
+const emptyParamsJsonSchema = {
+  $schema: draft07,
+  type: "object",
+  properties: {},
+  additionalProperties: false,
+};
+
+const safeAreaInputSchema: z.ZodType<SafeAreaInput, z.ZodTypeDef, unknown> =
+  z.union([
+    z.enum(["auto", "vertical", "square", "landscape"]),
+    z.boolean(),
+    looseNumber,
+    z
+      .object({
+        x: looseNumber.optional(),
+        y: looseNumber.optional(),
+        top: looseNumber.optional(),
+        right: looseNumber.optional(),
+        bottom: looseNumber.optional(),
+        left: looseNumber.optional(),
+      })
+      .strict(),
+  ]);
+
+const safeAreaBoxIntentSchema = z
+  .object({
+    anchor: z.enum(safeAreaAnchors as [SafeAreaAnchor, ...SafeAreaAnchor[]]),
+    safeArea: safeAreaInputSchema.optional(),
+    width: looseNumber.optional(),
+    height: looseNumber.optional(),
+    widthRatio: looseNumber.optional(),
+    heightRatio: looseNumber.optional(),
+    align: z.enum(["left", "center", "right"]).optional(),
+    offsetX: looseNumber.optional(),
+    offsetY: looseNumber.optional(),
+  })
+  .strict();
+
+const emptyParamsSchema = z.object({}).strict();
+const compositionSchema = z
+  .object({
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  })
+  .strict();
+const wrapperIdSchema = z.string().trim().min(1).max(191);
+
+function sortedKeys(value: Record<string, unknown>): string[] {
+  return Object.keys(value).sort(compareCodeUnits);
+}
+
+function manifest(
+  value: Omit<LayoutCompilerManifest, "manifestVersion">,
+): LayoutCompilerManifest {
+  return {
+    manifestVersion: LAYOUT_COMPILER_MANIFEST_VERSION,
+    ...value,
+  };
+}
+
+const layoutCompilerManifestSource = deepFreeze(
+  [
+    manifest({
+      id: "place",
+      family: "place",
+      name: "Place",
+      description:
+        "Anchor a root node inside the composition safe area through a flex wrapper.",
+      paramsSchema: placeParamsJsonSchema,
+      examples: [{ anchor: "bottom-center", margin: 32 }],
+      appliesTo: allNodeTypes,
+      requiredContext: ["composition", "node", "wrapperId"],
+      output: {
+        kind: "node-wrapper",
+        roles: ["layout", "placement"],
+        canonicalTarget: "scene-v1",
+        ownedStyleKeys: [
+          "alignItems",
+          "display",
+          "flexDirection",
+          "height",
+          "justifyContent",
+          "left",
+          "position",
+          "top",
+          "transform",
+          "width",
+          "zIndex",
+        ],
+      },
+    }),
+    manifest({
+      id: "safe-area/box",
+      family: "safe-area",
+      name: "Safe-area box",
+      description:
+        "Resolve a named safe-area anchor into explicit Scene v1 box geometry.",
+      paramsSchema: safeAreaBoxParamsJsonSchema,
+      examples: [
+        {
+          anchor: "lowerThird",
+          safeArea: "auto",
+          widthRatio: 0.72,
+        },
+      ],
+      appliesTo: visualNodeTypes,
+      requiredContext: ["composition"],
+      output: {
+        kind: "style",
+        roles: ["layout", "safe-area"],
+        canonicalTarget: "scene-v1",
+        ownedStyleKeys: ["height", "left", "position", "top", "width"],
+      },
+    }),
+    ...textRoles.map((role) =>
+      manifest({
+        id: `text-role/${role}`,
+        family: "text-role",
+        name: role[0]!.toUpperCase() + role.slice(1),
+        description: `Apply the composition-scaled ${role} typography role.`,
+        paramsSchema: emptyParamsJsonSchema,
+        examples: [{}],
+        appliesTo: ["text"],
+        requiredContext: ["composition"],
+        output: {
+          kind: "style",
+          roles: ["text", "typography"],
+          canonicalTarget: "scene-v1",
+          ownedStyleKeys: sortedKeys(
+            textRoleStyle(role, { width: 1000, height: 1000 }) as Record<
+              string,
+              unknown
+            >,
+          ),
+        },
+      }),
+    ),
+    ...Object.entries(mediaLooks).map(([key, preset]) =>
+      manifest({
+        id: `media-look/${key as MediaLookKey}`,
+        family: "media-look",
+        name: preset.name,
+        description: preset.description,
+        category: preset.category,
+        paramsSchema: emptyParamsJsonSchema,
+        examples: [{}],
+        appliesTo: mediaIntentNodeTypes,
+        requiredContext: [],
+        output: {
+          kind: "style",
+          roles: ["media", "visual-treatment"],
+          canonicalTarget: "scene-v1",
+          ownedStyleKeys: sortedKeys(preset.style as Record<string, unknown>),
+        },
+      }),
+    ),
+    ...Object.entries(clipLayouts).map(([key, preset]) =>
+      manifest({
+        id: `clip-layout/${key as ClipLayoutKey}`,
+        family: "clip-layout",
+        name: preset.name,
+        description: preset.description,
+        category: preset.category,
+        paramsSchema: emptyParamsJsonSchema,
+        examples: [{}],
+        appliesTo: mediaIntentNodeTypes,
+        requiredContext: [],
+        output: {
+          kind: "style",
+          roles: ["layout", "visual-media"],
+          canonicalTarget: "scene-v1",
+          ownedStyleKeys: sortedKeys(preset.style as Record<string, unknown>),
+        },
+      }),
+    ),
+  ].sort((left, right) => compareCodeUnits(left.id, right.id)),
+);
+
+const layoutCompilerManifestsById = new Map(
+  layoutCompilerManifestSource.map((entry) => [entry.id, entry]),
+);
+
+/**
+ * Returns a detached, deeply frozen, JSON-safe manifest snapshot. Mutating a
+ * result can never alter later discovery or compiler behavior.
+ */
+export function layoutCompilerManifests(): readonly LayoutCompilerManifest[] {
+  return deepFreeze(cloneJson(layoutCompilerManifestSource));
+}
+
+/** Returns one detached manifest, or `undefined` for an unknown stable id. */
+export function getLayoutCompilerManifest(
+  id: string,
+): LayoutCompilerManifest | undefined {
+  const found = layoutCompilerManifestsById.get(id as LayoutCompilerId);
+  return found === undefined ? undefined : deepFreeze(cloneJson(found));
+}
+
+/**
+ * Nonthrowing intent dispatcher for agents, commands, and programmer tools.
+ * It validates JSON input and context, then delegates to the existing 1.x
+ * helpers so their tree shape, numeric defaults, and override precedence stay
+ * byte-for-byte compatible for JSON-safe input.
+ */
+export function compileLayoutIntent(
+  requestInput: unknown,
+): CompileLayoutIntentResult {
+  try {
+    if (!isPlainRecord(requestInput)) {
+      return failure(
+        issue(
+          "invalid_request",
+          "request",
+          "Layout compiler request must be a plain JSON object.",
+        ),
+      );
+    }
+
+    const unknownRequestKeys = Object.keys(requestInput).filter(
+      (key) => !["id", "params", "context"].includes(key),
+    );
+    if (unknownRequestKeys.length > 0) {
+      return failure(
+        issue(
+          "invalid_request",
+          unknownRequestKeys[0]!,
+          `Unknown layout compiler request key ${JSON.stringify(unknownRequestKeys[0])}.`,
+          ["id", "params", "context"],
+        ),
+      );
+    }
+
+    if (typeof requestInput.id !== "string" || requestInput.id.length === 0) {
+      return failure(
+        issue(
+          "invalid_request",
+          "id",
+          "Layout compiler request needs a non-empty string id.",
+          layoutCompilerManifestSource.slice(0, 3).map(({ id }) => id),
+        ),
+      );
+    }
+
+    const found = layoutCompilerManifestsById.get(
+      requestInput.id as LayoutCompilerId,
+    );
+    if (!found) {
+      return failure(
+        issue(
+          "unknown_intent",
+          "id",
+          `Unknown layout compiler ${JSON.stringify(requestInput.id)}.`,
+          closestIds(
+            requestInput.id,
+            layoutCompilerManifestSource.map(({ id }) => id),
+            3,
+          ),
+        ),
+      );
+    }
+
+    const params = requestInput.params ?? {};
+    const contextInput = requestInput.context ?? {};
+    const jsonIssue = findJsonIssue(params, "params");
+    if (jsonIssue) return failure(jsonIssue);
+    if (!isPlainRecord(contextInput)) {
+      return failure(
+        issue(
+          "invalid_context",
+          "context",
+          "Layout compiler context must be a plain JSON object.",
+        ),
+      );
+    }
+    const unknownContextKeys = Object.keys(contextInput).filter(
+      (key) =>
+        !["composition", "node", "wrapperId", "style", "targetType"].includes(
+          key,
+        ),
+    );
+    if (unknownContextKeys.length > 0) {
+      return failure(
+        issue(
+          "invalid_context",
+          `context.${unknownContextKeys[0]}`,
+          `Unknown layout compiler context key ${JSON.stringify(unknownContextKeys[0])}.`,
+          ["composition", "node", "wrapperId", "style", "targetType"],
+        ),
+      );
+    }
+
+    const contextJsonIssue = findJsonIssue(contextInput, "context");
+    if (contextJsonIssue) return failure(contextJsonIssue);
+
+    const missing = found.requiredContext.filter(
+      (key) => contextInput[key] === undefined,
+    );
+    if (missing.length > 0) {
+      return {
+        ok: false,
+        errors: missing.map((key) =>
+          issue(
+            "missing_context",
+            `context.${key}`,
+            `Layout compiler ${JSON.stringify(found.id)} requires context.${key}.`,
+          ),
+        ),
+      };
+    }
+
+    if (contextInput.targetType !== undefined) {
+      if (
+        typeof contextInput.targetType !== "string" ||
+        !allNodeTypes.includes(
+          contextInput.targetType as LayoutCompilerNodeType,
+        )
+      ) {
+        return failure(
+          issue(
+            "invalid_context",
+            "context.targetType",
+            "targetType must be a canonical Scene node type.",
+            found.appliesTo as string[],
+          ),
+        );
+      }
+      if (
+        !found.appliesTo.includes(
+          contextInput.targetType as LayoutCompilerNodeType,
+        )
+      ) {
+        return failure(
+          issue(
+            "unsupported_target",
+            "context.targetType",
+            `${found.id} does not apply to ${JSON.stringify(contextInput.targetType)} nodes.`,
+            found.appliesTo as string[],
+          ),
+        );
+      }
+    }
+
+    const styleResult =
+      contextInput.style === undefined
+        ? undefined
+        : styleSchema.safeParse(contextInput.style);
+    if (styleResult && !styleResult.success) {
+      return zodFailure("invalid_context", "context.style", styleResult.error);
+    }
+    const style = styleResult?.data;
+
+    let compiled: CompiledLayoutIntentValue;
+    if (found.id === "place") {
+      const parsed = placeIntentSchema.safeParse(params);
+      if (!parsed.success) {
+        return zodFailure("invalid_params", "params", parsed.error);
+      }
+      const composition = parseComposition(contextInput.composition);
+      if (!composition.ok) return composition.result;
+      const wrapperId = wrapperIdSchema.safeParse(contextInput.wrapperId);
+      if (!wrapperId.success) {
+        return zodFailure(
+          "invalid_context",
+          "context.wrapperId",
+          wrapperId.error,
+        );
+      }
+      const node = sceneNodeSchema.safeParse(contextInput.node);
+      if (!node.success) {
+        return zodFailure("invalid_context", "context.node", node.error);
+      }
+
+      compiled = {
+        kind: "node-wrapper",
+        node: resolvePlaceIntent({
+          node: cloneJson(contextInput.node) as SceneNode,
+          place: parsed.data,
+          size: composition.value,
+          wrapperId: wrapperId.data,
+        }),
+      };
+    } else if (found.id === "safe-area/box") {
+      const parsed = safeAreaBoxIntentSchema.safeParse(params);
+      if (!parsed.success) {
+        return zodFailure("invalid_params", "params", parsed.error);
+      }
+      const composition = parseComposition(contextInput.composition);
+      if (!composition.ok) return composition.result;
+      const { anchor, ...options } = parsed.data;
+      compiled = {
+        kind: "style",
+        style: {
+          ...safeAreaBox(
+            composition.value,
+            anchor,
+            options as SafeAreaBoxOptions,
+          ),
+          ...style,
+        },
+      };
+    } else if (found.family === "text-role") {
+      const parsed = emptyParamsSchema.safeParse(params);
+      if (!parsed.success) {
+        return zodFailure("invalid_params", "params", parsed.error);
+      }
+      const composition = parseComposition(contextInput.composition);
+      if (!composition.ok) return composition.result;
+      compiled = {
+        kind: "style",
+        style: applyTextRole(
+          style,
+          found.id.slice("text-role/".length) as TextRole,
+          composition.value,
+        ),
+      };
+    } else if (found.family === "media-look") {
+      const parsed = emptyParamsSchema.safeParse(params);
+      if (!parsed.success) {
+        return zodFailure("invalid_params", "params", parsed.error);
+      }
+      compiled = {
+        kind: "style",
+        style: mediaLook(
+          found.id.slice("media-look/".length) as MediaLookKey,
+          style,
+        ),
+      };
+    } else {
+      const parsed = emptyParamsSchema.safeParse(params);
+      if (!parsed.success) {
+        return zodFailure("invalid_params", "params", parsed.error);
+      }
+      compiled = {
+        kind: "style",
+        style: clipLayout(
+          found.id.slice("clip-layout/".length) as ClipLayoutKey,
+          style,
+        ),
+      };
+    }
+
+    const compiledJsonIssue = findJsonIssue(compiled, "value");
+    if (compiledJsonIssue) return failure(compiledJsonIssue);
+
+    return {
+      ok: true,
+      id: found.id,
+      value: cloneJson(compiled),
+      diagnostics: [
+        {
+          code: "layout_intent_compiled",
+          path: "id",
+          message: `Compiled ${JSON.stringify(found.id)} to ${found.output.canonicalTarget} ${found.output.kind}.`,
+        },
+      ],
+    };
+  } catch (error) {
+    return failure(
+      issue(
+        "compile_failed",
+        "request",
+        `Layout intent compilation failed safely: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
+  }
+}
+
+function parseComposition(
+  value: unknown,
+):
+  | { ok: true; value: CompositionSize }
+  | { ok: false; result: CompileLayoutIntentResult } {
+  const parsed = compositionSchema.safeParse(value);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      result: zodFailure(
+        "invalid_context",
+        "context.composition",
+        parsed.error,
+      ),
+    };
+  }
+  return { ok: true, value: parsed.data };
+}
+
+function zodFailure(
+  code: Extract<LayoutCompileIssueCode, "invalid_params" | "invalid_context">,
+  prefix: string,
+  error: z.ZodError,
+): CompileLayoutIntentResult {
+  return {
+    ok: false,
+    errors: error.issues.map((entry) => {
+      const path = [prefix, ...entry.path.map(String)].join(".");
+      const options =
+        entry.code === z.ZodIssueCode.invalid_enum_value
+          ? entry.options.map(String)
+          : [];
+      const input = readIssueInput(entry);
+      return issue(
+        code,
+        path,
+        entry.message,
+        typeof input === "string" && options.length > 0
+          ? closestIds(input, options, Math.min(3, options.length))
+          : options.slice(0, 3),
+      );
+    }),
+  };
+}
+
+function readIssueInput(entry: z.ZodIssue): unknown {
+  return "received" in entry ? entry.received : undefined;
+}
+
+function issue(
+  code: LayoutCompileIssueCode,
+  path: string,
+  message: string,
+  suggestions: readonly string[] = [],
+): LayoutCompileIssue {
+  return { code, path, message, suggestions: [...suggestions] };
+}
+
+function failure(error: LayoutCompileIssue): CompileLayoutIntentResult {
+  return { ok: false, errors: [error] };
+}
+
+function findJsonIssue(
+  root: unknown,
+  rootPath: string,
+): LayoutCompileIssue | undefined {
+  const stack: Array<{ value: unknown; path: string; depth: number }> = [
+    { value: root, path: rootPath, depth: 0 },
+  ];
+  const seen = new WeakSet<object>();
+  let values = 0;
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    values += 1;
+    if (values > 50_000) {
+      return issue(
+        "non_json_value",
+        current.path,
+        "Layout compiler input exceeds the 50,000-value JSON safety limit.",
+      );
+    }
+    if (current.depth > 64) {
+      return issue(
+        "non_json_value",
+        current.path,
+        "Layout compiler input exceeds the 64-level JSON depth limit.",
+      );
+    }
+
+    const value = current.value;
+    if (
+      value === null ||
+      typeof value === "string" ||
+      typeof value === "boolean"
+    ) {
+      continue;
+    }
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) {
+        return issue(
+          "non_json_value",
+          current.path,
+          "JSON numbers must be finite.",
+        );
+      }
+      continue;
+    }
+    if (typeof value !== "object") {
+      return issue(
+        "non_json_value",
+        current.path,
+        `Unsupported non-JSON ${typeof value} value.`,
+      );
+    }
+    if (seen.has(value)) {
+      return issue(
+        "non_json_value",
+        current.path,
+        "Layout compiler input must be an acyclic JSON tree without shared object references.",
+      );
+    }
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      value.forEach((item, index) =>
+        stack.push({
+          value: item,
+          path: `${current.path}.${index}`,
+          depth: current.depth + 1,
+        }),
+      );
+      continue;
+    }
+    if (!isPlainRecord(value)) {
+      return issue(
+        "non_json_value",
+        current.path,
+        "Layout compiler input accepts only plain JSON objects.",
+      );
+    }
+    for (const [key, child] of Object.entries(value)) {
+      stack.push({
+        value: child,
+        path: `${current.path}.${key}`,
+        depth: current.depth + 1,
+      });
+    }
+  }
+
+  return undefined;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function compareCodeUnits(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value as Record<string, unknown>)) {
+      deepFreeze(child);
+    }
+  }
+  return value;
 }

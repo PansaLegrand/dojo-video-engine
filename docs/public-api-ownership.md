@@ -1,7 +1,7 @@
 # MotionForge public API ownership and deprecation baseline
 
 Status: accepted with RFC 0009  
-Baseline: MotionForge 1.0.0 / post-1.0 milestone MF6
+Baseline: MotionForge 1.0.0 / post-1.0 milestone MF7
 
 This document classifies the public package entry points that existed at the
 start of the post-1.0 engine program. The machine-readable export-map snapshot
@@ -24,6 +24,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/schema/values`             | Portable visual value grammars, parsed forms, validators, and deterministic serializers                | Stable entry point added in MF1. New optional grammar forms are additive; changing accepted existing semantics needs compatibility evidence. |
 | `@motionforge/core`                      | Scene builders, frame evaluation, layout, text helpers, and ephemeral display-list v1                  | Stable. Existing timing/layout defaults cannot change silently; display-list required fields and capabilities are versioned.                 |
 | `@motionforge/inspection`                | Renderer-neutral tree, timeline, layout, hit testing, sampled checks, and geometry diagnostics         | Stable entry point added in MF3. Result objects may grow additively; geometry remains explicitly qualified as exact, declared, or estimated. |
+| `@motionforge/layout`                    | Bounded semantic layout plans, intrinsic planning, diagnostics, and Scene v1 compilation               | Stable entry point added in MF7. Existing plan versions and compiler defaults are versioned; new optional fields are additive.               |
 | `@motionforge/runtime`                   | Prepared Scene revisions, backend transactions, lifecycle events/errors, metrics, and artifact sinks   | Stable entry point added in MF5. Required backend/sink fields, revision/token semantics, phases, and error codes follow the 1.x policy.      |
 | `@motionforge/extensions`                | Trusted extension definitions, manifests, registries, version/display resolution, and preflight        | Stable. Standard display v1 and exact opaque capability contracts are versioned; legacy renderer adapters remain supported for 1.x.          |
 | `@motionforge/renderer-canvas2d`         | Display-list Canvas execution, browser media, pooled/cache policy, preflight, and disposal             | Stable. Compile/execute, pool/cache ownership, and legacy rendering remain compatible; decoded resource shapes are advanced.                 |
@@ -33,6 +34,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/player`                    | Playback clock, Canvas preview, seeking, looping, and audio synchronization                            | Stable. New optional player hooks are additive.                                                                                              |
 | `@motionforge/presets`                   | Pure motion, caption, overlay, media, timeline, and authoring compilers                                | Stable compiler names and outputs under the documented 1.x policy. New catalog entries are additive.                                         |
 | `@motionforge/presets/catalog`           | Preset discovery metadata and patch examples                                                           | Stable entry point; catalog items may gain additive metadata.                                                                                |
+| `@motionforge/presets/intents`           | Versioned JSON-facing layout-intent manifests and Scene v1 compatibility compilers                     | Stable entry point added in MF7. Existing manifest ids, schemas, result codes, and legacy compiler outputs follow the 1.x policy.            |
 | `@motionforge/presets/macros`            | JSON-facing macro registry, manifests/guides, and expansion                                            | Stable macro names once published; new macros and optional parameters are additive.                                                          |
 | `@motionforge/authoring`                 | Seconds-first TypeScript authoring helpers that compile to Scene data                                  | Stable. Helpers may gain optional parameters; emitted existing defaults remain compatible.                                                   |
 | `@motionforge/agent-tools`               | Framework-neutral data, render, capability, and export adapters                                        | Stable tool/direct-function names and required inputs. Structured results may gain additive fields.                                          |
