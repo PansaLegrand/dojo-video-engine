@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.0.0 / MF5",
+  "recordedFor": "MotionForge 1.0.0 / MF6",
   "packages": {
     "@motionforge/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",

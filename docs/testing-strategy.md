@@ -26,29 +26,31 @@ The gate script lives at `scripts/release-gate.mjs`; clean-machine verification 
 
 `pnpm golden:test` is the release-candidate browser media gate. It runs `tools/golden/src/cli.ts` against `tools/golden/src/harness.ts` and the fixtures in `tools/golden/src/fixtures.ts`.
 
-| Area                  | Coverage                                                                                                                                          | Check type                          | Command               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------- |
-| Paint/layout baseline | Gradient paint, absolute insets, flex centering, space-between/stretch, overflow clipping                                                         | Exact frame hash                    | `pnpm golden:test`    |
-| Animation baseline    | Opacity midpoint, color midpoint, transform origin, transform tween/easing                                                                        | Exact frame hash                    | `pnpm golden:test`    |
-| Motion preset catalog | All 38 compiled presets, including repeat/yoyo and smooth filter motion                                                                           | Exact contact-sheet hash            | `pnpm golden:test`    |
-| Text baseline         | Embedded font, stroke, fitted text background, shadow presence, explicit newlines, wrapping, auto-height                                          | Exact hash or probe                 | `pnpm golden:test`    |
-| Image/media styling   | `objectFit`, rounded image clipping, filter, z-index, border, shadow                                                                              | Exact frame hash                    | `pnpm golden:test`    |
-| Lottie                | Source-frame seeking and playback-rate mapping for self-contained vector JSON                                                                     | Exact frame hash                    | `pnpm golden:test`    |
-| Procedural effects    | Seeded general-effect catalog renders identically                                                                                                 | Exact frame hash                    | `pnpm golden:test`    |
-| Extension kernel      | Versioned registry resolution, per-frame preparation, and Canvas2D adapter output                                                                 | Exact frame hash                    | `pnpm golden:test`    |
-| Visual primitives     | Shape/path geometry, radial/conic paint, multiple shadows, clips, soft/inverse masks, isolated groups, rich runs, strokes, radii, and blend modes | Exact frame hash                    | `pnpm golden:test`    |
-| Scene migration       | Legacy v0 effect scene migrates to pixels identical to canonical v1                                                                               | Cross-version frame hash            | `pnpm golden:test`    |
-| Export smoke          | Browser `exportVideo()` creates a plausible MP4 with `ftyp`, expected frame count, and codec metadata                                             | Browser encode assertion            | `pnpm golden:test`    |
-| Stream export         | Positional WritableStream output reconstructs a valid MP4 under backpressure                                                                      | Browser stream/mux assertion        | `pnpm golden:test`    |
-| Video media           | Synthetic clip trim/rate/hold/loop/reverse, preview pixels, export/decode round trip                                                              | Browser encode/decode assertion     | `pnpm golden:test`    |
-| Audio media           | Codec/track/timing, bus pan separation, audible ducking, limiting, automation, looping                                                            | Browser encode/decode RMS assertion | `pnpm golden:test`    |
-| Audio chunks          | 0.4s audio chunks across node-start boundaries                                                                                                    | Browser encode/decode RMS assertion | `pnpm golden:test`    |
-| Video soundtrack      | Video node's embedded audio reaches export with correct timing and volume                                                                         | Browser encode/decode RMS assertion | `pnpm golden:test`    |
-| Audio automation      | `volumeEnvelope` starts quiet and reaches full level in exported MP4                                                                              | Browser encode/decode RMS assertion | `pnpm golden:test`    |
-| Audio looping         | `loop: true` continues a 1s WAV beyond its source end in exported MP4                                                                             | Browser encode/decode RMS assertion | `pnpm golden:test`    |
-| Prepared runtime      | Legacy/runtime exact RGBA, transparent-frame replacement, borrowed player/export assets, and exact audio mix parity                               | Browser pixel/PCM assertion         | `pnpm golden:test`    |
-| Resource smoke        | 10-minute chunk/preview ranges, reachable assets, budgets, loop splitting, envelope offsets, 1,000-node layout                                    | Node smoke assertion                | `pnpm resource:smoke` |
-| Playground workflow   | Real UI paints, plays, seeks, patches, loads audio and Lottie scenes, and stays console-clean                                                     | Playwright UI smoke                 | `pnpm e2e`            |
+| Area                  | Coverage                                                                                                                                          | Check type                          | Command                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------- |
+| Paint/layout baseline | Gradient paint, absolute insets, flex centering, space-between/stretch, overflow clipping                                                         | Exact frame hash                    | `pnpm golden:test`      |
+| Animation baseline    | Opacity midpoint, color midpoint, transform origin, transform tween/easing                                                                        | Exact frame hash                    | `pnpm golden:test`      |
+| Motion preset catalog | All 38 compiled presets, including repeat/yoyo and smooth filter motion                                                                           | Exact contact-sheet hash            | `pnpm golden:test`      |
+| Text baseline         | Embedded font, stroke, fitted text background, shadow presence, explicit newlines, wrapping, auto-height                                          | Exact hash or probe                 | `pnpm golden:test`      |
+| Image/media styling   | `objectFit`, rounded image clipping, filter, z-index, border, shadow                                                                              | Exact frame hash                    | `pnpm golden:test`      |
+| Lottie                | Source-frame seeking and playback-rate mapping for self-contained vector JSON                                                                     | Exact frame hash                    | `pnpm golden:test`      |
+| Procedural effects    | Seeded general-effect catalog renders identically                                                                                                 | Exact frame hash                    | `pnpm golden:test`      |
+| Extension kernel      | Versioned registry resolution, per-frame preparation, and Canvas2D adapter output                                                                 | Exact frame hash                    | `pnpm golden:test`      |
+| Visual primitives     | Shape/path geometry, radial/conic paint, multiple shadows, clips, soft/inverse masks, isolated groups, rich runs, strokes, radii, and blend modes | Exact frame hash                    | `pnpm golden:test`      |
+| Scene migration       | Legacy v0 effect scene migrates to pixels identical to canonical v1                                                                               | Cross-version frame hash            | `pnpm golden:test`      |
+| Export smoke          | Browser `exportVideo()` creates a plausible MP4 with `ftyp`, expected frame count, and codec metadata                                             | Browser encode assertion            | `pnpm golden:test`      |
+| Stream export         | Positional WritableStream output reconstructs a valid MP4 under backpressure                                                                      | Browser stream/mux assertion        | `pnpm golden:test`      |
+| Video media           | Synthetic clip trim/rate/hold/loop/reverse, preview pixels, export/decode round trip                                                              | Browser encode/decode assertion     | `pnpm golden:test`      |
+| Audio media           | Codec/track/timing, bus pan separation, audible ducking, limiting, automation, looping                                                            | Browser encode/decode RMS assertion | `pnpm golden:test`      |
+| Audio chunks          | 0.4s audio chunks across node-start boundaries                                                                                                    | Browser encode/decode RMS assertion | `pnpm golden:test`      |
+| Video soundtrack      | Video node's embedded audio reaches export with correct timing and volume                                                                         | Browser encode/decode RMS assertion | `pnpm golden:test`      |
+| Audio automation      | `volumeEnvelope` starts quiet and reaches full level in exported MP4                                                                              | Browser encode/decode RMS assertion | `pnpm golden:test`      |
+| Audio looping         | `loop: true` continues a 1s WAV beyond its source end in exported MP4                                                                             | Browser encode/decode RMS assertion | `pnpm golden:test`      |
+| Prepared runtime      | Legacy/runtime exact RGBA, transparent-frame replacement, borrowed player/export assets, and exact audio mix parity                               | Browser pixel/PCM assertion         | `pnpm golden:test`      |
+| Display conformance   | Stable ops/IDs/order, JSON round-trip, capability rejection, Canvas-vs-facade RGBA across neutral fixtures                                        | Reusable backend + pixel suite      | `pnpm golden:test`      |
+| 1080p/4K compositing  | Nested isolation, soft/inverted masks, filters, transforms, shadows, pool stabilization/reuse/disposal                                            | Browser time + exact pool budgets   | `pnpm performance:gate` |
+| Resource smoke        | 10-minute chunk/preview ranges, reachable assets, budgets, loop splitting, envelope offsets, 1,000-node layout                                    | Node smoke assertion                | `pnpm resource:smoke`   |
+| Playground workflow   | Real UI paints, plays, seeks, patches, loads audio and Lottie scenes, and stays console-clean                                                     | Playwright UI smoke                 | `pnpm e2e`              |
 
 ## Golden Artifacts
 
@@ -67,6 +69,10 @@ Exact hash fixtures store both JSON snapshots and PNG baselines under `fixtures/
 - Animation changes need deterministic numeric assertions.
 - Renderer changes need either a unit-level contract test or a golden/probe fixture.
 - Runtime changes need transactional race/disposal tests; renderer adapters additionally need prepared-vs-legacy frame/audio parity and packed-entry-point coverage.
+- Display-list changes need structural conformance, cross-context text-layout
+  reuse, capability rejection, and Canvas pixel parity. Cache/pool changes
+  additionally need exact byte ownership, poisoned failure, eviction, and
+  disposal evidence.
 - Extension changes need registry/preflight unit coverage and a renderer golden for pixel-visible adapters.
 - Export changes need capability/failure-path tests plus a browser encode/decode assertion when the behavior depends on WebCodecs, media decoding, muxing, or AAC output.
 - Preset and authoring helpers should test emitted scene data, then rely on golden/showcase coverage for renderer-visible behavior.

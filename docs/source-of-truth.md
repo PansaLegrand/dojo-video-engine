@@ -48,6 +48,10 @@ model-provider/agent SDKs, authentication, databases, billing, queues, storage
 providers, and product UI. Adapters for those concerns belong in the consuming
 application.
 
+Scene v1 is the only canonical stored render document. Core display lists,
+resolved layouts, prepared resources, caches, and runtime sessions are
+ephemeral artifacts and do not create parallel storage or migration formats.
+
 `pnpm check:contracts` enforces the mechanical portion of this boundary and
 the synchronized-version policy, accepted internal dependency graph, source
 import rules, cycle freedom, and public entry-point baseline.

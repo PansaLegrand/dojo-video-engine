@@ -5,6 +5,7 @@ import {
   defineExtension,
 } from "@motionforge/extensions";
 import { createSceneRuntime } from "@motionforge/runtime";
+import { parseScene } from "@motionforge/schema";
 import { z } from "zod";
 import {
   createCanvas2DRuntimeBackend,
@@ -13,7 +14,12 @@ import {
   withCanvas2DResolvedAssets,
 } from "./runtime.js";
 import type { ResolvedAssets } from "./index.js";
-import { createCanvasTextMetricsProvider } from "./index.js";
+import {
+  Canvas2DStaticDisplayCache,
+  createCanvas2DOpaqueExtensionRegistry,
+  createCanvasTextMetricsProvider,
+} from "./index.js";
+import { ScratchSurfacePool } from "./surface-pool.js";
 
 type Call = { name: string; args: unknown[] };
 
@@ -60,6 +66,15 @@ function contextCalls(widthFactor = 10): {
     createRadialGradient: () => ({ addColorStop() {} }),
     createConicGradient: () => ({ addColorStop() {} }),
     getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+    getImageData: (_x: number, _y: number, width: number, height: number) => ({
+      data: new Uint8ClampedArray(width * height * 4),
+      width,
+      height,
+      colorSpace: "srgb",
+    }),
+    putImageData: (...args: unknown[]) => {
+      calls.push({ name: "putImageData", args });
+    },
   };
   const context = new Proxy(target, {
     get(object, property) {
@@ -110,6 +125,33 @@ const testScene = (text = "Hello") => ({
   ],
 });
 
+const isolatedScene = (duration = 30) => ({
+  ...testScene(),
+  duration,
+  nodes: [
+    {
+      id: "isolated",
+      type: "div",
+      style: {
+        width: 160,
+        height: 90,
+        isolation: true,
+        backgroundColor: "#123456",
+      },
+    },
+  ],
+});
+
+function createHostScratchPool(): ScratchSurfacePool {
+  return new ScratchSurfacePool({
+    createCanvas: (width, height) =>
+      new FakeOffscreenCanvas(width, height) as unknown as OffscreenCanvas,
+    maxBytes: 64 * 1024 * 1024,
+    maxSurfaces: 8,
+    maxDimension: 320,
+  });
+}
+
 function memorySink() {
   const chunks: number[][] = [];
   return {
@@ -146,6 +188,72 @@ describe("Canvas2D prepared runtime backend", () => {
     await expect(
       createSceneRuntime({ scene: testScene(), backend }),
     ).rejects.toMatchObject({ code: "preflight_failed" });
+  });
+
+  it("forwards an exact opaque registry through runtime preflight and render", async () => {
+    const draw = vi.fn();
+    const definition = defineExtension({
+      name: "com.example.runtime-opaque",
+      version: "1.0.0",
+      paramsSchema: z.object({ value: z.number() }),
+      deterministic: true,
+      workerCompatible: true,
+      display: {
+        kind: "opaque",
+        capability: {
+          id: "com.example.runtime-opaque.canvas",
+          version: "1.0.0",
+          realms: ["main"],
+        },
+        payloadSchema: z.object({ value: z.number() }),
+        compile: ({ params }) => ({ value: params.value }),
+      },
+    });
+    const opaqueExtensionRegistry = createCanvas2DOpaqueExtensionRegistry({
+      realm: "main",
+      handlers: [
+        {
+          capability: {
+            id: "com.example.runtime-opaque.canvas",
+            version: "1.0.0",
+            realms: ["main"],
+          },
+          draw,
+        },
+      ],
+    });
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: {
+        schemaVersion: 1,
+        width: 32,
+        height: 32,
+        fps: 30,
+        duration: 2,
+        assets: {},
+        nodes: [
+          {
+            id: "opaque",
+            type: "extension",
+            extension: {
+              name: definition.name,
+              version: definition.version,
+              params: { value: 1 },
+            },
+          },
+        ],
+      },
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      resolve: {
+        extensions: createExtensionRegistry([definition]),
+        opaqueExtensionRegistry,
+      },
+    });
+    await runtime.renderFrame(0, contextCalls().context);
+    expect(draw).toHaveBeenCalledOnce();
+    await runtime.disposeAsync();
   });
 
   it("accepts a headless render factory without DOM or OffscreenCanvas globals", async () => {
@@ -297,6 +405,228 @@ describe("Canvas2D prepared runtime backend", () => {
     );
   });
 
+  it("allows bounded scratch staging beyond the composition dimensions", async () => {
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: testScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+    });
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      const lease = scratchSurfacePool.acquire({
+        width: 640,
+        height: 256,
+        purpose: "large-shadow-regression",
+      });
+      expect(lease.requested).toEqual({ width: 640, height: 256 });
+      lease.release();
+    });
+    await runtime.disposeAsync();
+  });
+
+  it("reuses revision-owned scratch and disposes each replaced pool exactly once", async () => {
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: isolatedScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      staticDisplayCachePolicy: { maxEntries: 0 },
+    });
+    let first!: ScratchSurfacePool;
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      first = scratchSurfacePool;
+    });
+
+    await runtime.renderFrame(0, contextCalls().context);
+    await runtime.renderFrame(1, contextCalls().context);
+    await runtime.writeFrameArtifact(2, memorySink().sink);
+    expect(first.stats()).toMatchObject({
+      disposed: false,
+      allocations: 1,
+      reuses: 2,
+      idleSurfaceCount: 1,
+    });
+
+    await runtime.updateScene(isolatedScene(31));
+    expect(first.stats().disposed).toBe(true);
+    let second!: ScratchSurfacePool;
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      second = scratchSurfacePool;
+    });
+    expect(second).not.toBe(first);
+    expect(second.stats().disposed).toBe(false);
+
+    await runtime.disposeAsync();
+    await runtime.disposeAsync();
+    expect(second.stats().disposed).toBe(true);
+  });
+
+  it("never disposes an explicitly host-owned scratch pool", async () => {
+    const scratchSurfacePool = createHostScratchPool();
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: isolatedScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      scratchSurfacePool,
+      staticDisplayCachePolicy: { maxEntries: 0 },
+    });
+    await runtime.renderFrame(0, contextCalls().context);
+    await runtime.updateScene(isolatedScene(31));
+    await runtime.renderFrame(1, contextCalls().context);
+    await runtime.disposeAsync();
+
+    expect(scratchSurfacePool.stats()).toMatchObject({
+      disposed: false,
+      allocations: 1,
+      reuses: 1,
+    });
+    scratchSurfacePool.dispose();
+  });
+
+  it("transfers an owned static cache across commits and disposes only the final owner", async () => {
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: isolatedScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+    });
+    let cache!: Canvas2DStaticDisplayCache;
+    await withCanvas2DResolvedAssets(runtime, ({ staticDisplayCache }) => {
+      cache = staticDisplayCache;
+    });
+    await runtime.renderFrame(0, contextCalls().context);
+    await runtime.renderFrame(1, contextCalls().context);
+    expect(cache.stats()).toMatchObject({
+      entries: 1,
+      hits: 1,
+      disposed: false,
+    });
+
+    await runtime.updateScene(isolatedScene(31));
+    await withCanvas2DResolvedAssets(runtime, ({ staticDisplayCache }) => {
+      expect(staticDisplayCache).toBe(cache);
+    });
+    expect(cache.stats().disposed).toBe(false);
+    await runtime.renderFrame(2, contextCalls().context);
+    expect(cache.stats().hits).toBeGreaterThanOrEqual(2);
+    await runtime.disposeAsync();
+    expect(cache.stats().disposed).toBe(true);
+  });
+
+  it("never disposes an explicitly host-owned static cache", async () => {
+    const staticDisplayCache = new Canvas2DStaticDisplayCache({
+      maxBytes: 4 * 1024 * 1024,
+      maxEntries: 8,
+      maxKeyBytes: 128 * 1024,
+    });
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: isolatedScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      staticDisplayCache,
+    });
+    await runtime.renderFrame(0, contextCalls().context);
+    await runtime.updateScene(isolatedScene(31));
+    await runtime.disposeAsync();
+    expect(staticDisplayCache.stats()).toMatchObject({
+      disposed: false,
+      entries: 1,
+    });
+    staticDisplayCache.dispose();
+  });
+
+  it("enforces an owned scratch policy without leaking the failed pool", async () => {
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: isolatedScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      scratchSurfacePoolPolicy: { maxBytes: 0 },
+    });
+    let pool!: ScratchSurfacePool;
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      pool = scratchSurfacePool;
+    });
+
+    await expect(
+      runtime.renderFrame(0, contextCalls().context),
+    ).rejects.toMatchObject({ phase: "frame-render" });
+    expect(pool.stats()).toMatchObject({ disposed: false, failures: 1 });
+    await runtime.disposeAsync();
+    expect(pool.stats().disposed).toBe(true);
+  });
+
+  it("disposes provisional owned scratch on rollback and keeps the current pool", async () => {
+    const dispose = vi.spyOn(ScratchSurfacePool.prototype, "disposeAsync");
+    const backend = createCanvas2DRuntimeBackend({
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+    });
+    const operation = {
+      signal: new AbortController().signal,
+      sessionId: "scratch-rollback",
+      operationId: "prepare",
+      revision: 0,
+      generation: 0,
+      emitProgress: () => undefined,
+    };
+    const before = parseScene(testScene());
+    const current = await backend.prepare(before, operation);
+    const transaction = await backend.prepareUpdate!(
+      current,
+      before,
+      { ...before, duration: 31 },
+      operation,
+    );
+    await transaction.rollback();
+    await transaction.rollback();
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(current.scratchSurfacePool.stats().disposed).toBe(false);
+
+    await backend.dispose(current);
+    await backend.dispose(current);
+    expect(dispose).toHaveBeenCalledTimes(2);
+    dispose.mockRestore();
+  });
+
+  it("disposes a candidate pool when state construction fails", async () => {
+    const dispose = vi.spyOn(ScratchSurfacePool.prototype, "disposeAsync");
+    const runtime = await createCanvas2DSceneRuntime({
+      scene: testScene(),
+      globalObject: {
+        OffscreenCanvas:
+          FakeOffscreenCanvas as unknown as typeof OffscreenCanvas,
+      },
+      textMetricsFactory: ({ scene }) => {
+        if (scene.duration === 31) throw new Error("metrics unavailable");
+        return createCanvasTextMetricsProvider(contextCalls().context);
+      },
+    });
+    let current!: ScratchSurfacePool;
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      current = scratchSurfacePool;
+    });
+
+    await expect(
+      runtime.updateScene({ ...testScene(), duration: 31 }),
+    ).rejects.toThrow("metrics unavailable");
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(current.stats().disposed).toBe(false);
+    await runtime.disposeAsync();
+    expect(dispose).toHaveBeenCalledTimes(2);
+    dispose.mockRestore();
+  });
+
   it("reports reused extension resources and their required assets on update", async () => {
     const close = vi.fn();
     const createImageBitmap = vi.fn(async () => ({
@@ -318,6 +648,7 @@ describe("Canvas2D prepared runtime backend", () => {
             { assetId: params.assetId, type: "image" as const },
           ],
           reuseKey: () => "stable-v1",
+          reuseSafety: "immutable",
           resolveAssets: () => ({ prepared: true }),
         }),
       ]);
@@ -523,7 +854,14 @@ describe("Canvas2D prepared runtime backend", () => {
       },
       createArtifactCanvas: () => delayedCanvas,
     });
-    const runtime = await createSceneRuntime({ scene: testScene(), backend });
+    const runtime = await createSceneRuntime({
+      scene: isolatedScene(),
+      backend,
+    });
+    let scratch!: ScratchSurfacePool;
+    await withCanvas2DResolvedAssets(runtime, ({ scratchSurfacePool }) => {
+      scratch = scratchSurfacePool;
+    });
     const artifact = runtime.writeFrameArtifact(0, memorySink().sink);
     for (let index = 0; index < 50 && !started; index += 1) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -532,6 +870,7 @@ describe("Canvas2D prepared runtime backend", () => {
     const update = runtime.updateScene(testScene("updated"));
     await expect(artifact).rejects.toMatchObject({ code: "aborted" });
     await expect(update).resolves.toMatchObject({ revision: 1 });
+    expect(scratch.stats().disposed).toBe(true);
     gate.resolve(new Blob([new Uint8Array([1])], { type: "image/png" }));
     await runtime.disposeAsync();
   });

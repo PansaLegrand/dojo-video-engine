@@ -66,11 +66,12 @@ flowchart TB
 
     SCENE --> RUNTIME["<b>@motionforge/runtime</b><br/>revisions · transactions · lifecycle · artifacts"]
     SCENE --> CORE["<b>@motionforge/core</b><br/>builder API · keyframe evaluator · layout pass"]
+    CORE --> DISPLAY["<b>display list v1</b><br/>geometry · paint · text · media · capabilities"]
     CORE --> INSPECT["<b>@motionforge/inspection</b><br/>tree · timeline · geometry · hit test · diagnostics"]
     SCENE -. "versioned descriptors" .-> EXT["<b>@motionforge/extensions</b><br/>trusted versioned adapters · preflight · lifecycle"]
     EXT --> R2D
     RUNTIME --> R2D
-    CORE --> R2D["<b>@motionforge/renderer-canvas2d</b><br/>deterministic still-frame renderer"]
+    DISPLAY --> R2D["<b>@motionforge/renderer-canvas2d</b><br/>bounded pooled + cached backend"]
     R2D --> PLAYER["<b>@motionforge/player</b><br/>play · pause · seek · audio preview"]
     PLAYER --> PREVIEW["apps/chat + playground previews<br/><i>scrub any frame</i>"]
     R2D --> EXPORT["<b>@motionforge/export</b><br/>frame sequence loop → WebCodecs"]
@@ -82,7 +83,7 @@ flowchart TB
 | [`@motionforge/cli`](packages/cli)                             | Validate, print, and preview scene modules             | ✅ working |
 | [`create-motionforge`](packages/create-motionforge)            | Starter project generator                              | ✅ working |
 | [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export           | ✅ working |
-| [`@motionforge/core`](packages/core)                           | Builder API, keyframe evaluator, layout pass           | ✅ working |
+| [`@motionforge/core`](packages/core)                           | Evaluation, layout, display-list compiler              | ✅ working |
 | [`@motionforge/inspection`](packages/inspection)               | Spatial/temporal inspection and diagnostics            | ✅ working |
 | [`@motionforge/commands`](packages/commands)                   | Typed reversible edits and revisioned workspaces       | ✅ working |
 | [`@motionforge/runtime`](packages/runtime)                     | Reusable prepared scenes and lifecycle transactions    | ✅ working |

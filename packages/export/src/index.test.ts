@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Scene } from "@motionforge/schema";
-import type { ResolvedAssets } from "@motionforge/renderer-canvas2d";
+import {
+  Canvas2DStaticDisplayCache,
+  ScratchSurfacePool,
+  type ResolvedAssets,
+} from "@motionforge/renderer-canvas2d";
 import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
 import {
   audioChunkRanges,
@@ -37,6 +41,22 @@ const scene: Scene = {
 
 const context = {} as CanvasRenderingContext2D;
 
+function runtimeScratchPolicyTypeCheck(
+  runtime: Canvas2DSceneRuntime,
+  scratchSurfacePool: ScratchSurfacePool,
+): void {
+  void renderFrameSequenceFromRuntime(runtime, {
+    context,
+    // @ts-expect-error runtime-backed rendering owns the scratch policy.
+    scratchSurfacePool,
+  });
+  void exportVideoFromRuntime(runtime, {
+    // @ts-expect-error runtime-backed export owns the scratch policy.
+    scratchSurfacePool,
+  });
+}
+void runtimeScratchPolicyTypeCheck;
+
 function emptyAssets(): ResolvedAssets {
   return {
     images: new Map(),
@@ -57,9 +77,26 @@ function borrowedRuntime(
   abortActive(reason?: unknown): Promise<void>;
   readonly activeScopes: number;
   readonly preparedGeneration: number;
+  readonly scratchSurfacePool: ScratchSurfacePool;
+  readonly staticDisplayCache: Canvas2DStaticDisplayCache;
 } {
+  const scratchSurfacePool = new ScratchSurfacePool({
+    createCanvas: () => ({}) as OffscreenCanvas,
+    maxBytes: 1024,
+    maxSurfaces: 1,
+    maxDimension: 16,
+  });
+  const staticDisplayCache = new Canvas2DStaticDisplayCache({
+    maxBytes: 0,
+    maxEntries: 0,
+    maxKeyBytes: 0,
+  });
   const state = {
     assets,
+    scratchSurfacePool,
+    ownsScratchSurfacePool: false,
+    staticDisplayCache,
+    ownsStaticDisplayCache: false,
     textMeasureCaches: new WeakMap(),
     disposed: false,
     preparedGeneration: 0,
@@ -105,6 +142,8 @@ function borrowedRuntime(
 
   return {
     runtime,
+    scratchSurfacePool,
+    staticDisplayCache,
     async abortActive(reason = new Error("runtime revision changed")) {
       active?.controller.abort(reason);
       await active?.settled.catch(() => undefined);
@@ -238,6 +277,43 @@ describe("frameToTimestampUs", () => {
 });
 
 describe("renderFrameSequence", () => {
+  it("reuses a caller-owned scratch pool without disposing it on success or failure", async () => {
+    const scratchSurfacePool = new ScratchSurfacePool({
+      createCanvas: () => ({}) as OffscreenCanvas,
+      maxBytes: 1024,
+      maxSurfaces: 1,
+      maxDimension: 16,
+    });
+    const delegated: ScratchSurfacePool[] = [];
+    await renderFrameSequence({
+      scene,
+      context,
+      startFrame: 0,
+      endFrame: 2,
+      scratchSurfacePool,
+      renderFrame: (_context, _scene, _frame, _resolved, _text, scratch) =>
+        delegated.push(scratch!),
+    });
+    expect(delegated).toEqual([
+      scratchSurfacePool,
+      scratchSurfacePool,
+      scratchSurfacePool,
+    ]);
+    expect(scratchSurfacePool.stats().disposed).toBe(false);
+
+    await expect(
+      renderFrameSequence({
+        scene,
+        context,
+        scratchSurfacePool,
+        renderFrame: () => {
+          throw new Error("draw failed");
+        },
+      }),
+    ).rejects.toThrow("draw failed");
+    expect(scratchSurfacePool.stats().disposed).toBe(false);
+  });
+
   it("renders the requested inclusive frame range in order", async () => {
     const rendered: number[] = [];
     const progress: Array<{
@@ -377,6 +453,12 @@ describe("renderFrameSequence", () => {
   it("stops between frames when aborted by progress callback", async () => {
     const controller = new AbortController();
     const rendered: number[] = [];
+    const scratchSurfacePool = new ScratchSurfacePool({
+      createCanvas: () => ({}) as OffscreenCanvas,
+      maxBytes: 1024,
+      maxSurfaces: 1,
+      maxDimension: 16,
+    });
 
     await expect(
       renderFrameSequence({
@@ -385,6 +467,7 @@ describe("renderFrameSequence", () => {
         startFrame: 0,
         endFrame: 4,
         signal: controller.signal,
+        scratchSurfacePool,
         renderFrame: (_context, _scene, frame) => {
           rendered.push(frame);
         },
@@ -397,6 +480,7 @@ describe("renderFrameSequence", () => {
     ).rejects.toThrow("stop after frame 1");
 
     expect(rendered).toEqual([0, 1]);
+    expect(scratchSurfacePool.stats().disposed).toBe(false);
   });
 });
 
@@ -413,8 +497,18 @@ describe("Canvas2D prepared runtime export compatibility", () => {
       context,
       startFrame: 0,
       endFrame: 0,
-      renderFrame: (_context, delegatedScene, frame) => {
+      renderFrame: (
+        _context,
+        delegatedScene,
+        frame,
+        _resolved,
+        _text,
+        delegatedScratch,
+        delegatedStatic,
+      ) => {
         expect(delegatedScene).toBe(scene);
+        expect(delegatedScratch).toBe(scope.scratchSurfacePool);
+        expect(delegatedStatic).toBe(scope.staticDisplayCache);
         rendered.push(frame);
       },
       onFrame: () => framePending,
@@ -448,6 +542,7 @@ describe("Canvas2D prepared runtime export compatibility", () => {
     expect(rendered).toEqual([0, 1]);
     expect(scope.activeScopes).toBe(0);
     expect(scope.preparedGeneration).toBe(2);
+    expect(scope.scratchSurfacePool.stats().disposed).toBe(false);
   });
 
   it("mixes audio from the exact runtime-owned asset map", async () => {

@@ -1,14 +1,28 @@
 import {
+  compileDisplayList,
   createBoundedTextMetricsProvider,
   evaluateScene,
+  identityAffineMatrix,
   layoutScene,
+  multiplyAffineMatrices,
   normalizeLayoutCornerRadii,
   prepareTextLayout,
   resolveObjectFitRect,
   resolveLayoutCornerRadii,
+  resolveStyleTransformMatrix,
+  transformLayoutRect,
   wrapTextLines,
+  type AffineMatrix2D,
+  type DisplayExtensionCompilationInput,
+  type DisplayExtensionOperation,
+  type DisplayGroup,
+  type DisplayList,
+  type DisplayListCompilerBudgets,
+  type DisplayTextOperation,
   type LayoutCornerRadii,
   type LayoutBox,
+  type LayoutRect,
+  type MediaMetricsProvider,
   type MeasureTextLine,
   type TextMetricsProvider,
   type ResolvedNode,
@@ -28,6 +42,7 @@ import {
 import {
   parseBorderValue,
   parseConicGradientValue,
+  parseFilterValue,
   parseLinearGradientValue,
   parseRadialGradientValue,
   parseShadowListValue,
@@ -40,7 +55,9 @@ import {
 import {
   createExtensionRegistry,
   extensionResourceReuseKey,
+  legacyExtensionRendererCapability,
   preflightExtensions,
+  type ExtensionDisplayTarget,
   type ExtensionRegistry,
   type ExtensionPreflightIssue,
   type ExtensionSceneNode,
@@ -58,7 +75,43 @@ import {
   type AssetSourceKind,
   type PreparedAssetRequest,
 } from "./media-lifecycle.js";
+import {
+  compileResolvedCanvas2DDisplayExtension,
+  executeCanvas2DDisplayExtension,
+  type Canvas2DExtensionPreparedImage,
+  type Canvas2DOpaqueExtensionRegistry,
+} from "./extension-display.js";
+import {
+  Canvas2DStaticDisplayCache,
+  isStaticDisplayGroup,
+  type StaticDisplayResourceReference,
+} from "./display-cache.js";
+import { ScratchSurfacePool, checkedRgbaBytes } from "./surface-pool.js";
+import type { TextMeasureCache } from "./text-measure-cache.js";
 
+export {
+  Canvas2DStaticDisplayCache,
+  StaticDisplayCache,
+  fingerprintStaticDisplayGroup,
+  isStaticDisplayGroup,
+  type Canvas2DStaticDisplayBounds,
+  type Canvas2DStaticDisplayCacheOptions,
+  type Canvas2DStaticDisplayCacheStats,
+  type Canvas2DStaticDisplaySurface,
+  type StaticDisplayCacheDisposalReason,
+  type StaticDisplayCacheOptions,
+  type StaticDisplayCacheStats,
+  type StaticDisplayFingerprint,
+  type StaticDisplayFingerprintOptions,
+  type StaticDisplayResourceIdentity,
+  type StaticDisplayResourceReference,
+} from "./display-cache.js";
+export {
+  BoundedTextMeasureCache,
+  type TextMeasureCache,
+  type TextMeasureCacheOptions,
+  type TextMeasureCacheStats,
+} from "./text-measure-cache.js";
 export {
   AssetPolicyError,
   AudioAnalysisCache as BoundedAudioAnalysisCache,
@@ -73,6 +126,37 @@ export {
   type FontLease,
   type PreparedAssetRequest,
 } from "./media-lifecycle.js";
+export {
+  compileResolvedCanvas2DDisplayExtension,
+  createCanvas2DOpaqueExtensionRegistry,
+  executeCanvas2DDisplayExtension,
+  type Canvas2DExtensionDisplayContext,
+  type Canvas2DExtensionPreparedImage,
+  type Canvas2DLegacyExtensionDrawContext,
+  type Canvas2DOpaqueExtensionDrawContext,
+  type Canvas2DOpaqueExtensionHandler,
+  type Canvas2DOpaqueExtensionOperation,
+  type Canvas2DOpaqueExtensionRegistry,
+  type CompileResolvedCanvas2DDisplayExtensionOptions,
+  type ExecuteCanvas2DDisplayExtensionOptions,
+  type ResolvedCanvas2DDisplayExtension,
+} from "./extension-display.js";
+export {
+  SCRATCH_SURFACE_BUCKET_SIZE,
+  ScratchSurfacePool,
+  ScratchSurfacePoolError,
+  checkedRgbaBytes,
+  type Canvas2DSurface,
+  type Canvas2DSurfaceContext,
+  type DetachedScratchSurface,
+  type ScratchSurfaceBounds,
+  type ScratchSurfaceFactory,
+  type ScratchSurfaceLease,
+  type ScratchSurfacePoolErrorCode,
+  type ScratchSurfacePoolOptions,
+  type ScratchSurfacePoolStats,
+  type ScratchSurfaceReleaseOptions,
+} from "./surface-pool.js";
 
 // Re-exported so existing imports keep working; the implementation moved to
 // @motionforge/core where layout uses it for intrinsic text sizing.
@@ -97,6 +181,16 @@ export type RenderOptions = {
   resolvedScene?: ResolvedScene;
   /** Reused across frames to avoid repeated canvas text measurement. */
   textMeasureCache?: TextMeasureCache;
+  /**
+   * Session-owned bounded scratch storage for isolated groups and soft masks.
+   * Omit it for a render-call-scoped pool that is always disposed before
+   * renderStill() returns.
+   */
+  scratchSurfacePool?: ScratchSurfacePool;
+  /** Exact opaque extension handlers for the execution realm. */
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
+  /** Caller-owned bounded cache for already-isolated static subtrees. */
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
 };
 
 export type ResolveAssetsOptions = {
@@ -104,6 +198,8 @@ export type ResolveAssetsOptions = {
   extensions?: ExtensionRegistry;
   /** Reject definitions that cannot execute in a worker host. */
   worker?: boolean;
+  /** Exact opaque extension handlers advertised during display preflight. */
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
   signal?: AbortSignal;
   /** Use declared proxy sources (normally true for preview, false for export). */
   preferProxy?: boolean;
@@ -211,7 +307,8 @@ export type ResolvedCanvas2DExtensionNode = Omit<
   ResolvedExtensionNode,
   "rendererAdapter"
 > & {
-  adapter: Canvas2DExtensionAdapter;
+  /** Present only for the explicit legacy-opaque compatibility path. */
+  adapter?: Canvas2DExtensionAdapter;
   resolvedAssets: unknown;
 };
 
@@ -219,8 +316,6 @@ export type PreparedExtensionFrame = {
   sceneFrame: number;
   value: unknown;
 };
-
-export type TextMeasureCache = Map<string, number>;
 
 export type Canvas2DPreflightIssue = {
   severity: "error" | "warning";
@@ -233,6 +328,7 @@ export type Canvas2DPreflightIssue = {
     | "image_decoder_unavailable"
     | "lottie_requires_dom"
     | "extension_adapter_invalid"
+    | "extension_registry_realm_mismatch"
     | "dom_matrix_unavailable"
     | "path2d_unavailable"
     | "conic_gradient_unavailable"
@@ -266,7 +362,7 @@ export type Canvas2DPreflightResult = {
 
 export type Canvas2DPreflightOptions = Pick<
   ResolveAssetsOptions,
-  "extensions" | "worker" | "budget"
+  "extensions" | "worker" | "budget" | "opaqueExtensionRegistry"
 >;
 
 export type MediaResourceEstimate = {
@@ -276,6 +372,30 @@ export type MediaResourceEstimate = {
   estimatedDecodedImageBytes: number;
   maxSimultaneousVideoDecoders: number;
 };
+
+function createCanvas2DDisplayTarget(
+  worker: boolean | undefined,
+  opaqueRegistry: Canvas2DOpaqueExtensionRegistry | undefined,
+): ExtensionDisplayTarget {
+  const realm = worker === true ? "worker" : "main";
+  if (opaqueRegistry && opaqueRegistry.realm !== realm) {
+    throw new Error(
+      `Canvas2D opaque extension registry targets the ${opaqueRegistry.realm} realm, but this render targets ${realm}.`,
+    );
+  }
+  return Object.freeze({
+    version: "1",
+    backendId: "canvas2d",
+    realm,
+    capabilities: Object.freeze([
+      Object.freeze({
+        ...legacyExtensionRendererCapability,
+        realms: Object.freeze(["main", "worker"] as const),
+      }),
+      ...(opaqueRegistry?.capabilities ?? []),
+    ]),
+  });
+}
 
 /**
  * Checks environment capabilities before asset loading or frame preparation.
@@ -290,10 +410,20 @@ export function preflightCanvas2D(
   const scene = parseScene(sceneInput);
   const budget = resolveMediaResourceBudget(options.budget);
   const inspection = inspectScene(scene);
+  const expectedRealm = options.worker === true ? "worker" : "main";
+  const registryRealmMismatch =
+    options.opaqueExtensionRegistry !== undefined &&
+    options.opaqueExtensionRegistry.realm !== expectedRealm;
   const extensionPreflight = preflightExtensions(
     scene,
     options.extensions ?? createExtensionRegistry(),
-    { renderer: "canvas2d", worker: options.worker },
+    {
+      worker: options.worker,
+      displayTarget: createCanvas2DDisplayTarget(
+        options.worker,
+        registryRealmMismatch ? undefined : options.opaqueExtensionRegistry,
+      ),
+    },
   );
   const reachableAssetIds = collectReachableAssetIds(
     scene,
@@ -345,6 +475,14 @@ export function preflightCanvas2D(
     canvasContext && typeof canvasContext.createConicGradient === "function",
   );
   const issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue> = [];
+
+  if (registryRealmMismatch) {
+    issues.push({
+      severity: "error",
+      code: "extension_registry_realm_mismatch",
+      message: `Canvas2D opaque extension registry targets the ${options.opaqueExtensionRegistry?.realm} realm, but this render targets ${expectedRealm}.`,
+    });
+  }
 
   if (!hasCanvas || !canvasContext) {
     issues.push({
@@ -469,7 +607,10 @@ export function preflightCanvas2D(
   }
   issues.push(...extensionPreflight.issues);
   for (const resolvedNode of extensionPreflight.nodes) {
-    if (!isCanvas2DExtensionAdapter(resolvedNode.rendererAdapter)) {
+    if (
+      resolvedNode.displayDecision.kind === "legacy-opaque" &&
+      !isCanvas2DExtensionAdapter(resolvedNode.rendererAdapter)
+    ) {
       issues.push({
         severity: "error",
         code: "extension_adapter_invalid",
@@ -513,6 +654,7 @@ function inspectVisualRuntimeRequirements(nodes: readonly SceneNode[]): {
     const node = stack.pop();
     if (!node) continue;
     if (node.style?.filter && node.style.filter !== "none") filter = true;
+    if ((node.mask?.feather ?? 0) > 0) filter = true;
     if (isNonzeroLength(node.style?.letterSpacing)) letterSpacing = true;
     for (const paint of [
       node.style?.background,
@@ -824,6 +966,8 @@ export type ResolvedAssets = {
   extensionNodes?: Map<string, ResolvedCanvas2DExtensionNode>;
   /** Node-local values staged by extension prepareFrame hooks. */
   extensionFrames?: Map<string, PreparedExtensionFrame>;
+  /** Exact opaque handlers selected for this resolved execution realm. */
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
   budget?: MediaResourceBudget;
   resourceUsage?: {
     decodedImageBytes: number;
@@ -862,7 +1006,8 @@ type SharedAssetResource = {
 
 type SharedExtensionResource = {
   readonly definition: ResolvedExtensionNode["definition"];
-  readonly adapter: Canvas2DExtensionAdapter;
+  readonly adapter: Canvas2DExtensionAdapter | undefined;
+  readonly displayKey: string;
   readonly descriptorVersion: string;
   readonly worker: boolean;
   readonly reuseKey: string | null;
@@ -989,7 +1134,7 @@ function createSharedAssetResource(
 
 function createSharedExtensionResource(
   resolvedNode: ResolvedExtensionNode,
-  adapter: Canvas2DExtensionAdapter,
+  adapter: Canvas2DExtensionAdapter | undefined,
   reuseKey: string | null,
   requirementsKey: string,
   worker: boolean,
@@ -1001,6 +1146,7 @@ function createSharedExtensionResource(
   return {
     definition: resolvedNode.definition,
     adapter,
+    displayKey: extensionDisplayDecisionKey(resolvedNode.displayDecision),
     descriptorVersion: resolvedNode.node.extension.version,
     worker,
     reuseKey,
@@ -1032,6 +1178,19 @@ function createSharedExtensionResource(
       return result;
     },
   };
+}
+
+function extensionDisplayDecisionKey(
+  decision: ResolvedExtensionNode["displayDecision"],
+): string {
+  switch (decision.kind) {
+    case "standard":
+      return `standard:${decision.version}`;
+    case "opaque":
+      return `opaque:${decision.capability.id}@${decision.capability.version}:${decision.realm}`;
+    case "legacy-opaque":
+      return `legacy:${decision.renderer}:${decision.capability.id}@${decision.capability.version}:${decision.realm}`;
+  }
 }
 
 function extensionRequirementsKey(
@@ -1071,7 +1230,7 @@ function extensionRequirementsKey(
 function retainReusableExtensionResource(
   reuseFrom: ResolveAssetsOptions["reuseFrom"],
   resolvedNode: ResolvedExtensionNode,
-  adapter: Canvas2DExtensionAdapter,
+  adapter: Canvas2DExtensionAdapter | undefined,
   reuseKey: string | null,
   requirementsKey: string,
   worker: boolean,
@@ -1091,8 +1250,12 @@ function retainReusableExtensionResource(
     previousRuntime.resolvedAssets !== previous.value ||
     previousRuntime.definition !== previous.definition ||
     previousRuntime.adapter !== previous.adapter ||
+    extensionDisplayDecisionKey(previousRuntime.displayDecision) !==
+      previous.displayKey ||
     previous.definition !== resolvedNode.definition ||
     previous.adapter !== adapter ||
+    previous.displayKey !==
+      extensionDisplayDecisionKey(resolvedNode.displayDecision) ||
     previous.descriptorVersion !== resolvedNode.node.extension.version ||
     previous.worker !== worker ||
     previous.reuseKey !== reuseKey ||
@@ -1406,10 +1569,14 @@ export async function resolveAssets(
   }
   const budget = resolveMediaResourceBudget(options.budget);
   assertNotAborted(options.signal);
+  const displayTarget = createCanvas2DDisplayTarget(
+    options.worker,
+    options.opaqueExtensionRegistry,
+  );
   const extensionPreflight = preflightExtensions(
     parsed,
     options.extensions ?? createExtensionRegistry(),
-    { renderer: "canvas2d", worker: options.worker },
+    { displayTarget, worker: options.worker },
   );
   if (!extensionPreflight.ok) {
     throw new Error(
@@ -1421,7 +1588,12 @@ export async function resolveAssets(
   const extensionAdapters = new Map(
     extensionPreflight.nodes.map((resolvedNode) => [
       resolvedNode.node.id,
-      parseCanvas2DExtensionAdapter(resolvedNode.rendererAdapter, resolvedNode),
+      resolvedNode.displayDecision.kind === "legacy-opaque"
+        ? parseCanvas2DExtensionAdapter(
+            resolvedNode.rendererAdapter,
+            resolvedNode,
+          )
+        : undefined,
     ]),
   );
   const reachableAssetIds = collectReachableAssetIds(
@@ -1461,6 +1633,7 @@ export async function resolveAssets(
     lottieFrames: new Map(),
     extensionNodes: new Map(),
     extensionFrames: new Map(),
+    opaqueExtensionRegistry: options.opaqueExtensionRegistry,
     budget,
     resourceUsage: {
       decodedImageBytes: 0,
@@ -1654,7 +1827,7 @@ export async function resolveAssets(
       extensionPreflight.nodes.map((resolvedNode) => async () => {
         assertNotAborted(signal);
         const adapter = extensionAdapters.get(resolvedNode.node.id);
-        if (!adapter) {
+        if (resolvedNode.displayDecision.kind === "legacy-opaque" && !adapter) {
           throw new Error(
             `Canvas2D extension adapter for node "${resolvedNode.node.id}" disappeared after preflight.`,
           );
@@ -1723,6 +1896,7 @@ export async function resolveAssets(
           params: resolvedNode.params,
           requirements: resolvedNode.requirements,
           adapter,
+          displayDecision: resolvedNode.displayDecision,
           resolvedAssets: extensionAssets,
         });
       }),
@@ -1939,7 +2113,9 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
           shared &&
           shared.value === runtime.resolvedAssets &&
           shared.definition === runtime.definition &&
-          shared.adapter === runtime.adapter
+          shared.adapter === runtime.adapter &&
+          shared.displayKey ===
+            extensionDisplayDecisionKey(runtime.displayDecision)
         ) {
           return;
         }
@@ -3231,36 +3407,777 @@ async function decodeImageBlob(blob: Blob): Promise<ImageBitmap> {
   }
 }
 
+export type CompileCanvas2DDisplayListOptions = Pick<
+  RenderOptions,
+  "assets" | "resolvedScene" | "textMeasureCache"
+> & {
+  /** Optional compiler ceilings; core defaults remain authoritative. */
+  budgets?: Partial<DisplayListCompilerBudgets>;
+};
+
+/**
+ * Evaluates, lays out, and compiles one frame with one exact Canvas measurer.
+ * Prepared/native resources are consulted only by the extension compilation
+ * bridge and never become part of the returned JSON artifact.
+ */
+export function compileCanvas2DDisplayList(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  sceneInput: Scene,
+  frame: number,
+  options: CompileCanvas2DDisplayListOptions = {},
+): DisplayList {
+  const scene = parseScene(sceneInput);
+  if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
+  const resolved = options.resolvedScene ?? evaluateScene(scene, frame);
+  const evaluatedFrame = Math.max(0, Math.min(frame, scene.duration - 1));
+  if (resolved.frame !== evaluatedFrame) {
+    throw new Error(
+      `Resolved scene targets frame ${resolved.frame}, but Canvas2D display compilation requested evaluated frame ${evaluatedFrame}.`,
+    );
+  }
+  const measureTextLine = createContextTextMeasurer(
+    context,
+    options.textMeasureCache,
+  );
+  const textMetrics = createCanvasTextMetricsProvider(context);
+  const layout = layoutScene(resolved, { measureTextLine });
+  const extensionCompilations = compileCanvas2DExtensions(
+    scene,
+    layout.boxes,
+    layout.frame,
+    options.assets,
+  );
+  return compileDisplayList(layout, {
+    measureTextLine,
+    textMetrics,
+    mediaMetrics: options.assets
+      ? createDisplayMediaMetricsProvider(options.assets)
+      : undefined,
+    extensionCompilations,
+    budgets: options.budgets,
+  });
+}
+
+function createDisplayMediaMetricsProvider(
+  assets: ResolvedAssets,
+): MediaMetricsProvider {
+  return {
+    measure(asset) {
+      const source = assets.resolvedSources?.get(asset.id);
+      const reason = source
+        ? `prepared Canvas2D ${source.usingProxy ? "proxy" : "primary"} resource`
+        : "prepared Canvas2D resource";
+      const image = assets.images?.get(asset.id);
+      if (image) {
+        return {
+          width: image.width,
+          height: image.height,
+          fieldMeasurements: {
+            width: { measurement: "exact", reason },
+            height: { measurement: "exact", reason },
+          },
+        };
+      }
+      const video = assets.videos?.get(asset.id);
+      if (video) {
+        return {
+          width: video.width,
+          height: video.height,
+          durationSeconds: video.duration,
+          fieldMeasurements: {
+            width: { measurement: "exact", reason },
+            height: { measurement: "exact", reason },
+            durationSeconds: { measurement: "exact", reason },
+          },
+        };
+      }
+      const lottie = assets.lotties?.get(asset.id);
+      if (lottie) {
+        return {
+          width: lottie.width,
+          height: lottie.height,
+          durationSeconds: (lottie.op - lottie.ip) / lottie.fr,
+          fieldMeasurements: {
+            width: { measurement: "exact", reason },
+            height: { measurement: "exact", reason },
+            durationSeconds: { measurement: "exact", reason },
+          },
+        };
+      }
+      const audio = assets.audio?.get(asset.id);
+      return audio
+        ? {
+            durationSeconds: audio.duration,
+            fieldMeasurements: {
+              durationSeconds: { measurement: "exact", reason },
+            },
+          }
+        : undefined;
+    },
+  };
+}
+
+export type ExecuteCanvas2DDisplayListOptions = Omit<
+  RenderOptions,
+  "resolvedScene"
+> & {
+  /** Canonical Scene is retained only for resources and legacy callbacks. */
+  scene: Scene;
+};
+
+type Canvas2DDisplayExecutionState = {
+  extensionOperations: ReadonlyMap<string, DisplayExtensionOperation>;
+  displayGroups: ReadonlyMap<string, DisplayGroup>;
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
+  staticResourceIdentity: (reference: StaticDisplayResourceReference) => string;
+};
+
+/** Executes one validated display-list frame against separately prepared data. */
+export function executeCanvas2DDisplayList(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  displayList: DisplayList,
+  options: ExecuteCanvas2DDisplayListOptions,
+): void {
+  const scene = parseScene(options.scene);
+  if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
+  assertCanvas2DDisplayComposition(displayList, scene);
+  const evaluated = evaluateScene(scene, displayList.composition.frame);
+  const reconstructed = reconstructDisplayGroups(
+    displayList.groups,
+    evaluated.nodes,
+    displayList.composition,
+  );
+  const opaqueExtensionRegistry =
+    options.opaqueExtensionRegistry ?? options.assets?.opaqueExtensionRegistry;
+  const execution: Canvas2DDisplayExecutionState = {
+    extensionOperations: reconstructed.extensionOperations,
+    displayGroups: reconstructed.displayGroups,
+    opaqueExtensionRegistry,
+    staticDisplayCache: options.staticDisplayCache,
+    staticResourceIdentity: createStaticDisplayResourceIdentity(options.assets),
+  };
+  assertCanvas2DDisplayCapabilities(
+    context,
+    displayList,
+    execution,
+    options.assets,
+  );
+
+  if (options.clear ?? true) {
+    context.clearRect(
+      0,
+      0,
+      displayList.composition.width,
+      displayList.composition.height,
+    );
+  }
+
+  const transientScratchPool = options.scratchSurfacePool
+    ? undefined
+    : createTransientScratchSurfacePool(scene);
+  const scratchSurfacePool =
+    options.scratchSurfacePool ?? transientScratchPool!;
+  try {
+    for (const box of reconstructed.boxes) {
+      drawBox(
+        context,
+        box,
+        scene,
+        options.assets,
+        displayList.composition.frame,
+        displayList.composition.fps,
+        options.textMeasureCache,
+        scratchSurfacePool,
+        execution,
+      );
+    }
+  } finally {
+    transientScratchPool?.dispose();
+  }
+}
+
+/** Compatibility facade: evaluate → layout → display list → Canvas execute. */
 export function renderStill(
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   scene: Scene,
   frame: number,
   options: RenderOptions = {},
 ): void {
-  if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
-  const resolved = options.resolvedScene ?? evaluateScene(scene, frame);
-  const layout = layoutScene(resolved, {
-    measureTextLine: createContextTextMeasurer(
-      context,
-      options.textMeasureCache,
-    ),
+  const displayList = compileCanvas2DDisplayList(context, scene, frame, {
+    assets: options.assets,
+    resolvedScene: options.resolvedScene,
+    textMeasureCache: options.textMeasureCache,
   });
+  executeCanvas2DDisplayList(context, displayList, {
+    scene,
+    clear: options.clear,
+    assets: options.assets,
+    textMeasureCache: options.textMeasureCache,
+    scratchSurfacePool: options.scratchSurfacePool,
+    opaqueExtensionRegistry: options.opaqueExtensionRegistry,
+    staticDisplayCache: options.staticDisplayCache,
+  });
+}
 
-  if (options.clear ?? true) {
-    context.clearRect(0, 0, scene.width, scene.height);
-  }
+function compileCanvas2DExtensions(
+  scene: Scene,
+  boxes: readonly LayoutBox[],
+  frame: number,
+  assets: ResolvedAssets | undefined,
+): Readonly<Record<string, DisplayExtensionCompilationInput>> {
+  const compilations: Record<string, DisplayExtensionCompilationInput> = {};
+  const visit = (box: LayoutBox): void => {
+    if (box.node.type === "extension" && box.node.extension) {
+      const runtime = assets?.extensionNodes?.get(box.node.id);
+      if (!runtime) {
+        throw new Error(
+          `Scene draws extension node "${box.node.id}" but it is not in the resolved assets. Call resolveAssets(scene, { extensions }) and pass the result to renderStill.`,
+        );
+      }
+      const prepared = assertPreparedExtensionFrame(
+        runtime,
+        assets,
+        box.node.id,
+        frame,
+      );
+      const displayDecision = runtime.displayDecision;
+      if (displayDecision?.kind !== "legacy-opaque") {
+        if (!displayDecision) {
+          if (runtime.adapter) {
+            // 1.0 callers may have constructed a legacy runtime fixture. Its
+            // absence from this map deliberately compiles legacy-opaque.
+          } else {
+            throw new Error(
+              `Extension node "${box.node.id}" has no resolved display decision. Resolve assets through Canvas2D display-target preflight.`,
+            );
+          }
+        } else {
+          compilations[box.node.id] = compileResolvedCanvas2DDisplayExtension({
+            scene,
+            node: box.node as ResolvedNode & ExtensionSceneNode,
+            box: {
+              x: box.x,
+              y: box.y,
+              width: box.width,
+              height: box.height,
+            },
+            runtime,
+            preparedFrame: prepared?.value,
+            frame,
+            localFrame: box.node.localFrame,
+            sceneFps: scene.fps,
+          });
+        }
+      }
+    }
+    box.children.forEach(visit);
+  };
+  boxes.forEach(visit);
+  return compilations;
+}
 
-  for (const box of sortByZIndex(layout.boxes)) {
-    drawBox(
-      context,
-      box,
-      scene,
-      options.assets,
-      layout.frame,
-      scene.fps,
-      options.textMeasureCache,
+function assertPreparedExtensionFrame(
+  runtime: ResolvedCanvas2DExtensionNode,
+  assets: ResolvedAssets | undefined,
+  nodeId: string,
+  sceneFrame: number,
+): PreparedExtensionFrame | undefined {
+  const prepared = assets?.extensionFrames?.get(nodeId);
+  if (runtime.definition.prepareFrame && !prepared) {
+    throw new Error(
+      `Extension node "${nodeId}" has no prepared frame. Await prepareFrame(scene, frame, assets) before renderStill.`,
     );
   }
+  if (prepared && prepared.sceneFrame !== sceneFrame) {
+    throw new Error(
+      `Extension node "${nodeId}" has data prepared for scene frame ${prepared.sceneFrame}, but frame ${sceneFrame} is being rendered. Await prepareFrame(scene, ${sceneFrame}, assets) first.`,
+    );
+  }
+  return prepared;
+}
+
+function assertCanvas2DDisplayComposition(
+  displayList: DisplayList,
+  scene: Scene,
+): void {
+  if (
+    displayList.kind !== "motionforge.display-list" ||
+    displayList.version !== 1 ||
+    displayList.ephemeral !== true
+  ) {
+    throw new Error(
+      "Canvas2D requires an ephemeral MotionForge display-list v1.",
+    );
+  }
+  const expected = {
+    schemaVersion: scene.schemaVersion,
+    width: scene.width,
+    height: scene.height,
+    fps: scene.fps,
+    duration: scene.duration,
+  };
+  for (const key of Object.keys(expected) as Array<keyof typeof expected>) {
+    if (displayList.composition[key] !== expected[key]) {
+      throw new Error(
+        `Canvas2D display-list composition ${key} does not match the supplied Scene.`,
+      );
+    }
+  }
+  if (
+    !Number.isFinite(displayList.composition.frame) ||
+    displayList.composition.frame < 0 ||
+    displayList.composition.frame >= displayList.composition.duration
+  ) {
+    throw new Error("Canvas2D display-list frame is outside the composition.");
+  }
+}
+
+function reconstructDisplayGroups(
+  groups: readonly DisplayGroup[],
+  evaluatedNodes: readonly ResolvedNode[],
+  composition: DisplayList["composition"],
+): {
+  boxes: LayoutBox[];
+  extensionOperations: ReadonlyMap<string, DisplayExtensionOperation>;
+  displayGroups: ReadonlyMap<string, DisplayGroup>;
+} {
+  const nodeIds = new Set<string>();
+  const evaluatedById = new Map<string, ResolvedNode>();
+  const collectEvaluated = (node: ResolvedNode): void => {
+    evaluatedById.set(node.id, node);
+    node.children.forEach(collectEvaluated);
+  };
+  evaluatedNodes.forEach(collectEvaluated);
+  const extensionOperations = new Map<string, DisplayExtensionOperation>();
+  const displayGroups = new Map<string, DisplayGroup>();
+  const visit = (
+    group: DisplayGroup,
+    depth: number,
+    parentWorld: AffineMatrix2D,
+  ): LayoutBox => {
+    if (
+      group.kind !== "group" ||
+      group.depth !== depth ||
+      group.nodeId !== group.node.id ||
+      group.nodeType !== group.node.type ||
+      nodeIds.has(group.nodeId)
+    ) {
+      throw new Error(
+        `Canvas2D received an invalid display group for node ${JSON.stringify(group.nodeId)}.`,
+      );
+    }
+    nodeIds.add(group.nodeId);
+    displayGroups.set(group.nodeId, group);
+    const evaluatedNode = evaluatedById.get(group.nodeId);
+    if (
+      !evaluatedNode ||
+      stableJsonStringify({ ...evaluatedNode, children: [] }) !==
+        stableJsonStringify(group.node)
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(group.nodeId)} does not match the evaluated Scene node snapshot.`,
+      );
+    }
+    for (const [label, rect] of [
+      ["box", group.box],
+      ["contentBox", group.contentBox],
+    ] as const) {
+      if (
+        !rect ||
+        ![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) ||
+        rect.width < 0 ||
+        rect.height < 0
+      ) {
+        throw new Error(
+          `Canvas2D display group ${JSON.stringify(group.nodeId)} has an invalid ${label}.`,
+        );
+      }
+    }
+    assertDisplayGroupSemantics(group, composition, parentWorld);
+    if (group.node.type === "extension") {
+      if (group.content?.kind !== "extension") {
+        throw new Error(
+          `Canvas2D extension group ${JSON.stringify(group.nodeId)} has no explicit extension operation.`,
+        );
+      }
+      extensionOperations.set(group.nodeId, group.content);
+    }
+    const children = group.children.map((child) =>
+      visit(child, depth + 1, group.worldTransform),
+    );
+    return {
+      id: group.nodeId,
+      node: { ...group.node, children: children.map((child) => child.node) },
+      x: group.box.x,
+      y: group.box.y,
+      width: group.box.width,
+      height: group.box.height,
+      content: { ...group.contentBox },
+      children,
+    };
+  };
+  const boxes = groups.map((group) => visit(group, 0, identityAffineMatrix()));
+  if (nodeIds.size !== evaluatedById.size) {
+    throw new Error(
+      "Canvas2D display-list groups do not match the active evaluated Scene nodes.",
+    );
+  }
+  return { boxes, extensionOperations, displayGroups };
+}
+
+function assertDisplayGroupSemantics(
+  group: DisplayGroup,
+  composition: DisplayList["composition"],
+  parentWorld: AffineMatrix2D,
+): void {
+  const node = group.node;
+  const style = node.style;
+  const softMask =
+    node.mask !== undefined &&
+    ((node.mask.feather ?? 0) > 0 || (node.mask.opacity ?? 1) < 1);
+  const expectedTransform = resolveStyleTransformMatrix(style, group.box);
+  const expectedWorld = multiplyAffineMatrices(parentWorld, expectedTransform);
+  const expectedBounds = transformLayoutRect(expectedWorld, group.box);
+  if (
+    group.engineId !== `mf:node:${node.id.length}:${node.id}` ||
+    !sameMatrix(group.transform, expectedTransform) ||
+    !sameMatrix(group.worldTransform, expectedWorld) ||
+    !sameRect(group.transformedBounds, expectedBounds) ||
+    group.composite.opacity !== (style.opacity ?? 1) ||
+    group.composite.blendMode !== (style.blendMode ?? "source-over") ||
+    group.composite.filter !==
+      (style.filter !== undefined && style.filter !== "none"
+        ? style.filter
+        : null) ||
+    group.composite.isolation !== (style.isolation ?? false) ||
+    group.composite.strategy !==
+      (style.isolation || softMask ? "isolated" : "direct") ||
+    Boolean(group.clip) !== Boolean(node.clip) ||
+    Boolean(group.mask) !== Boolean(node.mask) ||
+    Boolean(group.overflowClip) !== (style.overflow === "hidden")
+  ) {
+    throw new Error(
+      `Canvas2D display group ${JSON.stringify(node.id)} has tampered transform/composite semantics.`,
+    );
+  }
+
+  const backgroundSource = style.background ?? style.backgroundColor;
+  if (
+    Boolean(group.background) !== Boolean(backgroundSource) ||
+    (group.background &&
+      (group.background.nodeId !== node.id ||
+        group.background.paint.source !== backgroundSource ||
+        !sameRect(group.background.bounds, group.box)))
+  ) {
+    throw new Error(
+      `Canvas2D display group ${JSON.stringify(node.id)} has tampered background paint semantics.`,
+    );
+  }
+  const border = style.border ? parseBorderValue(style.border) : null;
+  const hasBorder = Boolean(border && border.width > 0);
+  if (
+    Boolean(group.border) !== hasBorder ||
+    (group.border &&
+      border &&
+      (group.border.nodeId !== node.id ||
+        group.border.width !== border.width ||
+        group.border.paint.source !== border.color.source ||
+        !sameRect(group.border.bounds, group.box)))
+  ) {
+    throw new Error(
+      `Canvas2D display group ${JSON.stringify(node.id)} has tampered border paint semantics.`,
+    );
+  }
+
+  const content = group.content;
+  const expectedValue =
+    node.text ?? node.runs?.map((run) => run.text).join("") ?? "";
+  if (node.type === "text" && (node.text !== undefined || node.runs)) {
+    if (
+      content?.kind !== "text" ||
+      content.nodeId !== node.id ||
+      content.value !== expectedValue ||
+      content.fill !== (style.color ?? "#ffffff") ||
+      !sameRect(content.bounds, group.box)
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(node.id)} has tampered text paint semantics.`,
+      );
+    }
+    return;
+  }
+  if (node.type === "shape" && node.shape) {
+    const open = node.shape.kind === "line" || node.shape.kind === "polyline";
+    const fillSource = style.fill ?? (open ? undefined : "#000000");
+    const strokeSource = style.stroke ?? (open ? "#000000" : undefined);
+    if (
+      content?.kind !== "shape" ||
+      content.nodeId !== node.id ||
+      content.fill?.source !== fillSource ||
+      content.stroke?.paint.source !== strokeSource ||
+      !sameRect(content.bounds, group.box)
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(node.id)} has tampered shape paint semantics.`,
+      );
+    }
+    return;
+  }
+  if (
+    (node.type === "img" || node.type === "video" || node.type === "lottie") &&
+    node.assetId
+  ) {
+    const expectedKind =
+      node.type === "img"
+        ? "image"
+        : node.type === "video"
+          ? "prepared-video"
+          : "prepared-lottie";
+    if (
+      content?.kind !== "media" ||
+      content.nodeId !== node.id ||
+      content.resource.kind !== expectedKind ||
+      content.resource.assetId !== node.assetId ||
+      (content.resource.kind !== "image" &&
+        (content.resource.nodeId !== node.id ||
+          content.resource.sceneFrame !== composition.frame)) ||
+      !sameRect(content.bounds, group.box)
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(node.id)} has tampered media paint semantics.`,
+      );
+    }
+    return;
+  }
+  if (node.type === "effect" && node.effect) {
+    if (
+      content?.kind !== "effect" ||
+      content.nodeId !== node.id ||
+      content.effect !== node.effect ||
+      content.localFrame !== node.localFrame ||
+      content.sceneFps !== composition.fps ||
+      stableJsonStringify(content.params) !==
+        stableJsonStringify(node.params ?? {})
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(node.id)} has tampered effect semantics.`,
+      );
+    }
+    return;
+  }
+  if (node.type === "extension" && node.extension) {
+    if (
+      content?.kind !== "extension" ||
+      content.nodeId !== node.id ||
+      content.extension.name !== node.extension.name ||
+      content.extension.version !== node.extension.version ||
+      stableJsonStringify(content.extension.params) !==
+        stableJsonStringify(node.extension.params)
+    ) {
+      throw new Error(
+        `Canvas2D display group ${JSON.stringify(node.id)} has tampered extension semantics.`,
+      );
+    }
+    return;
+  }
+  if (content !== null) {
+    throw new Error(
+      `Canvas2D display group ${JSON.stringify(node.id)} has unexpected content paint semantics.`,
+    );
+  }
+}
+
+function sameRect(
+  left: { x: number; y: number; width: number; height: number },
+  right: { x: number; y: number; width: number; height: number },
+): boolean {
+  return (
+    left.x === right.x &&
+    left.y === right.y &&
+    left.width === right.width &&
+    left.height === right.height
+  );
+}
+
+function sameMatrix(left: AffineMatrix2D, right: AffineMatrix2D): boolean {
+  return (
+    left.a === right.a &&
+    left.b === right.b &&
+    left.c === right.c &&
+    left.d === right.d &&
+    left.e === right.e &&
+    left.f === right.f
+  );
+}
+
+function stableJsonStringify(value: unknown): string {
+  const normalize = (entry: unknown): unknown => {
+    if (Array.isArray(entry)) return entry.map(normalize);
+    if (typeof entry !== "object" || entry === null) return entry;
+    return Object.fromEntries(
+      Object.keys(entry as Record<string, unknown>)
+        .sort()
+        .map((key) => [
+          key,
+          normalize((entry as Record<string, unknown>)[key]),
+        ]),
+    );
+  };
+  return JSON.stringify(normalize(value));
+}
+
+const preparedStaticResourceIdentities = new WeakMap<object, number>();
+let nextPreparedStaticResourceIdentity = 1;
+
+function createStaticDisplayResourceIdentity(
+  assets: ResolvedAssets | undefined,
+): (reference: StaticDisplayResourceReference) => string {
+  return (reference) => {
+    if (reference.kind === "image") {
+      const image = assets?.images?.get(reference.assetId);
+      if (!image) {
+        throw new Error(
+          `Static image resource ${JSON.stringify(reference.assetId)} is not prepared.`,
+        );
+      }
+      return staticPreparedResourceIdentity(
+        image,
+        assets?.resolvedSources?.get(reference.assetId),
+      );
+    }
+    const font = assets?.fonts?.get(reference.family);
+    if (!font) {
+      return `system-font:${reference.family}:${reference.weight}:${reference.style}`;
+    }
+    return staticPreparedResourceIdentity(
+      font,
+      assets?.resolvedSources?.get(reference.family),
+    );
+  };
+}
+
+function staticPreparedResourceIdentity(
+  resource: object,
+  source: ResolvedAssetSource | undefined,
+): string {
+  let objectIdentity = preparedStaticResourceIdentities.get(resource);
+  if (!objectIdentity) {
+    objectIdentity = nextPreparedStaticResourceIdentity;
+    nextPreparedStaticResourceIdentity += 1;
+    preparedStaticResourceIdentities.set(resource, objectIdentity);
+  }
+  return JSON.stringify([
+    source?.resourceKey ?? source?.contentKey ?? source?.declarationKey ?? null,
+    objectIdentity,
+  ]);
+}
+
+function assertCanvas2DDisplayCapabilities(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  displayList: DisplayList,
+  execution: Canvas2DDisplayExecutionState,
+  assets: ResolvedAssets | undefined,
+): void {
+  for (const requirement of displayList.requirements) {
+    const capability = `${requirement.id}@${requirement.version}`;
+    if (capability === "motionforge.effect@1") continue;
+    if (capability === "motionforge.mask.soft@1") {
+      const needsFeatherFilter = requirement.nodeIds.some(
+        (nodeId) =>
+          (execution.displayGroups.get(nodeId)?.mask?.feather ?? 0) > 0,
+      );
+      if (needsFeatherFilter && !("filter" in context)) {
+        throw new Error(
+          "Canvas2D feathered masks require context.filter support.",
+        );
+      }
+      continue;
+    }
+    if (capability === "motionforge.filter@1") {
+      if (!("filter" in context)) {
+        throw new Error(
+          "Canvas2D display list requires context.filter support.",
+        );
+      }
+      continue;
+    }
+    if (capability === "motionforge.paint.conic@1") {
+      if (typeof context.createConicGradient !== "function") {
+        throw new Error(
+          "Canvas2D display list requires createConicGradient() support.",
+        );
+      }
+      continue;
+    }
+    if (
+      capability ===
+      `${legacyExtensionRendererCapability.id}@${legacyExtensionRendererCapability.version}`
+    ) {
+      for (const nodeId of requirement.nodeIds) {
+        const operation = execution.extensionOperations.get(nodeId);
+        const runtime = assets?.extensionNodes?.get(nodeId);
+        if (
+          operation?.mode !== "legacy-opaque" ||
+          !runtime?.adapter ||
+          (runtime.displayDecision !== undefined &&
+            runtime.displayDecision.kind !== "legacy-opaque")
+        ) {
+          throw new Error(
+            `Canvas2D display list requires a resolved legacy adapter for extension node ${JSON.stringify(nodeId)}.`,
+          );
+        }
+      }
+      continue;
+    }
+    const registry = execution.opaqueExtensionRegistry;
+    if (!registry) {
+      throw new Error(
+        `Canvas2D display list requires opaque capability ${capability}, but no registry was supplied.`,
+      );
+    }
+    registry.resolveExact({ id: requirement.id, version: requirement.version });
+    for (const nodeId of requirement.nodeIds) {
+      const operation = execution.extensionOperations.get(nodeId);
+      const runtime = assets?.extensionNodes?.get(nodeId);
+      if (
+        operation?.mode !== "opaque" ||
+        operation.capability.id !== requirement.id ||
+        operation.capability.version !== requirement.version ||
+        runtime?.displayDecision.kind !== "opaque" ||
+        runtime.displayDecision.capability.id !== requirement.id ||
+        runtime.displayDecision.capability.version !== requirement.version ||
+        runtime.displayDecision.realm !== registry.realm
+      ) {
+        throw new Error(
+          `Canvas2D opaque capability ${capability} does not match extension node ${JSON.stringify(nodeId)} runtime state.`,
+        );
+      }
+    }
+  }
+}
+
+const DEFAULT_TRANSIENT_SCRATCH_BYTES = 64 * 1024 * 1024;
+const MAX_TRANSIENT_SCRATCH_BYTES = 512 * 1024 * 1024;
+
+function createTransientScratchSurfacePool(scene: Scene): ScratchSurfacePool {
+  const sceneBytes = checkedRgbaBytes(scene.width, scene.height);
+  return new ScratchSurfacePool({
+    createCanvas: createStagingCanvas,
+    // Four scene-sized surfaces cover the common nested-isolation + mask
+    // case, while the hard cap keeps an accidental deep tree from turning a
+    // one-shot render into unbounded browser memory growth. Hosts rendering
+    // unusually large/deep scenes can inject a session-owned policy instead.
+    maxBytes: Math.min(
+      MAX_TRANSIENT_SCRATCH_BYTES,
+      Math.max(DEFAULT_TRANSIENT_SCRATCH_BYTES, sceneBytes * 4),
+    ),
+    maxSurfaces: 32,
+    // Shadows and object-fit:none pixelation can legitimately stage beyond a
+    // composition edge. The byte ceiling remains the authoritative memory
+    // guard; the host canvas factory still rejects unsupported dimensions.
+    maxDimension: Number.MAX_SAFE_INTEGER,
+  });
 }
 
 /**
@@ -3374,7 +4291,7 @@ function measureTextLine(
   const font = canvasFont(style, fontSize);
   const letterSpacing = readLength(style.letterSpacing, fontSize, 0);
   const cacheKey = textMeasureCache
-    ? `${font}\u0000${letterSpacing}\u0000${line}`
+    ? `${font}\u0000${style.direction ?? "inherit"}\u0000${letterSpacing}\u0000${line}`
     : null;
   const cached = cacheKey ? textMeasureCache?.get(cacheKey) : undefined;
 
@@ -3427,6 +4344,8 @@ function drawBox(
   sceneFrame: number,
   sceneFps: number,
   textMeasureCache: TextMeasureCache | undefined,
+  scratchSurfacePool: ScratchSurfacePool,
+  execution: Canvas2DDisplayExecutionState,
 ): void {
   const softMask =
     box.node.mask !== undefined &&
@@ -3441,6 +4360,8 @@ function drawBox(
       sceneFps,
       textMeasureCache,
       softMask,
+      scratchSurfacePool,
+      execution,
     );
     return;
   }
@@ -3452,6 +4373,8 @@ function drawBox(
     sceneFrame,
     sceneFps,
     textMeasureCache,
+    scratchSurfacePool,
+    execution,
   );
 }
 
@@ -3463,6 +4386,8 @@ function drawBoxDirect(
   sceneFrame: number,
   sceneFps: number,
   textMeasureCache: TextMeasureCache | undefined,
+  scratchSurfacePool: ScratchSurfacePool,
+  execution: Canvas2DDisplayExecutionState,
   options: {
     suppressRootComposite?: boolean;
     suppressRootMask?: boolean;
@@ -3497,7 +4422,7 @@ function drawBoxDirect(
       options.suppressRootMask ? undefined : node.mask,
     );
 
-    drawBackground(context, box, style);
+    drawBackground(context, box, style, scratchSurfacePool);
 
     if (style.overflow === "hidden") {
       // Clip own content and the subtree to the border box, following
@@ -3516,26 +4441,41 @@ function drawBoxDirect(
     }
 
     if (node.type === "text" && (node.text !== undefined || node.runs)) {
-      drawText(
-        context,
-        box,
-        node.text ?? node.runs?.map((run) => run.text).join("") ?? "",
-        style,
-        textMeasureCache,
-        node.runs,
-      );
+      const operation = execution.displayGroups.get(node.id)?.content;
+      if (operation?.kind !== "text") {
+        throw new Error(
+          `Canvas2D display list has no compiled text operation for node ${JSON.stringify(node.id)}.`,
+        );
+      }
+      drawCompiledText(context, operation);
     }
 
     if (node.type === "img" && node.assetId) {
-      drawImage(context, box, node.assetId, style, assets);
+      drawImage(context, box, node.assetId, style, assets, scratchSurfacePool);
     }
 
     if (node.type === "video" && node.assetId) {
-      drawVideo(context, box, node, style, assets, sceneFrame);
+      drawVideo(
+        context,
+        box,
+        node,
+        style,
+        assets,
+        sceneFrame,
+        scratchSurfacePool,
+      );
     }
 
     if (node.type === "lottie" && node.assetId) {
-      drawLottie(context, box, node, style, assets, sceneFrame);
+      drawLottie(
+        context,
+        box,
+        node,
+        style,
+        assets,
+        sceneFrame,
+        scratchSurfacePool,
+      );
     }
 
     if (node.type === "effect" && node.effect) {
@@ -3543,7 +4483,16 @@ function drawBoxDirect(
     }
 
     if (node.type === "extension" && node.extension) {
-      drawExtension(context, box, scene, node, assets, sceneFrame, sceneFps);
+      drawExtension(
+        context,
+        box,
+        scene,
+        node,
+        assets,
+        sceneFrame,
+        sceneFps,
+        execution,
+      );
     }
 
     if (node.type === "shape" && node.shape) {
@@ -3561,6 +4510,8 @@ function drawBoxDirect(
         sceneFrame,
         sceneFps,
         textMeasureCache,
+        scratchSurfacePool,
+        execution,
       );
     }
   } finally {
@@ -3577,41 +4528,391 @@ function drawIsolatedBox(
   sceneFps: number,
   textMeasureCache: TextMeasureCache | undefined,
   softMask: boolean,
+  scratchSurfacePool: ScratchSurfacePool,
+  execution: Canvas2DDisplayExecutionState,
 ): void {
-  const canvas = createStagingCanvas(scene.width, scene.height);
-  const isolatedContext = canvas.getContext("2d") as
-    | CanvasRenderingContext2D
-    | OffscreenCanvasRenderingContext2D
-    | null;
-  if (!isolatedContext) {
-    throw new Error("Canvas2D unavailable for isolated group compositing.");
-  }
-  isolatedContext.clearRect(0, 0, scene.width, scene.height);
-  drawBoxDirect(
-    isolatedContext,
-    box,
-    scene,
-    assets,
-    sceneFrame,
-    sceneFps,
-    textMeasureCache,
-    { suppressRootComposite: true, suppressRootMask: softMask },
+  const bounds = resolveIsolationBounds(box, scene, execution.displayGroups);
+  if (!bounds) return;
+  const displayGroup = execution.displayGroups.get(box.id);
+  const staticDisplayCache = execution.staticDisplayCache;
+  const cacheEligible = Boolean(
+    staticDisplayCache &&
+    displayGroup?.composite.strategy === "isolated" &&
+    isStaticDisplayGroup(displayGroup),
   );
-
-  if (softMask && box.node.mask) {
-    applySoftMask(isolatedContext, box, box.node.mask, scene);
-  }
-
-  context.save();
-  try {
-    context.globalAlpha *= box.node.style.opacity ?? 1;
-    if (box.node.style.blendMode) {
-      context.globalCompositeOperation = box.node.style.blendMode;
+  if (cacheEligible && displayGroup && staticDisplayCache) {
+    const cached = staticDisplayCache.get(displayGroup, bounds, {
+      resourceIdentity: execution.staticResourceIdentity,
+    });
+    if (cached) {
+      compositeIsolatedRaster(context, cached, bounds, box.node.style);
+      return;
     }
-    context.drawImage(canvas, 0, 0);
-  } finally {
-    context.restore();
   }
+  const lease = scratchSurfacePool.acquire({
+    width: bounds.width,
+    height: bounds.height,
+    purpose: `isolation:${box.id}`,
+  });
+  const adoptionEligible = Boolean(
+    cacheEligible &&
+    displayGroup &&
+    staticDisplayCache?.canAdopt(displayGroup, bounds, lease.bucket, {
+      resourceIdentity: execution.staticResourceIdentity,
+    }),
+  );
+  let poisoned = true;
+  try {
+    const isolatedContext = lease.context;
+    isolatedContext.clearRect(0, 0, bounds.width, bounds.height);
+    withSavedContext(isolatedContext, () => {
+      isolatedContext.translate(-bounds.x, -bounds.y);
+      drawBoxDirect(
+        isolatedContext,
+        box,
+        scene,
+        assets,
+        sceneFrame,
+        sceneFps,
+        textMeasureCache,
+        scratchSurfacePool,
+        execution,
+        { suppressRootComposite: true, suppressRootMask: softMask },
+      );
+    });
+
+    if (softMask && box.node.mask) {
+      applySoftMask(
+        isolatedContext,
+        box,
+        box.node.mask,
+        bounds,
+        scratchSurfacePool,
+      );
+    }
+
+    compositeIsolatedRaster(context, lease.surface, bounds, box.node.style);
+    poisoned = false;
+    if (adoptionEligible && displayGroup && staticDisplayCache) {
+      const detached = lease.detach();
+      if (detached) {
+        staticDisplayCache.adopt(displayGroup, bounds, detached, {
+          resourceIdentity: execution.staticResourceIdentity,
+        });
+      }
+    }
+  } finally {
+    lease.release({ poisoned });
+  }
+}
+
+function compositeIsolatedRaster(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  surface: CanvasImageSource,
+  bounds: IsolationBounds,
+  style: SceneStyle,
+): void {
+  withSavedContext(context, () => {
+    context.globalAlpha *= style.opacity ?? 1;
+    if (style.blendMode) {
+      context.globalCompositeOperation = style.blendMode;
+    }
+    // A pooled backing store may be larger than the requested crop. Never
+    // composite stale pixels from the unused bucket remainder.
+    context.drawImage(
+      surface,
+      0,
+      0,
+      bounds.width,
+      bounds.height,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+    );
+  });
+}
+
+type IsolationBounds = LayoutRect;
+type CollectedInkBounds = {
+  bounds: LayoutRect | null;
+  fullScene: boolean;
+};
+
+/**
+ * Computes a conservative pixel crop in the isolated node's parent
+ * coordinate space. Opaque host extensions and procedural effects retain the
+ * legacy full-scene staging contract because their painter can emit pixels
+ * outside its declared box.
+ */
+function resolveIsolationBounds(
+  box: LayoutBox,
+  scene: Pick<Scene, "width" | "height">,
+  displayGroups: ReadonlyMap<string, DisplayGroup>,
+): IsolationBounds | null {
+  const sceneRect: LayoutRect = {
+    x: 0,
+    y: 0,
+    width: scene.width,
+    height: scene.height,
+  };
+  const collected = collectSubtreeInkBounds(
+    box,
+    identityAffineMatrix(),
+    displayGroups,
+  );
+  if (collected.fullScene) return sceneRect;
+  const raw = collected.bounds;
+  if (!raw) return null;
+  if (![raw.x, raw.y, raw.width, raw.height].every(Number.isFinite)) {
+    return sceneRect;
+  }
+  const left = Math.max(0, Math.floor(snapNearInteger(raw.x)));
+  const top = Math.max(0, Math.floor(snapNearInteger(raw.y)));
+  const right = Math.min(
+    scene.width,
+    Math.ceil(snapNearInteger(raw.x + raw.width)),
+  );
+  const bottom = Math.min(
+    scene.height,
+    Math.ceil(snapNearInteger(raw.y + raw.height)),
+  );
+  if (right <= left || bottom <= top) return null;
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+function snapNearInteger(value: number): number {
+  const rounded = Math.round(value);
+  return Math.abs(value - rounded) <= 1e-9 * Math.max(1, Math.abs(value))
+    ? rounded
+    : value;
+}
+
+function collectSubtreeInkBounds(
+  box: LayoutBox,
+  parentTransform: AffineMatrix2D,
+  displayGroups: ReadonlyMap<string, DisplayGroup>,
+): CollectedInkBounds {
+  if (box.node.type === "extension" || box.node.type === "effect") {
+    return { bounds: null, fullScene: true };
+  }
+
+  const transform = multiplyAffineMatrices(
+    parentTransform,
+    resolveStyleTransformMatrix(box.node.style, box),
+  );
+  let bounds: LayoutRect | null = null;
+  const ownBounds = resolveOwnInkBounds(box, displayGroups.get(box.id));
+  if (ownBounds) {
+    bounds = transformLayoutRect(transform, ownBounds);
+  }
+  for (const child of box.children) {
+    const childBounds = collectSubtreeInkBounds(
+      child,
+      transform,
+      displayGroups,
+    );
+    if (childBounds.fullScene) return childBounds;
+    bounds = unionLayoutRects(bounds, childBounds.bounds);
+  }
+
+  const filterMargin = resolveFilterMargin(box.node.style.filter);
+  if (bounds && filterMargin > 0) {
+    bounds = expandLayoutRect(bounds, filterMargin);
+  }
+  const feather = box.node.mask?.feather ?? 0;
+  if (bounds && feather > 0) {
+    // Canvas blur kernels are truncated by implementations. Three radii is a
+    // deliberately conservative device-pixel envelope for mask feathering.
+    bounds = expandLayoutRect(bounds, feather * 3);
+  }
+  return { bounds, fullScene: false };
+}
+
+function resolveOwnInkBounds(
+  box: LayoutBox,
+  displayGroup: DisplayGroup | undefined,
+): LayoutRect | null {
+  const { node } = box;
+  const style = node.style;
+  let bounds: LayoutRect | null = null;
+  const boxRect: LayoutRect = {
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    height: box.height,
+  };
+
+  if (style.background ?? style.backgroundColor) {
+    bounds = boxRect;
+    for (const shadow of style.boxShadow
+      ? parseBoxShadows(style.boxShadow)
+      : []) {
+      bounds = unionLayoutRects(
+        bounds,
+        shadowLayoutRect(boxRect, shadow.offsetX, shadow.offsetY, shadow.blur),
+      );
+    }
+  }
+
+  const border = style.border ? parseBorder(style.border) : null;
+  if (border) {
+    bounds = unionLayoutRects(
+      bounds,
+      expandLayoutRect(boxRect, border.width / 2),
+    );
+  }
+
+  if (node.type === "shape" && node.shape) {
+    const strokeWidth = style.strokeWidth ?? 1;
+    const hasStroke =
+      style.stroke !== undefined ||
+      node.shape.kind === "line" ||
+      node.shape.kind === "polyline";
+    // Canvas's default miter limit is 10, hence five stroke widths from the
+    // path centerline. Round/bevel joins need only half a stroke.
+    const strokeMargin = hasStroke
+      ? style.strokeLineJoin === "round" || style.strokeLineJoin === "bevel"
+        ? strokeWidth / 2
+        : strokeWidth * 5
+      : 0;
+    bounds = unionLayoutRects(bounds, expandLayoutRect(boxRect, strokeMargin));
+  } else if (
+    node.type === "img" ||
+    node.type === "video" ||
+    node.type === "lottie"
+  ) {
+    bounds = unionLayoutRects(bounds, boxRect);
+  } else if (
+    node.type === "text" &&
+    (node.text !== undefined || node.runs !== undefined)
+  ) {
+    const compiled = displayGroup?.content;
+    if (compiled?.kind === "text") {
+      bounds = unionLayoutRects(bounds, compiledTextInkBounds(compiled));
+      return bounds;
+    }
+    // A detached/malformed list must not crop unknown glyph extents.
+    return {
+      x: Number.NEGATIVE_INFINITY,
+      y: Number.NEGATIVE_INFINITY,
+      width: Number.POSITIVE_INFINITY,
+      height: Number.POSITIVE_INFINITY,
+    };
+  }
+  return bounds;
+}
+
+function compiledTextInkBounds(operation: DisplayTextOperation): LayoutRect {
+  let result: LayoutRect | null = null;
+  for (const line of operation.lines) {
+    if (line.text === "") continue;
+    const startX =
+      line.runs.length > 0
+        ? line.x
+        : operation.align === "center"
+          ? line.x - line.width / 2
+          : operation.align === "right"
+            ? line.x - line.width
+            : line.x;
+    let lineBounds: LayoutRect = {
+      x: startX,
+      y: line.y - line.metrics.ascent,
+      width: line.width,
+      height: line.metrics.ascent + line.metrics.descent,
+    };
+    for (const run of line.runs) {
+      lineBounds = unionLayoutRects(lineBounds, {
+        x: run.x,
+        y: line.y - line.metrics.ascent,
+        width: run.width,
+        height: line.metrics.ascent + line.metrics.descent,
+      })!;
+    }
+    const strokeWidth = Math.max(
+      operation.stroke?.width ?? 0,
+      ...line.runs.map((run) => run.stroke?.width ?? 0),
+    );
+    lineBounds = expandLayoutRect(lineBounds, strokeWidth + 1);
+    if (operation.shadow) {
+      lineBounds = unionLayoutRects(
+        lineBounds,
+        shadowLayoutRect(
+          lineBounds,
+          operation.shadow.offsetX,
+          operation.shadow.offsetY,
+          operation.shadow.blur,
+        ),
+      )!;
+    }
+    if (line.background) {
+      lineBounds = unionLayoutRects(lineBounds, {
+        x: startX - line.background.paddingX,
+        y: line.y - operation.lineHeight / 2 - line.background.paddingY,
+        width: line.width + line.background.paddingX * 2,
+        height: operation.lineHeight + line.background.paddingY * 2,
+      })!;
+    }
+    for (const run of line.runs) {
+      if (!run.backgroundColor) continue;
+      lineBounds = unionLayoutRects(lineBounds, {
+        x: run.x,
+        y: line.y - operation.lineHeight / 2,
+        width: run.width,
+        height: operation.lineHeight,
+      })!;
+    }
+    result = unionLayoutRects(result, lineBounds);
+  }
+  return result ?? operation.bounds;
+}
+
+function resolveFilterMargin(filter: string | undefined): number {
+  if (!filter || filter === "none") return 0;
+  const parsed = parseFilterValue(filter);
+  if (!parsed || parsed.kind === "none") return 0;
+  return parsed.functions.reduce(
+    (margin, fn) => margin + (fn.kind === "blur" ? fn.value * 3 : 0),
+    0,
+  );
+}
+
+function shadowLayoutRect(
+  source: LayoutRect,
+  offsetX: number,
+  offsetY: number,
+  blur: number,
+): LayoutRect {
+  const spread = blur * 2;
+  return {
+    x: source.x + offsetX - spread,
+    y: source.y + offsetY - spread,
+    width: source.width + spread * 2,
+    height: source.height + spread * 2,
+  };
+}
+
+function expandLayoutRect(rect: LayoutRect, amount: number): LayoutRect {
+  const margin = Math.max(0, amount);
+  return {
+    x: rect.x - margin,
+    y: rect.y - margin,
+    width: rect.width + margin * 2,
+    height: rect.height + margin * 2,
+  };
+}
+
+function unionLayoutRects(
+  left: LayoutRect | null,
+  right: LayoutRect | null,
+): LayoutRect | null {
+  if (!left) return right ? { ...right } : null;
+  if (!right) return { ...left };
+  const x = Math.min(left.x, right.x);
+  const y = Math.min(left.y, right.y);
+  const rightEdge = Math.max(left.x + left.width, right.x + right.width);
+  const bottomEdge = Math.max(left.y + left.height, right.y + right.height);
+  return { x, y, width: rightEdge - x, height: bottomEdge - y };
 }
 
 function drawExtension(
@@ -3622,6 +4923,7 @@ function drawExtension(
   assets: ResolvedAssets | undefined,
   sceneFrame: number,
   sceneFps: number,
+  execution: Canvas2DDisplayExecutionState,
 ): void {
   const runtime = assets?.extensionNodes?.get(node.id);
   if (!runtime) {
@@ -3630,30 +4932,64 @@ function drawExtension(
     );
   }
 
-  const prepared = assets?.extensionFrames?.get(node.id);
-  if (runtime.definition.prepareFrame && !prepared) {
+  const prepared = assertPreparedExtensionFrame(
+    runtime,
+    assets,
+    node.id,
+    sceneFrame,
+  );
+  const operation = execution.extensionOperations.get(node.id);
+  if (!operation) {
     throw new Error(
-      `Extension node "${node.id}" has no prepared frame. Await prepareFrame(scene, frame, assets) before renderStill.`,
+      `Canvas2D display list has no extension operation for node ${JSON.stringify(node.id)}.`,
     );
   }
-  if (prepared && prepared.sceneFrame !== sceneFrame) {
-    throw new Error(
-      `Extension node "${node.id}" has data prepared for scene frame ${prepared.sceneFrame}, but frame ${sceneFrame} is being rendered. Await prepareFrame(scene, ${sceneFrame}, assets) first.`,
-    );
-  }
-
-  runtime.adapter.draw({
+  const adapter = runtime.adapter;
+  executeCanvas2DDisplayExtension({
     context,
-    scene,
-    node: node as ResolvedNode & ExtensionSceneNode,
-    box,
-    params: runtime.params,
+    operation,
+    box: { x: box.x, y: box.y, width: box.width, height: box.height },
+    preparedImages: collectPreparedExtensionImages(runtime, assets),
     resolvedAssets: runtime.resolvedAssets,
     preparedFrame: prepared?.value,
-    sceneFrame,
-    localFrame: node.localFrame,
-    sceneFps,
+    opaqueRegistry: execution.opaqueExtensionRegistry,
+    legacyDraw:
+      operation.mode === "legacy-opaque" && adapter
+        ? ({ context: target }) => {
+            return adapter.draw({
+              context: target,
+              scene,
+              node: node as ResolvedNode & ExtensionSceneNode,
+              box,
+              params: runtime.params,
+              resolvedAssets: runtime.resolvedAssets,
+              preparedFrame: prepared?.value,
+              sceneFrame,
+              localFrame: node.localFrame,
+              sceneFps,
+            });
+          }
+        : undefined,
   });
+}
+
+function collectPreparedExtensionImages(
+  runtime: ResolvedCanvas2DExtensionNode,
+  assets: ResolvedAssets | undefined,
+): ReadonlyMap<string, Canvas2DExtensionPreparedImage> {
+  const prepared = new Map<string, Canvas2DExtensionPreparedImage>();
+  for (const requirement of runtime.requirements) {
+    if (requirement.type !== undefined && requirement.type !== "image")
+      continue;
+    const image = assets?.images.get(requirement.assetId);
+    if (image) {
+      prepared.set(
+        requirement.assetId,
+        image as Canvas2DExtensionPreparedImage,
+      );
+    }
+  }
+  return prepared;
 }
 
 type ShapePath = {
@@ -3831,42 +5167,64 @@ function applySoftMask(
   isolatedContext: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   box: LayoutBox,
   mask: NonNullable<LayoutBox["node"]["mask"]>,
-  scene: Scene,
+  bounds: IsolationBounds,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
-  const maskCanvas = createStagingCanvas(scene.width, scene.height);
-  const maskContext = maskCanvas.getContext("2d") as
-    | CanvasRenderingContext2D
-    | OffscreenCanvasRenderingContext2D
-    | null;
-  if (!maskContext) {
-    throw new Error("Canvas2D unavailable for soft-mask staging.");
-  }
-  const maskPath = createShapePath(box, mask.shape);
-  if (maskPath.open) {
-    throw new Error(`Node "${box.id}" uses open geometry as a mask.`);
-  }
-  const opacity = mask.opacity ?? 1;
-  const feather = mask.feather ?? 0;
-
-  if (mask.inverted) {
-    maskContext.fillStyle = "#ffffff";
-    maskContext.fillRect(0, 0, scene.width, scene.height);
-    maskContext.globalCompositeOperation = "destination-out";
-  }
-  withSavedContext(maskContext, () => {
-    applyTransform(maskContext, box, box.node.style);
-    maskContext.globalAlpha = opacity;
-    if (feather > 0) {
-      maskContext.filter = `blur(${feather}px)`;
+  const lease = scratchSurfacePool.acquire({
+    width: bounds.width,
+    height: bounds.height,
+    purpose: `soft-mask:${box.id}`,
+  });
+  let poisoned = true;
+  try {
+    const maskContext = lease.context;
+    maskContext.clearRect(0, 0, bounds.width, bounds.height);
+    const maskPath = createShapePath(box, mask.shape);
+    if (maskPath.open) {
+      throw new Error(`Node "${box.id}" uses open geometry as a mask.`);
     }
-    maskContext.fillStyle = "#ffffff";
-    maskContext.fill(maskPath.path, maskPath.fillRule);
-  });
+    const opacity = mask.opacity ?? 1;
+    const feather = mask.feather ?? 0;
+    if (feather > 0 && !("filter" in maskContext)) {
+      throw new Error(
+        "Canvas2D feathered masks require context.filter support.",
+      );
+    }
 
-  withSavedContext(isolatedContext, () => {
-    isolatedContext.globalCompositeOperation = "destination-in";
-    isolatedContext.drawImage(maskCanvas, 0, 0);
-  });
+    if (mask.inverted) {
+      maskContext.fillStyle = "#ffffff";
+      maskContext.fillRect(0, 0, bounds.width, bounds.height);
+      maskContext.globalCompositeOperation = "destination-out";
+    }
+    withSavedContext(maskContext, () => {
+      maskContext.translate(-bounds.x, -bounds.y);
+      applyTransform(maskContext, box, box.node.style);
+      maskContext.globalAlpha = opacity;
+      if (feather > 0) {
+        maskContext.filter = `blur(${feather}px)`;
+      }
+      maskContext.fillStyle = "#ffffff";
+      maskContext.fill(maskPath.path, maskPath.fillRule);
+    });
+
+    withSavedContext(isolatedContext, () => {
+      isolatedContext.globalCompositeOperation = "destination-in";
+      isolatedContext.drawImage(
+        lease.surface,
+        0,
+        0,
+        bounds.width,
+        bounds.height,
+        0,
+        0,
+        bounds.width,
+        bounds.height,
+      );
+    });
+    poisoned = false;
+  } finally {
+    lease.release({ poisoned });
+  }
 }
 
 function drawShape(
@@ -3917,6 +5275,7 @@ function drawImage(
   assetId: string,
   style: SceneStyle,
   assets: ResolvedAssets | undefined,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const image = assets?.images.get(assetId);
 
@@ -3926,7 +5285,7 @@ function drawImage(
     );
   }
 
-  drawMedia(context, box, style, image, image);
+  drawMedia(context, box, style, image, image, scratchSurfacePool);
 }
 
 function drawVideo(
@@ -3936,6 +5295,7 @@ function drawVideo(
   style: SceneStyle,
   assets: ResolvedAssets | undefined,
   sceneFrame: number,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const prepared = assets?.videoFrames.get(node.id);
 
@@ -3951,7 +5311,7 @@ function drawVideo(
     );
   }
 
-  drawMedia(context, box, style, prepared.image, prepared);
+  drawMedia(context, box, style, prepared.image, prepared, scratchSurfacePool);
 }
 
 function drawLottie(
@@ -3961,6 +5321,7 @@ function drawLottie(
   style: SceneStyle,
   assets: ResolvedAssets | undefined,
   sceneFrame: number,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const prepared = assets?.lottieFrames.get(node.id);
 
@@ -3976,7 +5337,7 @@ function drawLottie(
     );
   }
 
-  drawMedia(context, box, style, prepared.image, prepared);
+  drawMedia(context, box, style, prepared.image, prepared, scratchSurfacePool);
 }
 
 function drawEffect(
@@ -5841,6 +7202,7 @@ function drawMedia(
   style: SceneStyle,
   source: ImageBitmap | HTMLCanvasElement | OffscreenCanvas,
   natural: { width: number; height: number },
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const fitted = computeObjectFit(
     style.objectFit,
@@ -5869,13 +7231,19 @@ function drawMedia(
 
     context.clip();
     if (pixelated) {
-      drawPixelatedMedia(context, source, natural, {
-        x: box.x + fitted.x,
-        y: box.y + fitted.y,
-        width: fitted.width,
-        height: fitted.height,
-        pixelSize: Math.max(1, Math.round(style.pixelSize ?? 12)),
-      });
+      drawPixelatedMedia(
+        context,
+        source,
+        natural,
+        {
+          x: box.x + fitted.x,
+          y: box.y + fitted.y,
+          width: fitted.width,
+          height: fitted.height,
+          pixelSize: Math.max(1, Math.round(style.pixelSize ?? 12)),
+        },
+        scratchSurfacePool,
+      );
     } else {
       context.drawImage(
         source,
@@ -5899,42 +7267,56 @@ function drawPixelatedMedia(
     height: number;
     pixelSize: number;
   },
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const lowWidth = Math.max(1, Math.ceil(fitted.width / fitted.pixelSize));
   const lowHeight = Math.max(1, Math.ceil(fitted.height / fitted.pixelSize));
-  const lowCanvas = createStagingCanvas(lowWidth, lowHeight);
-  const lowContext = lowCanvas.getContext("2d") as
-    | CanvasRenderingContext2D
-    | OffscreenCanvasRenderingContext2D
-    | null;
+  const lease = scratchSurfacePool.acquire({
+    width: lowWidth,
+    height: lowHeight,
+    purpose: "pixelated-media",
+  });
+  let poisoned = true;
+  try {
+    const lowContext = lease.context;
+    lowContext.clearRect(0, 0, lowWidth, lowHeight);
+    lowContext.imageSmoothingEnabled = true;
+    lowContext.imageSmoothingQuality = "high";
+    lowContext.drawImage(
+      source,
+      0,
+      0,
+      natural.width,
+      natural.height,
+      0,
+      0,
+      lowWidth,
+      lowHeight,
+    );
 
-  if (!lowContext) {
-    throw new Error("Canvas2D unavailable for pixelated media staging.");
+    context.imageSmoothingEnabled = false;
+    context.drawImage(
+      lease.surface,
+      0,
+      0,
+      lowWidth,
+      lowHeight,
+      fitted.x,
+      fitted.y,
+      fitted.width,
+      fitted.height,
+    );
+    poisoned = false;
+  } finally {
+    lease.release({ poisoned });
   }
-
-  lowContext.clearRect(0, 0, lowWidth, lowHeight);
-  lowContext.imageSmoothingEnabled = true;
-  lowContext.imageSmoothingQuality = "high";
-  lowContext.drawImage(
-    source,
-    0,
-    0,
-    natural.width,
-    natural.height,
-    0,
-    0,
-    lowWidth,
-    lowHeight,
-  );
-
-  context.imageSmoothingEnabled = false;
-  context.drawImage(lowCanvas, fitted.x, fitted.y, fitted.width, fitted.height);
 }
 
 function drawBackground(
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   box: LayoutBox,
   style: SceneStyle,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const background = style.background ?? style.backgroundColor;
 
@@ -5945,7 +7327,7 @@ function drawBackground(
   const shadows = style.boxShadow ? parseBoxShadows(style.boxShadow) : [];
   if (shadows.length > 1) {
     shadows.forEach((shadow) =>
-      drawBoxShadowLayer(context, box, style, shadow),
+      drawBoxShadowLayer(context, box, style, shadow, scratchSurfacePool),
     );
   }
   const shadow = shadows.length === 1 ? shadows[0] : null;
@@ -6000,6 +7382,7 @@ function drawBoxShadowLayer(
   box: LayoutBox,
   style: SceneStyle,
   shadow: ParsedBoxShadow,
+  scratchSurfacePool: ScratchSurfacePool,
 ): void {
   const padding = Math.ceil(
     Math.max(
@@ -6007,39 +7390,53 @@ function drawBoxShadowLayer(
       shadow.blur * 2 + Math.abs(shadow.offsetX) + Math.abs(shadow.offsetY),
     ),
   );
-  const canvas = createStagingCanvas(
-    Math.max(1, Math.ceil(box.width + padding * 2)),
-    Math.max(1, Math.ceil(box.height + padding * 2)),
-  );
-  const shadowContext = canvas.getContext("2d") as
-    | CanvasRenderingContext2D
-    | OffscreenCanvasRenderingContext2D
-    | null;
-  if (!shadowContext) {
-    throw new Error("Canvas2D unavailable for multiple box-shadow staging.");
-  }
-  const stagedBox = {
-    width: box.width,
-    height: box.height,
-  };
-  const radii = resolveCornerRadii(style, stagedBox);
-  shadowContext.fillStyle = "#000000";
-  shadowContext.shadowColor = shadow.color;
-  shadowContext.shadowOffsetX = shadow.offsetX;
-  shadowContext.shadowOffsetY = shadow.offsetY;
-  shadowContext.shadowBlur = shadow.blur;
-  roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
-  shadowContext.fill();
+  const width = Math.max(1, Math.ceil(box.width + padding * 2));
+  const height = Math.max(1, Math.ceil(box.height + padding * 2));
+  const lease = scratchSurfacePool.acquire({
+    width,
+    height,
+    purpose: `box-shadow:${box.id}`,
+  });
+  let poisoned = true;
+  try {
+    const shadowContext = lease.context;
+    shadowContext.clearRect(0, 0, width, height);
+    const stagedBox = {
+      width: box.width,
+      height: box.height,
+    };
+    const radii = resolveCornerRadii(style, stagedBox);
+    shadowContext.fillStyle = "#000000";
+    shadowContext.shadowColor = shadow.color;
+    shadowContext.shadowOffsetX = shadow.offsetX;
+    shadowContext.shadowOffsetY = shadow.offsetY;
+    shadowContext.shadowBlur = shadow.blur;
+    roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
+    shadowContext.fill();
 
-  // Remove the staging source while keeping its emitted shadow.
-  shadowContext.globalCompositeOperation = "destination-out";
-  shadowContext.shadowColor = "transparent";
-  shadowContext.shadowOffsetX = 0;
-  shadowContext.shadowOffsetY = 0;
-  shadowContext.shadowBlur = 0;
-  roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
-  shadowContext.fill();
-  context.drawImage(canvas, box.x - padding, box.y - padding);
+    // Remove the staging source while keeping its emitted shadow.
+    shadowContext.globalCompositeOperation = "destination-out";
+    shadowContext.shadowColor = "transparent";
+    shadowContext.shadowOffsetX = 0;
+    shadowContext.shadowOffsetY = 0;
+    shadowContext.shadowBlur = 0;
+    roundedRect(shadowContext, padding, padding, box.width, box.height, radii);
+    shadowContext.fill();
+    context.drawImage(
+      lease.surface,
+      0,
+      0,
+      width,
+      height,
+      box.x - padding,
+      box.y - padding,
+      width,
+      height,
+    );
+    poisoned = false;
+  } finally {
+    lease.release({ poisoned });
+  }
 }
 
 /**
@@ -6126,6 +7523,92 @@ function resolveLineHeight(
   }
 
   return readLength(value, fontSize, fontSize * 1.25);
+}
+
+/** Paints the compiler-owned line/run layout without target-context reflow. */
+function drawCompiledText(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  operation: DisplayTextOperation,
+): void {
+  context.font = `${operation.font.style} ${operation.font.weight} ${operation.font.size}px ${operation.font.family}`;
+  context.fillStyle = operation.fill;
+  context.textAlign = operation.align;
+  context.direction = operation.direction;
+  context.textBaseline = operation.baseline;
+  if ("letterSpacing" in context) {
+    context.letterSpacing = `${operation.letterSpacing}px`;
+  }
+  if (operation.shadow) {
+    context.shadowOffsetX = operation.shadow.offsetX;
+    context.shadowOffsetY = operation.shadow.offsetY;
+    context.shadowBlur = operation.shadow.blur;
+    context.shadowColor = operation.shadow.color;
+  }
+  if (operation.stroke) {
+    context.lineWidth = operation.stroke.width;
+    context.strokeStyle = operation.stroke.color;
+    context.lineJoin = "round";
+    context.miterLimit = 2;
+  }
+
+  for (const line of operation.lines) {
+    if (line.text === "") continue;
+    const rich = line.runs.length > 0;
+    if (line.background) {
+      const startX = rich
+        ? line.x
+        : operation.align === "center"
+          ? line.x - line.width / 2
+          : operation.align === "right"
+            ? line.x - line.width
+            : line.x;
+      drawTextBackground(context, {
+        x: startX - line.background.paddingX,
+        y: line.y - operation.lineHeight / 2 - line.background.paddingY,
+        width: line.width + line.background.paddingX * 2,
+        height: operation.lineHeight + line.background.paddingY * 2,
+        radius: line.background.radius,
+        color: line.background.color,
+      });
+    }
+
+    if (!rich) {
+      if (operation.stroke) {
+        if (line.maxWidth === null)
+          context.strokeText(line.text, line.x, line.y);
+        else context.strokeText(line.text, line.x, line.y, line.maxWidth);
+      }
+      if (line.maxWidth === null) context.fillText(line.text, line.x, line.y);
+      else context.fillText(line.text, line.x, line.y, line.maxWidth);
+      continue;
+    }
+
+    for (const run of line.runs) {
+      if (run.backgroundColor) {
+        drawTextBackground(context, {
+          x: run.x,
+          y: line.y - operation.lineHeight / 2,
+          width: run.width,
+          height: operation.lineHeight,
+          radius: 0,
+          color: run.backgroundColor,
+        });
+      }
+      withSavedContext(context, () => {
+        context.globalAlpha *= run.opacity;
+        context.textAlign = "left";
+        context.fillStyle = run.fill;
+        if (run.stroke) {
+          context.lineWidth = run.stroke.width;
+          context.strokeStyle = run.stroke.color;
+          context.lineJoin = "round";
+          context.miterLimit = 2;
+          context.strokeText(run.text, run.x, line.y);
+        }
+        context.fillText(run.text, run.x, line.y);
+      });
+    }
+  }
 }
 
 function drawText(

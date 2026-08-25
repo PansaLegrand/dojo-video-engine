@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-26
-Status: active implementation contract; MF0 through MF5 complete
+Status: active implementation contract; MF0 through MF6 complete
 
 ## Purpose
 
@@ -762,3 +762,27 @@ than the engine priority.
   and 30 MiB heap. All 14 policy-derived public packages passed dry-run
   packing. The packed clean-install starter imported and executed both runtime
   entry points, then passed validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF6 complete: accepted RFC 0011 and added core's ephemeral,
+  JSON-safe display-list v1 with stable hierarchy/operation identities,
+  geometry, paint, compiler-owned text layout, media references, explicit
+  capabilities, defensive snapshots, and structural budgets. `renderStill()`
+  now assembles evaluate → layout → compile → Canvas execute while retaining
+  its 1.x API and clamped/fractional-frame behavior. Extensions explicitly
+  choose standard rect/text/image operations, exact versioned opaque handlers,
+  or the preserved legacy Canvas bridge; immutable reuse, worker realms, and
+  native-resource separation are enforced. Canvas scratch allocation is
+  pooled, exact-bucket, byte/surface bounded, box-cropped, and ownership-safe
+  across isolation, soft masks, pixelation, and shadows. Proven-static isolated
+  subtrees use byte-bounded, resource-aware, collision-checked rasters that
+  survive compatible runtime revisions without adding a pixel copy. A reusable
+  nine-fixture backend conformance suite passed every structural/capability
+  case and exact-RGBA fixture. The full gate passed 962 unit tests,
+  750-scene/2,250-frame fuzzing, 28 corpus Scenes, seven resource checks, all
+  existing pixel/video/audio/export/runtime/tool goldens, Chromium/Firefox/
+  WebKit, and all 10 E2E checks. The existing 720p gate peaked at 6.15 ms/frame
+  and 29 MiB heap; cache-hit compositing measured 1.85 ms/frame at 1080p and
+  1.72 ms/frame at 4K with 14.44/57.66 MiB static residency and
+  63.86/258.83 MiB exact-bucket scratch peaks. Cached, fresh, and replenished
+  cache-disabled pixels were byte-identical. All 14 public packages packed,
+  and the external packed starter passed runtime imports plus
+  validate/migrate/inspect/lint/build.

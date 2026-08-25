@@ -6,7 +6,16 @@ import {
   type ExportWorkerEvent,
   type ExportWorkerRequest,
   type WorkerLike,
+  type WorkerExportOptions,
 } from "./worker.js";
+
+// Scratch pools contain native Canvas objects and must never enter the
+// structured-clone worker request contract.
+const workerOptionsTypeCheck = {
+  // @ts-expect-error scratchSurfacePool is intentionally non-serializable.
+  scratchSurfacePool: null,
+} satisfies WorkerExportOptions;
+void workerOptionsTypeCheck;
 
 const scene: Scene = {
   schemaVersion: 1,
@@ -90,6 +99,21 @@ describe("ExportWorkerClient", () => {
       type: "motionforge.export.cancel",
       id: task.id,
     });
+  });
+
+  it("defensively strips a scratch pool from untyped worker callers", () => {
+    const worker = new FakeWorker();
+    const pool = { nativeCanvas: true };
+    new ExportWorkerClient(worker).export(scene, {
+      scratchSurfacePool: pool,
+    } as never);
+    expect(worker.messages[0]).toMatchObject({
+      type: "motionforge.export.start",
+      options: {},
+    });
+    expect(
+      (worker.messages[0] as { options?: Record<string, unknown> }).options,
+    ).not.toHaveProperty("scratchSurfacePool");
   });
 });
 

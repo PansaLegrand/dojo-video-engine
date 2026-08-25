@@ -1,4 +1,5 @@
 import {
+  BoundedTextMeasureCache,
   prepareFrame,
   disposeAssetsAsync,
   estimateMediaResources,
@@ -9,6 +10,9 @@ import {
   type ResolvedAssets,
   type ResolveAssetsOptions,
   type MediaResourceEstimate,
+  type ScratchSurfacePool,
+  type Canvas2DStaticDisplayCache,
+  type Canvas2DOpaqueExtensionRegistry,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import {
@@ -128,12 +132,18 @@ export type ExportVideoOptions = {
   extensions?: ResolveAssetsOptions["extensions"];
   /** Require every extension definition to support worker execution. */
   worker?: boolean;
+  /** Exact opaque handlers used for extension display preflight/execution. */
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
   /** Final export uses original sources by default; opt in for draft proxy export. */
   preferProxy?: boolean;
   budget?: ResolveAssetsOptions["budget"];
   assetPolicy?: ResolveAssetsOptions["assetPolicy"];
   analysisCache?: ResolveAssetsOptions["analysisCache"];
   fontCache?: ResolveAssetsOptions["fontCache"];
+  /** Shared by every encoded frame; caller-owned and never disposed here. */
+  scratchSurfacePool?: ScratchSurfacePool;
+  /** Caller-owned bounded static raster cache; export never disposes it. */
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
   /**
    * Audio is mixed and fed to the encoder in windows of this many seconds
    * (default 10), so audio memory stays flat regardless of scene length.
@@ -151,11 +161,14 @@ type RuntimeOwnedExportOption =
   | "assets"
   | "extensions"
   | "worker"
+  | "opaqueExtensionRegistry"
   | "preferProxy"
   | "budget"
   | "assetPolicy"
   | "analysisCache"
-  | "fontCache";
+  | "fontCache"
+  | "scratchSurfacePool"
+  | "staticDisplayCache";
 
 /** Export options for media already prepared by a Canvas2D runtime. */
 export type RuntimeExportVideoOptions = Omit<
@@ -439,12 +452,18 @@ export type RenderFrameSequenceOptions = {
   signal?: AbortSignal;
   /** Resolved assets forwarded to the default renderStill renderer. */
   assets?: ResolvedAssets;
+  /** Shared across the sequence; caller-owned and never disposed here. */
+  scratchSurfacePool?: ScratchSurfacePool;
+  /** Caller-owned and never disposed by the frame loop. */
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
   renderFrame?: (
     context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
     scene: Scene,
     frame: number,
     resolvedScene?: ResolvedScene,
     textMeasureCache?: TextMeasureCache,
+    scratchSurfacePool?: ScratchSurfacePool,
+    staticDisplayCache?: Canvas2DStaticDisplayCache,
   ) => void;
   onFrame?: (frame: RenderedSequenceFrame) => void | Promise<void>;
   onProgress?: (progress: RenderFrameSequenceProgress) => void;
@@ -458,7 +477,7 @@ export type RenderFrameSequenceOptions = {
 /** Frame-loop options for media already prepared by a Canvas2D runtime. */
 export type RuntimeRenderFrameSequenceOptions = Omit<
   RenderFrameSequenceOptions,
-  "scene" | "assets"
+  "scene" | "assets" | "scratchSurfacePool" | "staticDisplayCache"
 >;
 
 export type RenderFrameSequenceResult = {
@@ -524,6 +543,7 @@ export function preflightExport(
     | "bitrate"
     | "extensions"
     | "worker"
+    | "opaqueExtensionRegistry"
     | "budget"
     | "assets"
   > = {},
@@ -537,6 +557,7 @@ export function preflightExport(
   const canvas = preflightCanvas2D(scene, globalObject, {
     extensions: options.extensions,
     worker: options.worker,
+    opaqueExtensionRegistry: options.opaqueExtensionRegistry,
     budget: options.budget,
   });
   const resolutionOnlyCodes = new Set([
@@ -600,6 +621,7 @@ export async function exportVideoWithFallback(
     bitrate: options.bitrate,
     extensions: options.extensions,
     worker: options.worker,
+    opaqueExtensionRegistry: options.opaqueExtensionRegistry,
     budget: options.budget,
     assets: options.assets,
   });
@@ -643,15 +665,19 @@ export async function renderFrameSequence(
       frame: number,
       resolvedScene?: ResolvedScene,
       textMeasureCache?: TextMeasureCache,
+      scratchSurfacePool?: ScratchSurfacePool,
+      staticDisplayCache?: Canvas2DStaticDisplayCache,
     ) =>
       renderStill(context, scene, frame, {
         assets: options.assets,
         resolvedScene,
         textMeasureCache,
+        scratchSurfacePool,
+        staticDisplayCache,
       }));
   let renderedFrames = 0;
   let lastProgressAt = 0;
-  const textMeasureCache: TextMeasureCache = new Map();
+  const textMeasureCache: TextMeasureCache = new BoundedTextMeasureCache();
 
   for (let frame = startFrame; frame <= endFrame; frame += 1) {
     throwIfAborted(options.signal);
@@ -672,6 +698,8 @@ export async function renderFrameSequence(
       frame,
       resolvedScene,
       textMeasureCache,
+      options.scratchSurfacePool,
+      options.staticDisplayCache,
     );
 
     const rendered: RenderedSequenceFrame = {
@@ -723,8 +751,15 @@ export async function renderFrameSequenceFromRuntime(
 ): Promise<RenderFrameSequenceResult> {
   return await withCanvas2DResolvedAssets(
     runtime,
-    ({ assets, scene, signal }) =>
-      renderFrameSequence({ ...options, scene, assets, signal }),
+    ({ assets, scratchSurfacePool, staticDisplayCache, scene, signal }) =>
+      renderFrameSequence({
+        ...options,
+        scene,
+        assets,
+        scratchSurfacePool,
+        staticDisplayCache,
+        signal,
+      }),
     { signal: options.signal },
   );
 }
@@ -767,8 +802,15 @@ export async function exportVideoFromRuntime(
 ): Promise<ExportVideoResult> {
   return await withCanvas2DResolvedAssets(
     runtime,
-    ({ assets, scene, signal }) =>
-      exportVideo({ ...options, scene, assets, signal }),
+    ({ assets, scratchSurfacePool, staticDisplayCache, scene, signal }) =>
+      exportVideo({
+        ...options,
+        scene,
+        assets,
+        scratchSurfacePool,
+        staticDisplayCache,
+        signal,
+      }),
     { signal: options.signal },
   );
 }
@@ -813,9 +855,16 @@ export async function exportVideoToStreamFromRuntime(
 ): Promise<ExportVideoStreamResult> {
   return await withCanvas2DResolvedAssets(
     runtime,
-    ({ assets, scene, signal }) =>
+    ({ assets, scratchSurfacePool, staticDisplayCache, scene, signal }) =>
       exportVideoToStream(
-        { ...options, scene, assets, signal },
+        {
+          ...options,
+          scene,
+          assets,
+          scratchSurfacePool,
+          staticDisplayCache,
+          signal,
+        },
         writable,
         streamOptions,
       ),
@@ -849,6 +898,7 @@ async function runExportVideo(
     bitrate: options.bitrate,
     extensions: options.extensions,
     worker: options.worker,
+    opaqueExtensionRegistry: options.opaqueExtensionRegistry,
     budget: options.budget,
     assets: options.assets,
   });
@@ -881,6 +931,7 @@ async function runExportVideo(
     (await resolveAssets(scene, {
       extensions: options.extensions,
       worker: options.worker,
+      opaqueExtensionRegistry: options.opaqueExtensionRegistry,
       signal: options.signal,
       preferProxy: options.preferProxy ?? false,
       budget: options.budget,
@@ -954,6 +1005,8 @@ async function runExportVideo(
         scene,
         context,
         assets,
+        scratchSurfacePool: options.scratchSurfacePool,
+        staticDisplayCache: options.staticDisplayCache,
         startFrame: options.startFrame,
         endFrame: options.endFrame,
         signal: options.signal,

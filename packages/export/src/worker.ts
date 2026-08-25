@@ -18,6 +18,9 @@ export type WorkerExportOptions = Omit<
   | "assetPolicy"
   | "analysisCache"
   | "fontCache"
+  | "scratchSurfacePool"
+  | "staticDisplayCache"
+  | "opaqueExtensionRegistry"
 >;
 
 export type ExportWorkerRequest =
@@ -49,6 +52,8 @@ export type ExportWorkerEvent =
 export type ExportWorkerHandlerOptions = {
   postMessage(event: ExportWorkerEvent): void;
   extensions?: ExportVideoOptions["extensions"];
+  opaqueExtensionRegistry?: ExportVideoOptions["opaqueExtensionRegistry"];
+  staticDisplayCache?: ExportVideoOptions["staticDisplayCache"];
   assetPolicy?: ExportVideoOptions["assetPolicy"];
   analysisCache?: ExportVideoOptions["analysisCache"];
   fontCache?: ExportVideoOptions["fontCache"];
@@ -80,12 +85,24 @@ export function createExportWorkerHandler(
     const controller = new AbortController();
     controllers.set(request.id, controller);
     try {
+      const {
+        scratchSurfacePool: _nonSerializablePool,
+        staticDisplayCache: _nonSerializableStaticCache,
+        opaqueExtensionRegistry: _nonSerializableOpaqueRegistry,
+        ...requestOptions
+      } = (request.options ?? {}) as WorkerExportOptions & {
+        scratchSurfacePool?: unknown;
+        staticDisplayCache?: unknown;
+        opaqueExtensionRegistry?: unknown;
+      };
       const result = await exportVideo({
-        ...request.options,
+        ...requestOptions,
         scene: request.scene,
         signal: controller.signal,
         worker: true,
         extensions: options.extensions,
+        opaqueExtensionRegistry: options.opaqueExtensionRegistry,
+        staticDisplayCache: options.staticDisplayCache,
         assetPolicy: options.assetPolicy,
         analysisCache: options.analysisCache,
         fontCache: options.fontCache,
@@ -143,7 +160,17 @@ export class ExportWorkerClient {
     } = {},
   ): { id: string; result: Promise<ExportVideoResult>; cancel(): void } {
     const id = `export-${++this.sequence}`;
-    const { onProgress, ...serializableOptions } = options;
+    const {
+      onProgress,
+      scratchSurfacePool: _nonSerializablePool,
+      staticDisplayCache: _nonSerializableStaticCache,
+      opaqueExtensionRegistry: _nonSerializableOpaqueRegistry,
+      ...serializableOptions
+    } = options as typeof options & {
+      scratchSurfacePool?: unknown;
+      staticDisplayCache?: unknown;
+      opaqueExtensionRegistry?: unknown;
+    };
     let settled = false;
     let listener!: (event: MessageEvent<ExportWorkerEvent>) => void;
     const result = new Promise<ExportVideoResult>((resolve, reject) => {

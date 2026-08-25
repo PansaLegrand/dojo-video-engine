@@ -24,6 +24,8 @@ import {
   parseTransformValue,
 } from "@motionforge/schema/values";
 
+export * from "./display-list.js";
+
 export type CompositionOptions = {
   width: number;
   height: number;

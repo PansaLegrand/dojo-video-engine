@@ -15,6 +15,7 @@ import {
   composition,
   div,
   text,
+  compileDisplayList,
   evaluateScene,
   layoutScene,
 } from "@motionforge/core";
@@ -38,6 +39,7 @@ const scene = composition({ width: 1080, height: 1920, fps: 30, duration: 120 })
 // Pure evaluation: scene JSON + frame number -> resolved styles -> layout boxes.
 const resolved = evaluateScene(scene, 30);
 const layout = layoutScene(resolved);
+const displayList = compileDisplayList(layout);
 ```
 
 The same builder program always emits the same scene JSON, so scenes can be diffed, patched, and snapshot-tested.
@@ -48,6 +50,9 @@ Stable for 1.x integrations:
 
 - Builder API: `composition()`, `div()`, `text()`, `richText()`, `img()`, `video()`, `audio()`, `lottie()`, `effect()`, `extension()`, `shape()`, `SceneBuilder`, `NodeBuilder`, and their option types.
 - Evaluation and layout: `evaluateScene()`, `layoutScene()`, `ResolvedScene`, `ResolvedNode`, `LayoutScene`, and `LayoutBox`.
+- Ephemeral paint intent: `compileDisplayList()`, `DisplayList`, display
+  groups/operations/capability requirements, measurement provenance, and
+  compiler budgets. Scene remains the only canonical stored document.
 - Keyframe evaluation and deterministic easing: `evaluateKeyframes()`, `applyEasing()`, `cubicBezierEasing()`, and `springEasing()`.
 - Repeat/yoyo playback, animated mask targets, filter interpolation, and named `SceneBuilder.marker()` output.
 - Text measurement helpers used by renderers/editors: `wrapTextLines()`, `prepareTextLines()`, and `prepareTextLayout()`.

@@ -150,6 +150,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
     }
 
     failures.push(...(await runLegacyMigrationChecks(page)));
+    failures.push(...(await runRendererConformanceChecks(page)));
     failures.push(...(await runExportSmokeTest(page)));
     failures.push(...(await runVideoChecks(page)));
     failures.push(...(await runAudioChecks(page)));
@@ -188,6 +189,27 @@ async function runLegacyMigrationChecks(page: Page): Promise<string[]> {
 
   console.log(`ok scene-v0-migration ${legacyHash}`);
   return [];
+}
+
+/**
+ * DisplayList v1 backend contract: structural fixtures plus exact Canvas2D
+ * compile/execute RGBA parity in the Playwright-pinned Chromium build.
+ */
+async function runRendererConformanceChecks(page: Page): Promise<string[]> {
+  const checks = await page.evaluate(() =>
+    window.runGoldenRendererConformanceChecks(),
+  );
+  const failures: string[] = [];
+  for (const check of checks) {
+    if (check.pass) {
+      console.log(`ok renderer-conformance: ${check.label} (${check.detail})`);
+    } else {
+      failures.push(
+        `renderer-conformance: ${check.label} failed — ${check.detail}`,
+      );
+    }
+  }
+  return failures;
 }
 
 /**

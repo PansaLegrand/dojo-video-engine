@@ -1,11 +1,15 @@
 import { inspectScene, parseScene, type Scene } from "@motionforge/schema";
 import {
+  BoundedTextMeasureCache,
   disposeAssetsAsync,
   prepareFrame,
   renderStill,
   resolveAssets,
   type ResolvedAssets,
   type ResolveAssetsOptions,
+  type ScratchSurfacePool,
+  type Canvas2DStaticDisplayCache,
+  type Canvas2DOpaqueExtensionRegistry,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import {
@@ -171,6 +175,8 @@ export type PlayerOptions = {
   extensions?: ResolveAssetsOptions["extensions"];
   /** Require every extension definition to support worker execution. */
   worker?: boolean;
+  /** Exact opaque handlers used for extension display preflight/execution. */
+  opaqueExtensionRegistry?: Canvas2DOpaqueExtensionRegistry;
   /** Preview uses declared proxy sources by default. */
   preferProxy?: boolean;
   /** Decoder/cache/image memory limits forwarded to asset resolution. */
@@ -181,6 +187,10 @@ export type PlayerOptions = {
   /** Cancels asset resolution and in-flight frame preparation. */
   signal?: AbortSignal;
   analyzeWaveforms?: boolean;
+  /** Reused for every frame; the caller retains ownership and must dispose it. */
+  scratchSurfacePool?: ScratchSurfacePool;
+  /** Caller-owned bounded static raster cache; Player never disposes it. */
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
   loop?: boolean;
   /**
    * Audio preview. Defaults to a WebAudioPreview when the environment has
@@ -200,12 +210,15 @@ type PlayerRuntimeOwnedOption =
   | "assets"
   | "extensions"
   | "worker"
+  | "opaqueExtensionRegistry"
   | "preferProxy"
   | "budget"
   | "assetPolicy"
   | "analysisCache"
   | "fontCache"
-  | "analyzeWaveforms";
+  | "analyzeWaveforms"
+  | "scratchSurfacePool"
+  | "staticDisplayCache";
 
 /**
  * Player options for an already-prepared Canvas2D runtime. Media resolution
@@ -238,6 +251,8 @@ export class Player {
   private readonly requestFrame: (callback: () => void) => number;
   private readonly cancelFrame: (handle: number) => void;
   private readonly signal: AbortSignal | undefined;
+  private readonly scratchSurfacePool: ScratchSurfacePool | undefined;
+  private readonly staticDisplayCache: Canvas2DStaticDisplayCache | undefined;
   private readonly renderController = new AbortController();
   private unlinkOptionSignal: (() => void) | null = null;
 
@@ -255,7 +270,8 @@ export class Player {
   private pendingAudio: AudioPreview | null = null;
   private readonly disposedAudio = new WeakSet<AudioPreview>();
   private audioReadyPromise: Promise<void> = Promise.resolve();
-  private readonly textMeasureCache: TextMeasureCache = new Map();
+  private readonly textMeasureCache: TextMeasureCache =
+    new BoundedTextMeasureCache();
   private onDisposeRequested: (() => void) | null;
 
   /** @internal — use createPlayer(). */
@@ -270,6 +286,8 @@ export class Player {
     this.context = options.context;
     this.assets = assets;
     this.ownsAssets = ownsAssets;
+    this.scratchSurfacePool = options.scratchSurfacePool;
+    this.staticDisplayCache = options.staticDisplayCache;
     this.onDisposeRequested = lifecycle.onDisposeRequested ?? null;
     this.signal = this.renderController.signal;
     if (options.signal) {
@@ -555,6 +573,8 @@ export class Player {
         assets: this.assets,
         resolvedScene,
         textMeasureCache: this.textMeasureCache,
+        scratchSurfacePool: this.scratchSurfacePool,
+        staticDisplayCache: this.staticDisplayCache,
       });
       this.renderedFrame = frame;
       this.emit("frame", frame);
@@ -644,6 +664,7 @@ async function createPlayerInternal(
       ? await resolveAssets(scene, {
           extensions: options.extensions,
           worker: options.worker,
+          opaqueExtensionRegistry: options.opaqueExtensionRegistry,
           preferProxy: options.preferProxy ?? true,
           budget: options.budget,
           assetPolicy: options.assetPolicy,
@@ -725,7 +746,13 @@ export async function createPlayerFromRuntime(
 
   const scope = withCanvas2DResolvedAssets(
     runtime,
-    async ({ assets, scene, signal }) => {
+    async ({
+      assets,
+      scratchSurfacePool,
+      staticDisplayCache,
+      scene,
+      signal,
+    }) => {
       let releaseScope = (): void => undefined;
       const releaseRequested = new Promise<void>((resolve) => {
         releaseScope = resolve;
@@ -740,6 +767,8 @@ export async function createPlayerFromRuntime(
             ...options,
             scene,
             assets,
+            scratchSurfacePool,
+            staticDisplayCache,
             signal,
           },
           { onDisposeRequested: releaseScope },

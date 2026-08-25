@@ -10,11 +10,17 @@ import { renderContactSheet, renderSceneStill } from "@motionforge/agent-tools";
 import { createPlayerFromRuntime } from "@motionforge/player";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
+  Canvas2DStaticDisplayCache,
+  compileCanvas2DDisplayList,
   disposeAssetsAsync,
   disposeAssets,
+  executeCanvas2DDisplayList,
   prepareFrame,
   renderStill,
   resolveAssets,
+  ScratchSurfacePool,
+  type Canvas2DStaticDisplayCacheStats,
+  type ScratchSurfacePoolStats,
 } from "@motionforge/renderer-canvas2d";
 import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
 import type { Scene } from "@motionforge/schema";
@@ -26,6 +32,15 @@ import {
   Input,
   type StreamTargetChunk,
 } from "mediabunny";
+import {
+  negotiateRendererCapabilities,
+  rendererConformanceFixtures,
+  runRendererConformanceSuite,
+  traceRendererDisplayList,
+  type RendererConformanceBackendAdapter,
+  type RendererConformanceFixture,
+  type RendererConformancePixels,
+} from "./renderer-conformance.js";
 
 export type RenderedFrame = {
   width: number;
@@ -74,10 +89,14 @@ declare global {
       fps: number;
       seconds: number;
     }) => Promise<BenchmarkResult>;
+    runGoldenCompositingBenchmark: (
+      options: CompositingBenchmarkOptions,
+    ) => Promise<CompositingBenchmarkResult>;
     runGoldenVideoChecks: () => Promise<VideoCheck[]>;
     runGoldenAudioChecks: () => Promise<VideoCheck[]>;
     runGoldenRuntimeParityChecks: () => Promise<VideoCheck[]>;
     runGoldenAgentToolChecks: () => Promise<VideoCheck[]>;
+    runGoldenRendererConformanceChecks: () => Promise<VideoCheck[]>;
   }
 }
 
@@ -227,6 +246,105 @@ window.runGoldenAgentToolChecks = async (): Promise<VideoCheck[]> => {
     },
   ];
 };
+
+const canvasDisplayListCapabilities = [
+  { id: "motionforge.effect", version: "1" },
+  { id: "motionforge.filter", version: "1" },
+  { id: "motionforge.mask.soft", version: "1" },
+  { id: "motionforge.paint.conic", version: "1" },
+] as const;
+
+const canvasDisplayListConformanceAdapter: RendererConformanceBackendAdapter = {
+  backendId: "canvas2d-pinned-chromium",
+  displayListVersion: 1,
+  capabilities: canvasDisplayListCapabilities,
+  async execute({ fixture, displayList }) {
+    const missing = negotiateRendererCapabilities(
+      displayList,
+      canvasDisplayListCapabilities,
+    );
+    if (missing.length > 0) return { status: "rejected", missing };
+
+    const trace = traceRendererDisplayList(displayList);
+    if (!fixture.pixelCapable) return { status: "accepted", trace };
+
+    const sourceFixture = rendererConformanceFixtures.find(
+      (candidate) => candidate.id === fixture.id,
+    );
+    if (!sourceFixture) {
+      throw new Error(`Unknown renderer conformance fixture ${fixture.id}.`);
+    }
+
+    const capture = createCaptureContext(
+      sourceFixture.scene.width,
+      sourceFixture.scene.height,
+    );
+    try {
+      // Exercise both Canvas adapter boundaries. Pixel fixtures deliberately
+      // avoid prepared media/extensions so the neutral core compilation and
+      // Canvas-host compilation must be byte-for-byte identical.
+      const canvasCompiled = compileCanvas2DDisplayList(
+        capture.context,
+        sourceFixture.scene,
+        sourceFixture.frame,
+      );
+      if (JSON.stringify(canvasCompiled) !== JSON.stringify(displayList)) {
+        throw new Error(
+          `Canvas compiler diverged from the neutral DisplayList for ${fixture.id}.`,
+        );
+      }
+      executeCanvas2DDisplayList(capture.context, displayList, {
+        scene: sourceFixture.scene,
+      });
+      return {
+        status: "accepted",
+        trace,
+        pixels: captureRgba(
+          capture.context,
+          sourceFixture.scene.width,
+          sourceFixture.scene.height,
+        ),
+      };
+    } finally {
+      capture.canvas.width = 1;
+      capture.canvas.height = 1;
+    }
+  },
+};
+
+window.runGoldenRendererConformanceChecks = async (): Promise<VideoCheck[]> => {
+  const suite = await runRendererConformanceSuite(
+    canvasDisplayListConformanceAdapter,
+    {
+      renderReference: renderRendererConformanceReference,
+    },
+  );
+  return suite.cases.map((result) => ({
+    label: `${suite.backendId}: ${result.fixtureId}`,
+    pass: result.pass,
+    detail: result.detail,
+  }));
+};
+
+function renderRendererConformanceReference(
+  fixture: RendererConformanceFixture,
+): RendererConformancePixels {
+  const capture = createCaptureContext(
+    fixture.scene.width,
+    fixture.scene.height,
+  );
+  try {
+    renderStill(capture.context, fixture.scene, fixture.frame);
+    return captureRgba(
+      capture.context,
+      fixture.scene.width,
+      fixture.scene.height,
+    );
+  } finally {
+    capture.canvas.width = 1;
+    capture.canvas.height = 1;
+  }
+}
 
 window.renderGoldenFrame = async (
   scene: Scene,
@@ -1416,6 +1534,496 @@ export type BenchmarkResult = {
   /** Chromium-only JS heap snapshots in MiB, taken after each stage. */
   heapMiB: Array<{ label: string; usedMiB: number | null }>;
 };
+
+export type CompositingBenchmarkOptions = {
+  width: number;
+  height: number;
+  frames: number;
+  warmupFrames: number;
+  maxPoolBytes: number;
+  maxPoolSurfaces: number;
+  maxStaticCacheBytes: number;
+  maxStaticCacheEntries: number;
+  maxStaticCacheKeyBytes: number;
+};
+
+export type CompositingBenchmarkResult = {
+  width: number;
+  height: number;
+  frames: number;
+  warmupFrames: number;
+  totalMs: number;
+  msPerFrame: number;
+  pixelChecksum: number;
+  configuredPoolBytes: number;
+  configuredStaticCacheBytes: number;
+  poolAfterWarmup: ScratchSurfacePoolStats;
+  poolAfterMeasuredFrames: ScratchSurfacePoolStats;
+  poolAfterCacheDisabledOracleWarmup: ScratchSurfacePoolStats;
+  poolAfterCacheDisabledOracle: ScratchSurfacePoolStats;
+  poolAfterDispose: ScratchSurfacePoolStats;
+  oraclePoolAfterRender: ScratchSurfacePoolStats;
+  oraclePoolAfterDispose: ScratchSurfacePoolStats;
+  staticCacheAfterWarmup: Canvas2DStaticDisplayCacheStats;
+  staticCacheAfterMeasuredFrames: Canvas2DStaticDisplayCacheStats;
+  staticCacheAfterDispose: Canvas2DStaticDisplayCacheStats;
+  cacheDisabledOracleExact: boolean;
+  cacheDisabledOracleDifference: string | null;
+  replenishedPoolOracleExact: boolean;
+  replenishedPoolOracleDifference: string | null;
+  hostSurfaceCount: number;
+  shrunkHostSurfaceCount: number;
+  oracleHostSurfaceCount: number;
+  shrunkOracleHostSurfaceCount: number;
+};
+
+/**
+ * Canvas-only compositing workload. It deliberately avoids asset resolution,
+ * media decoding, and WebCodecs so 4K scratch-memory regressions remain
+ * observable even on hosts without hardware codecs.
+ */
+window.runGoldenCompositingBenchmark = async (
+  options,
+): Promise<CompositingBenchmarkResult> => {
+  assertCompositingBenchmarkOptions(options);
+  const { width, height, frames, warmupFrames } = options;
+  const capture = createCaptureContext(width, height);
+  const scene = createCompositingBenchmarkScene(
+    width,
+    height,
+    frames + warmupFrames,
+  );
+  const hostSurfaces: HTMLCanvasElement[] = [];
+  const oracleHostSurfaces: HTMLCanvasElement[] = [];
+  const pool = new ScratchSurfacePool({
+    createCanvas(surfaceWidth, surfaceHeight) {
+      const surface = document.createElement("canvas");
+      surface.width = surfaceWidth;
+      surface.height = surfaceHeight;
+      hostSurfaces.push(surface);
+      return surface;
+    },
+    maxBytes: options.maxPoolBytes,
+    maxSurfaces: options.maxPoolSurfaces,
+    maxDimension: Math.max(width, height) * 2,
+  });
+  const oraclePool = new ScratchSurfacePool({
+    createCanvas(surfaceWidth, surfaceHeight) {
+      const surface = document.createElement("canvas");
+      surface.width = surfaceWidth;
+      surface.height = surfaceHeight;
+      oracleHostSurfaces.push(surface);
+      return surface;
+    },
+    maxBytes: options.maxPoolBytes,
+    maxSurfaces: options.maxPoolSurfaces,
+    maxDimension: Math.max(width, height) * 2,
+  });
+  const staticDisplayCache = new Canvas2DStaticDisplayCache({
+    maxBytes: options.maxStaticCacheBytes,
+    maxEntries: options.maxStaticCacheEntries,
+    maxKeyBytes: options.maxStaticCacheKeyBytes,
+    maxDimension: Math.max(width, height) * 2,
+  });
+
+  let poolAfterWarmup: ScratchSurfacePoolStats | undefined;
+  let poolAfterMeasuredFrames: ScratchSurfacePoolStats | undefined;
+  let poolAfterCacheDisabledOracleWarmup: ScratchSurfacePoolStats | undefined;
+  let poolAfterCacheDisabledOracle: ScratchSurfacePoolStats | undefined;
+  let staticCacheAfterWarmup: Canvas2DStaticDisplayCacheStats | undefined;
+  let staticCacheAfterMeasuredFrames:
+    | Canvas2DStaticDisplayCacheStats
+    | undefined;
+  let oraclePoolAfterRender: ScratchSurfacePoolStats | undefined;
+  let totalMs = 0;
+  let pixelChecksum = 0;
+  let cacheDisabledOracleDifference: string | null =
+    "cache-disabled oracle did not run";
+  let replenishedPoolOracleDifference: string | null =
+    "replenished-pool oracle did not run";
+
+  try {
+    // Render both temporal endpoints before measuring. The scene is spatially
+    // stable, while this also protects future animated variants from allocating
+    // a larger bucket halfway through the measured interval.
+    for (let index = 0; index < warmupFrames; index += 1) {
+      const frame =
+        index % 2 === 0
+          ? 0
+          : Math.max(0, scene.duration - 1 - Math.floor(index / 2));
+      renderStill(capture.context, scene, Math.floor(frame), {
+        scratchSurfacePool: pool,
+        staticDisplayCache,
+      });
+    }
+    poolAfterWarmup = pool.stats();
+    staticCacheAfterWarmup = staticDisplayCache.stats();
+
+    const startedAt = performance.now();
+    for (let frame = 0; frame < frames; frame += 1) {
+      renderStill(capture.context, scene, frame % scene.duration, {
+        scratchSurfacePool: pool,
+        staticDisplayCache,
+      });
+    }
+    totalMs = performance.now() - startedAt;
+    poolAfterMeasuredFrames = pool.stats();
+    staticCacheAfterMeasuredFrames = staticDisplayCache.stats();
+
+    // A few fixed probes prove that the browser painted the scene without
+    // adding a full-frame readback to the measured interval.
+    for (const [x, y] of [
+      [Math.floor(width * 0.08), Math.floor(height * 0.08)],
+      [Math.floor(width * 0.31), Math.floor(height * 0.33)],
+      [Math.floor(width * 0.52), Math.floor(height * 0.51)],
+      [Math.floor(width * 0.76), Math.floor(height * 0.69)],
+      [Math.floor(width * 0.91), Math.floor(height * 0.88)],
+    ] as const) {
+      const pixel = capture.context.getImageData(x, y, 1, 1).data;
+      pixelChecksum = pixel.reduce(
+        (checksum, value, channel) =>
+          (Math.imul(checksum, 16777619) ^ (value + channel)) >>> 0,
+        pixelChecksum || 2166136261,
+      );
+    }
+
+    // Render one identical frame without the static cache through a fresh,
+    // identically configured pool. Ownership transfer intentionally changes
+    // the main pool's later bucket topology, which is a separate lifecycle
+    // concern from cache pixel equivalence. Strip-wise comparison avoids two
+    // whole-frame ImageData allocations at 4K while remaining byte-exact.
+    const oracle = createCaptureContext(width, height);
+    try {
+      renderStill(oracle.context, scene, 0, {
+        scratchSurfacePool: oraclePool,
+      });
+      cacheDisabledOracleDifference = firstCanvasRgbaDifference(
+        capture.context,
+        oracle.context,
+        width,
+        height,
+      );
+      oraclePoolAfterRender = oraclePool.stats();
+    } finally {
+      oracle.canvas.width = 1;
+      oracle.canvas.height = 1;
+    }
+
+    // Replenish the ownership-transferred main pool once, then prove the next
+    // full uncached frame is allocation-free and reuses the retained buckets.
+    const scratchProbe = createCaptureContext(width, height);
+    try {
+      renderStill(scratchProbe.context, scene, 0, {
+        scratchSurfacePool: pool,
+      });
+      replenishedPoolOracleDifference = firstCanvasRgbaDifference(
+        capture.context,
+        scratchProbe.context,
+        width,
+        height,
+      );
+      poolAfterCacheDisabledOracleWarmup = pool.stats();
+      renderStill(scratchProbe.context, scene, 0, {
+        scratchSurfacePool: pool,
+      });
+      replenishedPoolOracleDifference ??= firstCanvasRgbaDifference(
+        capture.context,
+        scratchProbe.context,
+        width,
+        height,
+      );
+      poolAfterCacheDisabledOracle = pool.stats();
+    } finally {
+      scratchProbe.canvas.width = 1;
+      scratchProbe.canvas.height = 1;
+    }
+  } finally {
+    staticDisplayCache.dispose();
+    oraclePool.dispose();
+    pool.dispose();
+    // The output surface is host-owned rather than pooled; release its 4K
+    // backing store as part of the same deterministic teardown.
+    capture.canvas.width = 1;
+    capture.canvas.height = 1;
+  }
+
+  if (
+    !poolAfterWarmup ||
+    !poolAfterMeasuredFrames ||
+    !poolAfterCacheDisabledOracleWarmup ||
+    !poolAfterCacheDisabledOracle ||
+    !oraclePoolAfterRender ||
+    !staticCacheAfterWarmup ||
+    !staticCacheAfterMeasuredFrames
+  ) {
+    throw new Error("Compositing benchmark did not complete its measured run.");
+  }
+  const poolAfterDispose = pool.stats();
+  const oraclePoolAfterDispose = oraclePool.stats();
+  const staticCacheAfterDispose = staticDisplayCache.stats();
+  const shrunkHostSurfaceCount = hostSurfaces.filter(
+    (surface) => surface.width === 1 && surface.height === 1,
+  ).length;
+  const shrunkOracleHostSurfaceCount = oracleHostSurfaces.filter(
+    (surface) => surface.width === 1 && surface.height === 1,
+  ).length;
+  return {
+    width,
+    height,
+    frames,
+    warmupFrames,
+    totalMs: Number(totalMs.toFixed(2)),
+    msPerFrame: Number((totalMs / frames).toFixed(2)),
+    pixelChecksum,
+    configuredPoolBytes: options.maxPoolBytes,
+    configuredStaticCacheBytes: options.maxStaticCacheBytes,
+    poolAfterWarmup,
+    poolAfterMeasuredFrames,
+    poolAfterCacheDisabledOracleWarmup,
+    poolAfterCacheDisabledOracle,
+    poolAfterDispose,
+    oraclePoolAfterRender,
+    oraclePoolAfterDispose,
+    staticCacheAfterWarmup,
+    staticCacheAfterMeasuredFrames,
+    staticCacheAfterDispose,
+    cacheDisabledOracleExact: cacheDisabledOracleDifference === null,
+    cacheDisabledOracleDifference,
+    replenishedPoolOracleExact: replenishedPoolOracleDifference === null,
+    replenishedPoolOracleDifference,
+    hostSurfaceCount: hostSurfaces.length,
+    shrunkHostSurfaceCount,
+    oracleHostSurfaceCount: oracleHostSurfaces.length,
+    shrunkOracleHostSurfaceCount,
+  };
+};
+
+function firstCanvasRgbaDifference(
+  cached: CanvasRenderingContext2D,
+  uncached: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): string | null {
+  const stripRows = 32;
+  for (let y = 0; y < height; y += stripRows) {
+    const rows = Math.min(stripRows, height - y);
+    const cachedBytes = cached.getImageData(0, y, width, rows).data;
+    const uncachedBytes = uncached.getImageData(0, y, width, rows).data;
+    for (let index = 0; index < cachedBytes.length; index += 1) {
+      if (cachedBytes[index] !== uncachedBytes[index]) {
+        const pixel = Math.floor(index / 4);
+        const x = pixel % width;
+        const row = Math.floor(pixel / width);
+        const channel = ["r", "g", "b", "a"][index % 4];
+        return `pixel (${x}, ${y + row}) ${channel}: cached ${cachedBytes[index]}, uncached ${uncachedBytes[index]}`;
+      }
+    }
+  }
+  return null;
+}
+
+function assertCompositingBenchmarkOptions(
+  options: CompositingBenchmarkOptions,
+): void {
+  for (const [name, value] of Object.entries(options)) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new Error(
+        `Compositing benchmark ${name} must be a positive safe integer.`,
+      );
+    }
+  }
+}
+
+function createCompositingBenchmarkScene(
+  width: number,
+  height: number,
+  duration: number,
+): Scene {
+  const px = (at1080: number) =>
+    Math.max(1, Math.round((at1080 * height) / 1080));
+  const outerFeather = px(3);
+  const innerFeather = px(2);
+
+  return {
+    schemaVersion: 1,
+    width,
+    height,
+    fps: 30,
+    duration,
+    assets: {},
+    nodes: [
+      {
+        id: "composite-backdrop",
+        type: "div",
+        style: {
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(135deg, #07111f 0%, #172554 52%, #0f766e 100%)",
+        },
+      },
+      {
+        id: "outer-isolation",
+        type: "div",
+        style: {
+          position: "absolute",
+          left: "5%",
+          top: "7%",
+          width: "90%",
+          height: "86%",
+          isolation: true,
+          opacity: 0.97,
+          transform: "rotate(0.8deg) scale(0.985)",
+          transformOrigin: "50% 50%",
+          background:
+            "linear-gradient(145deg, #1d4ed8 0%, #7c3aed 48%, #be123c 100%)",
+          borderRadius: "7%",
+          boxShadow: `${px(14)}px ${px(18)}px ${px(34)}px rgba(0,0,0,0.42), -${px(9)}px ${px(8)}px ${px(22)}px rgba(34,211,238,0.25), 0px -${px(7)}px ${px(18)}px rgba(244,114,182,0.22)`,
+          filter: "saturate(1.08) contrast(1.04)",
+          overflow: "hidden",
+        },
+        mask: {
+          shape: { kind: "rect", radius: "8%" },
+          opacity: 0.96,
+          feather: outerFeather,
+        },
+        children: [
+          {
+            id: "transformed-ribbon",
+            type: "div",
+            style: {
+              position: "absolute",
+              left: "-8%",
+              top: "12%",
+              width: "62%",
+              height: "13%",
+              transform: "rotate(-11deg) translate(4%, 3%)",
+              background:
+                "linear-gradient(90deg, rgba(34,211,238,0.92), rgba(250,204,21,0.88))",
+              borderRadius: "18%",
+              filter: `blur(${px(1)}px) saturate(1.12)`,
+              boxShadow: `${px(5)}px ${px(8)}px ${px(14)}px rgba(2,6,23,0.35), -${px(4)}px ${px(3)}px ${px(10)}px rgba(255,255,255,0.2)`,
+            },
+          },
+          {
+            id: "nested-inverted-isolation",
+            type: "div",
+            style: {
+              position: "absolute",
+              left: "9%",
+              top: "23%",
+              width: "54%",
+              height: "62%",
+              isolation: true,
+              transform: "rotate(-2.4deg) translate(1.5%, -1%)",
+              transformOrigin: "50% 50%",
+              background:
+                "radial-gradient(circle at 35% 30%, #fde68a 0%, #fb7185 42%, #7e22ce 100%)",
+              borderRadius: "11%",
+              boxShadow: `${px(11)}px ${px(15)}px ${px(28)}px rgba(2,6,23,0.48), -${px(7)}px ${px(5)}px ${px(20)}px rgba(125,211,252,0.3)`,
+              filter: "contrast(1.06) saturate(1.1)",
+            },
+            mask: {
+              shape: { kind: "ellipse" },
+              inverted: true,
+              opacity: 0.9,
+              feather: innerFeather,
+            },
+            children: [
+              {
+                id: "inner-core-isolation",
+                type: "div",
+                style: {
+                  position: "absolute",
+                  left: "17%",
+                  top: "18%",
+                  width: "66%",
+                  height: "64%",
+                  isolation: true,
+                  transform: "rotate(5deg) scale(0.94)",
+                  transformOrigin: "50% 50%",
+                  background:
+                    "linear-gradient(120deg, rgba(15,23,42,0.92), rgba(30,64,175,0.82))",
+                  borderRadius: "16%",
+                  boxShadow: `${px(8)}px ${px(12)}px ${px(22)}px rgba(0,0,0,0.5), -${px(5)}px -${px(4)}px ${px(16)}px rgba(196,181,253,0.34)`,
+                  filter: "brightness(1.04) saturate(1.15)",
+                },
+                children: [
+                  {
+                    id: "core-diamond",
+                    type: "shape",
+                    shape: {
+                      kind: "polygon",
+                      points: [
+                        { x: 0.5, y: 0 },
+                        { x: 1, y: 0.5 },
+                        { x: 0.5, y: 1 },
+                        { x: 0, y: 0.5 },
+                      ],
+                    },
+                    style: {
+                      position: "absolute",
+                      left: "24%",
+                      top: "18%",
+                      width: "52%",
+                      height: "64%",
+                      transform: "rotate(13deg) scale(0.9)",
+                      fill: "linear-gradient(135deg, #67e8f9, #f0abfc)",
+                      stroke: "rgba(255,255,255,0.72)",
+                      strokeWidth: px(4),
+                      filter: `blur(${px(1)}px) saturate(1.12) contrast(1.04)`,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "right-soft-panel",
+            type: "div",
+            style: {
+              position: "absolute",
+              left: "66%",
+              top: "18%",
+              width: "27%",
+              height: "65%",
+              isolation: true,
+              transform: "rotate(3.2deg) translate(-2%, 1%)",
+              transformOrigin: "50% 50%",
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.88), rgba(165,243,252,0.66))",
+              borderRadius: "14%",
+              boxShadow: `${px(9)}px ${px(13)}px ${px(24)}px rgba(15,23,42,0.4), -${px(6)}px ${px(4)}px ${px(16)}px rgba(253,224,71,0.28)`,
+              filter: "saturate(1.05) contrast(1.03)",
+            },
+            mask: {
+              shape: { kind: "rect", radius: "18%" },
+              opacity: 0.93,
+              feather: innerFeather,
+            },
+            children: [
+              {
+                id: "panel-accent",
+                type: "shape",
+                shape: { kind: "ellipse" },
+                style: {
+                  position: "absolute",
+                  left: "15%",
+                  top: "24%",
+                  width: "70%",
+                  height: "52%",
+                  transform: "rotate(-9deg) scale(0.92)",
+                  fill: "radial-gradient(#facc15 0%, #f43f5e 70%)",
+                  filter: `blur(${px(1)}px) saturate(1.16)`,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
 
 /**
  * Production-size performance benchmark: synthesizes footage at the target

@@ -40,6 +40,43 @@ Works with both `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2
 
 Rendering is pure given `(scene, frame, assets)`: the same inputs always produce the same pixels. Scenes that draw `img` nodes throw an actionable error if assets were not resolved — a frame never renders with silently missing media. `img` nodes honor `objectFit` (`fill`, `contain`, `cover`, `none`, `scale-down`), `objectPosition`, and `borderRadius` clipping.
 
+### Display-list backend
+
+`renderStill()` is the compatibility assembly for one explicit pipeline:
+
+```ts
+import {
+  compileCanvas2DDisplayList,
+  executeCanvas2DDisplayList,
+} from "@motionforge/renderer-canvas2d";
+
+const list = compileCanvas2DDisplayList(context, scene, frame, { assets });
+executeCanvas2DDisplayList(context, list, { scene, assets });
+```
+
+The list is renderer-neutral, JSON-safe, frame-specific, and ephemeral. It
+contains resolved hierarchy, geometry, paint/composite intent, compiler-owned
+text lines/runs, media references, shapes, effects, and explicit extension
+capabilities; decoded media and Canvas objects remain in `assets`. Canvas
+validates the composition, node snapshots, paint semantics, prepared frame,
+and required capabilities before drawing.
+
+### Bounded surfaces and static caching
+
+Isolation, soft masks, pixelation, and multi-shadow staging use
+`ScratchSurfacePool`: byte/surface/dimension-bounded leases with exact source
+rectangles, exact-bucket reuse, deterministic eviction, poisoned release,
+ownership transfer, statistics, and
+1×1 backing-store disposal. Conservative transformed ink bounds keep ordinary
+groups box-sized; procedural and opaque drawing falls back to the full scene.
+
+`Canvas2DStaticDisplayCache` raster-caches only proven-static subtrees that
+already require isolated compositing. It is byte/entry/key bounded and includes
+prepared image/font identity in collision-checked fingerprints. Video, Lottie,
+effects, extensions, animations, and dynamic descendants bypass it. The
+bounded text-measure implementation is additive; the public structural
+`TextMeasureCache = Map<string, number>` input remains compatible.
+
 Font assets load through the same call and register under their asset id: declare `{ id: "Inter-Bold", type: "font", src: "..." }` and style text with `fontFamily: "Inter-Bold"`. Embed fonts whenever pixel-exact text matters; unregistered families fall back through the canvas font stack.
 
 ### Procedural and audio-reactive effects
@@ -59,12 +96,14 @@ effects. Audio-spectrum math and all effect dispatch paths are unit-tested.
 ### Versioned extensions
 
 Pass a trusted `ExtensionRegistry` with
-`resolveAssets(scene, { extensions: registry })` for scenes containing
-`extension` nodes. Resolution preflights identity, exact version, params,
-assets, renderer support, and optional worker support before any extension
-hook runs. `prepareFrame()` stages per-frame extension data, `renderStill()`
-invokes the Canvas2D adapter, and `disposeAssetsAsync()` awaits node-resource
-release.
+`resolveAssets(scene, { extensions: registry, opaqueExtensionRegistry? })` for
+scenes containing `extension` nodes. Resolution preflights identity, exact
+version, params, assets, display-list mode, backend capability, and main/worker
+realm before any hook runs. Standard extensions emit bounded rect/text/image
+operations; exact opaque handlers receive JSON payload plus separately
+prepared native resources; existing adapters remain explicit legacy-opaque
+operations. `prepareFrame()` stages per-frame extension data and
+`disposeAssetsAsync()` awaits node-resource release.
 
 Adapters receive resolved layout geometry and node-local time through
 `Canvas2DExtensionDrawContext`. Scene JSON never carries a draw function.
@@ -131,11 +170,15 @@ leases for genuinely concurrent preview/export sessions.
 Stable for 1.x integrations:
 
 - `resolveAssets(scene, options)`, `prepareFrame(scene, frame, assets, options?)`, `renderStill(context, scene, frame, options)`, `disposeAssets(assets)`, and awaitable `disposeAssetsAsync(assets)`.
+- `compileCanvas2DDisplayList()` and `executeCanvas2DDisplayList()` for the
+  renderer-neutral compile/Canvas execution seam.
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
 - `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime, Path2D, DOMMatrix, and extension capability checks.
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
+- Display extension registries/handlers, bounded scratch/static/text cache
+  implementations, their policies, and lifecycle statistics.
 - The `@motionforge/renderer-canvas2d/runtime` entry point, including
   `createCanvas2DSceneRuntime()`, `createCanvas2DRuntimeBackend()`, metrics
   providers, and the serialized compatibility scope.

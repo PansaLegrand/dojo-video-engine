@@ -6,10 +6,16 @@ import {
 } from "@motionforge/extensions";
 import { z } from "zod";
 import {
+  compileCanvas2DDisplayList,
+  BoundedTextMeasureCache,
+  Canvas2DStaticDisplayCache,
+  assetDeclarationKey,
   computeObjectFit,
+  createCanvas2DOpaqueExtensionRegistry,
   collectReachableAssetIds,
   assertResolvedAssetsCompatible,
   disposeAssetsAsync,
+  executeCanvas2DDisplayList,
   estimateMediaResources,
   FontAssetCache,
   lottieSourceFrame,
@@ -25,6 +31,7 @@ import {
   prepareFrame,
   renderStill,
   resolveAssets,
+  ScratchSurfacePool,
   shapePointInBox,
   type Canvas2DExtensionAdapter,
   validateLottieDocument,
@@ -37,6 +44,99 @@ import {
 
 // Deterministic fake measurer: every character is 10px wide.
 const measure = (line: string): number => line.length * 10;
+
+type RecordedDrawImage = unknown[];
+
+function createScratchRenderHarness() {
+  const surfaces: Array<{
+    width: number;
+    height: number;
+    context: CanvasRenderingContext2D;
+    drawImages: RecordedDrawImage[];
+  }> = [];
+
+  const createContext = () => {
+    const drawImages: RecordedDrawImage[] = [];
+    const context = {
+      globalAlpha: 1,
+      globalCompositeOperation: "source-over",
+      fillStyle: "#000000",
+      strokeStyle: "#000000",
+      filter: "none",
+      font: "normal 400 10px sans-serif",
+      direction: "inherit",
+      textAlign: "left",
+      textBaseline: "alphabetic",
+      lineWidth: 1,
+      lineCap: "butt",
+      lineJoin: "miter",
+      miterLimit: 10,
+      shadowColor: "transparent",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowBlur: 0,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: "high",
+      save: vi.fn(),
+      restore: vi.fn(),
+      reset: vi.fn(),
+      clearRect: vi.fn(),
+      fillRect: vi.fn(),
+      strokeRect: vi.fn(),
+      beginPath: vi.fn(),
+      closePath: vi.fn(),
+      rect: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      arcTo: vi.fn(),
+      arc: vi.fn(),
+      ellipse: vi.fn(),
+      clip: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      setLineDash: vi.fn(),
+      translate: vi.fn(),
+      scale: vi.fn(),
+      rotate: vi.fn(),
+      fillText: vi.fn(),
+      strokeText: vi.fn(),
+      measureText: (text: string) => ({ width: text.length * 10 }),
+      getImageData: vi.fn(
+        (_x: number, _y: number, width: number, height: number) =>
+          ({
+            data: new Uint8ClampedArray(width * height * 4),
+            width,
+            height,
+            colorSpace: "srgb",
+          }) as ImageData,
+      ),
+      putImageData: vi.fn(),
+      drawImage: (...args: unknown[]) => drawImages.push(args),
+    } as unknown as CanvasRenderingContext2D;
+    return { context, drawImages };
+  };
+
+  const target = createContext();
+  const pool = new ScratchSurfacePool({
+    createCanvas(width, height) {
+      const staged = createContext();
+      const surface = {
+        width,
+        height,
+        getContext: () => staged.context,
+        context: staged.context,
+        drawImages: staged.drawImages,
+      };
+      surfaces.push(surface);
+      return surface as unknown as OffscreenCanvas;
+    },
+    maxBytes: 32 * 1024 * 1024,
+    maxSurfaces: 16,
+    maxDimension: 1_024,
+  });
+  return { pool, surfaces, target };
+}
 
 describe("Canvas2D preflight", () => {
   class PreflightCanvas {
@@ -301,6 +401,46 @@ describe("Canvas2D preflight", () => {
         OffscreenCanvas: CompleteCanvasFeatures,
       } as unknown as Partial<typeof globalThis>),
     ).toMatchObject({ ok: true, issues: [] });
+  });
+
+  it("requires filter support for feather-only masks in preflight and execution", () => {
+    const featherScene = {
+      schemaVersion: 1 as const,
+      width: 64,
+      height: 64,
+      fps: 30,
+      duration: 2,
+      assets: {},
+      nodes: [
+        {
+          id: "masked",
+          type: "div" as const,
+          style: { width: 40, height: 40, backgroundColor: "#fff" },
+          mask: { shape: { kind: "rect" as const }, feather: 4 },
+        },
+      ],
+    };
+    class NoFilterCanvas {
+      getContext() {
+        return {};
+      }
+    }
+    expect(
+      preflightCanvas2D(featherScene, {
+        OffscreenCanvas: NoFilterCanvas,
+        Path2D: class {},
+      } as unknown as Partial<typeof globalThis>).issues.map(
+        (issue) => issue.code,
+      ),
+    ).toContain("filter_unavailable");
+
+    const targetHarness = createScratchRenderHarness().target;
+    const target = targetHarness.context;
+    const list = compileCanvas2DDisplayList(target, featherScene, 0);
+    delete (target as unknown as Record<string, unknown>).filter;
+    expect(() =>
+      executeCanvas2DDisplayList(target, list, { scene: featherScene }),
+    ).toThrow(/feathered masks require context.filter/);
   });
 
   it("reports decoder and decoded-image budget estimates", () => {
@@ -1058,6 +1198,549 @@ describe("shape geometry", () => {
   });
 });
 
+describe("bounded scratch compositing", () => {
+  const sceneWith = (node: Record<string, unknown>) => ({
+    schemaVersion: 1,
+    width: 200,
+    height: 120,
+    fps: 30,
+    duration: 1,
+    assets: {},
+    nodes: [node],
+  });
+
+  it("uses integer pixel crops without compositing unused pool bucket pixels", () => {
+    const { pool, target } = createScratchRenderHarness();
+    renderStill(
+      target.context,
+      sceneWith({
+        id: "fractional",
+        type: "div",
+        style: {
+          position: "absolute",
+          left: 25.25,
+          top: 14.5,
+          width: 30.5,
+          height: 20.25,
+          backgroundColor: "#ffffff",
+          isolation: true,
+        },
+      }) as never,
+      0,
+      { scratchSurfacePool: pool },
+    );
+
+    expect(target.drawImages).toHaveLength(1);
+    expect(target.drawImages[0]!.slice(1)).toEqual([
+      0, 0, 31, 21, 25, 14, 31, 21,
+    ]);
+    expect(pool.stats()).toMatchObject({
+      allocations: 1,
+      leasedSurfaceCount: 0,
+    });
+  });
+
+  it("honors transform origins when cropping transformed isolated ink", () => {
+    const { pool, target } = createScratchRenderHarness();
+    renderStill(
+      target.context,
+      sceneWith({
+        id: "rotated",
+        type: "div",
+        style: {
+          position: "absolute",
+          left: 50,
+          top: 40,
+          width: 20,
+          height: 10,
+          backgroundColor: "#ffffff",
+          isolation: true,
+          transform: "rotate(90deg)",
+          transformOrigin: "left top",
+        },
+      }) as never,
+      0,
+      { scratchSurfacePool: pool },
+    );
+
+    expect(target.drawImages[0]!.slice(1)).toEqual([
+      0, 0, 10, 20, 40, 40, 10, 20,
+    ]);
+  });
+
+  it("unions descendant transformed bounds and leases nested isolation safely", () => {
+    const { pool, surfaces, target } = createScratchRenderHarness();
+    const scene = sceneWith({
+      id: "outer",
+      type: "div",
+      style: {
+        position: "absolute",
+        left: 10,
+        top: 10,
+        width: 20,
+        height: 20,
+        backgroundColor: "#111111",
+        isolation: true,
+      },
+      children: [
+        {
+          id: "inner",
+          type: "div",
+          style: {
+            position: "absolute",
+            left: 40,
+            top: 5,
+            width: 10,
+            height: 10,
+            backgroundColor: "#ffffff",
+            isolation: true,
+          },
+        },
+      ],
+    });
+
+    renderStill(target.context, scene as never, 0, {
+      scratchSurfacePool: pool,
+    });
+    expect(target.drawImages[0]!.slice(1)).toEqual([
+      0, 0, 50, 20, 10, 10, 50, 20,
+    ]);
+    expect(surfaces[0]!.drawImages[0]!.slice(1)).toEqual([
+      0, 0, 10, 10, 50, 15, 10, 10,
+    ]);
+    expect(pool.stats()).toMatchObject({
+      allocations: 2,
+      leasedSurfaceCount: 0,
+      idleSurfaceCount: 2,
+    });
+
+    renderStill(target.context, scene as never, 0, {
+      scratchSurfacePool: pool,
+    });
+    expect(pool.stats()).toMatchObject({
+      allocations: 2,
+      reuses: 2,
+      leasedSurfaceCount: 0,
+    });
+  });
+
+  it("includes border, stroke, text-shadow, box-shadow, and filter ink margins", () => {
+    const cases = [
+      {
+        node: {
+          id: "border",
+          type: "div",
+          style: {
+            position: "absolute",
+            left: 50,
+            top: 40,
+            width: 20,
+            height: 10,
+            border: "4px solid #fff",
+            isolation: true,
+          },
+        },
+        crop: [0, 0, 24, 14, 48, 38, 24, 14],
+      },
+      {
+        node: {
+          id: "stroke",
+          type: "shape",
+          shape: {
+            kind: "line",
+            points: [
+              { x: 0, y: 0 },
+              { x: 1, y: 1 },
+            ],
+          },
+          style: {
+            position: "absolute",
+            left: 50,
+            top: 40,
+            width: 20,
+            height: 10,
+            strokeWidth: 4,
+            isolation: true,
+          },
+        },
+        crop: [0, 0, 60, 50, 30, 20, 60, 50],
+      },
+      {
+        node: {
+          id: "text-shadow",
+          type: "text",
+          text: "x",
+          style: {
+            position: "absolute",
+            left: 50,
+            top: 40,
+            width: 20,
+            height: 10,
+            fontSize: 20,
+            textShadow: "10px -4px 6px #000",
+            isolation: true,
+          },
+        },
+        crop: [0, 0, 36, 46, 47, 12, 36, 46],
+      },
+      {
+        node: {
+          id: "filtered-shadow",
+          type: "div",
+          style: {
+            position: "absolute",
+            left: 50,
+            top: 40,
+            width: 20,
+            height: 10,
+            backgroundColor: "#fff",
+            boxShadow: "-3px 5px 4px #000",
+            filter: "blur(2px)",
+            isolation: true,
+          },
+        },
+        crop: [0, 0, 48, 38, 33, 31, 48, 38],
+      },
+    ];
+
+    vi.stubGlobal(
+      "Path2D",
+      class {
+        rect() {}
+        moveTo() {}
+        lineTo() {}
+        closePath() {}
+      },
+    );
+    try {
+      for (const { node, crop } of cases) {
+        const { pool, target } = createScratchRenderHarness();
+        renderStill(target.context, sceneWith(node) as never, 0, {
+          scratchSurfacePool: pool,
+        });
+        expect(target.drawImages[0]!.slice(1), node.id).toEqual(crop);
+      }
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("bounds inverted feather masks and composites only their requested rect", () => {
+    vi.stubGlobal(
+      "Path2D",
+      class {
+        rect() {}
+        addPath() {}
+      },
+    );
+    try {
+      const { pool, surfaces, target } = createScratchRenderHarness();
+      renderStill(
+        target.context,
+        sceneWith({
+          id: "masked",
+          type: "div",
+          mask: {
+            shape: { kind: "rect" },
+            inverted: true,
+            opacity: 0.5,
+            feather: 4,
+          },
+          style: {
+            position: "absolute",
+            left: 50,
+            top: 30,
+            width: 20,
+            height: 10,
+            backgroundColor: "#fff",
+            isolation: true,
+          },
+        }) as never,
+        0,
+        { scratchSurfacePool: pool },
+      );
+
+      expect(target.drawImages[0]!.slice(1)).toEqual([
+        0, 0, 44, 34, 38, 18, 44, 34,
+      ]);
+      expect(surfaces[0]!.drawImages[0]!.slice(1)).toEqual([
+        0, 0, 44, 34, 0, 0, 44, 34,
+      ]);
+      expect(surfaces[1]!.context.fillRect).toHaveBeenCalledWith(0, 0, 44, 34);
+      expect(pool.stats()).toMatchObject({
+        allocations: 2,
+        leasedSurfaceCount: 0,
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("keeps filtered soft-mask buckets independent of larger idle history", () => {
+    const node = {
+      id: "history-independent",
+      type: "div",
+      style: {
+        position: "absolute",
+        left: 50,
+        top: 40,
+        width: 20,
+        height: 10,
+        backgroundColor: "#fff",
+        filter: "blur(2px)",
+        isolation: true,
+      },
+      mask: { shape: { kind: "rect" }, feather: 2 },
+    };
+    vi.stubGlobal(
+      "Path2D",
+      class {
+        rect() {}
+        moveTo() {}
+        lineTo() {}
+        closePath() {}
+      },
+    );
+    try {
+      const polluted = createScratchRenderHarness();
+      const large = polluted.pool.acquire({
+        width: 65,
+        height: 65,
+        purpose: "unrelated-history",
+      });
+      large.release();
+      const fresh = createScratchRenderHarness();
+
+      renderStill(polluted.target.context, sceneWith(node) as never, 0, {
+        scratchSurfacePool: polluted.pool,
+      });
+      renderStill(fresh.target.context, sceneWith(node) as never, 0, {
+        scratchSurfacePool: fresh.pool,
+      });
+
+      expect(polluted.target.drawImages[0]!.slice(1)).toEqual(
+        fresh.target.drawImages[0]!.slice(1),
+      );
+      expect(polluted.surfaces[0]).toMatchObject({ width: 128, height: 128 });
+      expect(
+        polluted.surfaces.slice(1).map(({ width, height }) => [width, height]),
+      ).toEqual([
+        [64, 64],
+        [64, 64],
+      ]);
+      expect(polluted.pool.stats()).toMatchObject({
+        allocations: 3,
+        reuses: 0,
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("reuses one lease across multi-shadow layers and composites exact source rects", () => {
+    const { pool, target } = createScratchRenderHarness();
+    renderStill(
+      target.context,
+      sceneWith({
+        id: "shadowed",
+        type: "div",
+        style: {
+          position: "absolute",
+          left: 50,
+          top: 40,
+          width: 20,
+          height: 10,
+          backgroundColor: "#fff",
+          boxShadow: "0 2px 2px #000, -3px 0 1px #fff",
+        },
+      }) as never,
+      0,
+      { scratchSurfacePool: pool },
+    );
+
+    expect(target.drawImages.map((args) => args.slice(1))).toEqual([
+      [0, 0, 32, 22, 44, 34, 32, 22],
+      [0, 0, 30, 20, 45, 35, 30, 20],
+    ]);
+    expect(pool.stats()).toMatchObject({
+      allocations: 1,
+      reuses: 1,
+      leasedSurfaceCount: 0,
+    });
+  });
+
+  it("poisons a multi-shadow staging lease when compositing fails", () => {
+    const { pool, target } = createScratchRenderHarness();
+    target.context.drawImage = () => {
+      throw new Error("shadow composite failed");
+    };
+
+    expect(() =>
+      renderStill(
+        target.context,
+        sceneWith({
+          id: "shadowed",
+          type: "div",
+          style: {
+            width: 20,
+            height: 10,
+            backgroundColor: "#fff",
+            boxShadow: "0 2px 2px #000, -3px 0 1px #fff",
+          },
+        }) as never,
+        0,
+        { scratchSurfacePool: pool },
+      ),
+    ).toThrow("shadow composite failed");
+    expect(pool.stats()).toMatchObject({
+      surfaceCount: 0,
+      leasedSurfaceCount: 0,
+      poisonedReleases: 1,
+    });
+  });
+
+  it("poisons pixelation staging when the scaled composite fails", () => {
+    const { pool, target } = createScratchRenderHarness();
+    target.context.drawImage = () => {
+      throw new Error("pixel composite failed");
+    };
+    const scene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 1,
+      assets: {
+        clip: { id: "clip", type: "video", src: "blob:fake" },
+      },
+      nodes: [
+        {
+          id: "shot",
+          type: "video",
+          assetId: "clip",
+          style: {
+            width: 100,
+            height: 100,
+            imageRendering: "pixelated",
+            pixelSize: 10,
+          },
+        },
+      ],
+    };
+    const source = { width: 100, height: 100 } as HTMLCanvasElement;
+    const assets = {
+      videoFrames: new Map([
+        ["shot", { image: source, width: 100, height: 100, sceneFrame: 0 }],
+      ]),
+    };
+
+    expect(() =>
+      renderStill(target.context, scene as never, 0, {
+        assets: assets as never,
+        scratchSurfacePool: pool,
+      }),
+    ).toThrow("pixel composite failed");
+    expect(pool.stats()).toMatchObject({
+      surfaceCount: 0,
+      leasedSurfaceCount: 0,
+      poisonedReleases: 1,
+    });
+  });
+
+  it("falls back to the full scene for legacy opaque extensions", async () => {
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.opaque",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+      }),
+    ]);
+    const scene = sceneWith({
+      id: "opaque",
+      type: "extension",
+      extension: {
+        name: "com.example.opaque",
+        version: "1.0.0",
+        params: {},
+      },
+      style: {
+        position: "absolute",
+        left: 80,
+        top: 50,
+        width: 10,
+        height: 10,
+        isolation: true,
+      },
+    });
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    const { pool, target } = createScratchRenderHarness();
+    try {
+      renderStill(target.context, scene as never, 0, {
+        assets,
+        scratchSurfacePool: pool,
+      });
+      expect(target.drawImages[0]!.slice(1)).toEqual([
+        0, 0, 200, 120, 0, 0, 200, 120,
+      ]);
+    } finally {
+      await disposeAssetsAsync(assets);
+    }
+  });
+
+  it("poisons failed draw leases and never leaves a surface leased", async () => {
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.throwing",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: {
+          canvas2d: {
+            draw: () => {
+              throw new Error("adapter draw failed");
+            },
+          },
+        },
+      }),
+    ]);
+    const scene = sceneWith({
+      id: "throwing",
+      type: "extension",
+      extension: {
+        name: "com.example.throwing",
+        version: "1.0.0",
+        params: {},
+      },
+      style: { width: 10, height: 10, isolation: true },
+    });
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    const { pool, target } = createScratchRenderHarness();
+    try {
+      expect(() =>
+        renderStill(target.context, scene as never, 0, {
+          assets,
+          scratchSurfacePool: pool,
+        }),
+      ).toThrow("adapter draw failed");
+      expect(pool.stats()).toMatchObject({
+        surfaceCount: 0,
+        leasedSurfaceCount: 0,
+        poisonedReleases: 1,
+      });
+    } finally {
+      await disposeAssetsAsync(assets);
+    }
+  });
+});
+
 describe("renderStill", () => {
   it("exports a callable browser renderer", () => {
     expect(typeof renderStill).toBe("function");
@@ -1269,6 +1952,7 @@ describe("renderStill", () => {
         workerCompatible: true,
         renderers: { canvas2d: adapter },
         reuseKey: ({ params }) => `variant:${params.variant}`,
+        reuseSafety: "immutable",
         resolveAssets: () => ({ lease: ++resolutions }),
         disposeAssets: (value) => {
           disposed.push(value.lease);
@@ -1352,6 +2036,7 @@ describe("renderStill", () => {
             { assetId: params.assetId, type: "image" as const },
           ],
           reuseKey: ({ params }) => params.resourceVersion,
+          reuseSafety: "immutable",
           resolveAssets: () => ({ lease: ++resolutions }),
           disposeAssets: (value) => {
             disposed.push(value.lease);
@@ -1427,6 +2112,7 @@ describe("renderStill", () => {
       workerCompatible: true,
       renderers: { canvas2d: { draw: () => undefined } },
       reuseKey: () => "stable",
+      reuseSafety: "immutable",
       resolveAssets: () => ({ lease: ++resolutions }),
       disposeAssets: (value) => {
         disposed.push(value.lease);
@@ -2783,13 +3469,27 @@ describe("renderStill with video nodes", () => {
           ],
         ]),
       };
+      const scratchSurfacePool = new ScratchSurfacePool({
+        createCanvas: (width, height) =>
+          new FakeOffscreenCanvas(width, height) as unknown as OffscreenCanvas,
+        maxBytes: 1024 * 1024,
+        maxSurfaces: 4,
+        maxDimension: 100,
+      });
 
-      renderStill(context, scene as never, 0, { assets: assets as never });
+      renderStill(context, scene as never, 0, {
+        assets: assets as never,
+        scratchSurfacePool,
+      });
 
-      expect(stagingCanvases[0]).toMatchObject({ width: 10, height: 10 });
+      expect(stagingCanvases[0]).toMatchObject({ width: 64, height: 64 });
       expect(stagingDraws[0]?.slice(-2)).toEqual([10, 10]);
       expect(outputDraws[0]?.[0]).toBe(stagingCanvases[0]);
-      expect(outputDraws[0]?.slice(1)).toEqual([0, 0, 100, 100]);
+      expect(outputDraws[0]?.slice(1)).toEqual([0, 0, 10, 10, 0, 0, 100, 100]);
+      expect(scratchSurfacePool.stats()).toMatchObject({
+        allocations: 1,
+        leasedSurfaceCount: 0,
+      });
     } finally {
       (
         globalThis as { OffscreenCanvas?: typeof OffscreenCanvas }
@@ -3433,5 +4133,614 @@ describe("VideoPlaybackCursor", () => {
     await cursor.dispose();
 
     expect(stats.terminated).toBe(1);
+  });
+});
+
+describe("Canvas2D display-list facade", () => {
+  const scene = {
+    schemaVersion: 1 as const,
+    width: 160,
+    height: 90,
+    fps: 30,
+    duration: 10,
+    assets: {},
+    nodes: [
+      {
+        id: "card",
+        type: "div" as const,
+        style: {
+          position: "absolute" as const,
+          left: 10,
+          top: 8,
+          width: 120,
+          height: 60,
+          backgroundColor: "#123456",
+        },
+        children: [
+          {
+            id: "label",
+            type: "text" as const,
+            text: "Display list",
+            style: { width: 100, height: 30, color: "#ffffff" },
+          },
+        ],
+      },
+    ],
+  };
+
+  it("makes renderStill exactly the compile-then-execute compatibility facade", () => {
+    const facade = createScratchRenderHarness().target.context;
+    const explicit = createScratchRenderHarness().target.context;
+
+    renderStill(facade, scene, 0);
+    const list = compileCanvas2DDisplayList(explicit, scene, 0);
+    executeCanvas2DDisplayList(explicit, list, { scene });
+
+    for (const method of [
+      "clearRect",
+      "beginPath",
+      "rect",
+      "fill",
+      "fillText",
+      "translate",
+      "rotate",
+      "scale",
+    ] as const) {
+      expect(vi.mocked(explicit[method]).mock.calls).toEqual(
+        vi.mocked(facade[method]).mock.calls,
+      );
+    }
+    expect(JSON.parse(JSON.stringify(list))).toEqual(list);
+  });
+
+  it("rejects composition and undeclared backend capability mismatches", () => {
+    const target = createScratchRenderHarness().target.context;
+    const list = compileCanvas2DDisplayList(target, scene, 0);
+    expect(() =>
+      executeCanvas2DDisplayList(
+        target,
+        {
+          ...list,
+          composition: { ...list.composition, width: 161 },
+        },
+        { scene },
+      ),
+    ).toThrow(/composition width/);
+    expect(() =>
+      executeCanvas2DDisplayList(
+        target,
+        {
+          ...list,
+          requirements: [
+            { id: "com.example.future", version: "1.0.0", nodeIds: ["card"] },
+          ],
+        },
+        { scene },
+      ),
+    ).toThrow(/no registry was supplied/);
+
+    const group = list.groups[0]!;
+    expect(() =>
+      executeCanvas2DDisplayList(
+        target,
+        {
+          ...list,
+          groups: [
+            {
+              ...group,
+              background: group.background
+                ? {
+                    ...group.background,
+                    paint: { kind: "color", source: "#tampered" },
+                  }
+                : null,
+            },
+          ],
+        },
+        { scene },
+      ),
+    ).toThrow(/tampered background paint semantics/);
+  });
+
+  it("preserves legacy clamping and fractional frame evaluation", () => {
+    const target = createScratchRenderHarness().target.context;
+    expect(
+      compileCanvas2DDisplayList(target, scene, -100).composition.frame,
+    ).toBe(0);
+    expect(
+      compileCanvas2DDisplayList(target, scene, 100).composition.frame,
+    ).toBe(scene.duration - 1);
+    const fractional = compileCanvas2DDisplayList(target, scene, 1.25);
+    expect(fractional.composition.frame).toBe(1.25);
+    expect(() =>
+      executeCanvas2DDisplayList(target, fractional, { scene }),
+    ).not.toThrow();
+  });
+
+  it("compiles and executes standard extension display without a legacy adapter", async () => {
+    const extensionResource = { portable: true };
+    const resolveExtension = vi.fn(() => extensionResource);
+    const disposeExtension = vi.fn();
+    const definition = defineExtension({
+      name: "com.example.standard-card",
+      version: "1.0.0",
+      paramsSchema: z.object({ color: z.string() }),
+      deterministic: true,
+      workerCompatible: true,
+      reuseKey: () => "portable-v1",
+      reuseSafety: "immutable",
+      resolveAssets: resolveExtension,
+      disposeAssets: disposeExtension,
+      display: {
+        kind: "standard",
+        version: "1",
+        compile: ({ params }, output) => {
+          output.rect("surface", {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 20,
+            radius: 4,
+            fill: params.color,
+          });
+        },
+      },
+    });
+    const extensionScene = {
+      schemaVersion: 1 as const,
+      width: 100,
+      height: 60,
+      fps: 30,
+      duration: 5,
+      assets: {},
+      nodes: [
+        {
+          id: "standard",
+          type: "extension" as const,
+          extension: {
+            name: definition.name,
+            version: definition.version,
+            params: { color: "#ff00aa" },
+          },
+          style: { width: 40, height: 20 },
+        },
+      ],
+    };
+    const extensionRegistry = createExtensionRegistry([definition]);
+    const assets = await resolveAssets(extensionScene, {
+      extensions: extensionRegistry,
+    });
+    const target = createScratchRenderHarness().target.context;
+    const list = compileCanvas2DDisplayList(target, extensionScene, 0, {
+      assets,
+    });
+    expect(assets.extensionNodes?.get("standard")).toMatchObject({
+      adapter: undefined,
+      displayDecision: { kind: "standard", version: "1" },
+    });
+    expect(list.groups[0]?.content).toMatchObject({
+      kind: "extension",
+      mode: "standard",
+      displayVersion: "1",
+    });
+    expect(() => JSON.stringify(list)).not.toThrow();
+    expect(() =>
+      executeCanvas2DDisplayList(target, list, {
+        scene: extensionScene,
+        assets,
+      }),
+    ).not.toThrow();
+    expect(vi.mocked(target.fill)).toHaveBeenCalled();
+    const successor = await resolveAssets(extensionScene, {
+      extensions: extensionRegistry,
+      reuseFrom: { scene: extensionScene, assets },
+    });
+    expect(resolveExtension).toHaveBeenCalledOnce();
+    expect(successor.extensionNodes?.get("standard")?.resolvedAssets).toBe(
+      extensionResource,
+    );
+    await disposeAssetsAsync(assets);
+    expect(disposeExtension).not.toHaveBeenCalled();
+    await disposeAssetsAsync(successor);
+    expect(disposeExtension).toHaveBeenCalledOnce();
+  });
+
+  it("prepares standard images from untyped declared requirements", () => {
+    const definition = defineExtension({
+      name: "com.example.untyped-image",
+      version: "1.0.0",
+      paramsSchema: z.object({}),
+      deterministic: true,
+      workerCompatible: true,
+      display: {
+        kind: "standard",
+        version: "1",
+        compile: (_context, output) => {
+          output.image("hero", {
+            assetId: "hero",
+            x: 0,
+            y: 0,
+            width: 20,
+            height: 20,
+          });
+        },
+      },
+    });
+    const heroAsset = {
+      id: "hero",
+      type: "image" as const,
+      src: "hero.png",
+      metadata: { width: 20, height: 20 },
+    };
+    const node = {
+      id: "standard-image",
+      type: "extension" as const,
+      extension: {
+        name: definition.name,
+        version: definition.version,
+        params: {},
+      },
+      style: { width: 20, height: 20 },
+    };
+    const imageScene = {
+      schemaVersion: 1 as const,
+      width: 40,
+      height: 40,
+      fps: 30,
+      duration: 1,
+      assets: { hero: heroAsset },
+      nodes: [node],
+    };
+    const image = { width: 20, height: 20 } as unknown as ImageBitmap;
+    const assets = {
+      images: new Map([["hero", image]]),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+      extensionNodes: new Map([
+        [
+          node.id,
+          {
+            node,
+            definition,
+            params: {},
+            requirements: [{ assetId: "hero", optional: false }],
+            adapter: undefined,
+            displayDecision: {
+              kind: "standard" as const,
+              version: "1" as const,
+            },
+            resolvedAssets: undefined,
+          },
+        ],
+      ]),
+      extensionFrames: new Map(),
+      resolvedSources: new Map([
+        [
+          "hero",
+          {
+            assetId: "hero",
+            declaredSource: heroAsset.src,
+            resolvedSource: heroAsset.src,
+            contentKey: assetDeclarationKey(heroAsset),
+            usingProxy: false,
+            sourceKind: "primary" as const,
+            declarationKey: assetDeclarationKey(heroAsset),
+            assetType: "image" as const,
+            sourceMode: "auto" as const,
+          },
+        ],
+      ]),
+    };
+    const targetHarness = createScratchRenderHarness().target;
+    const target = targetHarness.context;
+    const list = compileCanvas2DDisplayList(target, imageScene, 0, {
+      assets: assets as never,
+    });
+    executeCanvas2DDisplayList(target, list, {
+      scene: imageScene,
+      assets: assets as never,
+    });
+    expect(targetHarness.drawImages).toContainEqual([image, 0, 0, 20, 20]);
+  });
+
+  it("keeps opaque native resources outside JSON and enforces realm/frame identity", async () => {
+    const nativeResources = new Map([["secret", { token: Symbol("native") }]]);
+    const nativeFrame = new Date(0);
+    const handler = vi.fn();
+    const definition = defineExtension({
+      name: "com.example.opaque-card",
+      version: "1.0.0",
+      paramsSchema: z.object({ columns: z.number() }),
+      deterministic: true,
+      workerCompatible: true,
+      resolveAssets: () => nativeResources,
+      prepareFrame: () => nativeFrame,
+      display: {
+        kind: "opaque",
+        capability: {
+          id: "com.example.canvas-card",
+          version: "1.2.0",
+          realms: ["main", "worker"],
+        },
+        payloadSchema: z.object({ columns: z.number() }).strict(),
+        compile: ({ params }) => ({ columns: params.columns }),
+      },
+    });
+    const extensionScene = {
+      schemaVersion: 1 as const,
+      width: 100,
+      height: 60,
+      fps: 30,
+      duration: 8,
+      assets: {},
+      nodes: [
+        {
+          id: "opaque",
+          type: "extension" as const,
+          extension: {
+            name: definition.name,
+            version: definition.version,
+            params: { columns: 3 },
+          },
+          style: { width: 40, height: 20 },
+        },
+      ],
+    };
+    const registry = createCanvas2DOpaqueExtensionRegistry({
+      realm: "main",
+      handlers: [
+        {
+          capability: {
+            id: "com.example.canvas-card",
+            version: "1.2.0",
+            realms: ["main", "worker"],
+          },
+          draw: handler,
+        },
+      ],
+    });
+    const extensions = createExtensionRegistry([definition]);
+    const assets = await resolveAssets(extensionScene, {
+      extensions,
+      opaqueExtensionRegistry: registry,
+    });
+    await prepareFrame(extensionScene, 3, assets);
+    const target = createScratchRenderHarness().target.context;
+    const list = compileCanvas2DDisplayList(target, extensionScene, 3, {
+      assets,
+    });
+    const serialized = JSON.stringify(list);
+    expect(serialized).toContain('"columns":3');
+    expect(serialized).not.toContain("secret");
+    executeCanvas2DDisplayList(target, list, { scene: extensionScene, assets });
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0]?.[0]).toMatchObject({
+      resolvedAssets: nativeResources,
+      preparedFrame: nativeFrame,
+      realm: "main",
+    });
+    expect(() =>
+      compileCanvas2DDisplayList(target, extensionScene, 4, { assets }),
+    ).toThrow(/prepared for scene frame 3/);
+
+    assets.opaqueExtensionRegistry = undefined;
+    expect(() =>
+      executeCanvas2DDisplayList(target, list, {
+        scene: extensionScene,
+        assets,
+      }),
+    ).toThrow(/no registry was supplied/);
+
+    const workerRegistry = createCanvas2DOpaqueExtensionRegistry({
+      realm: "worker",
+      handlers: [
+        {
+          capability: registry.capabilities[0]!,
+          draw: () => undefined,
+        },
+      ],
+    });
+    expect(
+      preflightCanvas2D(
+        extensionScene,
+        {
+          OffscreenCanvas: class {
+            getContext() {
+              return {};
+            }
+          },
+        } as unknown as Partial<typeof globalThis>,
+        {
+          extensions,
+          worker: true,
+          opaqueExtensionRegistry: workerRegistry,
+        },
+      ),
+    ).toMatchObject({ ok: true, issues: [] });
+    await disposeAssetsAsync(assets);
+  });
+
+  it("executes compiler-owned text lines without target-context reflow", () => {
+    const target = createScratchRenderHarness().target.context;
+    const textScene = {
+      schemaVersion: 1 as const,
+      width: 120,
+      height: 60,
+      fps: 30,
+      duration: 2,
+      assets: {},
+      nodes: [
+        {
+          id: "text",
+          type: "text" as const,
+          text: "hello world",
+          style: { width: 60, height: 40, fontSize: 10 },
+        },
+      ],
+    };
+    target.measureText = (value) => ({ width: value.length }) as TextMetrics;
+    const list = compileCanvas2DDisplayList(target, textScene, 0);
+    const compiledLines = (
+      list.groups[0]?.content?.kind === "text"
+        ? list.groups[0].content.lines
+        : []
+    ).map((line) => line.text);
+    const measureWide = vi.fn((value: string) => ({
+      width: value.length * 20,
+    }));
+    target.measureText = measureWide as unknown as typeof target.measureText;
+    vi.mocked(target.fillText).mockClear();
+    executeCanvas2DDisplayList(target, list, { scene: textScene });
+    expect(
+      vi.mocked(target.fillText).mock.calls.map(([value]) => value),
+    ).toEqual(compiledLines);
+    expect(measureWide).not.toHaveBeenCalled();
+  });
+
+  it("caches only already-isolated static subtrees and skips their redraw", () => {
+    const harness = createScratchRenderHarness();
+    const staticDisplayCache = new Canvas2DStaticDisplayCache({
+      maxBytes: 4 * 1024 * 1024,
+      maxEntries: 8,
+      maxKeyBytes: 256 * 1024,
+    });
+    const staticScene = {
+      schemaVersion: 1 as const,
+      width: 120,
+      height: 80,
+      fps: 30,
+      duration: 3,
+      assets: {},
+      nodes: [
+        {
+          id: "static",
+          type: "div" as const,
+          style: {
+            position: "absolute" as const,
+            left: 10,
+            top: 12,
+            width: 40,
+            height: 30,
+            backgroundColor: "#fff",
+            opacity: 0.5,
+            blendMode: "multiply" as const,
+            isolation: true,
+          },
+        },
+      ],
+    };
+    renderStill(harness.target.context, staticScene, 0, {
+      scratchSurfacePool: harness.pool,
+      staticDisplayCache,
+    });
+    const stagedFillCalls = vi.mocked(harness.surfaces[0]!.context.fill).mock
+      .calls.length;
+    renderStill(harness.target.context, staticScene, 1, {
+      scratchSurfacePool: harness.pool,
+      staticDisplayCache,
+    });
+    expect(
+      vi.mocked(harness.surfaces[0]!.context.fill).mock.calls,
+    ).toHaveLength(stagedFillCalls);
+    expect(harness.pool.stats()).toMatchObject({
+      allocations: 1,
+      reuses: 0,
+      detaches: 1,
+      surfaceCount: 0,
+      allocatedBytes: 0,
+    });
+    expect(staticDisplayCache.stats()).toMatchObject({
+      entries: 1,
+      hits: 1,
+    });
+    expect(harness.surfaces).toHaveLength(1);
+  });
+
+  it("uses direction in bounded text cache identity", () => {
+    const cache = new BoundedTextMeasureCache();
+    const target = createScratchRenderHarness().target.context;
+    const base = {
+      schemaVersion: 1 as const,
+      width: 100,
+      height: 40,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "label",
+          type: "text" as const,
+          text: "abc",
+          style: { width: 80, height: 30, direction: "ltr" as const },
+        },
+      ],
+    };
+    compileCanvas2DDisplayList(target, base, 0, { textMeasureCache: cache });
+    compileCanvas2DDisplayList(
+      target,
+      {
+        ...base,
+        nodes: [
+          {
+            ...base.nodes[0]!,
+            style: { ...base.nodes[0]!.style, direction: "rtl" },
+          },
+        ],
+      } as never,
+      0,
+      { textMeasureCache: cache },
+    );
+    expect(
+      Array.from(cache.keys()).some((key) => key.includes("\u0000ltr\u0000")),
+    ).toBe(true);
+    expect(
+      Array.from(cache.keys()).some((key) => key.includes("\u0000rtl\u0000")),
+    ).toBe(true);
+  });
+
+  it("uses compiled glyph metrics and rich-run extents for isolation crops", () => {
+    const harness = createScratchRenderHarness();
+    harness.target.context.measureText = () =>
+      ({
+        width: 120,
+        actualBoundingBoxAscent: 80,
+        actualBoundingBoxDescent: 30,
+      }) as TextMetrics;
+    renderStill(
+      harness.target.context,
+      {
+        schemaVersion: 1,
+        width: 220,
+        height: 220,
+        fps: 30,
+        duration: 1,
+        assets: {},
+        nodes: [
+          {
+            id: "overshoot",
+            type: "text",
+            runs: [{ text: "Á", style: { color: "#fff" } }],
+            style: {
+              position: "absolute",
+              left: 60,
+              top: 100,
+              width: 10,
+              height: 10,
+              fontSize: 100,
+              isolation: true,
+            },
+          },
+        ],
+      } as never,
+      0,
+      { scratchSurfacePool: harness.pool },
+    );
+    const composite = harness.target.drawImages[0]!;
+    expect(composite[7]).toBeGreaterThanOrEqual(100);
+    expect(composite[8]).toBeGreaterThanOrEqual(100);
   });
 });

@@ -16,6 +16,8 @@ import type {
 } from "@motionforge/runtime";
 import {
   collectReachableAssetIds,
+  BoundedTextMeasureCache,
+  Canvas2DStaticDisplayCache,
   disposeAssetsAsync,
   prepareFrame,
   preflightCanvas2D,
@@ -26,6 +28,11 @@ import {
   type TextMeasureCache,
 } from "./index.js";
 import type { ResolvedScene } from "@motionforge/core";
+import {
+  ScratchSurfacePool,
+  checkedRgbaBytes,
+  type ScratchSurfaceFactory,
+} from "./surface-pool.js";
 
 export type Canvas2DRenderTarget =
   | CanvasRenderingContext2D
@@ -35,6 +42,12 @@ type CanvasSurface = HTMLCanvasElement | OffscreenCanvas;
 
 export type Canvas2DPreparedState = {
   readonly assets: ResolvedAssets;
+  /** Revision-owned render scratch, or an explicitly borrowed host pool. */
+  readonly scratchSurfacePool: ScratchSurfacePool;
+  readonly ownsScratchSurfacePool: boolean;
+  /** Revision-owned cache, or an explicitly borrowed host cache. */
+  readonly staticDisplayCache: Canvas2DStaticDisplayCache;
+  ownsStaticDisplayCache: boolean;
   textMeasureCaches: WeakMap<object, TextMeasureCache>;
   disposed: boolean;
   artifactSurface?: CanvasSurface;
@@ -61,6 +74,24 @@ export type Canvas2DRuntimeBackendOptions = {
   artifactMimeTypes?: string[];
   createArtifactCanvas?: (width: number, height: number) => CanvasSurface;
   createRenderCanvas?: (width: number, height: number) => CanvasSurface;
+  /** Host-owned pool shared by every prepared revision; MotionForge never disposes it. */
+  scratchSurfacePool?: ScratchSurfacePool;
+  /** Policy used to create one runtime-owned pool per prepared revision. */
+  scratchSurfacePoolPolicy?: Readonly<{
+    createCanvas?: ScratchSurfaceFactory;
+    maxBytes?: number;
+    maxSurfaces?: number;
+    maxDimension?: number;
+  }>;
+  /** Host-owned cache shared across revisions; MotionForge never disposes it. */
+  staticDisplayCache?: Canvas2DStaticDisplayCache;
+  /** Policy used to create one runtime-owned cache per prepared revision. */
+  staticDisplayCachePolicy?: Readonly<{
+    maxBytes?: number;
+    maxEntries?: number;
+    maxKeyBytes?: number;
+    maxDimension?: number;
+  }>;
 };
 
 export type Canvas2DSceneRuntime = PreparedSceneSession<
@@ -96,6 +127,8 @@ export function withCanvas2DResolvedAssets<Result>(
   runtime: Canvas2DSceneRuntime,
   callback: (context: {
     assets: ResolvedAssets;
+    scratchSurfacePool: ScratchSurfacePool;
+    staticDisplayCache: Canvas2DStaticDisplayCache;
     scene: Scene;
     signal: AbortSignal;
   }) => Result | Promise<Result>,
@@ -108,7 +141,13 @@ export function withCanvas2DResolvedAssets<Result>(
       // compatibility scope invalidates older Canvas prepared tokens.
       state.preparedGeneration += 1;
       try {
-        return await callback({ assets: state.assets, scene, signal });
+        return await callback({
+          assets: state.assets,
+          scratchSurfacePool: state.scratchSurfacePool,
+          staticDisplayCache: state.staticDisplayCache,
+          scene,
+          signal,
+        });
       } finally {
         state.preparedGeneration += 1;
       }
@@ -124,6 +163,16 @@ export function createCanvas2DRuntimeBackend(
   Canvas2DPreparedFrame,
   Canvas2DRenderTarget
 > {
+  if (options.scratchSurfacePool && options.scratchSurfacePoolPolicy) {
+    throw new Error(
+      "Canvas2D runtime accepts either scratchSurfacePool or scratchSurfacePoolPolicy, not both.",
+    );
+  }
+  if (options.staticDisplayCache && options.staticDisplayCachePolicy) {
+    throw new Error(
+      "Canvas2D runtime accepts either staticDisplayCache or staticDisplayCachePolicy, not both.",
+    );
+  }
   const globalObject = options.globalObject ?? globalThis;
   const mimeTypes = Array.from(
     new Set(options.artifactMimeTypes ?? ["image/png"]),
@@ -162,6 +211,7 @@ export function createCanvas2DRuntimeBackend(
         extensions: options.resolve?.extensions,
         worker: options.resolve?.worker,
         budget: options.resolve?.budget,
+        opaqueExtensionRegistry: options.resolve?.opaqueExtensionRegistry,
       });
       const issues = result.issues.filter((issue) => {
         if (!customContext) return true;
@@ -192,9 +242,19 @@ export function createCanvas2DRuntimeBackend(
         ...options.resolve,
         signal: context.signal,
       });
+      let scratch: { pool: ScratchSurfacePool; owned: boolean } | undefined;
+      let staticCache:
+        | { cache: Canvas2DStaticDisplayCache; owned: boolean }
+        | undefined;
       try {
+        scratch = createRuntimeScratchSurfacePool(scene, options, globalObject);
+        staticCache = createRuntimeStaticDisplayCache(options);
         return {
           assets,
+          scratchSurfacePool: scratch.pool,
+          ownsScratchSurfacePool: scratch.owned,
+          staticDisplayCache: staticCache.cache,
+          ownsStaticDisplayCache: staticCache.owned,
           textMeasureCaches: new WeakMap(),
           disposed: false,
           preparedGeneration: 0,
@@ -207,6 +267,8 @@ export function createCanvas2DRuntimeBackend(
           textMetrics: resolveRuntimeTextProvider(options, scene, assets),
         };
       } catch (error) {
+        if (staticCache?.owned) staticCache.cache.dispose();
+        if (scratch?.owned) await scratch.pool.disposeAsync();
         await disposeAssetsAsync(assets);
         throw error;
       }
@@ -218,9 +280,21 @@ export function createCanvas2DRuntimeBackend(
         reuseFrom: { scene: previousScene, assets: current.assets },
       });
       let candidate: Canvas2DPreparedState;
+      let scratch: { pool: ScratchSurfacePool; owned: boolean } | undefined;
       try {
+        scratch = createRuntimeScratchSurfacePool(
+          nextScene,
+          options,
+          globalObject,
+        );
         candidate = {
           assets: candidateAssets,
+          scratchSurfacePool: scratch.pool,
+          ownsScratchSurfacePool: scratch.owned,
+          staticDisplayCache: current.staticDisplayCache,
+          // Ownership transfers only at commit. Rollback disposal must not
+          // clear the cache still owned by the live current revision.
+          ownsStaticDisplayCache: false,
           textMeasureCaches: new WeakMap(),
           disposed: false,
           preparedGeneration: 0,
@@ -237,6 +311,7 @@ export function createCanvas2DRuntimeBackend(
           ),
         };
       } catch (error) {
+        if (scratch?.owned) await scratch.pool.disposeAsync();
         await disposeAssetsAsync(candidateAssets);
         throw error;
       }
@@ -252,6 +327,8 @@ export function createCanvas2DRuntimeBackend(
         commit: () => {
           if (terminal) throw new Error(`Canvas2D update already ${terminal}.`);
           terminal = "commit";
+          candidate.ownsStaticDisplayCache = current.ownsStaticDisplayCache;
+          current.ownsStaticDisplayCache = false;
           return {
             session: candidate,
             cleanup: disposeState(current),
@@ -299,6 +376,8 @@ export function createCanvas2DRuntimeBackend(
           assets: state.assets,
           resolvedScene: prepared.resolvedScene,
           textMeasureCache: textMeasureCacheFor(state, artifactContext),
+          scratchSurfacePool: state.scratchSurfacePool,
+          staticDisplayCache: state.staticDisplayCache,
         });
       } catch (error) {
         state.artifactContext = undefined;
@@ -362,6 +441,8 @@ function renderToTarget(
       assets: state.assets,
       resolvedScene: prepared.resolvedScene,
       textMeasureCache: textMeasureCacheFor(state, renderContext),
+      scratchSurfacePool: state.scratchSurfacePool,
+      staticDisplayCache: state.staticDisplayCache,
     });
   } catch (error) {
     state.renderContext = undefined;
@@ -554,24 +635,35 @@ function assertLatestPreparedFrame(
 async function disposeState(state: Canvas2DPreparedState): Promise<void> {
   if (state.disposed) return;
   state.disposed = true;
+  let assetError: unknown;
   try {
     await disposeAssetsAsync(state.assets);
+  } catch (error) {
+    assetError = error;
   } finally {
-    (
-      state.textMetrics as TextMetricsProvider & { clearCache?: () => void }
-    )?.clearCache?.();
-    state.textMetrics = undefined;
-    state.textMeasureCaches = new WeakMap();
-    state.artifactContext = undefined;
-    state.artifactSurface = undefined;
-    state.renderContext = undefined;
-    // Canvas width reset discards any nested save stack retained by a failed draw.
-    if (state.renderSurface) {
-      state.renderSurface.width = 1;
-      state.renderSurface.height = 1;
+    try {
+      if (state.ownsScratchSurfacePool) {
+        await state.scratchSurfacePool.disposeAsync();
+      }
+    } finally {
+      if (state.ownsStaticDisplayCache) state.staticDisplayCache.dispose();
+      (
+        state.textMetrics as TextMetricsProvider & { clearCache?: () => void }
+      )?.clearCache?.();
+      state.textMetrics = undefined;
+      state.textMeasureCaches = new WeakMap();
+      state.artifactContext = undefined;
+      state.artifactSurface = undefined;
+      state.renderContext = undefined;
+      // Canvas width reset discards any nested save stack retained by a failed draw.
+      if (state.renderSurface) {
+        state.renderSurface.width = 1;
+        state.renderSurface.height = 1;
+      }
+      state.renderSurface = undefined;
     }
-    state.renderSurface = undefined;
   }
+  if (assetError !== undefined) throw assetError;
 }
 
 function textMeasureCacheFor(
@@ -581,36 +673,10 @@ function textMeasureCacheFor(
   const key = context as unknown as object;
   let cache = state.textMeasureCaches.get(key);
   if (!cache) {
-    cache = new BoundedRuntimeTextMeasureCache(2_048);
+    cache = new BoundedTextMeasureCache();
     state.textMeasureCaches.set(key, cache);
   }
   return cache;
-}
-
-class BoundedRuntimeTextMeasureCache extends Map<string, number> {
-  constructor(private readonly maxEntries: number) {
-    super();
-  }
-
-  override get(key: string): number | undefined {
-    const value = super.get(key);
-    if (value !== undefined) {
-      super.delete(key);
-      super.set(key, value);
-    }
-    return value;
-  }
-
-  override set(key: string, value: number): this {
-    if (super.has(key)) super.delete(key);
-    super.set(key, value);
-    while (this.size > this.maxEntries) {
-      const oldest = this.keys().next().value as string | undefined;
-      if (oldest === undefined) break;
-      super.delete(oldest);
-    }
-    return this;
-  }
 }
 
 function ensureArtifactSurface(
@@ -662,6 +728,80 @@ function createRuntimeRenderCanvas(
   return options.createRenderCanvas
     ? options.createRenderCanvas(width, height)
     : defaultCanvas(width, height, globalObject);
+}
+
+const DEFAULT_RUNTIME_SCRATCH_BYTES = 64 * 1024 * 1024;
+const MAX_DEFAULT_RUNTIME_SCRATCH_BYTES = 512 * 1024 * 1024;
+// Shadows, pixelation, and objectFit:none may legitimately stage beyond the
+// composition edge. The byte ceiling remains the authoritative memory guard.
+const DEFAULT_RUNTIME_SCRATCH_MAX_DIMENSION = 16_384;
+
+function createRuntimeScratchSurfacePool(
+  scene: Scene,
+  options: Canvas2DRuntimeBackendOptions,
+  globalObject: Partial<typeof globalThis>,
+): { pool: ScratchSurfacePool; owned: boolean } {
+  if (options.scratchSurfacePool) {
+    if (options.scratchSurfacePool.stats().disposed) {
+      throw new Error(
+        "Canvas2D runtime scratchSurfacePool is already disposed.",
+      );
+    }
+    return { pool: options.scratchSurfacePool, owned: false };
+  }
+  const policy = options.scratchSurfacePoolPolicy;
+  const sceneBytes = checkedRgbaBytes(scene.width, scene.height);
+  const createCanvas =
+    policy?.createCanvas ??
+    options.createRenderCanvas ??
+    options.createArtifactCanvas ??
+    ((width: number, height: number) =>
+      defaultCanvas(width, height, globalObject));
+  return {
+    pool: new ScratchSurfacePool({
+      createCanvas,
+      maxBytes:
+        policy?.maxBytes ??
+        Math.min(
+          MAX_DEFAULT_RUNTIME_SCRATCH_BYTES,
+          Math.max(DEFAULT_RUNTIME_SCRATCH_BYTES, sceneBytes * 4),
+        ),
+      maxSurfaces: policy?.maxSurfaces ?? 32,
+      maxDimension:
+        policy?.maxDimension ??
+        Math.max(
+          DEFAULT_RUNTIME_SCRATCH_MAX_DIMENSION,
+          scene.width,
+          scene.height,
+        ),
+    }),
+    owned: true,
+  };
+}
+
+const DEFAULT_RUNTIME_STATIC_CACHE_BYTES = 128 * 1024 * 1024;
+
+function createRuntimeStaticDisplayCache(
+  options: Canvas2DRuntimeBackendOptions,
+): { cache: Canvas2DStaticDisplayCache; owned: boolean } {
+  if (options.staticDisplayCache) {
+    if (options.staticDisplayCache.stats().disposed) {
+      throw new Error(
+        "Canvas2D runtime staticDisplayCache is already disposed.",
+      );
+    }
+    return { cache: options.staticDisplayCache, owned: false };
+  }
+  const policy = options.staticDisplayCachePolicy;
+  return {
+    cache: new Canvas2DStaticDisplayCache({
+      maxBytes: policy?.maxBytes ?? DEFAULT_RUNTIME_STATIC_CACHE_BYTES,
+      maxEntries: policy?.maxEntries ?? 256,
+      maxKeyBytes: policy?.maxKeyBytes ?? 1 * 1024 * 1024,
+      maxDimension: policy?.maxDimension ?? 16_384,
+    }),
+    owned: true,
+  };
 }
 
 function canCreateArtifactSurface(

@@ -1,12 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { createPlayer, createPlayerFromRuntime, FrameClock } from "./index.js";
 import {
+  Canvas2DStaticDisplayCache,
   disposeAssetsAsync,
   prepareFrame,
+  renderStill,
   resolveAssets,
   type ResolvedAssets,
+  ScratchSurfacePool,
 } from "@motionforge/renderer-canvas2d";
 import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
+import { evaluateScene } from "@motionforge/core";
 
 vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
   const actual =
@@ -16,9 +20,22 @@ vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
     ...actual,
     disposeAssetsAsync: vi.fn(actual.disposeAssetsAsync),
     prepareFrame: vi.fn(actual.prepareFrame),
+    renderStill: vi.fn(actual.renderStill),
     resolveAssets: vi.fn(actual.resolveAssets),
   };
 });
+
+function runtimeScratchPolicyTypeCheck(
+  runtime: Canvas2DSceneRuntime,
+  scratchSurfacePool: ScratchSurfacePool,
+): void {
+  void createPlayerFromRuntime(runtime, {
+    context: {} as CanvasRenderingContext2D,
+    // @ts-expect-error runtime-backed players own the scratch policy.
+    scratchSurfacePool,
+  });
+}
+void runtimeScratchPolicyTypeCheck;
 
 describe("FrameClock", () => {
   const clock = (
@@ -185,9 +202,26 @@ function borrowedRuntime(
   abortActive(reason?: unknown): Promise<void>;
   readonly activeScopes: number;
   readonly preparedGeneration: number;
+  readonly scratchSurfacePool: ScratchSurfacePool;
+  readonly staticDisplayCache: Canvas2DStaticDisplayCache;
 } {
+  const scratchSurfacePool = new ScratchSurfacePool({
+    createCanvas: () => ({}) as OffscreenCanvas,
+    maxBytes: 1024,
+    maxSurfaces: 1,
+    maxDimension: 16,
+  });
+  const staticDisplayCache = new Canvas2DStaticDisplayCache({
+    maxBytes: 0,
+    maxEntries: 0,
+    maxKeyBytes: 0,
+  });
   const state = {
     assets,
+    scratchSurfacePool,
+    ownsScratchSurfacePool: false,
+    staticDisplayCache,
+    ownsStaticDisplayCache: false,
     textMeasureCaches: new WeakMap(),
     disposed: false,
     preparedGeneration: 0,
@@ -233,6 +267,8 @@ function borrowedRuntime(
 
   return {
     runtime,
+    scratchSurfacePool,
+    staticDisplayCache,
     async abortActive(reason = new Error("runtime revision changed")) {
       active?.controller.abort(reason);
       await active?.settled.catch(() => undefined);
@@ -247,6 +283,38 @@ function borrowedRuntime(
 }
 
 describe("Player", () => {
+  it("reuses but never disposes caller-owned render caches", async () => {
+    const scratchSurfacePool = new ScratchSurfacePool({
+      createCanvas: () => ({}) as OffscreenCanvas,
+      maxBytes: 1024,
+      maxSurfaces: 1,
+      maxDimension: 16,
+    });
+    const staticDisplayCache = new Canvas2DStaticDisplayCache({
+      maxBytes: 0,
+      maxEntries: 0,
+      maxKeyBytes: 0,
+    });
+    const renderStillMock = vi.mocked(renderStill);
+    renderStillMock.mockClear();
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      audio: false,
+      scratchSurfacePool,
+      staticDisplayCache,
+    });
+    expect(renderStillMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      0,
+      expect.objectContaining({ scratchSurfacePool, staticDisplayCache }),
+    );
+    await player.disposeAsync();
+    expect(scratchSurfacePool.stats().disposed).toBe(false);
+    expect(staticDisplayCache.stats().disposed).toBe(false);
+  });
+
   it("renders frame 0 on creation and frames advance with the clock", async () => {
     const driver = fakeDriver();
     const frames: number[] = [];
@@ -353,12 +421,9 @@ describe("Player", () => {
     const prepareFrameMock = vi.mocked(prepareFrame);
     prepareFrameMock.mockClear();
     let finishFirst!: () => void;
-    prepareFrameMock.mockResolvedValueOnce({
-      ...testScene,
-      schemaVersion: 1,
-      frame: 0,
-      nodes: [],
-    });
+    prepareFrameMock.mockResolvedValueOnce(
+      evaluateScene(testScene as never, 0),
+    );
     const player = await createPlayer({
       context: fakeContext(),
       scene: testScene,
@@ -369,21 +434,10 @@ describe("Player", () => {
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
-            finishFirst = () =>
-              resolve({
-                ...testScene,
-                schemaVersion: 1,
-                frame: 2,
-                nodes: [],
-              });
+            finishFirst = () => resolve(evaluateScene(testScene as never, 2));
           }),
       )
-      .mockResolvedValueOnce({
-        ...testScene,
-        schemaVersion: 1,
-        frame: 4,
-        nodes: [],
-      });
+      .mockResolvedValueOnce(evaluateScene(testScene as never, 4));
 
     const first = player.seek(2);
     const second = player.seek(4);
@@ -451,12 +505,8 @@ describe("Player", () => {
     let finishFrame!: () => void;
     const resolvedFrame = (
       frame: number,
-    ): Awaited<ReturnType<typeof prepareFrame>> => ({
-      ...ownedAssetScene,
-      schemaVersion: 1,
-      frame,
-      nodes: [],
-    });
+    ): Awaited<ReturnType<typeof prepareFrame>> =>
+      evaluateScene(ownedAssetScene as never, frame);
 
     disposeAssetsMock.mockClear();
     resolveAssetsMock.mockResolvedValueOnce(assets);
@@ -505,6 +555,27 @@ describe("Canvas2D prepared runtime player compatibility", () => {
     await vi.waitFor(() => expect(scope.activeScopes).toBe(0));
     expect(scope.preparedGeneration).toBe(2);
     expect(disposeAssetsMock).not.toHaveBeenCalledWith(assets);
+  });
+
+  it("delegates runtime-owned scratch and static caches by identity", async () => {
+    const scope = borrowedRuntime(testScene, emptyAssets());
+    const renderStillMock = vi.mocked(renderStill);
+    renderStillMock.mockClear();
+    const player = await createPlayerFromRuntime(scope.runtime, {
+      context: fakeContext(),
+      audio: false,
+    });
+
+    expect(renderStillMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      0,
+      expect.objectContaining({
+        scratchSurfacePool: scope.scratchSurfacePool,
+        staticDisplayCache: scope.staticDisplayCache,
+      }),
+    );
+    await player.disposeAsync();
   });
 
   it("disposes and releases a player before a runtime update continues", async () => {

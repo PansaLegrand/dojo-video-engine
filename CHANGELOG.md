@@ -124,6 +124,26 @@ starter packages.
   facades, headless Canvas factories, neutral target compositing, strict
   portable progress metadata, and packed external entry-point verification.
 
+### Renderer-neutral display list and bounded Canvas backend
+
+- Added the ephemeral JSON-safe display-list v1 compiler with stable group/op
+  IDs, resolved geometry/paint/composites, compiler-owned text layout, media
+  references, explicit capabilities, defensive snapshots, and hard structural
+  budgets; Scene v1 remains the only canonical stored artifact.
+- `renderStill()` now assembles evaluate → layout → display compile → Canvas
+  execute. Public compile/execute APIs support conformance testing and reject
+  composition, capability, prepared-frame, hierarchy, and paint tampering.
+- Extensions now explicitly choose a bounded standard rect/text/image builder,
+  an exact versioned opaque JSON operation/realm, or the preserved 1.x legacy
+  Canvas bridge. Immutable resource reuse, worker handler injection, and native
+  resource separation are enforced.
+- Added pooled, box-bounded isolation/masks/pixelation/shadow staging plus
+  byte-bounded static-isolation and text caches with revision/resource-aware
+  invalidation, collision checks, lifecycle statistics, and deterministic
+  disposal.
+- Added a reusable renderer conformance suite and compositing-heavy 1080p/4K
+  performance gates with measured scratch allocation/reuse/memory budgets.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for
