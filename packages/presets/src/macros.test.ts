@@ -14,6 +14,7 @@ import {
   expandMacroNodeInput,
   expandMacroNodes,
   isMacroNode,
+  macroDefinitions,
   macroNames,
   macroPromptGuide,
   type MacroContext,
@@ -95,6 +96,19 @@ describe("macro registry", () => {
       expect(guide).toContain(`- ${name}:`);
       expect(guide).toContain(`{"macro":"${name}"`);
     }
+  });
+
+  it("returns detached documentation records without exposing the registry", () => {
+    const definitions = macroDefinitions();
+
+    expect(definitions.map(({ name }) => name)).toEqual(macroNames());
+    expect(Object.isFrozen(definitions)).toBe(true);
+    expect(definitions.every((definition) => Object.isFrozen(definition))).toBe(
+      true,
+    );
+    expect(
+      definitions.every(({ params }) => typeof params.safeParse === "function"),
+    ).toBe(true);
   });
 
   it("detects macro nodes", () => {

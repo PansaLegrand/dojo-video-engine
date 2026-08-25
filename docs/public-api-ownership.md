@@ -1,7 +1,7 @@
 # MotionForge public API ownership and deprecation baseline
 
 Status: accepted with RFC 0009  
-Baseline: MotionForge 1.0.0 / post-1.0 milestone MF3
+Baseline: MotionForge 1.0.0 / post-1.0 milestone MF4
 
 This document classifies the public package entry points that existed at the
 start of the post-1.0 engine program. The machine-readable export-map snapshot
@@ -35,6 +35,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/authoring`             | Seconds-first TypeScript authoring helpers that compile to Scene data                                  | Stable. Helpers may gain optional parameters; emitted existing defaults remain compatible.                                                   |
 | `@motionforge/agent-tools`           | Framework-neutral data, render, capability, and export adapters                                        | Stable tool/direct-function names and required inputs. Structured results may gain additive fields.                                          |
 | `@motionforge/cli` and `motionforge` | CLI loading, validation, inspection, local Studio, and export facade                                   | Stable command names and successful exit semantics. New commands/options are additive.                                                       |
+| `@motionforge/commands`              | Typed non-recursive Scene commands, compilation, reversibility, manifests, and in-memory workspace     | Stable entry point added in MF4. Command kinds and required fields are versioned; result/history objects may grow additively.                |
 | `create-motionforge` and its bin     | Starter generation                                                                                     | Stable command and generated-project contract; templates may advance with compatible package releases.                                       |
 
 ## Current deprecation baseline

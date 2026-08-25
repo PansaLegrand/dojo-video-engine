@@ -133,6 +133,9 @@ importers:
 
   packages/agent-tools:
     dependencies:
+      '@motionforge/commands':
+        specifier: workspace:*
+        version: link:../commands
       '@motionforge/export':
         specifier: workspace:*
         version: link:../export
@@ -205,6 +208,28 @@ importers:
         specifier: ^7.3.5
         version: 7.3.5(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
     devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+
+  packages/commands:
+    dependencies:
+      '@motionforge/presets':
+        specifier: workspace:*
+        version: link:../presets
+      '@motionforge/schema':
+        specifier: workspace:*
+        version: link:../schema
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
+      zod-to-json-schema:
+        specifier: ^3.25.2
+        version: 3.25.2(zod@3.25.76)
+    devDependencies:
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
       vitest:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)

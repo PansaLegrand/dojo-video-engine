@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.0.0 / MF3",
+  "recordedFor": "MotionForge 1.0.0 / MF4",
   "packages": {
     "@motionforge/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
@@ -36,6 +36,17 @@
       "bin": {
         "motionforge": "./dist/bin/motionforge.js"
       }
+    },
+    "@motionforge/commands": {
+      "owner": "Typed Scene commands, reversible edits, and revisioned in-memory workspaces",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
     },
     "@motionforge/core": {
       "owner": "Scene builders, deterministic evaluation, animation, and layout",

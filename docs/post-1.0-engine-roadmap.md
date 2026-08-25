@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-25  
-Status: active implementation contract; MF0 through MF3 complete
+Status: active implementation contract; MF0 through MF4 complete
 
 ## Purpose
 
@@ -722,3 +722,23 @@ than the engine priority.
   at or below 5.96 ms/frame and 26 MiB heap. All 12 public packages, including
   inspection, passed dry-run packing; `pnpm verify:clean` packed them, installed
   a generated external starter, and passed validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF4 complete: added `@motionforge/commands` with 16 strict,
+  bounded, non-recursive command kinds and Zod/draft-07/Ajv structural parity;
+  canonical compilation covers text/style/placement/resize/align/distribute,
+  timing, forward/reverse media trim, gain, flat add/remove/move/group, motion
+  presets, macros, and layout/look intents. Exact verified inverse patches and
+  a bounded in-memory workspace provide draft/commit, monotonic revisions,
+  stale-write rejection, semantic diffs, affected IDs, undo/redo, and defensive
+  history. Versioned motion/macro manifests include validated schemas/examples,
+  required assets, and output roles; the agent registry exposes the identical
+  command schema through `motionforge.commands.apply`. Adversarial review covered
+  rich text, source ordering/reparenting, repeat/yoyo preservation, layout-owned
+  style clearing, absolute/center geometry, nested opaque-data and animation
+  budgets, custom macro isolation, duplicate-ID semantic arrays, and all 13
+  ScenePatch inverse categories. Independent randomized evidence passed 1,000
+  mixed-patch inverse and 1,685 commit/undo/redo round trips. The full gate
+  passed 799 unit tests, 750-scene/2,250-frame fuzzing, the 28-scene corpus,
+  seven resource checks, unchanged pixel/media/audio/tool goldens, all three
+  browsers, 10 E2E checks, and performance at or below 6.41 ms/frame and 28 MiB
+  heap. All 13 policy-derived public packages passed dry-run packing, and the
+  packed clean-install starter passed validate/migrate/inspect/lint/build.

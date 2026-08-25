@@ -2,11 +2,21 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   normalizePublicSurface,
+  publicPackageDirectories,
   publicPackagePolicy,
   validateEntrypointBaseline,
   validateSourceContract,
   validateWorkspaceGraph,
 } from "./package-contracts.mjs";
+
+test("release package directories derive from every public package owner", () => {
+  assert.equal(
+    publicPackageDirectories.length,
+    Object.keys(publicPackagePolicy).length,
+  );
+  assert.ok(publicPackageDirectories.includes("packages/commands"));
+  assert.ok(publicPackageDirectories.includes("packages/create-motionforge"));
+});
 
 const packageEntry = (name, dependencies = {}, extra = {}) => ({
   packageDir: `/workspace/packages/${name.replace(/^@motionforge\//, "")}`,

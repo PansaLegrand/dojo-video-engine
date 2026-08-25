@@ -45,6 +45,7 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@motionforge/commands": "workspace:*",
     "@motionforge/export": "workspace:*",
     "@motionforge/extensions": "workspace:*",
     "@motionforge/inspection": "workspace:*",

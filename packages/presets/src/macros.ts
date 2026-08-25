@@ -232,6 +232,33 @@ export function macroNames(): string[] {
   return Array.from(registry.keys());
 }
 
+/**
+ * Read-only discovery metadata for a registered macro.
+ *
+ * The expansion callback is deliberately omitted: consumers that only need to
+ * build documentation, manifests, or JSON Schema should not receive a handle
+ * to the mutable registry or to its execution surface.
+ */
+export type MacroDocumentationDefinition = Readonly<{
+  name: string;
+  description: string;
+  usage: string;
+  params: z.ZodTypeAny;
+}>;
+
+/**
+ * Returns fresh, frozen documentation records without exposing the registry.
+ * Zod schemas are immutable builder values and are safe to share for
+ * validation/schema conversion.
+ */
+export function macroDefinitions(): readonly MacroDocumentationDefinition[] {
+  return Object.freeze(
+    Array.from(registry.values(), ({ name, description, usage, params }) =>
+      Object.freeze({ name, description, usage, params }),
+    ),
+  );
+}
+
 /** Compact per-macro documentation lines for agent system prompts. */
 export function macroPromptGuide(): string {
   return Array.from(registry.values())
@@ -2652,6 +2679,19 @@ registerMacro<z.infer<typeof captionsParams>>({
     '{"macro":"captions","assetId":"video_1","template":"karaoke","from":0,"trimStart":0,"style":{"color":"#ff69b4","highlightColor":"#ffffff"}}',
   params: captionsParams,
   expand: (params, runtime) => {
+    if (runtime.ctx.assets) {
+      const asset = runtime.ctx.assets[params.assetId];
+      if (!asset) {
+        throw new MacroExpansionError([
+          `macro "captions": assetId "${params.assetId}" is not in scene.assets. Add the transcribed audio/video asset before inserting captions.`,
+        ]);
+      }
+      if (asset.type !== "audio" && asset.type !== "video") {
+        throw new MacroExpansionError([
+          `macro "captions": asset "${params.assetId}" is a ${asset.type} asset; captions require a transcribed audio or video asset.`,
+        ]);
+      }
+    }
     const transcripts = runtime.ctx.transcripts;
 
     if (!transcripts) {

@@ -79,6 +79,12 @@ import type {
   TreeInspection,
   TreeInspectionNode,
 } from "@motionforge/inspection";
+import {
+  applySceneCommands,
+  sceneCommandJsonSchema,
+  sceneCommandsSchema,
+  type CompileSceneCommandsContext,
+} from "@motionforge/commands";
 
 export type SceneChange = {
   kind: "add" | "remove" | "change";
@@ -388,6 +394,7 @@ export function createAgentToolRegistry(
   options: {
     extensions?: ExtensionRegistry;
     globalObject?: Partial<typeof globalThis>;
+    commandContext?: CompileSceneCommandsContext;
   } = {},
 ): AgentToolRegistry {
   const sceneValueSchema = z.unknown().refine((value) => value !== undefined, {
@@ -463,7 +470,13 @@ export function createAgentToolRegistry(
         path: ["sampleCount"],
       },
     );
-  const inspectionTool = (
+  const commandApplyInputSchema = z
+    .object({
+      scene: sceneValueSchema,
+      commands: sceneCommandsSchema,
+    })
+    .strict();
+  const strictSchemaTool = (
     name: string,
     description: string,
     schema: ZodType,
@@ -486,6 +499,35 @@ export function createAgentToolRegistry(
     }
     return entry;
   };
+  const commandApplyTool = strictSchemaTool(
+    "motionforge.commands.apply",
+    "Compile typed non-recursive edit commands and apply them as one transactional Scene patch.",
+    commandApplyInputSchema,
+    (input) => {
+      const parsed = commandApplyInputSchema.parse(input);
+      return applySceneCommands(
+        parsed.scene,
+        parsed.commands,
+        options.commandContext,
+      );
+    },
+    ["scene", "commands"],
+  );
+  const commandDocument = sceneCommandJsonSchema();
+  const commandRoot = (
+    commandDocument.definitions as
+      | Record<string, Record<string, unknown>>
+      | undefined
+  )?.MotionforgeSceneCommands;
+  const commandToolProperties = commandApplyTool.inputSchema.properties as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+  if (!commandRoot || !commandToolProperties?.commands) {
+    throw new Error(
+      "MotionForge internal error: command JSON Schema root is unavailable.",
+    );
+  }
+  commandToolProperties.commands = structuredClone(commandRoot);
   return new AgentToolRegistry([
     tool(
       "motionforge.validate",
@@ -505,7 +547,7 @@ export function createAgentToolRegistry(
       sceneSchema,
       (input) => inspectScene(sceneSchema.parse(input).scene),
     ),
-    inspectionTool(
+    strictSchemaTool(
       "motionforge.inspect.tree",
       "Inspect the canonical node tree with source paths, parent/depth metadata, and local/absolute active windows.",
       treeInputSchema,
@@ -515,7 +557,7 @@ export function createAgentToolRegistry(
       },
       ["scene"],
     ),
-    inspectionTool(
+    strictSchemaTool(
       "motionforge.inspect.timeline",
       "Inspect absolute node timing and source-media windows without rendering pixels.",
       treeInputSchema,
@@ -525,7 +567,7 @@ export function createAgentToolRegistry(
       },
       ["scene"],
     ),
-    inspectionTool(
+    strictSchemaTool(
       "motionforge.inspect.layout",
       "Inspect renderer-neutral layout, transforms, clipping, z-order, text/media geometry, and diagnostics at one frame.",
       layoutInputSchema,
@@ -540,7 +582,7 @@ export function createAgentToolRegistry(
       },
       ["scene", "frame"],
     ),
-    inspectionTool(
+    strictSchemaTool(
       "motionforge.hitTest",
       "Return topmost-first geometry hits for a scene point at one frame.",
       hitTestInputSchema,
@@ -556,7 +598,7 @@ export function createAgentToolRegistry(
       },
       ["scene", "frame", "point"],
     ),
-    inspectionTool(
+    strictSchemaTool(
       "motionforge.check",
       "Return one bounded validation, tree, timeline, sampled-layout, and diagnostics envelope.",
       checkInputSchema,
@@ -578,6 +620,7 @@ export function createAgentToolRegistry(
       ["scene"],
       true,
     ),
+    commandApplyTool,
     tool(
       "motionforge.lint",
       "Find valid-but-suspicious scene data.",
@@ -751,6 +794,7 @@ function layoutInspectionOptions(input: {
 }
 
 export {
+  applySceneCommands,
   applyScenePatch,
   analyzeComposition,
   checkScene,
@@ -763,6 +807,20 @@ export {
   migrateScene,
   validateScene,
 };
+export {
+  capabilityManifests,
+  compileSceneCommands,
+  createSceneWorkspace,
+  diffSceneSemantics,
+  getMacroManifest,
+  getMotionPresetManifest,
+  invertScenePatch,
+  macroManifests,
+  motionPresetManifests,
+  sceneCommandJsonSchema,
+  sceneCommandSchema,
+  sceneCommandsSchema,
+} from "@motionforge/commands";
 export type { Scene, ScenePatch };
 export type {
   AnalyzeCompositionOptions,
@@ -798,3 +856,21 @@ export type {
   TreeInspection,
   TreeInspectionNode,
 };
+export type {
+  ApplySceneCommandsResult,
+  CapabilityManifest,
+  CommandDiagnostic,
+  CommandError,
+  CompileSceneCommandsContext,
+  CompileSceneCommandsResult,
+  MacroManifest,
+  MotionPresetManifest,
+  SceneCommand,
+  SceneCommands,
+  SceneWorkspaceOptions,
+  SceneWorkspaceSnapshot,
+  WorkspaceDraft,
+  WorkspaceHistoryEntry,
+  WorkspaceSemanticChange,
+  WorkspaceSemanticDiff,
+} from "@motionforge/commands";

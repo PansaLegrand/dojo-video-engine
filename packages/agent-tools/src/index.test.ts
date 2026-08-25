@@ -9,6 +9,7 @@ import {
   inspectLayout,
   inspectTimeline,
   inspectTree,
+  sceneCommandJsonSchema,
 } from "./index.js";
 
 const scene = {
@@ -68,6 +69,7 @@ describe("agent tool registry", () => {
     expect(names).toEqual([
       "motionforge.capabilities",
       "motionforge.check",
+      "motionforge.commands.apply",
       "motionforge.diff",
       "motionforge.export",
       "motionforge.export.estimate",
@@ -94,6 +96,20 @@ describe("agent tool registry", () => {
         patch: [{ op: "setText", id: "a", text: "Updated" }],
       }),
     ).resolves.toMatchObject({ ok: true });
+    await expect(
+      registry.call("motionforge.commands.apply", {
+        scene,
+        commands: [{ kind: "text.set", id: "a", text: "By command" }],
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      scene: {
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ id: "a", text: "By command" }),
+        ]),
+      },
+      affectedIds: ["a"],
+    });
 
     await expect(
       registry.call("motionforge.inspect.tree", {
@@ -173,6 +189,23 @@ describe("agent tool registry", () => {
     expect(descriptors.get("motionforge.check")?.inputSchema).toMatchObject({
       allOf: [{ not: { required: ["frames", "sampleCount"] } }],
     });
+    expect(
+      descriptors.get("motionforge.commands.apply")?.inputSchema,
+    ).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["scene", "commands"],
+    });
+    const commandDocument = sceneCommandJsonSchema();
+    expect(
+      (
+        descriptors.get("motionforge.commands.apply")?.inputSchema
+          .properties as Record<string, unknown>
+      ).commands,
+    ).toEqual(
+      (commandDocument.definitions as Record<string, Record<string, unknown>>)
+        .MotionforgeSceneCommands,
+    );
     await expect(
       registry.call("motionforge.inspect.layout", { scene, frame: -1 }),
     ).rejects.toThrow();

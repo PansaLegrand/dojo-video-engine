@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { publicPackageDirectories } from "./package-contracts.mjs";
 
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const cliBin = join(rootDir, "packages/cli/dist/bin/motionforge.js");
@@ -115,22 +116,7 @@ async function runSmokeChecks() {
 }
 
 async function runPackDryRuns() {
-  const publishablePackages = [
-    "packages/schema",
-    "packages/core",
-    "packages/extensions",
-    "packages/inspection",
-    "packages/agent-tools",
-    "packages/renderer-canvas2d",
-    "packages/export",
-    "packages/player",
-    "packages/presets",
-    "packages/authoring",
-    "packages/cli",
-    "packages/create-motionforge",
-  ];
-
-  for (const packageDir of publishablePackages) {
+  for (const packageDir of publicPackageDirectories) {
     await run("npm", ["pack", "--dry-run"], { cwd: packageDir });
   }
 }

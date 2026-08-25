@@ -10,6 +10,7 @@ export const publicPackagePolicy = {
   "@motionforge/agent-tools": {
     owner: "Framework-neutral agent tool adapters",
     allowedMotionforgeDependencies: [
+      "@motionforge/commands",
       "@motionforge/export",
       "@motionforge/inspection",
       "@motionforge/extensions",
@@ -33,6 +34,13 @@ export const publicPackagePolicy = {
       "@motionforge/export",
       "@motionforge/inspection",
       "@motionforge/player",
+      "@motionforge/presets",
+      "@motionforge/schema",
+    ],
+  },
+  "@motionforge/commands": {
+    owner: "Typed Scene commands and revisioned in-memory workspaces",
+    allowedMotionforgeDependencies: [
       "@motionforge/presets",
       "@motionforge/schema",
     ],
@@ -90,6 +98,15 @@ export const publicPackagePolicy = {
     allowedMotionforgeDependencies: [],
   },
 };
+
+/** One source of truth for release/clean-install package coverage. */
+export const publicPackageDirectories = Object.keys(publicPackagePolicy)
+  .map((name) =>
+    name === "create-motionforge"
+      ? "packages/create-motionforge"
+      : `packages/${name.slice("@motionforge/".length)}`,
+  )
+  .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 
 const dependencyFields = [
   "dependencies",

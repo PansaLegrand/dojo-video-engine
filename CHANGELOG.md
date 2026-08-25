@@ -92,6 +92,22 @@ starter packages.
   one versioned JSON envelope even for invalid scenes. Agent tools expose the
   same bounded tree/timeline/layout/hit-test/check operations.
 
+### Typed commands and revisioned workspaces
+
+- Added `@motionforge/commands` with 16 strict, discriminated, non-recursive
+  command kinds for text/style/layout/timing/media/node/preset/macro edits and
+  a draft-07 JSON Schema for editors and function-calling agents.
+- Commands compile sequentially against a private Scene into one canonical,
+  transactional ScenePatch with affected IDs and actionable diagnostics;
+  align/distribute reject unresolved geometry rather than guessing.
+- Added verified exact inverse-patch generation plus a bounded in-memory
+  workspace with draft/commit, monotonic revisions, stale-write rejection,
+  semantic diffs, undo/redo, and forward/inverse history evidence.
+- Added versioned motion-preset and built-in macro manifests with parameter
+  schemas, validated examples, explicit asset requirements, and output roles.
+- Release packing now derives from the public package ownership policy, so a
+  newly classified package cannot be omitted from full or clean-install gates.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

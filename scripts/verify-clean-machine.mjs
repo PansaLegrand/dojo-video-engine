@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { publicPackageDirectories } from "./package-contracts.mjs";
 
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const keep = process.argv.includes("--keep");
@@ -11,21 +12,6 @@ const createBin = join(
   rootDir,
   "packages/create-motionforge/dist/bin/create-motionforge.js",
 );
-
-const publishablePackages = [
-  "packages/schema",
-  "packages/core",
-  "packages/extensions",
-  "packages/inspection",
-  "packages/agent-tools",
-  "packages/renderer-canvas2d",
-  "packages/export",
-  "packages/player",
-  "packages/presets",
-  "packages/authoring",
-  "packages/cli",
-  "packages/create-motionforge",
-];
 
 const tempDir = await mkdtemp(join(tmpdir(), "motionforge-clean-machine-"));
 const packDir = join(tempDir, "packs");
@@ -62,7 +48,7 @@ try {
 async function packWorkspacePackages() {
   const packed = new Map();
 
-  for (const packageDir of publishablePackages) {
+  for (const packageDir of publicPackageDirectories) {
     const manifest = await readJson(join(rootDir, packageDir, "package.json"));
 
     await run("pnpm", [

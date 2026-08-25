@@ -5,7 +5,9 @@ Stable data and browser-media tools for agent-native MotionForge workflows.
 ```ts
 import {
   checkScene,
+  compileSceneCommands,
   createAgentToolRegistry,
+  createSceneWorkspace,
   diffScenes,
   discoverCapabilities,
   inspectLayout,
@@ -13,6 +15,8 @@ import {
 } from "@motionforge/agent-tools";
 
 const tools = createAgentToolRegistry();
+const workspace = createSceneWorkspace(scene);
+const compiled = compileSceneCommands(scene, commands);
 const changes = diffScenes(before, after);
 const capabilities = discoverCapabilities();
 const layout = inspectLayout(scene, 45);
@@ -22,7 +26,8 @@ const sheet = await renderContactSheet({ scene, frames: [0, 30, 60] });
 
 The package exposes validation, migration, structural inspection, renderer-
 neutral tree/timeline/layout inspection, hit testing, bounded composition
-checks, lint, patch, semantic diff, capability discovery, export
+checks, typed command compilation/application, revisioned workspace helpers,
+lint, patch, semantic diff, capability discovery, export
 preflight/estimation, still rendering, contact sheets, and MP4 export. Tool
 descriptors include strict bounded JSON Schema inputs for function-calling
 agents, including required Scene fields and mutually exclusive sampling modes.
