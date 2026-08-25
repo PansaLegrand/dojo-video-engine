@@ -74,6 +74,24 @@ starter packages.
   after their frames paint, asynchronous render errors are observable, and
   `disposeAsync()` joins audio/render work before releasing owned media.
 
+### Renderer-neutral composition inspection
+
+- Added `@motionforge/inspection` with JSON-safe tree, timeline, per-frame
+  layout, hit-test, sampled-composition, and unified check APIs.
+- Inspection reports stable hierarchy/source paths, half-open local and
+  absolute windows, border/content/transformed/clip bounds, paint order,
+  text-line and media-fit geometry, and explicit measurement provenance.
+- Added deterministic outside-frame, zero-size, safe-edge, overlap,
+  possible-occlusion, subtitle-collision, excessive-crop, and flex-overflow
+  diagnostics with confidence, evidence, and remediation classes. Semantic
+  roles and permitted overlaps are accepted only as explicit host intent.
+- Moved affine-transform and object-fit geometry into renderer-neutral core
+  helpers while retaining the existing Canvas2D compatibility export and
+  pixel behavior.
+- Added `motionforge inspect-layout` and `motionforge check`; the latter emits
+  one versioned JSON envelope even for invalid scenes. Agent tools expose the
+  same bounded tree/timeline/layout/hit-test/check operations.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

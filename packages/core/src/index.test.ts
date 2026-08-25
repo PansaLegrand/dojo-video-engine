@@ -9,20 +9,28 @@ import {
   extension,
   evaluateKeyframes,
   evaluateScene,
+  getLayoutContentRect,
+  invertAffineMatrix,
   layoutScene,
   lottie,
   parseColor,
   parseFilter,
   parseAspectRatio,
   parseTransform,
+  pointInRoundedLayoutRect,
   prepareTextLayout,
   prepareTextLines,
   richText,
+  resolveObjectFitRect,
+  resolveLayoutCornerRadii,
+  resolveStyleTransformMatrix,
   resolveAnimationFrame,
   sampleScene,
   shape,
   springEasing,
   text,
+  transformLayoutPoint,
+  transformLayoutRect,
   video,
 } from "./index.js";
 
@@ -553,8 +561,68 @@ describe("layout", () => {
     const spaced = layout.boxes.find((box) => box.id === "spaced");
     const content = spaced?.children[0];
 
-    expect(spaced).toMatchObject({ x: 20, y: 10, width: 150, height: 75 });
+    expect(spaced).toMatchObject({
+      x: 20,
+      y: 10,
+      width: 150,
+      height: 75,
+      content: { x: 30, y: 16, width: 120, height: 61 },
+    });
     expect(content).toMatchObject({ x: 30, y: 16, width: 120, height: 61 });
+  });
+
+  it("clamps over-padded content and exposes a compatibility accessor", () => {
+    const layout = layoutOf(
+      composition({ width: 100, height: 80, fps: 30, duration: 1 }).children(
+        div({
+          id: "padded",
+          style: { width: 40, height: 30, padding: 50 },
+        }),
+      ),
+    );
+    const padded = layout.boxes[0];
+
+    expect(padded?.content).toEqual({ x: 50, y: 50, width: 0, height: 0 });
+    expect(padded && getLayoutContentRect(padded)).toEqual(padded?.content);
+    expect(
+      getLayoutContentRect({
+        id: "legacy-fixture",
+        x: 1,
+        y: 2,
+        width: 3,
+        height: 4,
+        node: padded!.node,
+        children: [],
+      }),
+    ).toEqual({ x: 1, y: 2, width: 3, height: 4 });
+  });
+
+  it("combines safe-area, padding, flex, and nested content coordinates", () => {
+    const layout = layoutOf(
+      composition({ width: 300, height: 200, fps: 30, duration: 1 }).children(
+        div({
+          id: "safe-flex",
+          style: {
+            safeArea: { top: 10, right: 20, bottom: 30, left: 40 },
+            padding: 5,
+            display: "flex",
+            alignItems: "stretch",
+          },
+        }).children(
+          div({ id: "child", style: { width: 50, paddingLeft: 7 } }).children(
+            div({ id: "grandchild" }),
+          ),
+        ),
+      ),
+    );
+    const parent = layout.boxes[0]!;
+    const child = parent.children[0]!;
+    const grandchild = child.children[0]!;
+
+    expect(parent.content).toEqual({ x: 45, y: 15, width: 230, height: 150 });
+    expect(child).toMatchObject({ x: 45, y: 15, width: 50, height: 150 });
+    expect(child.content).toEqual({ x: 52, y: 15, width: 43, height: 150 });
+    expect(grandchild).toMatchObject({ x: 52, y: 15, width: 43, height: 150 });
   });
 
   it("derives an auto dimension from aspectRatio", () => {
@@ -942,6 +1010,105 @@ describe("parseTransform", () => {
     expect(parseTransform("rgba(0, 0, 0, 1)")).toBeNull();
     expect(parseTransform("matrix(1, 0, 0, 1, 0, 0)")).toBeNull();
     expect(parseTransform("scale(1) extra")).toBeNull();
+  });
+});
+
+describe("renderer-neutral geometry", () => {
+  it("resolves object fit and position for every fit mode", () => {
+    const box = { width: 200, height: 100 };
+    const square = { width: 100, height: 100 };
+
+    expect(resolveObjectFitRect(undefined, undefined, box, square)).toEqual({
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+    });
+    expect(
+      resolveObjectFitRect("contain", "right bottom", box, square),
+    ).toEqual({ x: 100, y: 0, width: 100, height: 100 });
+    expect(resolveObjectFitRect("cover", "left top", box, square)).toEqual({
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 200,
+    });
+    expect(resolveObjectFitRect("none", "100% 50%", box, square)).toEqual({
+      x: 100,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+    expect(
+      resolveObjectFitRect("scale-down", "center", box, {
+        width: 400,
+        height: 200,
+      }),
+    ).toEqual({ x: 0, y: 0, width: 200, height: 100 });
+  });
+
+  it("resolves ordered transforms, percentage translation, and origins", () => {
+    const box = { x: 10, y: 20, width: 100, height: 50 };
+    const matrix = resolveStyleTransformMatrix(
+      {
+        transform: "translate(10%, 20%) scale(2, 3) rotate(90deg)",
+        transformOrigin: "left top",
+      },
+      box,
+    );
+    const point = transformLayoutPoint(matrix, { x: 10, y: 20 });
+
+    expect(point.x).toBeCloseTo(20);
+    expect(point.y).toBeCloseTo(30);
+    const transformed = transformLayoutRect(matrix, box);
+    expect(transformed.width).toBeCloseTo(100);
+    expect(transformed.height).toBeCloseTo(300);
+    const inverse = invertAffineMatrix(matrix)!;
+    expect(transformLayoutPoint(inverse, point)).toEqual({ x: 10, y: 20 });
+  });
+
+  it("handles center, far-edge, and singular transforms deterministically", () => {
+    const box = { x: 0, y: 0, width: 100, height: 80 };
+    const centered = resolveStyleTransformMatrix(
+      { transform: "scale(2)", transformOrigin: "center" },
+      box,
+    );
+    expect(transformLayoutPoint(centered, { x: 50, y: 40 })).toEqual({
+      x: 50,
+      y: 40,
+    });
+    const farEdge = resolveStyleTransformMatrix(
+      { transform: "scale(2)", transformOrigin: "right bottom" },
+      box,
+    );
+    expect(transformLayoutPoint(farEdge, { x: 100, y: 80 })).toEqual({
+      x: 100,
+      y: 80,
+    });
+    expect(
+      invertAffineMatrix(
+        resolveStyleTransformMatrix({ transform: "scale(0)" }, box),
+      ),
+    ).toBeNull();
+  });
+
+  it("normalizes renderer-shared per-corner overflow geometry", () => {
+    const box = { x: 0, y: 0, width: 100, height: 50 };
+    const radii = resolveLayoutCornerRadii(
+      {
+        borderRadius: 60,
+        borderTopRightRadius: "20%",
+      },
+      box,
+    );
+    expect(radii.topLeft).toBeCloseTo(25);
+    expect(radii.topRight).toBeCloseTo(25 / 6);
+    expect(radii.bottomRight).toBeCloseTo(25);
+    expect(radii.bottomLeft).toBeCloseTo(25);
+    expect(pointInRoundedLayoutRect({ x: 0, y: 0 }, box, radii)).toBe(false);
+    expect(pointInRoundedLayoutRect({ x: 25, y: 0 }, box, radii)).toBe(true);
+    expect(pointInRoundedLayoutRect({ x: 50, y: 25 }, box, radii)).toBe(true);
+    expect(pointInRoundedLayoutRect({ x: -1, y: 25 }, box, radii)).toBe(false);
   });
 });
 

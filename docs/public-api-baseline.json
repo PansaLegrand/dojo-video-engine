@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.0.0 / MF0",
+  "recordedFor": "MotionForge 1.0.0 / MF3",
   "packages": {
     "@motionforge/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
@@ -78,6 +78,17 @@
     },
     "@motionforge/extensions": {
       "owner": "Trusted versioned extension definitions and lifecycle preflight",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/inspection": {
+      "owner": "Renderer-neutral tree, timeline, layout, hit-test, and composition diagnostics",
       "stability": "stable",
       "exports": {
         ".": {

@@ -85,6 +85,8 @@ async function runSmokeChecks() {
 
     await run("node", [cliBin, "validate", scenePath]);
     await run("node", [cliBin, "inspect", scenePath]);
+    await run("node", [cliBin, "inspect-layout", scenePath, "--frame", "0"]);
+    await run("node", [cliBin, "check", scenePath, "--frames", "0,29"]);
 
     await run("node", [createBin, "gate-video"], { cwd: dir });
 
@@ -117,6 +119,7 @@ async function runPackDryRuns() {
     "packages/schema",
     "packages/core",
     "packages/extensions",
+    "packages/inspection",
     "packages/agent-tools",
     "packages/renderer-canvas2d",
     "packages/export",

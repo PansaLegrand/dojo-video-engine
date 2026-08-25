@@ -139,6 +139,9 @@ importers:
       '@motionforge/extensions':
         specifier: workspace:*
         version: link:../extensions
+      '@motionforge/inspection':
+        specifier: workspace:*
+        version: link:../inspection
       '@motionforge/presets':
         specifier: workspace:*
         version: link:../presets
@@ -183,6 +186,9 @@ importers:
       '@motionforge/export':
         specifier: workspace:*
         version: link:../export
+      '@motionforge/inspection':
+        specifier: workspace:*
+        version: link:../inspection
       '@motionforge/player':
         specifier: workspace:*
         version: link:../player
@@ -249,6 +255,19 @@ importers:
       zod-to-json-schema:
         specifier: ^3.25.2
         version: 3.25.2(zod@3.25.76)
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+
+  packages/inspection:
+    dependencies:
+      '@motionforge/core':
+        specifier: workspace:*
+        version: link:../core
+      '@motionforge/schema':
+        specifier: workspace:*
+        version: link:../schema
     devDependencies:
       vitest:
         specifier: ^3.2.4
@@ -2298,14 +2317,6 @@ snapshots:
     optionalDependencies:
       vite: 7.3.5(@types/node@20.19.42)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
 
-  '@vitest/mocker@3.2.6(vite@7.3.5(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0))':
-    dependencies:
-      '@vitest/spy': 3.2.6
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.5(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
-
   '@vitest/pretty-format@3.2.6':
     dependencies:
       tinyrainbow: 2.0.0
@@ -3092,7 +3103,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.6
-      '@vitest/mocker': 3.2.6(vite@7.3.5(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0))
+      '@vitest/mocker': 3.2.6(vite@7.3.5(@types/node@20.19.42)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.6
       '@vitest/runner': 3.2.6
       '@vitest/snapshot': 3.2.6

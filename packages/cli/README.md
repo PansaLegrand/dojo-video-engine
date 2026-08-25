@@ -15,7 +15,9 @@ motionforge validate src/video.ts
 motionforge print src/video.ts
 motionforge migrate src/video.ts
 motionforge inspect src/video.ts
+motionforge inspect-layout src/video.ts --frame 45
 motionforge lint src/video.ts
+motionforge check src/video.ts --frames 0,45,89
 motionforge diff before.ts after.ts
 motionforge capabilities
 motionforge dev src/video.ts
@@ -95,13 +97,21 @@ unused-asset conditions.
 `@motionforge/agent-tools`. `capabilities` prints runtime-derived schema,
 motion-preset, macro, extension, and export capability metadata.
 
+`inspect-layout` returns renderer-neutral border/content/transformed/clip
+bounds, paint order, text/media metrics, and deterministic diagnostics for one
+in-range frame. `check` emits one versioned JSON envelope containing
+validation, structural inspection, lint, tree, timeline, bounded frame
+samples, and diagnostics. Invalid scenes still produce a parseable envelope
+and exit `1`; valid scenes with warnings exit `0`. Use either an explicit
+comma-separated `--frames` list or `--sample-count` (both are capped at 100).
+
 `dev` starts MotionForge Studio for the scene module. The studio validates the source, renders it on Canvas2D, exposes a frame scrubber and JSON inspector, and enables browser MP4 export when WebCodecs is available.
 
 ## API Stability
 
 Stable for 1.x integrations:
 
-- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge lint`, `motionforge diff`, `motionforge capabilities`, and `motionforge dev`.
+- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge inspect-layout`, `motionforge lint`, `motionforge check`, `motionforge diff`, `motionforge capabilities`, and `motionforge dev`.
 - Programmatic helpers: `executeCli()`, `runCli()`, `inspectScene()`, `CliResult`, `CliIo`, and `SceneInspection`.
 - Scene module loading contract: JSON files, JS/ESM modules, TypeScript modules through `tsx`, default export or named `scene`, and scene-returning functions/promises.
 

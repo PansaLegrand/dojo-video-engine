@@ -1,7 +1,7 @@
 # MotionForge public API ownership and deprecation baseline
 
 Status: accepted with RFC 0009  
-Baseline: MotionForge 1.0.0 / post-1.0 milestone MF0
+Baseline: MotionForge 1.0.0 / post-1.0 milestone MF3
 
 This document classifies the public package entry points that existed at the
 start of the post-1.0 engine program. The machine-readable export-map snapshot
@@ -23,6 +23,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/schema`                | Canonical Scene documents, validation, migration, inspection, lint, JSON Schema, and low-level patches | Stable. Document semantics require Scene versioning/migration; additive result fields are permitted.                                         |
 | `@motionforge/schema/values`         | Portable visual value grammars, parsed forms, validators, and deterministic serializers                | Stable entry point added in MF1. New optional grammar forms are additive; changing accepted existing semantics needs compatibility evidence. |
 | `@motionforge/core`                  | Scene builders, frame evaluation, keyframes, layout, and text-layout helpers                           | Stable. Existing timing/layout defaults and output semantics cannot change silently.                                                         |
+| `@motionforge/inspection`            | Renderer-neutral tree, timeline, layout, hit testing, sampled checks, and geometry diagnostics         | Stable entry point added in MF3. Result objects may grow additively; geometry remains explicitly qualified as exact, declared, or estimated. |
 | `@motionforge/extensions`            | Trusted extension definitions, manifests, registries, version resolution, and preflight                | Stable. Renderer adapter payloads and resolved resource shapes are advanced APIs that may grow additively.                                   |
 | `@motionforge/renderer-canvas2d`     | Canvas2D rendering, browser-media preparation, runtime preflight, and resource disposal                | Stable entry point. Decoded resource shapes are advanced APIs; lifecycle ordering and documented functions remain compatible.                |
 | `@motionforge/export`                | Frame/audio export orchestration, encoding, muxing, estimation, preflight, and streaming               | Stable. New optional controls and additive result metadata are permitted.                                                                    |

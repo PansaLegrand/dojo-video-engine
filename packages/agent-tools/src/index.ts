@@ -37,6 +37,48 @@ import {
   type ExportVideoOptions,
   type ExportVideoResult,
 } from "@motionforge/export";
+import {
+  analyzeComposition,
+  checkScene,
+  hitTest,
+  inspectLayout,
+  inspectTimeline,
+  inspectTree,
+} from "@motionforge/inspection";
+import type {
+  AnalyzeCompositionOptions,
+  CheckSceneOptions,
+  CompositionInspection,
+  DiagnosticCode,
+  FrameWindow,
+  HitTestOptions,
+  HitTestResult,
+  InspectionBaseOptions,
+  InspectionDiagnostic,
+  LayoutInspection,
+  LayoutInspectionNode,
+  LayoutInspectionOptions,
+  Matrix2D,
+  MeasuredRect,
+  MeasurementQuality,
+  MediaMetrics,
+  MediaMetricsProvider,
+  Point,
+  Rect,
+  RemediationClass,
+  SceneCheckEnvelope,
+  SourcePath,
+  TextInspection,
+  TextLineInspection,
+  TextLineMetrics,
+  TextLineMetricsInput,
+  TextMetricsProvider,
+  TimelineInspection,
+  TimelineInspectionNode,
+  TimelineSource,
+  TreeInspection,
+  TreeInspectionNode,
+} from "@motionforge/inspection";
 
 export type SceneChange = {
   kind: "add" | "remove" | "change";
@@ -327,7 +369,9 @@ export class AgentToolRegistry {
   list(): AgentToolDefinition[] {
     return Array.from(this.tools.values())
       .map(({ execute: _execute, ...definition }) => definition)
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort((left, right) =>
+        left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
+      );
   }
 
   async call(name: string, input: unknown): Promise<unknown> {
@@ -346,7 +390,102 @@ export function createAgentToolRegistry(
     globalObject?: Partial<typeof globalThis>;
   } = {},
 ): AgentToolRegistry {
-  const sceneSchema = z.object({ scene: z.unknown() });
+  const sceneValueSchema = z.unknown().refine((value) => value !== undefined, {
+    message: "scene is required.",
+  });
+  const sceneSchema = z.object({ scene: sceneValueSchema });
+  const nodeIdSchema = z.string().min(1).max(191);
+  const semanticRolesSchema = z
+    .record(nodeIdSchema, z.string().min(1).max(128))
+    .refine((roles) => Object.keys(roles).length <= 100, {
+      message: "semanticRoles may contain at most 100 node roles.",
+    });
+  const allowedOverlapsSchema = z
+    .array(z.tuple([nodeIdSchema, nodeIdSchema]))
+    .max(100);
+  const inspectionBaseShape = {
+    semanticRoles: semanticRolesSchema.optional(),
+    allowedOverlaps: allowedOverlapsSchema.optional(),
+  };
+  const insetSchema = z.union([
+    z.number().finite().nonnegative().max(1_000_000),
+    z
+      .object({
+        top: z.number().finite().nonnegative().max(1_000_000),
+        right: z.number().finite().nonnegative().max(1_000_000),
+        bottom: z.number().finite().nonnegative().max(1_000_000),
+        left: z.number().finite().nonnegative().max(1_000_000),
+      })
+      .strict(),
+  ]);
+  const layoutOptionsShape = {
+    ...inspectionBaseShape,
+    unsafeInsets: insetSchema.optional(),
+    safeAreaRoles: z.array(z.string().min(1).max(128)).max(100).optional(),
+    excessiveCropThreshold: z.number().finite().min(0).max(1).optional(),
+  };
+  const treeInputSchema = z
+    .object({ scene: sceneValueSchema, ...inspectionBaseShape })
+    .strict();
+  const layoutInputSchema = z
+    .object({
+      scene: sceneValueSchema,
+      frame: z.number().int().nonnegative(),
+      ...layoutOptionsShape,
+    })
+    .strict();
+  const hitTestInputSchema = z
+    .object({
+      scene: sceneValueSchema,
+      frame: z.number().int().nonnegative(),
+      point: z
+        .object({
+          x: z.number().finite().min(-1_000_000_000).max(1_000_000_000),
+          y: z.number().finite().min(-1_000_000_000).max(1_000_000_000),
+        })
+        .strict(),
+      includeTransparent: z.boolean().optional(),
+      ...layoutOptionsShape,
+    })
+    .strict();
+  const checkInputSchema = z
+    .object({
+      scene: sceneValueSchema,
+      frames: z.array(z.number().int().nonnegative()).max(100).optional(),
+      sampleCount: z.number().int().positive().max(100).optional(),
+      ...layoutOptionsShape,
+    })
+    .strict()
+    .refine(
+      (input) => input.frames === undefined || input.sampleCount === undefined,
+      {
+        message: "Use either frames or sampleCount, not both.",
+        path: ["sampleCount"],
+      },
+    );
+  const inspectionTool = (
+    name: string,
+    description: string,
+    schema: ZodType,
+    execute: (input: unknown) => unknown | Promise<unknown>,
+    required: string[],
+    mutuallyExclusiveSamples = false,
+  ): RegisteredTool => {
+    const entry = tool(name, description, schema, execute);
+    entry.inputSchema.required = required;
+    const properties = entry.inputSchema.properties as
+      | Record<string, Record<string, unknown>>
+      | undefined;
+    if (properties?.semanticRoles) {
+      properties.semanticRoles.maxProperties = 100;
+    }
+    if (mutuallyExclusiveSamples) {
+      entry.inputSchema.allOf = [
+        { not: { required: ["frames", "sampleCount"] } },
+      ];
+    }
+    return entry;
+  };
   return new AgentToolRegistry([
     tool(
       "motionforge.validate",
@@ -365,6 +504,79 @@ export function createAgentToolRegistry(
       "Inspect scene capabilities and resource declarations.",
       sceneSchema,
       (input) => inspectScene(sceneSchema.parse(input).scene),
+    ),
+    inspectionTool(
+      "motionforge.inspect.tree",
+      "Inspect the canonical node tree with source paths, parent/depth metadata, and local/absolute active windows.",
+      treeInputSchema,
+      (input) => {
+        const parsed = treeInputSchema.parse(input);
+        return inspectTree(parsed.scene, inspectionBaseOptions(parsed));
+      },
+      ["scene"],
+    ),
+    inspectionTool(
+      "motionforge.inspect.timeline",
+      "Inspect absolute node timing and source-media windows without rendering pixels.",
+      treeInputSchema,
+      (input) => {
+        const parsed = treeInputSchema.parse(input);
+        return inspectTimeline(parsed.scene, inspectionBaseOptions(parsed));
+      },
+      ["scene"],
+    ),
+    inspectionTool(
+      "motionforge.inspect.layout",
+      "Inspect renderer-neutral layout, transforms, clipping, z-order, text/media geometry, and diagnostics at one frame.",
+      layoutInputSchema,
+      (input) => {
+        const parsed = layoutInputSchema.parse(input);
+        const scene = assertInspectionFrames(parsed.scene, [parsed.frame]);
+        return inspectLayout(
+          scene,
+          parsed.frame,
+          layoutInspectionOptions(parsed),
+        );
+      },
+      ["scene", "frame"],
+    ),
+    inspectionTool(
+      "motionforge.hitTest",
+      "Return topmost-first geometry hits for a scene point at one frame.",
+      hitTestInputSchema,
+      (input) => {
+        const parsed = hitTestInputSchema.parse(input);
+        const scene = assertInspectionFrames(parsed.scene, [parsed.frame]);
+        return hitTest(scene, parsed.frame, parsed.point, {
+          ...layoutInspectionOptions(parsed),
+          ...(parsed.includeTransparent === undefined
+            ? {}
+            : { includeTransparent: parsed.includeTransparent }),
+        });
+      },
+      ["scene", "frame", "point"],
+    ),
+    inspectionTool(
+      "motionforge.check",
+      "Return one bounded validation, tree, timeline, sampled-layout, and diagnostics envelope.",
+      checkInputSchema,
+      (input) => {
+        const parsed = checkInputSchema.parse(input);
+        const validation = validateScene(parsed.scene);
+        const sceneInput = validation.ok ? validation.scene : parsed.scene;
+        if (validation.ok) {
+          assertInspectionFrames(validation.scene, parsed.frames ?? []);
+        }
+        return checkScene(sceneInput, {
+          ...layoutInspectionOptions(parsed),
+          ...(parsed.frames === undefined ? {} : { frames: parsed.frames }),
+          ...(parsed.sampleCount === undefined
+            ? {}
+            : { sampleCount: parsed.sampleCount }),
+        });
+      },
+      ["scene"],
+      true,
     ),
     tool(
       "motionforge.lint",
@@ -486,11 +698,103 @@ export function createAgentToolRegistry(
   ]);
 }
 
+function inspectionBaseOptions(input: {
+  semanticRoles?: Record<string, string>;
+  allowedOverlaps?: Array<[string, string]>;
+}): InspectionBaseOptions {
+  return {
+    ...(input.semanticRoles === undefined
+      ? {}
+      : { semanticRoles: input.semanticRoles }),
+    ...(input.allowedOverlaps === undefined
+      ? {}
+      : { allowedOverlaps: input.allowedOverlaps }),
+  };
+}
+
+function assertInspectionFrames(
+  sceneInput: unknown,
+  frames: readonly number[],
+): Scene {
+  const scene = parseScene(sceneInput);
+  for (const frame of frames) {
+    if (frame >= scene.duration) {
+      throw new Error(
+        `Inspection frame ${frame} is outside Scene duration ${scene.duration}.`,
+      );
+    }
+  }
+  return scene;
+}
+
+function layoutInspectionOptions(input: {
+  semanticRoles?: Record<string, string>;
+  allowedOverlaps?: Array<[string, string]>;
+  unsafeInsets?:
+    | number
+    | { top: number; right: number; bottom: number; left: number };
+  safeAreaRoles?: string[];
+  excessiveCropThreshold?: number;
+}): LayoutInspectionOptions {
+  return {
+    ...inspectionBaseOptions(input),
+    ...(input.unsafeInsets === undefined
+      ? {}
+      : { unsafeInsets: input.unsafeInsets }),
+    ...(input.safeAreaRoles === undefined
+      ? {}
+      : { safeAreaRoles: input.safeAreaRoles }),
+    ...(input.excessiveCropThreshold === undefined
+      ? {}
+      : { excessiveCropThreshold: input.excessiveCropThreshold }),
+  };
+}
+
 export {
   applyScenePatch,
+  analyzeComposition,
+  checkScene,
+  hitTest,
+  inspectLayout,
   inspectScene,
+  inspectTimeline,
+  inspectTree,
   lintScene,
   migrateScene,
   validateScene,
 };
 export type { Scene, ScenePatch };
+export type {
+  AnalyzeCompositionOptions,
+  CheckSceneOptions,
+  CompositionInspection,
+  DiagnosticCode,
+  FrameWindow,
+  HitTestOptions,
+  HitTestResult,
+  InspectionBaseOptions,
+  InspectionDiagnostic,
+  LayoutInspection,
+  LayoutInspectionNode,
+  LayoutInspectionOptions,
+  Matrix2D,
+  MeasuredRect,
+  MeasurementQuality,
+  MediaMetrics,
+  MediaMetricsProvider,
+  Point,
+  Rect,
+  RemediationClass,
+  SceneCheckEnvelope,
+  SourcePath,
+  TextInspection,
+  TextLineInspection,
+  TextLineMetrics,
+  TextLineMetricsInput,
+  TextMetricsProvider,
+  TimelineInspection,
+  TimelineInspectionNode,
+  TimelineSource,
+  TreeInspection,
+  TreeInspectionNode,
+};

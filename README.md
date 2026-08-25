@@ -63,6 +63,7 @@ flowchart TB
     adapters --> SCENE["scene document — the canonical video<br/><b>@motionforge/schema</b> · Zod validation + JSON Schema"]
 
     SCENE --> CORE["<b>@motionforge/core</b><br/>builder API · keyframe evaluator · layout pass"]
+    CORE --> INSPECT["<b>@motionforge/inspection</b><br/>tree · timeline · geometry · hit test · diagnostics"]
     SCENE -. "versioned descriptors" .-> EXT["<b>@motionforge/extensions</b><br/>trusted versioned adapters · preflight · lifecycle"]
     EXT --> R2D
     CORE --> R2D["<b>@motionforge/renderer-canvas2d</b><br/>deterministic still-frame renderer"]
@@ -78,6 +79,7 @@ flowchart TB
 | [`create-motionforge`](packages/create-motionforge)            | Starter project generator                              | ✅ working |
 | [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export           | ✅ working |
 | [`@motionforge/core`](packages/core)                           | Builder API, keyframe evaluator, layout pass           | ✅ working |
+| [`@motionforge/inspection`](packages/inspection)               | Spatial/temporal inspection and diagnostics            | ✅ working |
 | [`@motionforge/agent-tools`](packages/agent-tools)             | Agent validation, diff, discovery, render/export tools | ✅ working |
 | [`@motionforge/extensions`](packages/extensions)               | Versioned deterministic renderer extension kernel      | ✅ working |
 | [`@motionforge/renderer-canvas2d`](packages/renderer-canvas2d) | Canvas2D reference renderer                            | ✅ working |
@@ -111,6 +113,7 @@ This project treats LLM agents as first-class users:
 - [`docs/scene-format.md`](docs/scene-format.md) — the full format spec with a property-by-property support matrix.
 - [`packages/schema/scene.schema.json`](packages/schema/scene.schema.json) — JSON Schema (draft-07) for validating scenes without running any code.
 - Validation errors are written to be actionable: they name the path, the problem, and what to do instead. Node ids are unique by contract, so agents can patch scenes by id.
+- Renderer-neutral inspection answers where every active node is, when it is active, what may overlap or clip it, and which measurements are exact, declared, or estimated—without asking a vision model to infer coordinates from pixels.
 - **Scene patches** ([RFC 0001](docs/rfcs/0001-scene-patch-ops.md)): `applyScenePatch(scene, ops)` applies id-addressed, transactional edits — the API a chat loop drives. Misspelled ids get closest-match suggestions in the error.
 - **Try the loop by hand**: the playground's _Agent console_ lets you paste a scene or a patch, applies it through these exact APIs, and shows you the same errors an agent would read.
 - [`tools/agent-eval`](tools/agent-eval) runs generate/edit suites against any OpenAI-compatible chat endpoint and scores the result mechanically with the same validation and patch APIs.

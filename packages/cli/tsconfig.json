@@ -9,6 +9,7 @@
   "include": ["src"],
   "references": [
     { "path": "../agent-tools" },
+    { "path": "../inspection" },
     { "path": "../schema" },
     { "path": "../presets" },
     { "path": "../player" },

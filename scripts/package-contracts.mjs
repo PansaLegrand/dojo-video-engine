@@ -11,6 +11,7 @@ export const publicPackagePolicy = {
     owner: "Framework-neutral agent tool adapters",
     allowedMotionforgeDependencies: [
       "@motionforge/export",
+      "@motionforge/inspection",
       "@motionforge/extensions",
       "@motionforge/presets",
       "@motionforge/renderer-canvas2d",
@@ -30,6 +31,7 @@ export const publicPackagePolicy = {
     allowedMotionforgeDependencies: [
       "@motionforge/agent-tools",
       "@motionforge/export",
+      "@motionforge/inspection",
       "@motionforge/player",
       "@motionforge/presets",
       "@motionforge/schema",
@@ -54,6 +56,14 @@ export const publicPackagePolicy = {
   "@motionforge/extensions": {
     owner: "Trusted versioned extension contracts",
     allowedMotionforgeDependencies: ["@motionforge/schema"],
+  },
+  "@motionforge/inspection": {
+    owner:
+      "Renderer-neutral tree, timeline, layout, hit-test, and composition diagnostics",
+    allowedMotionforgeDependencies: [
+      "@motionforge/core",
+      "@motionforge/schema",
+    ],
   },
   "@motionforge/player": {
     owner: "Real-time preview and audio-synchronized playback",

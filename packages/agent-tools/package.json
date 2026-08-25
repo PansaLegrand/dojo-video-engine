@@ -47,6 +47,7 @@
   "dependencies": {
     "@motionforge/export": "workspace:*",
     "@motionforge/extensions": "workspace:*",
+    "@motionforge/inspection": "workspace:*",
     "@motionforge/presets": "workspace:*",
     "@motionforge/renderer-canvas2d": "workspace:*",
     "@motionforge/schema": "workspace:*",

@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-25  
-Status: active implementation contract; MF0 through MF2 complete
+Status: active implementation contract; MF0 through MF3 complete
 
 ## Purpose
 
@@ -703,3 +703,22 @@ than the engine priority.
   `pnpm verify:clean` also packed the publishable workspace, installed the
   generated starter outside the monorepo, and passed validate/migrate/inspect/
   lint/build against the packed artifacts.
+- 2026-08-26 — MF3 complete: added the public renderer-neutral
+  `@motionforge/inspection` package with tree, timeline, per-frame layout,
+  topmost-first hit testing, bounded composition sampling, and unified check
+  envelopes. Core now owns shared content, affine transform, rounded-corner,
+  and object-fit geometry while the Canvas2D compatibility API and pixels stay
+  unchanged. Text/media metrics carry exact/declared/estimated provenance;
+  diagnostics cover outside/zero/safe-edge/overlap/possible-occlusion/subtitle/
+  crop/flex cases with explicit host intent, confidence, source paths, and
+  remediation classes. CLI `inspect-layout`/`check` and five strict bounded
+  agent tools expose the same contract. Adversarial coverage includes nested
+  timing/transforms/clips, animated/soft/inverted masks, ancestor transparency,
+  rounded geometry, line strokes, RTL/text fitting, local coordinates,
+  non-finite/provider failures, conservative confidence, and JSON Schema
+  strictness. The final full gate passed 735 unit tests, 750-scene/2,250-frame
+  fuzzing, the 28-scene corpus, seven resource checks, unchanged pixel/media/
+  audio/tool goldens, Chromium/Firefox/WebKit, all 10 E2E checks, and performance
+  at or below 5.96 ms/frame and 26 MiB heap. All 12 public packages, including
+  inspection, passed dry-run packing; `pnpm verify:clean` packed them, installed
+  a generated external starter, and passed validate/migrate/inspect/lint/build.

@@ -1,8 +1,12 @@
 import {
   evaluateScene,
   layoutScene,
+  normalizeLayoutCornerRadii,
   prepareTextLayout,
+  resolveObjectFitRect,
+  resolveLayoutCornerRadii,
   wrapTextLines,
+  type LayoutCornerRadii,
   type LayoutBox,
   type MeasureTextLine,
   type ResolvedNode,
@@ -23,7 +27,6 @@ import {
   parseBorderValue,
   parseConicGradientValue,
   parseLinearGradientValue,
-  parseObjectPositionValue,
   parseRadialGradientValue,
   parseShadowListValue,
   parseShadowValue,
@@ -3077,12 +3080,7 @@ type ShapePath = {
   open: boolean;
 };
 
-type CornerRadii = {
-  topLeft: number;
-  topRight: number;
-  bottomRight: number;
-  bottomLeft: number;
-};
+type CornerRadii = LayoutCornerRadii;
 
 export function shapePointInBox(
   point: { x: number; y: number },
@@ -3328,80 +3326,7 @@ export function computeObjectFit(
   box: { width: number; height: number },
   natural: { width: number; height: number },
 ): { x: number; y: number; width: number; height: number } {
-  const containScale =
-    natural.width > 0 && natural.height > 0
-      ? Math.min(box.width / natural.width, box.height / natural.height)
-      : 1;
-  const coverScale =
-    natural.width > 0 && natural.height > 0
-      ? Math.max(box.width / natural.width, box.height / natural.height)
-      : 1;
-
-  let width = box.width;
-  let height = box.height;
-
-  switch (fit ?? "fill") {
-    case "contain":
-      width = natural.width * containScale;
-      height = natural.height * containScale;
-      break;
-    case "cover":
-      width = natural.width * coverScale;
-      height = natural.height * coverScale;
-      break;
-    case "none":
-      width = natural.width;
-      height = natural.height;
-      break;
-    case "scale-down": {
-      const scale = Math.min(1, containScale);
-      width = natural.width * scale;
-      height = natural.height * scale;
-      break;
-    }
-    case "fill":
-    default:
-      break;
-  }
-
-  const parsedPosition =
-    parseObjectPositionValue(position ?? "center") ??
-    parseObjectPositionValue("center");
-
-  if (!parsedPosition) {
-    throw new Error(
-      "MotionForge internal error: center object position failed to parse.",
-    );
-  }
-
-  return {
-    x: resolvePositionComponent(parsedPosition.x, box.width, width),
-    y: resolvePositionComponent(parsedPosition.y, box.height, height),
-    width,
-    height,
-  };
-}
-
-function resolvePositionComponent(
-  part: TransformOriginComponent,
-  boxSize: number,
-  drawnSize: number,
-): number {
-  if (part.kind === "length") {
-    return part.value.unit === "%"
-      ? (boxSize - drawnSize) * (part.value.value / 100)
-      : part.value.value;
-  }
-
-  if (part.value === "left" || part.value === "top") {
-    return 0;
-  }
-
-  if (part.value === "right" || part.value === "bottom") {
-    return boxSize - drawnSize;
-  }
-
-  return (boxSize - drawnSize) / 2;
+  return resolveObjectFitRect(fit, position, box, natural);
 }
 
 function drawImage(
@@ -6165,18 +6090,7 @@ function resolveCornerRadii(
   style: SceneStyle,
   box: Pick<LayoutBox, "width" | "height">,
 ): CornerRadii {
-  const reference = Math.min(box.width, box.height);
-  const radius = readLength(style.borderRadius, reference, 0);
-  return normalizeCornerRadii(
-    {
-      topLeft: readLength(style.borderTopLeftRadius, reference, radius),
-      topRight: readLength(style.borderTopRightRadius, reference, radius),
-      bottomRight: readLength(style.borderBottomRightRadius, reference, radius),
-      bottomLeft: readLength(style.borderBottomLeftRadius, reference, radius),
-    },
-    box.width,
-    box.height,
-  );
+  return resolveLayoutCornerRadii(style, box);
 }
 
 function insetCornerRadii(radii: CornerRadii, inset: number): CornerRadii {
@@ -6193,37 +6107,7 @@ function normalizeCornerRadii(
   width: number,
   height: number,
 ): CornerRadii {
-  const raw =
-    typeof radius === "number"
-      ? {
-          topLeft: radius,
-          topRight: radius,
-          bottomRight: radius,
-          bottomLeft: radius,
-        }
-      : radius;
-  const nonnegative = {
-    topLeft: Math.max(0, raw.topLeft),
-    topRight: Math.max(0, raw.topRight),
-    bottomRight: Math.max(0, raw.bottomRight),
-    bottomLeft: Math.max(0, raw.bottomLeft),
-  };
-  const scale = Math.min(
-    1,
-    Math.abs(width) / Math.max(1, nonnegative.topLeft + nonnegative.topRight),
-    Math.abs(width) /
-      Math.max(1, nonnegative.bottomLeft + nonnegative.bottomRight),
-    Math.abs(height) /
-      Math.max(1, nonnegative.topLeft + nonnegative.bottomLeft),
-    Math.abs(height) /
-      Math.max(1, nonnegative.topRight + nonnegative.bottomRight),
-  );
-  return {
-    topLeft: nonnegative.topLeft * scale,
-    topRight: nonnegative.topRight * scale,
-    bottomRight: nonnegative.bottomRight * scale,
-    bottomLeft: nonnegative.bottomLeft * scale,
-  };
+  return normalizeLayoutCornerRadii(radius, width, height);
 }
 
 function hasCornerRadius(radii: CornerRadii): boolean {

@@ -19,6 +19,8 @@ import {
   parseColorValue,
   parseEasingValue,
   parseFilterValue,
+  parseObjectPositionValue,
+  parseTransformOriginValue,
   parseTransformValue,
 } from "@motionforge/schema/values";
 
@@ -821,15 +823,389 @@ export function springEasing(t: number, bounce = 0.25): number {
   return 1 - Math.exp(-damping * t) * Math.cos(frequency * t);
 }
 
-export type LayoutBox = {
-  id: string;
+export type LayoutRect = {
   x: number;
   y: number;
   width: number;
   height: number;
+};
+
+export type LayoutCornerRadii = {
+  topLeft: number;
+  topRight: number;
+  bottomRight: number;
+  bottomLeft: number;
+};
+
+export function normalizeLayoutCornerRadii(
+  radius: number | LayoutCornerRadii,
+  width: number,
+  height: number,
+): LayoutCornerRadii {
+  const raw =
+    typeof radius === "number"
+      ? {
+          topLeft: radius,
+          topRight: radius,
+          bottomRight: radius,
+          bottomLeft: radius,
+        }
+      : radius;
+  const nonnegative = {
+    topLeft: Math.max(0, raw.topLeft),
+    topRight: Math.max(0, raw.topRight),
+    bottomRight: Math.max(0, raw.bottomRight),
+    bottomLeft: Math.max(0, raw.bottomLeft),
+  };
+  const scale = Math.min(
+    1,
+    Math.abs(width) / Math.max(1, nonnegative.topLeft + nonnegative.topRight),
+    Math.abs(width) /
+      Math.max(1, nonnegative.bottomLeft + nonnegative.bottomRight),
+    Math.abs(height) /
+      Math.max(1, nonnegative.topLeft + nonnegative.bottomLeft),
+    Math.abs(height) /
+      Math.max(1, nonnegative.topRight + nonnegative.bottomRight),
+  );
+  return {
+    topLeft: nonnegative.topLeft * scale,
+    topRight: nonnegative.topRight * scale,
+    bottomRight: nonnegative.bottomRight * scale,
+    bottomLeft: nonnegative.bottomLeft * scale,
+  };
+}
+
+/** Resolves the same per-corner radii used by Canvas overflow clipping. */
+export function resolveLayoutCornerRadii(
+  style: Pick<
+    SceneStyle,
+    | "borderRadius"
+    | "borderTopLeftRadius"
+    | "borderTopRightRadius"
+    | "borderBottomRightRadius"
+    | "borderBottomLeftRadius"
+  >,
+  box: Pick<LayoutRect, "width" | "height">,
+): LayoutCornerRadii {
+  const reference = Math.min(box.width, box.height);
+  const radius = readLength(style.borderRadius, reference, 0);
+  return normalizeLayoutCornerRadii(
+    {
+      topLeft: readLength(style.borderTopLeftRadius, reference, radius),
+      topRight: readLength(style.borderTopRightRadius, reference, radius),
+      bottomRight: readLength(style.borderBottomRightRadius, reference, radius),
+      bottomLeft: readLength(style.borderBottomLeftRadius, reference, radius),
+    },
+    box.width,
+    box.height,
+  );
+}
+
+/** Circular corner containment used by renderer-neutral geometry inspection. */
+export function pointInRoundedLayoutRect(
+  point: { x: number; y: number },
+  rect: LayoutRect,
+  radii: LayoutCornerRadii,
+): boolean {
+  if (
+    point.x < rect.x ||
+    point.y < rect.y ||
+    point.x > rect.x + rect.width ||
+    point.y > rect.y + rect.height
+  ) {
+    return false;
+  }
+  const corners = [
+    {
+      radius: radii.topLeft,
+      applies:
+        point.x < rect.x + radii.topLeft && point.y < rect.y + radii.topLeft,
+      centerX: rect.x + radii.topLeft,
+      centerY: rect.y + radii.topLeft,
+    },
+    {
+      radius: radii.topRight,
+      applies:
+        point.x > rect.x + rect.width - radii.topRight &&
+        point.y < rect.y + radii.topRight,
+      centerX: rect.x + rect.width - radii.topRight,
+      centerY: rect.y + radii.topRight,
+    },
+    {
+      radius: radii.bottomRight,
+      applies:
+        point.x > rect.x + rect.width - radii.bottomRight &&
+        point.y > rect.y + rect.height - radii.bottomRight,
+      centerX: rect.x + rect.width - radii.bottomRight,
+      centerY: rect.y + rect.height - radii.bottomRight,
+    },
+    {
+      radius: radii.bottomLeft,
+      applies:
+        point.x < rect.x + radii.bottomLeft &&
+        point.y > rect.y + rect.height - radii.bottomLeft,
+      centerX: rect.x + radii.bottomLeft,
+      centerY: rect.y + rect.height - radii.bottomLeft,
+    },
+  ];
+  for (const corner of corners) {
+    if (!corner.applies || corner.radius <= 0) continue;
+    const dx = point.x - corner.centerX;
+    const dy = point.y - corner.centerY;
+    return dx * dx + dy * dy <= corner.radius * corner.radius;
+  }
+  return true;
+}
+
+/** A renderer-neutral 2D affine transform using the Canvas/CSS matrix order. */
+export type AffineMatrix2D = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  e: number;
+  f: number;
+};
+
+export const identityAffineMatrix = (): AffineMatrix2D => ({
+  a: 1,
+  b: 0,
+  c: 0,
+  d: 1,
+  e: 0,
+  f: 0,
+});
+
+export function multiplyAffineMatrices(
+  left: AffineMatrix2D,
+  right: AffineMatrix2D,
+): AffineMatrix2D {
+  return {
+    a: left.a * right.a + left.c * right.b,
+    b: left.b * right.a + left.d * right.b,
+    c: left.a * right.c + left.c * right.d,
+    d: left.b * right.c + left.d * right.d,
+    e: left.a * right.e + left.c * right.f + left.e,
+    f: left.b * right.e + left.d * right.f + left.f,
+  };
+}
+
+export function transformLayoutPoint(
+  matrix: AffineMatrix2D,
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  return {
+    x: matrix.a * point.x + matrix.c * point.y + matrix.e,
+    y: matrix.b * point.x + matrix.d * point.y + matrix.f,
+  };
+}
+
+export function invertAffineMatrix(
+  matrix: AffineMatrix2D,
+): AffineMatrix2D | null {
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+  if (Math.abs(determinant) < 1e-12) return null;
+  return {
+    a: matrix.d / determinant,
+    b: -matrix.b / determinant,
+    c: -matrix.c / determinant,
+    d: matrix.a / determinant,
+    e: (matrix.c * matrix.f - matrix.d * matrix.e) / determinant,
+    f: (matrix.b * matrix.e - matrix.a * matrix.f) / determinant,
+  };
+}
+
+export function transformLayoutRect(
+  matrix: AffineMatrix2D,
+  rect: LayoutRect,
+): LayoutRect {
+  const points = [
+    transformLayoutPoint(matrix, { x: rect.x, y: rect.y }),
+    transformLayoutPoint(matrix, { x: rect.x + rect.width, y: rect.y }),
+    transformLayoutPoint(matrix, {
+      x: rect.x + rect.width,
+      y: rect.y + rect.height,
+    }),
+    transformLayoutPoint(matrix, { x: rect.x, y: rect.y + rect.height }),
+  ];
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  return {
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys),
+  };
+}
+
+/**
+ * Resolves a node's transform into an absolute-coordinate affine matrix.
+ * The operation order matches Canvas2D and MotionForge's CSS-like transform
+ * list, so inspection and rendering can share the same geometry semantics.
+ */
+export function resolveStyleTransformMatrix(
+  style: Pick<SceneStyle, "transform" | "transformOrigin">,
+  box: LayoutRect,
+): AffineMatrix2D {
+  if (typeof style.transform !== "string") return identityAffineMatrix();
+
+  const origin = parseTransformOriginValue(style.transformOrigin ?? "center");
+  type OriginPart = NonNullable<typeof origin>["x"];
+  const resolveOrigin = (
+    part: OriginPart | undefined,
+    size: number,
+  ): number => {
+    if (!part) return size / 2;
+    if (part.kind === "length") {
+      return part.value.unit === "%"
+        ? (part.value.value / 100) * size
+        : part.value.value;
+    }
+    if (part.value === "left" || part.value === "top") return 0;
+    if (part.value === "right" || part.value === "bottom") return size;
+    return size / 2;
+  };
+
+  const translate = (x: number, y: number): AffineMatrix2D => ({
+    a: 1,
+    b: 0,
+    c: 0,
+    d: 1,
+    e: x,
+    f: y,
+  });
+  const scale = (x: number, y: number): AffineMatrix2D => ({
+    a: x,
+    b: 0,
+    c: 0,
+    d: y,
+    e: 0,
+    f: 0,
+  });
+  const rotate = (degrees: number): AffineMatrix2D => {
+    const radians = (degrees * Math.PI) / 180;
+    return {
+      a: Math.cos(radians),
+      b: Math.sin(radians),
+      c: -Math.sin(radians),
+      d: Math.cos(radians),
+      e: 0,
+      f: 0,
+    };
+  };
+
+  const originX = box.x + resolveOrigin(origin?.x, box.width);
+  const originY = box.y + resolveOrigin(origin?.y, box.height);
+  let matrix = translate(originX, originY);
+  const parsed = parseTransformValue(style.transform);
+  if (parsed?.kind === "transform-list") {
+    for (const fn of parsed.functions) {
+      if (fn.kind === "translate") {
+        matrix = multiplyAffineMatrices(
+          matrix,
+          translate(
+            fn.x.unit === "%" ? (fn.x.value / 100) * box.width : fn.x.value,
+            fn.y.unit === "%" ? (fn.y.value / 100) * box.height : fn.y.value,
+          ),
+        );
+      } else if (fn.kind === "scale") {
+        matrix = multiplyAffineMatrices(matrix, scale(fn.x, fn.y));
+      } else {
+        matrix = multiplyAffineMatrices(matrix, rotate(fn.degrees));
+      }
+    }
+  }
+  return multiplyAffineMatrices(matrix, translate(-originX, -originY));
+}
+
+/** Geometry for object-fit/object-position, relative to the containing box. */
+export function resolveObjectFitRect(
+  fit: SceneStyle["objectFit"],
+  position: string | undefined,
+  box: Pick<LayoutRect, "width" | "height">,
+  natural: Pick<LayoutRect, "width" | "height">,
+): LayoutRect {
+  const containScale =
+    natural.width > 0 && natural.height > 0
+      ? Math.min(box.width / natural.width, box.height / natural.height)
+      : 1;
+  const coverScale =
+    natural.width > 0 && natural.height > 0
+      ? Math.max(box.width / natural.width, box.height / natural.height)
+      : 1;
+  let width = box.width;
+  let height = box.height;
+  if (fit === "contain") {
+    width = natural.width * containScale;
+    height = natural.height * containScale;
+  } else if (fit === "cover") {
+    width = natural.width * coverScale;
+    height = natural.height * coverScale;
+  } else if (fit === "none") {
+    width = natural.width;
+    height = natural.height;
+  } else if (fit === "scale-down") {
+    const scale = Math.min(1, containScale);
+    width = natural.width * scale;
+    height = natural.height * scale;
+  }
+
+  const parsed =
+    parseObjectPositionValue(position ?? "center") ??
+    parseObjectPositionValue("center");
+  if (!parsed) {
+    throw new Error(
+      "MotionForge internal error: center object position failed to parse.",
+    );
+  }
+  type PositionPart = typeof parsed.x;
+  const resolvePosition = (
+    part: PositionPart,
+    boxSize: number,
+    drawnSize: number,
+  ): number => {
+    if (part.kind === "length") {
+      return part.value.unit === "%"
+        ? (boxSize - drawnSize) * (part.value.value / 100)
+        : part.value.value;
+    }
+    if (part.value === "left" || part.value === "top") return 0;
+    if (part.value === "right" || part.value === "bottom") {
+      return boxSize - drawnSize;
+    }
+    return (boxSize - drawnSize) / 2;
+  };
+  return {
+    x: resolvePosition(parsed.x, box.width, width),
+    y: resolvePosition(parsed.y, box.height, height),
+    width,
+    height,
+  };
+}
+
+export type LayoutBox = LayoutRect & {
+  id: string;
+  /**
+   * Inner content rectangle after resolved padding. `layoutScene()` always
+   * supplies it; optionality preserves source compatibility for consumers
+   * that construct LayoutBox fixtures directly.
+   */
+  content?: LayoutRect;
   node: ResolvedNode;
   children: LayoutBox[];
 };
+
+/** Returns the resolved content rectangle, with a 1.x fixture fallback. */
+export function getLayoutContentRect(box: LayoutBox): LayoutRect {
+  return (
+    box.content ?? {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+    }
+  );
+}
 
 export type LayoutScene = Omit<ResolvedScene, "nodes"> & {
   boxes: LayoutBox[];
@@ -844,6 +1220,8 @@ export type MeasureTextLine = (
   line: string,
   style: SceneStyle,
   fontSize: number,
+  /** Optional stable node identity for provider-specific font/locale lookup. */
+  nodeId?: string,
 ) => number;
 
 export type LayoutOptions = {
@@ -1265,6 +1643,7 @@ function layoutNode(
     y,
     width,
     height,
+    content,
     node,
     children,
   };
@@ -1447,7 +1826,7 @@ function estimateNodeWidth(
       .split("\n")
       .reduce(
         (longest, line) =>
-          Math.max(longest, measure(line, node.style, fontSize)),
+          Math.max(longest, measure(line, node.style, fontSize, node.id)),
         0,
       );
   }
@@ -1471,7 +1850,7 @@ function textIntrinsicHeight(
     textNodeContent(node),
     width,
     fontSize,
-    (line, size) => measure(line, node.style, size),
+    (line, size) => measure(line, node.style, size, node.id),
     {
       maxLines: node.style.maxLines,
       minFontSize: readLength(node.style.minFontSize, 0, 12),

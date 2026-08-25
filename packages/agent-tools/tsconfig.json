@@ -9,6 +9,7 @@
   "include": ["src"],
   "references": [
     { "path": "../schema" },
+    { "path": "../inspection" },
     { "path": "../extensions" },
     { "path": "../presets" },
     { "path": "../renderer-canvas2d" },

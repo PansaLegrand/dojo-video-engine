@@ -50,6 +50,7 @@
   "dependencies": {
     "@motionforge/agent-tools": "workspace:*",
     "@motionforge/export": "workspace:*",
+    "@motionforge/inspection": "workspace:*",
     "@motionforge/player": "workspace:*",
     "@motionforge/presets": "workspace:*",
     "@motionforge/schema": "workspace:*",

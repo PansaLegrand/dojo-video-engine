@@ -16,6 +16,7 @@ const publishablePackages = [
   "packages/schema",
   "packages/core",
   "packages/extensions",
+  "packages/inspection",
   "packages/agent-tools",
   "packages/renderer-canvas2d",
   "packages/export",

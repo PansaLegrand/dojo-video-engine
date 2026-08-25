@@ -324,6 +324,135 @@ describe("@motionforge/cli", () => {
     }
   });
 
+  it("inspects one frame with renderer-neutral layout geometry", async () => {
+    const dir = await tempDir();
+    try {
+      const scenePath = join(dir, "layout.json");
+      await writeFile(
+        scenePath,
+        JSON.stringify({
+          ...validScene(),
+          duration: 30,
+          nodes: [
+            {
+              id: "title",
+              type: "text",
+              text: "Hello",
+              style: { left: 100, top: 200, width: 400, height: 80 },
+            },
+          ],
+        }),
+      );
+
+      const result = await executeCli([
+        "inspect-layout",
+        scenePath,
+        "--frame",
+        "12",
+      ]);
+      expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        kind: "motionforge.layout",
+        version: 1,
+        frame: 12,
+        nodes: [
+          {
+            id: "title",
+            layoutBounds: { x: 100, y: 200, width: 400, height: 80 },
+          },
+        ],
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("checks bounded frame samples in one JSON envelope", async () => {
+    const dir = await tempDir();
+    try {
+      const scenePath = join(dir, "check.json");
+      await writeFile(
+        scenePath,
+        JSON.stringify({
+          ...validScene(),
+          duration: 30,
+          nodes: [{ id: "title", type: "text", text: "Hello" }],
+        }),
+      );
+
+      const result = await executeCli([
+        "check",
+        scenePath,
+        "--frames",
+        "0,12,29",
+      ]);
+      expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        kind: "motionforge.check",
+        version: 1,
+        validation: { ok: true, errors: [] },
+        structural: { width: 1080, durationFrames: 30 },
+        lint: { issues: [] },
+        composition: { sampledFrames: [0, 12, 29] },
+        summary: { nodes: 1 },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("returns invalid scenes as a parseable check envelope", async () => {
+    const dir = await tempDir();
+    try {
+      const scenePath = join(dir, "invalid.json");
+      await writeFile(
+        scenePath,
+        JSON.stringify({
+          ...validScene(),
+          nodes: [{ id: "missing-copy", type: "text" }],
+        }),
+      );
+      const result = await executeCli(["check", scenePath]);
+
+      expect(result).toMatchObject({ exitCode: 1, stderr: "" });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        kind: "motionforge.check",
+        version: 1,
+        ok: false,
+        validation: { ok: false, errors: expect.any(Array) },
+        composition: null,
+        summary: { errors: 1 },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects ambiguous, malformed, duplicate, and out-of-range samples", async () => {
+    const dir = await tempDir();
+    try {
+      const scenePath = join(dir, "scene.json");
+      await writeFile(scenePath, JSON.stringify(validScene()));
+      const cases = [
+        ["inspect-layout", scenePath],
+        ["inspect-layout", scenePath, "--frame", "90"],
+        ["check", scenePath, "--frames", "0,nope"],
+        ["check", scenePath, "--frames", "0,,2"],
+        ["check", scenePath, "--sample-count", "101"],
+        ["check", scenePath, "--sample-count", "3", "--sample-count", "4"],
+        ["check", scenePath, "--frames", "0,1", "--sample-count", "2"],
+      ];
+      for (const argv of cases) {
+        const result = await executeCli(argv);
+        expect(result.exitCode, argv.join(" ")).toBe(2);
+        expect(result.stdout, argv.join(" ")).toBe("");
+        expect(result.stderr, argv.join(" ")).toContain("Usage:");
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("explains incorrect command usage", async () => {
     await expect(executeCli(["unknown"])).resolves.toMatchObject({
       exitCode: 2,
