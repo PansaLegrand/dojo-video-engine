@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "recordedFor": "MotionForge 1.0.0 / MF0",
+  "packages": {
+    "@motionforge/agent-tools": {
+      "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/authoring": {
+      "owner": "Seconds-first TypeScript authoring compilers",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/cli": {
+      "owner": "Command-line and local Studio facade",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": {
+        "motionforge": "./dist/bin/motionforge.js"
+      }
+    },
+    "@motionforge/core": {
+      "owner": "Scene builders, deterministic evaluation, animation, and layout",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "create-motionforge": {
+      "owner": "Starter project generation",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": {
+        "create-motionforge": "./dist/bin/create-motionforge.js"
+      }
+    },
+    "@motionforge/export": {
+      "owner": "Frame/audio export, WebCodecs encoding, muxing, streams, and worker protocol",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./worker": {
+          "types": "./dist/worker.d.ts",
+          "import": "./dist/worker.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/extensions": {
+      "owner": "Trusted versioned extension definitions and lifecycle preflight",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/player": {
+      "owner": "Canvas preview, playback clock, seeking, and audio synchronization",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/presets": {
+      "owner": "Pure presets, templates, macros, intents, and choreography compilers",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./catalog": {
+          "types": "./dist/catalog.d.ts",
+          "import": "./dist/catalog.js"
+        },
+        "./macros": {
+          "types": "./dist/macros.d.ts",
+          "import": "./dist/macros.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/renderer-canvas2d": {
+      "owner": "Canvas2D reference rendering and browser-media preparation",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/schema": {
+      "owner": "Canonical Scene validation, migration, inspection, lint, JSON Schema, and patches",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    }
+  }
+}

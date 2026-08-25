@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-25  
-Status: proposed implementation contract; no milestone in this document is complete
+Status: active implementation contract; MF0 complete
 
 ## Purpose
 
@@ -78,13 +78,13 @@ host-product capability.
 
 ## Target package direction
 
-The core dependency direction is one-way:
+The target dependency direction is one-way. In this diagram, `A -> B` means
+**A may depend on B**; concrete edges land only with their owning milestone:
 
 ```text
-@motionforge/schema
-  ├──> @motionforge/core
-  ├──> @motionforge/extensions
-  └──> @motionforge/presets
+@motionforge/core       ──> schema
+@motionforge/extensions ──> schema
+@motionforge/presets    ──> schema
 
 @motionforge/inspection ──> schema + core
 @motionforge/commands   ──> schema + presets
@@ -213,8 +213,10 @@ docs: define post-1.0 engine boundaries
 
 Deliver:
 
-- this roadmap plus an accepted architecture RFC;
-- public/advanced/internal API ownership table;
+- this roadmap plus accepted
+  [RFC 0009](rfcs/0009-post-1.0-platform-architecture.md);
+- the public package/entry-point
+  [ownership and deprecation baseline](public-api-ownership.md);
 - target dependency DAG and deprecation policy;
 - automated forbidden-import and dependency-cycle checks;
 - current package export-map snapshot;
@@ -231,7 +233,8 @@ Exit gate:
 - current `pnpm release:full` remains green;
 - architectural boundary tests fail on a controlled negative fixture created
   outside normally scanned source paths;
-- every current public export is classified and covered.
+- every current public package entry point and bin is classified and covered;
+  MF0 does not claim a machine-checked symbol-level API report.
 
 ### MF1 — Canonical contract integrity
 
@@ -660,3 +663,18 @@ strict document
 More animation packs are valuable only after this loop is reliable and
 discoverable. Until then, new presets are a small supporting workstream rather
 than the engine priority.
+
+## Implementation log
+
+- 2026-08-25 — MF0 complete: accepted RFC 0009; recorded package/entry-point
+  ownership and the 1.0 export/bin baseline; centralized the current dependency
+  policy; and enforced cycle freedom, approved internal edges, `workspace:*`,
+  public-to-private isolation, declared external dependencies, exported/self
+  subpaths, relative escapes, product/framework/provider/data dependencies,
+  CJS/import-type/JS-family sources, the unscoped starter package, and Windows
+  test paths. Ten controlled contract fixtures passed. `pnpm release:full`
+  passed 595 unit tests, 750-scene fuzzing, 28-scene corpus validation, resource
+  checks, pixel/media/audio/tool goldens, Chromium/Firefox/WebKit probes,
+  performance, 10 browser E2E checks, builds, CLI/starter smoke, and all package
+  dry-runs. No Scene, renderer, export, package entry point, or pixel/audio
+  behavior changed.

@@ -5,6 +5,16 @@ starter packages.
 
 ## Unreleased
 
+### Post-1.0 architecture contract
+
+- Accepted RFC 0009 defining the standalone engine boundary, target dependency
+  direction, canonical/ephemeral layers, and downstream synchronization policy.
+- Recorded every 1.0 public package entry point in a machine-checked ownership
+  and deprecation baseline.
+- Extended package contract checks with an allowed dependency graph, cycle and
+  undeclared/deep/cross-package import detection, framework/product boundary
+  rules, public entry-point drift detection, and controlled negative tests.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

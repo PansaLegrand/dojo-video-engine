@@ -20,6 +20,9 @@
 - Deep `src/*` / `dist/*` imports are never public API.
 - Renderer-internal decoded resource shapes remain advanced APIs and may gain
   additive fields; lifecycle ordering and public entry points are stable.
+- Public entry-point ownership, the MF0 export-map snapshot, and the 1.x
+  deprecation/re-export policy are recorded in
+  [public-api-ownership.md](public-api-ownership.md).
 
 ## Rendering
 

@@ -1,13 +1,21 @@
 #!/usr/bin/env node
 import { access, readdir, readFile } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  validateEntrypointBaseline,
+  validateSourceContract,
+  validateWorkspaceGraph,
+} from "./package-contracts.mjs";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const changelog = await readFile(join(rootDir, "CHANGELOG.md"), "utf8");
+const baseline = JSON.parse(
+  await readFile(join(rootDir, "docs/public-api-baseline.json"), "utf8"),
+);
 const packageDirs = await readdir(packagesDir, { withFileTypes: true });
-const publicPackages = [];
+const packages = [];
 
 for (const entry of packageDirs) {
   if (!entry.isDirectory()) continue;
@@ -15,11 +23,17 @@ for (const entry of packageDirs) {
   const manifest = JSON.parse(
     await readFile(join(packageDir, "package.json"), "utf8"),
   );
-  if (manifest.private) continue;
-  publicPackages.push({ packageDir, manifest });
+  packages.push({ packageDir, manifest });
 }
 
-const errors = [];
+const publicPackages = packages.filter((entry) => !entry.manifest.private);
+const packageManifests = new Map(
+  packages.map((entry) => [entry.manifest.name, entry.manifest]),
+);
+const errors = [
+  ...validateWorkspaceGraph(packages),
+  ...validateEntrypointBaseline(packages, baseline),
+];
 const versions = new Set(
   publicPackages.map(({ manifest }) => manifest.version),
 );
@@ -44,67 +58,17 @@ for (const { packageDir, manifest } of publicPackages) {
     }
   }
 
-  for (const dependencyField of [
-    "dependencies",
-    "devDependencies",
-    "peerDependencies",
-  ]) {
-    for (const [name, version] of Object.entries(
-      manifest[dependencyField] ?? {},
-    )) {
-      if (name.startsWith("@motionforge/") && version !== "workspace:*") {
-        errors.push(
-          `${manifest.name} ${dependencyField}.${name} must use workspace:*, found ${version}.`,
-        );
-      }
-    }
-  }
-}
-
-const browserEnginePackages = [
-  "authoring",
-  "core",
-  "export",
-  "extensions",
-  "agent-tools",
-  "player",
-  "presets",
-  "renderer-canvas2d",
-  "schema",
-];
-const forbiddenSpecifiers = [
-  /^@\//,
-  /^@clerk(?:\/|$)/,
-  /^@prisma(?:\/|$)/,
-  /^next(?:\/|$)/,
-  /^react(?:\/|$)/,
-  /^stripe(?:\/|$)/,
-];
-const importPattern = /(?:from\s+|import\s*\()\s*["']([^"']+)["']/g;
-
-for (const packageName of browserEnginePackages) {
-  const srcDir = join(packagesDir, packageName, "src");
-  const sourceFiles = await collectTypeScriptFiles(srcDir);
-
+  const sourceFiles = await collectTypeScriptFiles(join(packageDir, "src"));
   for (const sourceFile of sourceFiles) {
-    const source = await readFile(sourceFile, "utf8");
-    const displayPath = relative(rootDir, sourceFile);
-
-    if (source.includes("/Users/") || source.includes("dojo-video-web")) {
-      errors.push(
-        `${displayPath} contains a local or downstream repository path.`,
-      );
-    }
-
-    for (const match of source.matchAll(importPattern)) {
-      const specifier = match[1];
-      if (!specifier) continue;
-      if (forbiddenSpecifiers.some((pattern) => pattern.test(specifier))) {
-        errors.push(
-          `${displayPath} imports forbidden browser-engine dependency ${JSON.stringify(specifier)}.`,
-        );
-      }
-    }
+    errors.push(
+      ...validateSourceContract({
+        source: await readFile(sourceFile, "utf8"),
+        sourceFile,
+        packageDir,
+        manifest,
+        packageManifests,
+      }),
+    );
   }
 }
 
@@ -115,21 +79,22 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `package contracts ok (${publicPackages.length} public packages at ${releaseVersion})`,
+  `package contracts ok (${publicPackages.length} public packages at ${releaseVersion}; dependency graph and entrypoint baseline verified)`,
 );
 
 async function collectTypeScriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
-
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
       files.push(...(await collectTypeScriptFiles(path)));
-    } else if (entry.isFile() && entry.name.endsWith(".ts")) {
+    } else if (
+      entry.isFile() &&
+      /\.(?:ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(entry.name)
+    ) {
       files.push(path);
     }
   }
-
   return files;
 }

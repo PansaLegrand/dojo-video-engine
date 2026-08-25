@@ -27,18 +27,27 @@ The browser engine consists of:
 
 - `@motionforge/schema`
 - `@motionforge/core`
+- `@motionforge/extensions`
 - `@motionforge/renderer-canvas2d`
 - `@motionforge/export`
 - `@motionforge/player`
 - `@motionforge/presets`
 - `@motionforge/authoring`
+- `@motionforge/agent-tools`
+
+The public developer tooling is `@motionforge/cli` and
+`create-motionforge`. Package and entry-point ownership is recorded in
+[`public-api-ownership.md`](public-api-ownership.md); the accepted post-1.0
+boundary is [RFC 0009](rfcs/0009-post-1.0-platform-architecture.md).
 
 These packages must remain independent of application frameworks,
-authentication, databases, billing, queues, storage providers, and product UI.
-Adapters for those concerns belong in the consuming application.
+model-provider/agent SDKs, authentication, databases, billing, queues, storage
+providers, and product UI. Adapters for those concerns belong in the consuming
+application.
 
 `pnpm check:contracts` enforces the mechanical portion of this boundary and
-the synchronized-version policy.
+the synchronized-version policy, accepted internal dependency graph, source
+import rules, cycle freedom, and public entry-point baseline.
 
 ## Change workflow
 
