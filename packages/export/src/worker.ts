@@ -8,7 +8,16 @@ import {
 
 export type WorkerExportOptions = Omit<
   ExportVideoOptions,
-  "scene" | "signal" | "onProgress" | "assets" | "extensions" | "worker"
+  | "scene"
+  | "signal"
+  | "onProgress"
+  | "assets"
+  | "extensions"
+  | "worker"
+  | "verificationSink"
+  | "assetPolicy"
+  | "analysisCache"
+  | "fontCache"
 >;
 
 export type ExportWorkerRequest =
@@ -40,6 +49,10 @@ export type ExportWorkerEvent =
 export type ExportWorkerHandlerOptions = {
   postMessage(event: ExportWorkerEvent): void;
   extensions?: ExportVideoOptions["extensions"];
+  assetPolicy?: ExportVideoOptions["assetPolicy"];
+  analysisCache?: ExportVideoOptions["analysisCache"];
+  fontCache?: ExportVideoOptions["fontCache"];
+  verificationSink?: ExportVideoOptions["verificationSink"];
 };
 
 export function createExportWorkerHandler(
@@ -53,6 +66,17 @@ export function createExportWorkerHandler(
         ?.abort(new DOMException("Export cancelled.", "AbortError"));
       return;
     }
+    if (controllers.has(request.id)) {
+      options.postMessage({
+        type: "motionforge.export.error",
+        id: request.id,
+        error: {
+          name: "DuplicateExportRequestError",
+          message: `An export with id "${request.id}" is already active. Request ids must be unique until terminal completion.`,
+        },
+      });
+      return;
+    }
     const controller = new AbortController();
     controllers.set(request.id, controller);
     try {
@@ -62,6 +86,10 @@ export function createExportWorkerHandler(
         signal: controller.signal,
         worker: true,
         extensions: options.extensions,
+        assetPolicy: options.assetPolicy,
+        analysisCache: options.analysisCache,
+        fontCache: options.fontCache,
+        verificationSink: options.verificationSink,
         onProgress: (progress) =>
           options.postMessage({
             type: "motionforge.export.progress",
@@ -84,7 +112,9 @@ export function createExportWorkerHandler(
         },
       });
     } finally {
-      controllers.delete(request.id);
+      if (controllers.get(request.id) === controller) {
+        controllers.delete(request.id);
+      }
     }
   };
 }
@@ -161,11 +191,11 @@ export function installExportWorker(
       listener: (event: MessageEvent<ExportWorkerRequest>) => void,
     ): void;
   },
-  options: { extensions?: ExportVideoOptions["extensions"] } = {},
+  options: Omit<ExportWorkerHandlerOptions, "postMessage"> = {},
 ): void {
   const handle = createExportWorkerHandler({
     postMessage: (event) => scope.postMessage(event),
-    extensions: options.extensions,
+    ...options,
   });
   scope.addEventListener("message", (event) => {
     void handle(event.data);

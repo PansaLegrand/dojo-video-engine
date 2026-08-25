@@ -759,7 +759,22 @@ export const assetSchema = z
         width: z.number().int().positive().optional(),
         height: z.number().int().positive().optional(),
         byteLength: z.number().int().positive().optional(),
+        mimeType: z.string().min(1).max(127).optional(),
         codec: z.string().min(1).optional(),
+        hasAudio: z.boolean().optional(),
+        audioCodec: z.string().min(1).optional(),
+        audioSampleRate: z.number().int().positive().optional(),
+        audioChannels: z.number().int().positive().max(32).optional(),
+        frameRate: z
+          .object({
+            numerator: z.number().int().positive(),
+            denominator: z.number().int().positive(),
+          })
+          .strict()
+          .optional(),
+        variableFrameRate: z.boolean().optional(),
+        /** Host-owned stable content identity; signed URL rotation may preserve it. */
+        contentHash: z.string().min(1).max(256).optional(),
       })
       .strict()
       .optional(),

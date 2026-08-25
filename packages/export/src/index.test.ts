@@ -8,6 +8,7 @@ import {
   evaluateVolumeEnvelope,
   estimateExport,
   exportVideo,
+  exportVideoWithFallback,
   frameToTimestampUs,
   loopedSourceRanges,
   limitAudioPeak,
@@ -16,6 +17,7 @@ import {
   mixAudioSegments,
   preflightExport,
   renderFrameSequence,
+  withResolvedAssetOwnership,
 } from "./index.js";
 
 const scene: Scene = {
@@ -74,9 +76,64 @@ describe("export planning", () => {
     expect(result.ok).toBe(false);
     expect(result.issues.map((issue) => issue.code)).toEqual([
       "canvas_unavailable",
+      "video_frame_unavailable",
       "video_encoder_unavailable",
       "worker_unavailable",
     ]);
+  });
+
+  it("delegates unsupported local export only through an explicit host fallback", async () => {
+    const fallback = vi.fn(async () => ({
+      blob: new Blob(),
+      codec: "avc" as const,
+      audioCodec: null,
+      totalFrames: scene.duration,
+    }));
+    const result = await exportVideoWithFallback({ scene }, fallback, {});
+
+    expect(result.executor).toBe("host");
+    expect(result.preflight.ok).toBe(false);
+    expect(fallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { scene },
+        preflight: expect.objectContaining({ ok: false }),
+      }),
+    );
+  });
+
+  it("fails worker preflight for a declared embedded soundtrack without AudioDecoder", () => {
+    class FakeOffscreenCanvas {
+      getContext() {
+        return {};
+      }
+    }
+    const videoScene: Scene = {
+      ...scene,
+      assets: {
+        clip: {
+          id: "clip",
+          type: "video",
+          src: "clip.mp4",
+          metadata: { hasAudio: true },
+        },
+      },
+      nodes: [{ id: "clip", type: "video", assetId: "clip" }],
+    };
+    const result = preflightExport(
+      videoScene,
+      {
+        VideoFrame: class {},
+        VideoEncoder: class {},
+        VideoDecoder: class {},
+        OffscreenCanvas: FakeOffscreenCanvas,
+        Worker: class {},
+      } as unknown as Partial<typeof globalThis>,
+      { worker: true },
+    );
+
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "audio_decoder_unavailable",
+    );
   });
 });
 
@@ -262,8 +319,56 @@ describe("exportVideo", () => {
     // Plain Node has no VideoEncoder; the happy path is covered by the
     // browser-based export smoke test in tools/golden.
     await expect(exportVideo({ scene })).rejects.toThrow(
-      /VideoEncoder.*detectExportCapability/,
+      /video_encoder_unavailable.*detectExportCapability/s,
     );
+  });
+});
+
+describe("export media ownership", () => {
+  function assetsWithInput(dispose: () => void): ResolvedAssets {
+    return {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map([["clip", { input: { dispose } } as never]]),
+      videoFrames: new Map(),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+  }
+
+  it("disposes internally owned resources after success and failure", async () => {
+    const successDispose = vi.fn();
+    await expect(
+      withResolvedAssetOwnership(
+        assetsWithInput(successDispose),
+        true,
+        async () => "ok",
+      ),
+    ).resolves.toBe("ok");
+    expect(successDispose).toHaveBeenCalledOnce();
+
+    const failureDispose = vi.fn();
+    await expect(
+      withResolvedAssetOwnership(
+        assetsWithInput(failureDispose),
+        true,
+        async () => {
+          throw new Error("encode failed");
+        },
+      ),
+    ).rejects.toThrow("encode failed");
+    expect(failureDispose).toHaveBeenCalledOnce();
+  });
+
+  it("never disposes caller-owned resources", async () => {
+    const dispose = vi.fn();
+    await withResolvedAssetOwnership(
+      assetsWithInput(dispose),
+      false,
+      async () => undefined,
+    );
+    expect(dispose).not.toHaveBeenCalled();
   });
 });
 
@@ -529,6 +634,52 @@ describe("worker-safe decoded audio", () => {
     } finally {
       if (originalAudioBuffer) globals.AudioBuffer = originalAudioBuffer;
     }
+  });
+
+  it("stops audio decoding on cancellation and still closes the yielded sample", async () => {
+    const controller = new AbortController();
+    const close = vi.fn();
+    const assets = {
+      audio: new Map([
+        [
+          "tone",
+          {
+            duration: 1,
+            sampleRate: 48_000,
+            numberOfChannels: 1,
+            sink: {
+              async *samples() {
+                controller.abort(new Error("cancel audio"));
+                yield {
+                  sampleRate: 48_000,
+                  numberOfChannels: 1,
+                  numberOfFrames: 1,
+                  timestamp: 0,
+                  duration: 1 / 48_000,
+                  copyTo: () => undefined,
+                  close,
+                };
+              },
+            },
+          },
+        ],
+      ]),
+      videos: new Map(),
+    } as unknown as ResolvedAssets;
+    const audioScene: Scene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 30,
+      duration: 30,
+      assets: { tone: { id: "tone", type: "audio", src: "tone.wav" } },
+      nodes: [{ id: "tone", type: "audio", assetId: "tone" }],
+    };
+
+    await expect(
+      mixSceneAudioData(audioScene, assets, 0, 29, controller.signal),
+    ).rejects.toThrow("cancel audio");
+    expect(close).toHaveBeenCalledOnce();
   });
 });
 

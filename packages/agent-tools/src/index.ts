@@ -22,7 +22,7 @@ import {
   type ExtensionRegistry,
 } from "@motionforge/extensions";
 import {
-  disposeAssets,
+  disposeAssetsAsync,
   prepareFrame,
   renderStill,
   resolveAssets,
@@ -233,7 +233,7 @@ export async function renderSceneStill(options: {
     const resolvedScene = await prepareFrame(scene, options.frame, assets);
     renderStill(context, scene, options.frame, { assets, resolvedScene });
   } finally {
-    if (ownsAssets) disposeAssets(assets);
+    if (ownsAssets) await disposeAssetsAsync(assets);
   }
   return canvas;
 }
@@ -279,7 +279,7 @@ export async function renderContactSheet(options: {
       );
     }
   } finally {
-    if (ownsAssets) disposeAssets(assets);
+    if (ownsAssets) await disposeAssetsAsync(assets);
   }
   return canvas;
 }

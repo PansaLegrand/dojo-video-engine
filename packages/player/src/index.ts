@@ -1,6 +1,6 @@
 import { inspectScene, parseScene, type Scene } from "@motionforge/schema";
 import {
-  disposeAssets,
+  disposeAssetsAsync,
   prepareFrame,
   renderStill,
   resolveAssets,
@@ -131,6 +131,29 @@ export class FrameClock {
 
 export type PlayerEvent = "frame" | "play" | "pause" | "ended";
 
+async function waitForPlayerOperation<T>(
+  operation: Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (!signal) return operation;
+  if (signal.aborted) throw signal.reason;
+  let listener!: () => void;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    listener = () =>
+      reject(
+        signal.reason instanceof Error
+          ? signal.reason
+          : new Error("Player operation aborted."),
+      );
+    signal.addEventListener("abort", listener, { once: true });
+  });
+  try {
+    return await Promise.race([operation, aborted]);
+  } finally {
+    signal.removeEventListener("abort", listener);
+  }
+}
+
 export type PlayerOptions = {
   /** A 2D context sized to the scene; the player draws into it. */
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -148,6 +171,11 @@ export type PlayerOptions = {
   preferProxy?: boolean;
   /** Decoder/cache/image memory limits forwarded to asset resolution. */
   budget?: ResolveAssetsOptions["budget"];
+  assetPolicy?: ResolveAssetsOptions["assetPolicy"];
+  analysisCache?: ResolveAssetsOptions["analysisCache"];
+  fontCache?: ResolveAssetsOptions["fontCache"];
+  /** Cancels asset resolution and in-flight frame preparation. */
+  signal?: AbortSignal;
   analyzeWaveforms?: boolean;
   loop?: boolean;
   /**
@@ -180,14 +208,23 @@ export class Player {
   private readonly now: () => number;
   private readonly requestFrame: (callback: () => void) => number;
   private readonly cancelFrame: (handle: number) => void;
+  private readonly signal: AbortSignal | undefined;
+  private readonly renderController = new AbortController();
+  private unlinkOptionSignal: (() => void) | null = null;
 
   private listeners = new Map<PlayerEvent, Set<(frame: number) => void>>();
   private renderedFrame = -1;
   private rafHandle: number | null = null;
   private rendering = false;
+  private renderQueue: Promise<void> = Promise.resolve();
   private assetsReleased = false;
   private disposed = false;
+  private disposalPromise: Promise<void> | null = null;
+  private lastRenderError: Error | null = null;
+  private errorListeners = new Set<(error: Error) => void>();
   private audio: AudioPreview | null = null;
+  private pendingAudio: AudioPreview | null = null;
+  private readonly disposedAudio = new WeakSet<AudioPreview>();
   private audioReadyPromise: Promise<void> = Promise.resolve();
   private readonly textMeasureCache: TextMeasureCache = new Map();
 
@@ -202,6 +239,16 @@ export class Player {
     this.context = options.context;
     this.assets = assets;
     this.ownsAssets = ownsAssets;
+    this.signal = this.renderController.signal;
+    if (options.signal) {
+      const abort = () => this.renderController.abort(options.signal?.reason);
+      if (options.signal.aborted) abort();
+      else {
+        options.signal.addEventListener("abort", abort, { once: true });
+        this.unlinkOptionSignal = () =>
+          options.signal?.removeEventListener("abort", abort);
+      }
+    }
     this.now = options.now ?? (() => performance.now());
     this.requestFrame =
       options.requestFrame ??
@@ -231,6 +278,16 @@ export class Player {
 
   set loop(value: boolean) {
     this.clock.loop = value;
+  }
+
+  /** Last asynchronous render-loop error, if playback stopped because of one. */
+  get error(): Error | null {
+    return this.lastRenderError;
+  }
+
+  onError(listener: (error: Error) => void): () => void {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
   }
 
   /**
@@ -301,19 +358,35 @@ export class Player {
 
     this.stopTicking();
     this.disposed = true;
+    this.renderController.abort(
+      typeof DOMException === "function"
+        ? new DOMException("Player disposed.", "AbortError")
+        : new Error("Player disposed."),
+    );
+    this.unlinkOptionSignal?.();
+    this.unlinkOptionSignal = null;
     this.listeners.clear();
-    this.audio?.dispose();
+    this.errorListeners.clear();
+    if (this.audio) this.disposeAudioOnce(this.audio);
     this.audio = null;
+    if (this.pendingAudio) this.disposeAudioOnce(this.pendingAudio);
+    this.pendingAudio = null;
+    void this.beginDisposal().catch(() => {
+      // Await disposeAsync() when teardown failures must be observed.
+    });
+  }
 
-    if (!this.rendering) {
-      this.releaseOwnedAssets();
-    }
+  /** Stops playback and waits for audio/render work and owned media teardown. */
+  async disposeAsync(): Promise<void> {
+    this.dispose();
+    await this.beginDisposal();
   }
 
   /** @internal — wired by createPlayer() after load() decides audibility. */
   attachAudio(audio: AudioPreview): void {
+    if (this.pendingAudio === audio) this.pendingAudio = null;
     if (this.disposed) {
-      audio.dispose();
+      this.disposeAudioOnce(audio);
       return;
     }
 
@@ -324,6 +397,24 @@ export class Player {
     if (this.clock.playing) {
       audio.start(this.clock.frameAt(this.now()).frame / this.scene.fps);
     }
+  }
+
+  /** @internal — binds preview preparation to the player lifecycle signal. */
+  loadAudio(audio: AudioPreview): Promise<boolean> {
+    this.pendingAudio = audio;
+    return audio.load(this.scene, this.assets, this.signal);
+  }
+
+  /** @internal — clears a preview that resolved silent or failed to load. */
+  discardAudio(audio: AudioPreview): void {
+    if (this.pendingAudio === audio) this.pendingAudio = null;
+    this.disposeAudioOnce(audio);
+  }
+
+  private disposeAudioOnce(audio: AudioPreview): void {
+    if (this.disposedAudio.has(audio)) return;
+    this.disposedAudio.add(audio);
+    audio.dispose();
   }
 
   /** @internal — wired by createPlayer(). */
@@ -343,7 +434,7 @@ export class Player {
 
     this.rafHandle = this.requestFrame(() => {
       this.rafHandle = null;
-      void this.tick();
+      void this.tick().catch((error: unknown) => this.handleRenderError(error));
     });
   }
 
@@ -399,18 +490,26 @@ export class Player {
   }
 
   private async renderFrame(frame: number): Promise<void> {
-    // One render in flight at a time; the next tick picks up the latest
-    // clock position, so a slow video decode skips ahead instead of queueing
-    // stale frames.
-    if (this.rendering || this.disposed) {
-      return;
-    }
+    const task = this.renderQueue
+      .catch(() => undefined)
+      .then(() => this.performRenderFrame(frame));
+    this.renderQueue = task.catch(() => undefined);
+    return task;
+  }
+
+  private async performRenderFrame(frame: number): Promise<void> {
+    if (this.disposed) return;
 
     this.rendering = true;
 
     try {
       const resolvedScene = this.assets
-        ? await prepareFrame(this.scene, frame, this.assets)
+        ? await waitForPlayerOperation(
+            prepareFrame(this.scene, frame, this.assets, {
+              signal: this.signal,
+            }),
+            this.signal,
+          )
         : undefined;
 
       if (this.disposed) {
@@ -432,18 +531,41 @@ export class Player {
       this.rendering = false;
 
       if (this.disposed) {
-        this.releaseOwnedAssets();
+        void this.beginDisposal().catch(() => undefined);
       }
     }
   }
 
-  private releaseOwnedAssets(): void {
+  private beginDisposal(): Promise<void> {
+    if (this.disposalPromise) return this.disposalPromise;
+    const ownedAssetDisposal = this.releaseOwnedAssets();
+    this.disposalPromise = (async () => {
+      await this.renderQueue.catch(() => undefined);
+      await ownedAssetDisposal;
+    })();
+    return this.disposalPromise;
+  }
+
+  private async releaseOwnedAssets(): Promise<void> {
     if (!this.ownsAssets || !this.assets || this.assetsReleased) {
       return;
     }
 
     this.assetsReleased = true;
-    disposeAssets(this.assets);
+    await disposeAssetsAsync(this.assets);
+  }
+
+  private handleRenderError(error: unknown): void {
+    if (this.disposed) return;
+    const normalized =
+      error instanceof Error ? error : new Error(String(error));
+    this.lastRenderError = normalized;
+    if (this.clock.playing) {
+      this.clock.pause(this.now());
+      this.audio?.stop();
+    }
+    this.stopTicking();
+    Array.from(this.errorListeners).forEach((listener) => listener(normalized));
   }
 
   private emit(event: PlayerEvent, frame: number): void {
@@ -482,42 +604,51 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
           worker: options.worker,
           preferProxy: options.preferProxy ?? true,
           budget: options.budget,
+          assetPolicy: options.assetPolicy,
+          analysisCache: options.analysisCache,
+          fontCache: options.fontCache,
           analyzeWaveforms: options.analyzeWaveforms,
+          signal: options.signal,
         })
       : undefined);
 
   const player = new Player(scene, options, assets, ownsAssets);
 
-  // Best-effort audio preview: attach only when the scene actually has
-  // something audible, so silent scenes never touch AudioContext. The mix
-  // runs concurrently with the first paint and attaches whenever it lands —
-  // decoding a long soundtrack must never delay the first visible frame.
-  if (options.audio !== false) {
-    const audio =
-      options.audio ??
-      (ChunkedWebAudioPreview.supported()
-        ? new ChunkedWebAudioPreview()
-        : null);
+  try {
+    // Best-effort audio preview: attach only when the scene actually has
+    // something audible, so silent scenes never touch AudioContext. The mix
+    // runs concurrently with the first paint and attaches whenever it lands —
+    // decoding a long soundtrack must never delay the first visible frame.
+    if (options.audio !== false) {
+      const audio =
+        options.audio ??
+        (ChunkedWebAudioPreview.supported()
+          ? new ChunkedWebAudioPreview()
+          : null);
 
-    if (audio) {
-      player.setAudioReady(
-        audio
-          .load(scene, assets)
-          .then((audible) => {
-            if (audible) {
-              player.attachAudio(audio);
-            } else {
-              audio.dispose();
-            }
-          })
-          .catch(() => {
-            // Preview audio is best-effort; the export mixes its own.
-            audio.dispose();
-          }),
-      );
+      if (audio) {
+        player.setAudioReady(
+          player
+            .loadAudio(audio)
+            .then((audible) => {
+              if (audible) {
+                player.attachAudio(audio);
+              } else {
+                player.discardAudio(audio);
+              }
+            })
+            .catch(() => {
+              // Preview audio is best-effort; the export mixes its own.
+              player.discardAudio(audio);
+            }),
+        );
+      }
     }
-  }
 
-  await player.renderInitialFrame();
-  return player;
+    await player.renderInitialFrame();
+    return player;
+  } catch (error) {
+    await player.disposeAsync();
+    throw error;
+  }
 }

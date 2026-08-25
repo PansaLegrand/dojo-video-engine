@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Scene } from "@motionforge/schema";
 import {
   ExportWorkerClient,
+  createExportWorkerHandler,
   type ExportWorkerEvent,
   type ExportWorkerRequest,
   type WorkerLike,
@@ -88,6 +89,34 @@ describe("ExportWorkerClient", () => {
     expect(worker.messages.at(-1)).toEqual({
       type: "motionforge.export.cancel",
       id: task.id,
+    });
+  });
+});
+
+describe("createExportWorkerHandler", () => {
+  it("rejects a duplicate active request id without replacing cancellation ownership", async () => {
+    const events: ExportWorkerEvent[] = [];
+    const handler = createExportWorkerHandler({
+      postMessage: (event) => events.push(event),
+    });
+    const request = {
+      type: "motionforge.export.start" as const,
+      id: "same-id",
+      scene,
+    };
+
+    const first = handler(request);
+    await handler(request);
+    await first;
+
+    expect(events).toContainEqual({
+      type: "motionforge.export.error",
+      id: "same-id",
+      error: {
+        name: "DuplicateExportRequestError",
+        message:
+          'An export with id "same-id" is already active. Request ids must be unique until terminal completion.',
+      },
     });
   });
 });

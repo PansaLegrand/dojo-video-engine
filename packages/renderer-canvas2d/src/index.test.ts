@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { sampleScene } from "@motionforge/core";
 import {
   createExtensionRegistry,
@@ -8,7 +8,8 @@ import { z } from "zod";
 import {
   computeObjectFit,
   collectReachableAssetIds,
-  disposeAssets,
+  assertResolvedAssetsCompatible,
+  disposeAssetsAsync,
   estimateMediaResources,
   lottieSourceFrame,
   parseBorder,
@@ -26,6 +27,7 @@ import {
   shapePointInBox,
   type Canvas2DExtensionAdapter,
   validateLottieDocument,
+  waitForLottieReady,
   VideoPlaybackCursor,
   videoSourceTime,
   waveformFromSamples,
@@ -66,7 +68,6 @@ describe("Canvas2D preflight", () => {
       "image_decoder_unavailable",
       "video_decoder_unavailable",
       "audio_decoder_unavailable",
-      "font_loading_unavailable",
       "lottie_requires_dom",
     ]);
   });
@@ -92,13 +93,50 @@ describe("Canvas2D preflight", () => {
         imageDecoder: true,
         videoDecoder: true,
         audioDecoder: true,
-        fontLoading: true,
+        fontLoading: false,
         domLottie: true,
         extensions: false,
         path2d: false,
         domMatrix: false,
       },
     });
+  });
+
+  it("uses reachable assets and includes declared embedded-video audio", () => {
+    const scene = {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {
+        clip: {
+          id: "clip",
+          type: "video",
+          src: "clip.mp4",
+          metadata: { hasAudio: true, byteLength: 2_000 },
+        },
+        unused: { id: "unused", type: "image", src: "unused.png" },
+      },
+      nodes: [{ id: "clip", type: "video", assetId: "clip" }],
+    };
+    const environment = {
+      OffscreenCanvas: class {},
+      VideoDecoder: class {},
+    } as unknown as Partial<typeof globalThis>;
+    const result = preflightCanvas2D(scene, environment, {
+      budget: { maxAssetBytes: 1_000 },
+    });
+
+    expect(result.requirements).toMatchObject({
+      imageDecoder: false,
+      videoDecoder: true,
+      audioDecoder: true,
+    });
+    expect(result.issues.map((issue) => issue.code)).toEqual([
+      "audio_decoder_unavailable",
+      "asset_byte_budget_exceeded",
+    ]);
   });
 
   it("includes extension registry compatibility in Canvas2D preflight", () => {
@@ -293,6 +331,63 @@ describe("Canvas2D preflight", () => {
       "video_decoder_budget_exceeded",
       "decoded_image_budget_estimate_exceeded",
     ]);
+  });
+});
+
+describe("resolved asset source identity", () => {
+  const assets = {
+    images: new Map(),
+    fonts: new Map(),
+    videos: new Map(),
+    videoFrames: new Map(),
+    audio: new Map(),
+    lotties: new Map(),
+    lottieFrames: new Map(),
+    resolvedSources: new Map([
+      [
+        "clip",
+        {
+          assetId: "clip",
+          declaredSource: "https://cdn.test/old.mp4",
+          resolvedSource: "https://signed.test/old.mp4",
+          contentKey: "sha256:same",
+          usingProxy: false,
+          sourceKind: "primary",
+          declarationKey: "primary:https://cdn.test/old.mp4\u0000proxy:",
+        },
+      ],
+    ]),
+  };
+
+  it("rejects changed URLs unless a stable content identity proves equivalence", () => {
+    const scene = (contentHash?: string) => ({
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 1,
+      assets: {
+        clip: {
+          id: "clip",
+          type: "video",
+          src: "https://cdn.test/new.mp4",
+          ...(contentHash ? { metadata: { contentHash } } : {}),
+        },
+      },
+      nodes: [{ id: "clip", type: "video", assetId: "clip" }],
+    });
+
+    expect(() =>
+      assertResolvedAssetsCompatible(scene(), assets as never),
+    ).toThrow(/changed source/);
+    expect(() =>
+      assertResolvedAssetsCompatible(scene("sha256:same"), assets as never),
+    ).not.toThrow();
+    expect(() =>
+      renderStill({} as never, scene() as never, 0, {
+        assets: assets as never,
+      }),
+    ).toThrow(/changed source/);
   });
 });
 
@@ -555,7 +650,7 @@ describe("renderStill", () => {
     });
     const resolvedScene = await prepareFrame(scene as never, 3, assets);
     renderStill(context, scene as never, 3, { assets, resolvedScene });
-    disposeAssets(assets);
+    await disposeAssetsAsync(assets);
 
     expect(events).toEqual(["resolve", "prepare:3", "draw", "dispose"]);
     expect(draws).toEqual([{ color: "#22d3ee", phase: 3, width: 45 }]);
@@ -585,6 +680,442 @@ describe("renderStill", () => {
     await expect(resolveAssets(scene as never)).rejects.toThrow(
       /extension_not_installed/,
     );
+  });
+
+  it("rolls back successfully prepared sibling extensions after partial failure", async () => {
+    const events: string[] = [];
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.ready",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        resolveAssets: () => {
+          events.push("ready");
+          return { lease: true };
+        },
+        disposeAssets: async () => {
+          await Promise.resolve();
+          events.push("disposed");
+        },
+      }),
+      defineExtension({
+        name: "com.example.failed",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        resolveAssets: async () => {
+          await Promise.resolve();
+          throw new Error("partial failure");
+        },
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "ready",
+          type: "extension",
+          extension: {
+            name: "com.example.ready",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+        {
+          id: "failed",
+          type: "extension",
+          extension: {
+            name: "com.example.failed",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+
+    await expect(
+      resolveAssets(scene as never, { extensions: registry }),
+    ).rejects.toThrow("partial failure");
+    expect(events).toEqual(["ready", "disposed"]);
+  });
+
+  it("cancels in-flight extension resolution and rolls back acquired siblings", async () => {
+    const controller = new AbortController();
+    const events: string[] = [];
+    let started!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.acquired",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        resolveAssets: () => ({ acquired: true }),
+        disposeAssets: () => {
+          events.push("disposed");
+        },
+      }),
+      defineExtension({
+        name: "com.example.waiting",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        resolveAssets: ({ signal }) =>
+          new Promise((_resolve, reject) => {
+            started();
+            signal?.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "acquired",
+          type: "extension",
+          extension: {
+            name: "com.example.acquired",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+        {
+          id: "waiting",
+          type: "extension",
+          extension: {
+            name: "com.example.waiting",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+
+    const resolution = resolveAssets(scene as never, {
+      extensions: registry,
+      signal: controller.signal,
+    });
+    await waiting;
+    controller.abort(new Error("cancel resolution"));
+    await expect(resolution).rejects.toThrow("cancel resolution");
+    expect(events).toEqual(["disposed"]);
+  });
+
+  it("rejects corrupt media without a later unhandled demux rejection", async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      await expect(
+        resolveAssets({
+          schemaVersion: 1,
+          width: 10,
+          height: 10,
+          fps: 30,
+          duration: 1,
+          assets: {
+            bad: {
+              id: "bad",
+              type: "video",
+              src: "data:text/plain;base64,YmFk",
+              sourceMode: "buffer",
+            },
+          },
+          nodes: [{ id: "bad", type: "video", assetId: "bad" }],
+        } as never),
+      ).rejects.toThrow(/unsupported|unrecognizable/i);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
+  it("preserves fetched image MIME when constructing the bounded Blob", async () => {
+    const decode = vi.fn(async (blob: Blob) => ({
+      width: 1,
+      height: 1,
+      close: () => undefined,
+      type: blob.type,
+    }));
+    vi.stubGlobal("createImageBitmap", decode);
+    try {
+      const assets = await resolveAssets({
+        schemaVersion: 1,
+        width: 1,
+        height: 1,
+        fps: 30,
+        duration: 1,
+        assets: {
+          badge: {
+            id: "badge",
+            type: "image",
+            src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
+          },
+        },
+        nodes: [{ id: "badge", type: "img", assetId: "badge" }],
+      } as never);
+      expect((decode.mock.calls[0]?.[0] as Blob).type).toBe("image/svg+xml");
+      await disposeAssetsAsync(assets);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("awaits cursor shutdown before inputs and makes disposal idempotent", async () => {
+    const events: string[] = [];
+    const assets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map([
+        [
+          "clip",
+          {
+            input: { dispose: () => events.push("input") },
+          },
+        ],
+      ]),
+      videoFrames: new Map(),
+      videoCursors: new Map([
+        [
+          "node\u0000clip",
+          {
+            dispose: async () => {
+              await Promise.resolve();
+              events.push("cursor");
+            },
+          },
+        ],
+      ]),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+
+    const first = disposeAssetsAsync(assets as never);
+    const second = disposeAssetsAsync(assets as never);
+    expect(second).toBe(first);
+    await first;
+    expect(events).toEqual(["cursor", "input"]);
+  });
+
+  it("serializes frame preparation for one resolved-asset lease", async () => {
+    const frames: number[] = [];
+    const releases: Array<() => void> = [];
+    let active = 0;
+    let maxActive = 0;
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.serial",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        prepareFrame: ({ frame }) =>
+          new Promise<number>((resolve) => {
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            frames.push(frame);
+            releases.push(() => {
+              active -= 1;
+              resolve(frame);
+            });
+          }),
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 4,
+      assets: {},
+      nodes: [
+        {
+          id: "serial",
+          type: "extension",
+          extension: {
+            name: "com.example.serial",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    const first = prepareFrame(scene as never, 1, assets);
+    const second = prepareFrame(scene as never, 2, assets);
+    for (let index = 0; index < 4; index += 1) await Promise.resolve();
+    expect(frames).toEqual([1]);
+    releases.shift()?.();
+    await first;
+    for (let index = 0; index < 4; index += 1) await Promise.resolve();
+    expect(frames).toEqual([1, 2]);
+    releases.shift()?.();
+    await second;
+
+    expect(maxActive).toBe(1);
+    expect(assets.extensionFrames?.get("serial")?.sceneFrame).toBe(2);
+    await disposeAssetsAsync(assets);
+  });
+
+  it("keeps the queue tail locked when a middle frame is aborted", async () => {
+    const frames: number[] = [];
+    const releases: Array<() => void> = [];
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.abort-queue",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        prepareFrame: ({ frame }) =>
+          new Promise<number>((resolve) => {
+            frames.push(frame);
+            releases.push(() => resolve(frame));
+          }),
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 5,
+      assets: {},
+      nodes: [
+        {
+          id: "queue",
+          type: "extension",
+          extension: {
+            name: "com.example.abort-queue",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    const first = prepareFrame(scene as never, 1, assets);
+    const middleController = new AbortController();
+    const middle = prepareFrame(scene as never, 2, assets, {
+      signal: middleController.signal,
+    });
+    const last = prepareFrame(scene as never, 3, assets);
+    for (let index = 0; index < 4; index += 1) await Promise.resolve();
+    middleController.abort(new Error("skip middle"));
+    await expect(middle).rejects.toThrow("skip middle");
+    expect(frames).toEqual([1]);
+
+    releases.shift()?.();
+    await first;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(frames).toEqual([1, 3]);
+    releases.shift()?.();
+    await last;
+    await disposeAssetsAsync(assets);
+  });
+
+  it("waits for started frame tasks after a later traversal failure", async () => {
+    const events: string[] = [];
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.started",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        prepareFrame: ({ signal }) =>
+          new Promise<void>((resolve) => {
+            signal?.addEventListener(
+              "abort",
+              () => {
+                queueMicrotask(() => {
+                  events.push("started-settled");
+                  resolve();
+                });
+              },
+              { once: true },
+            );
+          }),
+      }),
+      defineExtension({
+        name: "com.example.removed",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 10,
+      height: 10,
+      fps: 30,
+      duration: 2,
+      assets: {},
+      nodes: [
+        {
+          id: "started",
+          type: "extension",
+          extension: {
+            name: "com.example.started",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+        {
+          id: "removed",
+          type: "extension",
+          extension: {
+            name: "com.example.removed",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+    const assets = await resolveAssets(scene as never, {
+      extensions: registry,
+    });
+    assets.extensionNodes?.delete("removed");
+
+    await expect(prepareFrame(scene as never, 1, assets)).rejects.toThrow(
+      /was not resolved/,
+    );
+    expect(events).toEqual(["started-settled"]);
+    await disposeAssetsAsync(assets);
   });
 });
 
@@ -1145,6 +1676,13 @@ describe("videoSourceTime", () => {
     expect(videoSourceTime(15, 30, 0.5, 2, 10)).toBe(1.5);
   });
 
+  it("maps the integer composition grid to NTSC source seconds without drift", () => {
+    const ntscFrameSeconds = 1_001 / 30_000;
+    const sourceTime = videoSourceTime(300, 30, 0, 1, 20);
+    expect(sourceTime).toBe(10);
+    expect(sourceTime / ntscFrameSeconds).toBeCloseTo(299.7003, 4);
+  });
+
   it("holds the last frame when the scene outlasts the clip", () => {
     expect(videoSourceTime(900, 30, 0, 1, 2)).toBeCloseTo(1.999, 5);
     expect(videoSourceTime(0, 30, 99, 1, 2)).toBeCloseTo(1.999, 5);
@@ -1642,6 +2180,75 @@ describe("validateLottieDocument", () => {
   });
 });
 
+describe("Lottie readiness lifecycle", () => {
+  function fakeAnimation() {
+    const handlers = new Map<string, Set<(...args: unknown[]) => void>>();
+    return {
+      animation: {
+        goToAndStop: () => undefined,
+        destroy: () => undefined,
+        addEventListener(name: string, handler: (...args: unknown[]) => void) {
+          const listeners = handlers.get(name) ?? new Set();
+          listeners.add(handler);
+          handlers.set(name, listeners);
+        },
+        removeEventListener(
+          name: string,
+          handler: (...args: unknown[]) => void,
+        ) {
+          handlers.get(name)?.delete(handler);
+        },
+      },
+      emit(name: string, value?: unknown) {
+        Array.from(handlers.get(name) ?? []).forEach((handler) =>
+          handler(value),
+        );
+      },
+      listenerCount() {
+        return Array.from(handlers.values()).reduce(
+          (total, listeners) => total + listeners.size,
+          0,
+        );
+      },
+    };
+  }
+
+  it("rejects data failure and abort while removing every listener", async () => {
+    const failed = fakeAnimation();
+    const failure = waitForLottieReady(failed.animation, undefined, 1_000);
+    failed.emit("data_failed", new Error("bad lottie"));
+    await expect(failure).rejects.toThrow("bad lottie");
+    expect(failed.listenerCount()).toBe(0);
+
+    const aborted = fakeAnimation();
+    const controller = new AbortController();
+    const cancellation = waitForLottieReady(
+      aborted.animation,
+      controller.signal,
+      1_000,
+    );
+    controller.abort(new Error("cancel lottie"));
+    await expect(cancellation).rejects.toThrow("cancel lottie");
+    expect(aborted.listenerCount()).toBe(0);
+  });
+
+  it("times out a readiness wait deterministically", async () => {
+    vi.useFakeTimers();
+    try {
+      const pending = fakeAnimation();
+      const readiness = waitForLottieReady(pending.animation, undefined, 25);
+      const rejection = expect(readiness).rejects.toThrow(
+        "timed out after 25ms",
+      );
+      await vi.advanceTimersByTimeAsync(25);
+      await rejection;
+      expect(pending.listenerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("wrapTextLines with spaceless scripts", () => {
   // 10px per code point, like the Latin fake measurer above.
   const measureCjk = (line: string): number => Array.from(line).length * 10;
@@ -1766,6 +2373,15 @@ describe("VideoPlaybackCursor", () => {
 
     expect(stats.decodes).toBe(decodesAfterFirst);
     expect(stats.seeks).toEqual([0]);
+  });
+
+  it("selects frames by presentation timestamps for variable-frame-rate input", async () => {
+    const { source } = scriptedSource([0, 0.02, 0.055, 0.11, 0.145]);
+    const cursor = new VideoPlaybackCursor(source);
+
+    expect((await cursor.frameAt(1 / 30))?.timestamp).toBeCloseTo(0.02, 9);
+    expect((await cursor.frameAt(2 / 30))?.timestamp).toBeCloseTo(0.055, 9);
+    expect((await cursor.frameAt(4 / 30))?.timestamp).toBeCloseTo(0.11, 9);
   });
 
   it("re-seeks on a backward seek and terminates the old iterator", async () => {

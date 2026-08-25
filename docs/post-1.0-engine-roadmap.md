@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-25  
-Status: active implementation contract; MF0 complete
+Status: active implementation contract; MF0 through MF2 complete
 
 ## Purpose
 
@@ -681,3 +681,25 @@ than the engine priority.
   performance, 10 browser E2E checks, builds, CLI/starter smoke, and all package
   dry-runs. No Scene, renderer, export, package entry point, or pixel/audio
   behavior changed.
+- 2026-08-25 — MF1 complete: canonical Scene v1 parsing became strict across
+  document, node, style, animation, keyframe, envelope, and nested values;
+  tolerant ingestion moved to explicit repair, renderer-supported value
+  grammars and animation targets were aligned, preflight budgets and generated
+  schema were added, and the downstream compatibility audit was recorded in
+  `mf1-compatibility-audit.md`. Commit `0807144` passed the full release and
+  clean-machine gates without silently changing existing valid-scene output.
+- 2026-08-26 — MF2 complete: media resolution is transactional and cancellable;
+  async teardown is idempotent; source/font/analysis/decoder resources are
+  bounded; host `AssetPolicy`, stable content identity, reachable-media and
+  embedded-audio preflight, worker id ownership, player rollback, explicit
+  host fallback, and bounded output verification are implemented. The exact
+  public contract and remaining sampling/extension limits are recorded in
+  `mf2-media-lifecycle.md`. The final full release gate passed 119 focused
+  renderer/media tests, 47 export tests, 23 player tests, all workspace
+  suites/types/contracts/builds, 750-scene fuzzing, the 28-scene corpus, seven
+  long-resource checks, verified video/audio/tool goldens, Chromium/Firefox/
+  WebKit probes, all 10 E2E checks, performance at or below 6.1 ms/frame and
+  26 MiB heap, CLI/starter smoke, and every public package dry-run.
+  `pnpm verify:clean` also packed the publishable workspace, installed the
+  generated starter outside the monorepo, and passed validate/migrate/inspect/
+  lint/build against the packed artifacts.

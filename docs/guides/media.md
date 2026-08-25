@@ -125,10 +125,22 @@ Lottie assets must be self-contained vector JSON. Expressions and external image
 
 ## Current Limits
 
-- Large video/audio files are fetched into memory as whole blobs before decode.
-- Streaming sources are deferred until real projects force the complexity.
-- A failed fetch or decode rejects; MotionForge does not silently render placeholders.
-- Rendering a media node without resolved assets throws with the missing asset id and fix.
+- HTTP video/audio defaults to a bounded range-backed source. `data:`, `blob:`,
+  and explicit `sourceMode: "buffer"` assets use a bounded whole Blob.
+- Resolution is transactional and cancellable. A failed sibling load rolls
+  back already acquired images, fonts, media Inputs, Lottie players, and
+  extension resources; MotionForge never renders silent placeholders.
+- Await `disposeAssetsAsync()` for deterministic decoder/resource teardown.
+  The legacy `disposeAssets()` facade cannot report asynchronous cleanup
+  errors.
+- `MediaResourceBudget` bounds one asset, range cache, decoded images, analysis
+  cache, fonts, Lottie readiness, and simultaneous video decoders.
+- Agent-authored and privileged-host scenes should inject `AssetPolicy` to
+  authorize schemes/origins, add credentials, resolve proxies, refresh signed
+  URLs, validate MIME/bytes, and provide stable content identity.
+- Rendering a media node without a compatible resolved lease throws with the
+  asset id and fix. Reusing a lease after its source changes also fails unless
+  a stable `metadata.contentHash` proves equivalent content.
 
 ## Named Looks
 

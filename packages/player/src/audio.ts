@@ -9,7 +9,11 @@ import type { Scene } from "@motionforge/schema";
  */
 export interface AudioPreview {
   /** Prepares the scene's audio. Resolves false when there is nothing audible. */
-  load(scene: Scene, assets: ResolvedAssets | undefined): Promise<boolean>;
+  load(
+    scene: Scene,
+    assets: ResolvedAssets | undefined,
+    signal?: AbortSignal,
+  ): Promise<boolean>;
   /** Starts playback at the given scene time in seconds. */
   start(atSeconds: number): void;
   stop(): void;
@@ -82,10 +86,11 @@ export class WebAudioPreview implements AudioPreview {
   async load(
     scene: Scene,
     assets: ResolvedAssets | undefined,
+    signal?: AbortSignal,
   ): Promise<boolean> {
     if (!this.adoptedBuffer) {
       this.buffer = assets
-        ? await mixSceneAudio(scene, assets, 0, scene.duration - 1)
+        ? await mixSceneAudio(scene, assets, 0, scene.duration - 1, signal)
         : null;
     }
 
@@ -154,6 +159,8 @@ export class ChunkedWebAudioPreview implements AudioPreview {
   private assets: ResolvedAssets | undefined;
   private source: AudioBufferSourceNode | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private mixController: AbortController | null = null;
+  private lastMixError: Error | null = null;
   private generation = 0;
   private startedAtContextTime = 0;
   private startOffset = 0;
@@ -167,10 +174,16 @@ export class ChunkedWebAudioPreview implements AudioPreview {
     return typeof AudioContext !== "undefined";
   }
 
+  get error(): Error | null {
+    return this.lastMixError;
+  }
+
   async load(
     scene: Scene,
     assets: ResolvedAssets | undefined,
+    signal?: AbortSignal,
   ): Promise<boolean> {
+    if (signal?.aborted) throw signal.reason;
     this.scene = scene;
     this.assets = assets;
     return Boolean(assets && collectAudioPlacements(scene).length > 0);
@@ -183,7 +196,14 @@ export class ChunkedWebAudioPreview implements AudioPreview {
     this.stopSource();
     const generation = ++this.generation;
     const requestedAt = this.context.currentTime;
-    void this.startChunk(atSeconds, requestedAt, generation);
+    this.lastMixError = null;
+    this.mixController = new AbortController();
+    this.launchChunk(
+      atSeconds,
+      requestedAt,
+      generation,
+      this.mixController.signal,
+    );
   }
 
   stop(): void {
@@ -210,6 +230,7 @@ export class ChunkedWebAudioPreview implements AudioPreview {
     requestedSceneTime: number,
     requestedAtContextTime: number,
     generation: number,
+    signal: AbortSignal,
   ): Promise<void> {
     const scene = this.scene;
     const assets = this.assets;
@@ -224,13 +245,24 @@ export class ChunkedWebAudioPreview implements AudioPreview {
       sceneTime,
       this.chunkSeconds,
     );
-    const buffer = await mixSceneAudio(scene, assets, startFrame, endFrame);
+    const buffer = await mixSceneAudio(
+      scene,
+      assets,
+      startFrame,
+      endFrame,
+      signal,
+    );
     if (generation !== this.generation || !this.context) return;
     const nowSceneTime =
       requestedSceneTime +
       Math.max(0, this.context.currentTime - requestedAtContextTime);
     if (nowSceneTime >= (endFrame + 1) / scene.fps) {
-      await this.startChunk(nowSceneTime, this.context.currentTime, generation);
+      await this.startChunk(
+        nowSceneTime,
+        this.context.currentTime,
+        generation,
+        signal,
+      );
       return;
     }
     if (!buffer) {
@@ -238,7 +270,12 @@ export class ChunkedWebAudioPreview implements AudioPreview {
       const delayMs = Math.max(0, (nextTime - nowSceneTime) * 1000);
       this.timer = setTimeout(() => {
         if (!this.context) return;
-        void this.startChunk(nextTime, this.context.currentTime, generation);
+        this.launchChunk(
+          nextTime,
+          this.context.currentTime,
+          generation,
+          signal,
+        );
       }, delayMs);
       return;
     }
@@ -254,11 +291,33 @@ export class ChunkedWebAudioPreview implements AudioPreview {
       if (this.source === source) this.source = null;
       if (generation !== this.generation || !this.context) return;
       const nextTime = (endFrame + 1) / scene.fps;
-      void this.startChunk(nextTime, this.context.currentTime, generation);
+      this.launchChunk(nextTime, this.context.currentTime, generation, signal);
     };
   }
 
+  private launchChunk(
+    sceneTime: number,
+    contextTime: number,
+    generation: number,
+    signal: AbortSignal,
+  ): void {
+    void this.startChunk(sceneTime, contextTime, generation, signal).catch(
+      (error: unknown) => {
+        if (signal.aborted || generation !== this.generation) return;
+        this.lastMixError =
+          error instanceof Error ? error : new Error(String(error));
+        this.stopSource();
+      },
+    );
+  }
+
   private stopSource(): void {
+    this.mixController?.abort(
+      typeof DOMException === "function"
+        ? new DOMException("Audio preview work was superseded.", "AbortError")
+        : new Error("Audio preview work was superseded."),
+    );
+    this.mixController = null;
     if (this.timer !== null) {
       clearTimeout(this.timer);
       this.timer = null;

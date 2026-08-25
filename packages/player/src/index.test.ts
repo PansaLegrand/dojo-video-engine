@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createPlayer, FrameClock } from "./index.js";
 import {
-  disposeAssets,
+  disposeAssetsAsync,
   prepareFrame,
   resolveAssets,
   type ResolvedAssets,
@@ -13,7 +13,7 @@ vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
 
   return {
     ...actual,
-    disposeAssets: vi.fn(actual.disposeAssets),
+    disposeAssetsAsync: vi.fn(actual.disposeAssetsAsync),
     prepareFrame: vi.fn(actual.prepareFrame),
     resolveAssets: vi.fn(actual.resolveAssets),
   };
@@ -154,8 +154,9 @@ function fakeDriver() {
         callback();
       }
       // Let the async tick (prepare/render) settle.
-      await Promise.resolve();
-      await Promise.resolve();
+      for (let index = 0; index < 8; index += 1) {
+        await Promise.resolve();
+      }
     },
     get pending() {
       return queue.size;
@@ -257,7 +258,95 @@ describe("Player", () => {
     expect(() => player.play()).toThrow(/disposed/);
   });
 
-  it("defers owned asset disposal while a frame render is in flight", async () => {
+  it("serializes concurrent seeks and resolves each only after its frame paints", async () => {
+    const assets: ResolvedAssets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+    const prepareFrameMock = vi.mocked(prepareFrame);
+    prepareFrameMock.mockClear();
+    let finishFirst!: () => void;
+    prepareFrameMock.mockResolvedValueOnce({
+      ...testScene,
+      schemaVersion: 1,
+      frame: 0,
+      nodes: [],
+    });
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      assets,
+      audio: false,
+    });
+    prepareFrameMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirst = () =>
+              resolve({
+                ...testScene,
+                schemaVersion: 1,
+                frame: 2,
+                nodes: [],
+              });
+          }),
+      )
+      .mockResolvedValueOnce({
+        ...testScene,
+        schemaVersion: 1,
+        frame: 4,
+        nodes: [],
+      });
+
+    const first = player.seek(2);
+    const second = player.seek(4);
+    for (let index = 0; index < 4; index += 1) await Promise.resolve();
+    expect(prepareFrameMock).toHaveBeenCalledTimes(2); // initial + first seek
+    finishFirst();
+    await first;
+    await second;
+
+    expect(player.currentFrame).toBe(4);
+    expect(prepareFrameMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("rolls back owned assets when initial rendering fails", async () => {
+    const ownedAssetScene = {
+      ...testScene,
+      assets: {
+        clip: { id: "clip", type: "video" as const, src: "blob:fake" },
+      },
+    };
+    const assets: ResolvedAssets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+    const disposeAssetsMock = vi.mocked(disposeAssetsAsync);
+    disposeAssetsMock.mockClear();
+    vi.mocked(resolveAssets).mockResolvedValueOnce(assets);
+    vi.mocked(prepareFrame).mockRejectedValueOnce(new Error("initial decode"));
+
+    await expect(
+      createPlayer({
+        context: fakeContext(),
+        scene: ownedAssetScene,
+        audio: false,
+      }),
+    ).rejects.toThrow("initial decode");
+    expect(disposeAssetsMock).toHaveBeenCalledWith(assets);
+  });
+
+  it("aborts an in-flight frame before awaiting owned asset disposal", async () => {
     const driver = fakeDriver();
     const ownedAssetScene = {
       ...testScene,
@@ -274,7 +363,7 @@ describe("Player", () => {
       lotties: new Map(),
       lottieFrames: new Map(),
     };
-    const disposeAssetsMock = vi.mocked(disposeAssets);
+    const disposeAssetsMock = vi.mocked(disposeAssetsAsync);
     const prepareFrameMock = vi.mocked(prepareFrame);
     const resolveAssetsMock = vi.mocked(resolveAssets);
     let finishFrame!: () => void;
@@ -308,12 +397,11 @@ describe("Player", () => {
 
     player.play();
     const renderPromise = driver.step(34);
-    player.dispose();
-
-    expect(disposeAssetsMock).not.toHaveBeenCalled();
-    finishFrame();
+    for (let index = 0; index < 4; index += 1) await Promise.resolve();
+    await player.disposeAsync();
     await renderPromise;
     expect(disposeAssetsMock).toHaveBeenCalledWith(assets);
+    finishFrame();
   });
 });
 
@@ -498,5 +586,23 @@ describe("Player audio preview", () => {
     finishLoad(true);
     await player.audioReady;
     expect(calls).toEqual(["dispose"]);
+  });
+
+  it("does not let a non-cooperative audio load block disposeAsync", async () => {
+    const calls: string[] = [];
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      audio: {
+        load: () => new Promise<boolean>(() => undefined),
+        start: () => undefined,
+        stop: () => calls.push("stop"),
+        position: () => null,
+        dispose: () => calls.push("dispose"),
+      },
+    });
+
+    await player.disposeAsync();
+    expect(calls).toContain("dispose");
   });
 });

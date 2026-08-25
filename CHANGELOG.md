@@ -54,6 +54,26 @@ starter packages.
   undeclared/deep/cross-package import detection, framework/product boundary
   rules, public entry-point drift detection, and controlled negative tests.
 
+### Transactional media and verified export
+
+- Asset resolution now rolls back partial failure/cancellation, exposes
+  awaitable idempotent disposal, serializes frame preparation per lease, prunes
+  inactive staging state, and rejects stale source reuse.
+- Added host-owned `AssetPolicy` callbacks for proxy/source selection,
+  authorization, credentials, signed-URL refresh, MIME/response checks,
+  content identity, Fetch injection, byte ceilings, and cancellation.
+- Added byte-bounded/coalesced audio-analysis and reference-counted bounded
+  font caches, plus per-asset/source/image/decoder/Lottie resource budgets.
+- Preflight now uses reachable assets and includes declared embedded-video
+  soundtracks; worker request ids retain unique cancellation ownership.
+- Export disposes internally owned resources on every outcome, propagates
+  cancellation through audio/frame work, provides an explicit host fallback,
+  and supports `none`/`container`/`sampled`/bounded-`full` output verification
+  with a verification-capable custom-sink contract.
+- Player creation rolls back on first-frame failure, concurrent seeks settle
+  after their frames paint, asynchronous render errors are observable, and
+  `disposeAsync()` joins audio/render work before releasing owned media.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

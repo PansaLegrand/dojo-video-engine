@@ -13,6 +13,7 @@ import {
   parseScene,
   isAudioReactiveEffect,
   type Scene,
+  type SceneAsset,
   type SceneNode,
   type SceneShapeGeometry,
   type SceneStyle,
@@ -39,6 +40,33 @@ import {
   type ExtensionSceneNode,
   type ResolvedExtensionNode,
 } from "@motionforge/extensions";
+import {
+  AudioAnalysisCache as BoundedAudioAnalysisCache,
+  FontAssetCache,
+  assetDeclarationKey,
+  createBoundedAssetFetch,
+  fetchAssetBounded,
+  prepareAssetRequest,
+  readResponseBytes,
+  type AssetPolicy,
+  type AssetSourceKind,
+  type PreparedAssetRequest,
+} from "./media-lifecycle.js";
+
+export {
+  AssetPolicyError,
+  AudioAnalysisCache as BoundedAudioAnalysisCache,
+  FontAssetCache,
+  assetDeclarationKey,
+  createAudioAnalysisCache as createBoundedAudioAnalysisCache,
+  type AssetPolicy,
+  type AssetPolicyContext,
+  type AssetSourceKind,
+  type CacheStats,
+  type FontCacheStats,
+  type FontLease,
+  type PreparedAssetRequest,
+} from "./media-lifecycle.js";
 
 // Re-exported so existing imports keep working; the implementation moved to
 // @motionforge/core where layout uses it for intrinsic text sizing.
@@ -75,6 +103,10 @@ export type ResolveAssetsOptions = {
   preferProxy?: boolean;
   budget?: Partial<MediaResourceBudget>;
   analysisCache?: AudioAnalysisCache;
+  /** Host-owned URL, credential, proxy, MIME, and byte policy. */
+  assetPolicy?: AssetPolicy;
+  /** Optional host-owned bounded font cache. */
+  fontCache?: FontAssetCache<FontFace>;
   /** Precompute cached editor waveforms for reachable audio assets. */
   analyzeWaveforms?: boolean;
 };
@@ -83,13 +115,58 @@ export type MediaResourceBudget = {
   maxSourceCacheBytes: number;
   maxDecodedImageBytes: number;
   maxVideoDecoders: number;
+  /** Maximum bytes for any one buffered/direct asset. Optional for 1.0 compatibility. */
+  maxAssetBytes?: number;
+  /** Process-owned analysis cache ceiling; host-owned caches set their own policy. */
+  maxAudioAnalysisCacheBytes?: number;
+  /** Reachable fonts allowed in one resolution. Inject fontCache to own a different resident ceiling. */
+  maxFontCacheEntries?: number;
+  /** Maximum wait for a Lottie document to become ready. */
+  maxLottieWaitMs?: number;
 };
 
 export const defaultMediaResourceBudget: MediaResourceBudget = {
   maxSourceCacheBytes: 64 * 1024 * 1024,
   maxDecodedImageBytes: 256 * 1024 * 1024,
   maxVideoDecoders: 8,
+  maxAssetBytes: 512 * 1024 * 1024,
+  maxAudioAnalysisCacheBytes: 64 * 1024 * 1024,
+  maxFontCacheEntries: 32,
+  maxLottieWaitMs: 15_000,
 };
+
+export function resolveMediaResourceBudget(
+  overrides: Partial<MediaResourceBudget> = {},
+): MediaResourceBudget {
+  const budget = { ...defaultMediaResourceBudget, ...overrides };
+  const finiteNonnegative = [
+    "maxSourceCacheBytes",
+    "maxDecodedImageBytes",
+    "maxAssetBytes",
+    "maxAudioAnalysisCacheBytes",
+    "maxLottieWaitMs",
+  ] as const;
+  for (const key of finiteNonnegative) {
+    const value = budget[key];
+    if (value === undefined || !Number.isFinite(value) || value < 0) {
+      throw new Error(`${key} must be a finite non-negative number.`);
+    }
+  }
+  if (
+    !Number.isInteger(budget.maxVideoDecoders) ||
+    budget.maxVideoDecoders < 1
+  ) {
+    throw new Error("maxVideoDecoders must be a positive integer.");
+  }
+  if (
+    budget.maxFontCacheEntries === undefined ||
+    !Number.isInteger(budget.maxFontCacheEntries) ||
+    budget.maxFontCacheEntries < 1
+  ) {
+    throw new Error("maxFontCacheEntries must be a positive integer.");
+  }
+  return budget;
+}
 
 export type Canvas2DExtensionDrawContext<
   P = unknown,
@@ -149,6 +226,7 @@ export type Canvas2DPreflightIssue = {
     | "conic_gradient_unavailable"
     | "video_decoder_budget_exceeded"
     | "decoded_image_budget_estimate_exceeded"
+    | "asset_byte_budget_exceeded"
     | "video_decoder_unavailable";
   message: string;
 };
@@ -198,20 +276,45 @@ export function preflightCanvas2D(
   options: Canvas2DPreflightOptions = {},
 ): Canvas2DPreflightResult {
   const scene = parseScene(sceneInput);
-  const budget = { ...defaultMediaResourceBudget, ...options.budget };
-  const resourceEstimate = estimateMediaResources(scene);
+  const budget = resolveMediaResourceBudget(options.budget);
   const inspection = inspectScene(scene);
+  const extensionPreflight = preflightExtensions(
+    scene,
+    options.extensions ?? createExtensionRegistry(),
+    { renderer: "canvas2d", worker: options.worker },
+  );
+  const reachableAssetIds = collectReachableAssetIds(
+    scene,
+    extensionPreflight.nodes,
+  );
+  const reachableAssets = Array.from(reachableAssetIds)
+    .map((id) => scene.assets[id])
+    .filter((asset): asset is NonNullable<typeof asset> => Boolean(asset));
+  const reachableByType = (type: (typeof reachableAssets)[number]["type"]) =>
+    reachableAssets.filter((asset) => asset.type === type);
+  const reachableImages = reachableByType("image");
+  const reachableVideos = reachableByType("video");
+  const reachableAudio = reachableByType("audio");
+  const reachableFonts = reachableByType("font");
+  const reachableLotties = reachableByType("lottie");
+  const needsAudioDecoder =
+    reachableAudio.length > 0 ||
+    reachableVideos.some((asset) => asset.metadata?.hasAudio === true);
+  const resourceEstimate = estimateMediaResources(
+    scene,
+    extensionPreflight.nodes,
+  );
   const documentObject = globalObject.document;
   const hasDomCanvas = Boolean(documentObject?.createElement);
-  const hasOffscreenCanvas = "OffscreenCanvas" in globalObject;
+  const hasOffscreenCanvas = typeof globalObject.OffscreenCanvas === "function";
   const hasCanvas = hasDomCanvas || hasOffscreenCanvas;
-  const hasImageDecoder = "createImageBitmap" in globalObject;
-  const hasVideoDecoder = "VideoDecoder" in globalObject;
-  const hasAudioDecoder = "AudioDecoder" in globalObject;
-  const hasPath2D = "Path2D" in globalObject;
-  const hasDomMatrix = "DOMMatrix" in globalObject;
+  const hasImageDecoder = typeof globalObject.createImageBitmap === "function";
+  const hasVideoDecoder = typeof globalObject.VideoDecoder === "function";
+  const hasAudioDecoder = typeof globalObject.AudioDecoder === "function";
+  const hasPath2D = typeof globalObject.Path2D === "function";
+  const hasDomMatrix = typeof globalObject.DOMMatrix === "function";
   const hasFontLoading = Boolean(
-    "FontFace" in globalObject &&
+    typeof globalObject.FontFace === "function" &&
     (documentObject?.fonts ||
       (globalObject as Partial<typeof globalThis> & { fonts?: FontFaceSet })
         .fonts),
@@ -239,28 +342,28 @@ export function preflightCanvas2D(
         "Canvas2D rendering needs OffscreenCanvas or a DOM canvas element.",
     });
   }
-  if (inspection.assets.image > 0 && !hasImageDecoder) {
+  if (reachableImages.length > 0 && !hasImageDecoder) {
     issues.push({
       severity: "error",
       code: "image_decoder_unavailable",
       message: "Image assets need createImageBitmap in this renderer.",
     });
   }
-  if (inspection.assets.video > 0 && !hasVideoDecoder) {
+  if (reachableVideos.length > 0 && !hasVideoDecoder) {
     issues.push({
       severity: "error",
       code: "video_decoder_unavailable",
       message: "Video assets need the WebCodecs VideoDecoder API.",
     });
   }
-  if (inspection.assets.audio > 0 && !hasAudioDecoder) {
+  if (needsAudioDecoder && !hasAudioDecoder) {
     issues.push({
       severity: "error",
       code: "audio_decoder_unavailable",
       message: "Audio assets need the WebCodecs AudioDecoder API.",
     });
   }
-  if (inspection.assets.font > 0 && !hasFontLoading) {
+  if (reachableFonts.length > 0 && !hasFontLoading) {
     issues.push({
       severity: "error",
       code: "font_loading_unavailable",
@@ -268,7 +371,7 @@ export function preflightCanvas2D(
         "Font assets need FontFace plus document.fonts or a worker FontFaceSet.",
     });
   }
-  if (inspection.capabilities.hasLottie && !hasDomCanvas) {
+  if (reachableLotties.length > 0 && !hasDomCanvas) {
     issues.push({
       severity: "error",
       code: "lottie_requires_dom",
@@ -336,11 +439,22 @@ export function preflightCanvas2D(
       message: `Declared image dimensions estimate ${resourceEstimate.estimatedDecodedImageBytes} decoded bytes, above the budget of ${budget.maxDecodedImageBytes}.`,
     });
   }
-  const extensionPreflight = preflightExtensions(
-    scene,
-    options.extensions ?? createExtensionRegistry(),
-    { renderer: "canvas2d", worker: options.worker },
-  );
+  const maxAssetBytes =
+    budget.maxAssetBytes ??
+    defaultMediaResourceBudget.maxAssetBytes ??
+    Infinity;
+  for (const asset of reachableAssets) {
+    if (
+      asset.metadata?.byteLength !== undefined &&
+      asset.metadata.byteLength > maxAssetBytes
+    ) {
+      issues.push({
+        severity: "error",
+        code: "asset_byte_budget_exceeded",
+        message: `Asset "${asset.id}" declares ${asset.metadata.byteLength} bytes, above the per-asset budget of ${maxAssetBytes}. Use a proxy or raise maxAssetBytes.`,
+      });
+    }
+  }
   issues.push(...extensionPreflight.issues);
   for (const resolvedNode of extensionPreflight.nodes) {
     if (!isCanvas2DExtensionAdapter(resolvedNode.rendererAdapter)) {
@@ -357,11 +471,11 @@ export function preflightCanvas2D(
     renderer: "canvas2d",
     requirements: {
       canvas: true,
-      imageDecoder: inspection.assets.image > 0,
-      videoDecoder: inspection.assets.video > 0,
-      audioDecoder: inspection.assets.audio > 0,
-      fontLoading: inspection.assets.font > 0,
-      domLottie: inspection.capabilities.hasLottie,
+      imageDecoder: reachableImages.length > 0,
+      videoDecoder: reachableVideos.length > 0,
+      audioDecoder: needsAudioDecoder,
+      fontLoading: reachableFonts.length > 0,
+      domLottie: reachableLotties.length > 0,
       extensions: inspection.capabilities.hasExtensions,
       path2d: needsPath2D,
       domMatrix: inspection.capabilities.hasVectorPaths,
@@ -495,6 +609,41 @@ export type AudioClip = {
   input: Input;
 };
 
+type MediabunnyInputInternals = {
+  _demuxerPromise?: Promise<{ dispose(): void }> | null;
+};
+
+/**
+ * Disposes pinned Mediabunny Inputs without its 1.46 rejected-demuxer `.then()`
+ * creating an unhandled child promise. Remove this shim after the dependency
+ * handles the rejection internally.
+ */
+export function disposeMediaInputSafely(input: Input): void {
+  if (input.disposed) return;
+  const internals = input as Input & MediabunnyInputInternals;
+  const demuxer = internals._demuxerPromise ?? null;
+  if (demuxer) internals._demuxerPromise = null;
+  try {
+    input.dispose();
+  } finally {
+    if (demuxer) {
+      void demuxer
+        .then(
+          (resolved) => {
+            try {
+              resolved.dispose();
+            } catch {
+              // Built-in cleanup aggregates resources it owns; this late
+              // dependency continuation has no synchronous caller.
+            }
+          },
+          () => undefined,
+        )
+        .catch(() => undefined);
+    }
+  }
+}
+
 /** Copies decoded PCM without constructing a Web Audio AudioBuffer. */
 function copyAudioSampleChannels(sample: AudioSample): Float32Array[] {
   return Array.from({ length: sample.numberOfChannels }, (_, planeIndex) => {
@@ -521,10 +670,18 @@ export type AudioAnalysis = {
   waveform: AudioWaveform;
 };
 
-export type AudioAnalysisCache = Map<string, AudioAnalysis>;
+export type AudioAnalysisCache = Map<string, AudioAnalysis> & {
+  getOrCreate?(
+    key: string,
+    loader: () => AudioAnalysis | Promise<AudioAnalysis>,
+  ): Promise<AudioAnalysis>;
+};
 
-export function createAudioAnalysisCache(): AudioAnalysisCache {
-  return new Map();
+export function createAudioAnalysisCache(
+  maxBytes = defaultMediaResourceBudget.maxAudioAnalysisCacheBytes ??
+    64 * 1024 * 1024,
+): AudioAnalysisCache {
+  return new BoundedAudioAnalysisCache<AudioAnalysis>(maxBytes);
 }
 
 const sharedAudioAnalysisCache = createAudioAnalysisCache();
@@ -548,6 +705,58 @@ export type LottieClip = {
   canvas: HTMLCanvasElement;
 };
 
+type LottieReadyAnimation = LottieClip["animation"] & {
+  addEventListener(name: string, handler: (...args: unknown[]) => void): void;
+  removeEventListener(
+    name: string,
+    handler: (...args: unknown[]) => void,
+  ): void;
+};
+
+/** @internal Cancellable readiness gate shared by DOM Lottie loading tests. */
+export async function waitForLottieReady(
+  animation: LottieReadyAnimation,
+  signal?: AbortSignal,
+  timeoutMs = 15_000,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const finish = (error?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", onAbort);
+      animation.removeEventListener("DOMLoaded", onReady);
+      animation.removeEventListener("data_failed", onFailed);
+      if (error) reject(error);
+      else resolve();
+    };
+    const onReady = () => finish();
+    const onFailed = (error?: unknown) =>
+      finish(
+        error instanceof Error
+          ? error
+          : new Error("lottie-web reported data_failed."),
+      );
+    const onAbort = () => {
+      try {
+        assertNotAborted(signal);
+      } catch (error) {
+        finish(error);
+      }
+    };
+    const timeout = setTimeout(
+      () =>
+        finish(new Error(`Lottie readiness timed out after ${timeoutMs}ms.`)),
+      timeoutMs,
+    );
+    animation.addEventListener("DOMLoaded", onReady);
+    animation.addEventListener("data_failed", onFailed);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+  });
+}
+
 /** A decoded video frame staged for one scene frame by prepareFrame(). */
 export type PreparedVideoFrame = {
   image: HTMLCanvasElement | OffscreenCanvas;
@@ -555,6 +764,16 @@ export type PreparedVideoFrame = {
   height: number;
   /** The scene frame this image was prepared for; renderStill rejects stale frames. */
   sceneFrame: number;
+};
+
+export type ResolvedAssetSource = {
+  assetId: string;
+  declaredSource: string;
+  resolvedSource: string;
+  contentKey: string;
+  usingProxy: boolean;
+  sourceKind: AssetSourceKind;
+  declarationKey: string;
 };
 
 /**
@@ -595,13 +814,105 @@ export type ResolvedAssets = {
     reachableAssets: number;
     declaredAssets: number;
   };
+  /** Source identity used to reject stale reuse after Scene asset changes. */
+  resolvedSources?: Map<string, ResolvedAssetSource>;
 };
+
+type ResolvedAssetsLifecycle = {
+  controller: AbortController;
+  disposed: boolean;
+  disposal?: Promise<void>;
+  abortCleanups: Set<() => void>;
+  fontLeases: Map<string, { release(): void }>;
+};
+
+const resolvedAssetsLifecycles = new WeakMap<
+  ResolvedAssets,
+  ResolvedAssetsLifecycle
+>();
+const framePreparationQueues = new WeakMap<ResolvedAssets, Promise<void>>();
+
+function getResolvedAssetsLifecycle(
+  assets: ResolvedAssets,
+): ResolvedAssetsLifecycle {
+  let lifecycle = resolvedAssetsLifecycles.get(assets);
+  if (!lifecycle) {
+    lifecycle = {
+      controller: new AbortController(),
+      disposed: false,
+      abortCleanups: new Set(),
+      fontLeases: new Map(),
+    };
+    resolvedAssetsLifecycles.set(assets, lifecycle);
+  }
+  return lifecycle;
+}
+
+function assertAssetsAlive(assets: ResolvedAssets): void {
+  if (getResolvedAssetsLifecycle(assets).disposed) {
+    throw new Error(
+      "Resolved assets are disposed; call resolveAssets(scene) for a new lease.",
+    );
+  }
+}
 
 function assertNotAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) {
     throw signal.reason instanceof Error
       ? signal.reason
       : new Error("MotionForge asset resolution was aborted.");
+  }
+}
+
+function combineAbortSignals(signals: Array<AbortSignal | undefined>): {
+  signal: AbortSignal;
+  dispose(): void;
+} {
+  const controller = new AbortController();
+  const cleanups: Array<() => void> = [];
+  const abortFrom = (signal: AbortSignal) => {
+    if (!controller.signal.aborted) controller.abort(signal.reason);
+  };
+  for (const signal of signals) {
+    if (!signal) continue;
+    if (signal.aborted) {
+      abortFrom(signal);
+      break;
+    }
+    const listener = () => abortFrom(signal);
+    signal.addEventListener("abort", listener, { once: true });
+    cleanups.push(() => signal.removeEventListener("abort", listener));
+  }
+  return {
+    signal: controller.signal,
+    dispose: () => cleanups.splice(0).forEach((cleanup) => cleanup()),
+  };
+}
+
+async function awaitWithAbort<T>(
+  promise: Promise<T>,
+  signal: AbortSignal | undefined,
+  onAbort?: () => void | Promise<void>,
+): Promise<T> {
+  assertNotAborted(signal);
+  if (!signal) return promise;
+  let listener: (() => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    listener = () => {
+      void Promise.resolve(onAbort?.()).finally(() => {
+        try {
+          assertNotAborted(signal);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+    signal.addEventListener("abort", listener, { once: true });
+  });
+  try {
+    return await Promise.race([promise, aborted]);
+  } finally {
+    if (listener) signal.removeEventListener("abort", listener);
   }
 }
 
@@ -747,9 +1058,20 @@ export class VideoPlaybackCursor {
   }
 }
 
-// Fonts registered with the environment's FontFaceSet, keyed by id + src, so
-// re-resolving a scene never registers duplicate faces.
-const registeredFonts = new Map<string, FontFace>();
+const sharedFontCaches = new WeakMap<object, FontAssetCache<FontFace>>();
+
+function getSharedFontCache(fontSet: FontFaceSet): FontAssetCache<FontFace> {
+  let cache = sharedFontCaches.get(fontSet);
+  if (!cache) {
+    cache = new FontAssetCache<FontFace>({
+      maxEntries: defaultMediaResourceBudget.maxFontCacheEntries ?? 32,
+      maxBytes: 64 * 1024 * 1024,
+      fontSet,
+    });
+    sharedFontCaches.set(fontSet, cache);
+  }
+  return cache;
+}
 
 /**
  * Fetches and decodes every asset the scene references. Call once per scene
@@ -762,10 +1084,7 @@ export async function resolveAssets(
   options: ResolveAssetsOptions = {},
 ): Promise<ResolvedAssets> {
   const parsed = parseScene(scene);
-  const budget: MediaResourceBudget = {
-    ...defaultMediaResourceBudget,
-    ...options.budget,
-  };
+  const budget = resolveMediaResourceBudget(options.budget);
   assertNotAborted(options.signal);
   const extensionPreflight = preflightExtensions(
     parsed,
@@ -789,205 +1108,478 @@ export async function resolveAssets(
     parsed,
     extensionPreflight.nodes,
   );
+  const reachableFontCount = Array.from(reachableAssetIds).filter(
+    (id) => parsed.assets[id]?.type === "font",
+  ).length;
+  const effectiveFontLimit = options.fontCache
+    ? (budget.maxFontCacheEntries ?? 32)
+    : Math.min(
+        budget.maxFontCacheEntries ?? 32,
+        defaultMediaResourceBudget.maxFontCacheEntries ?? 32,
+      );
+  if (reachableFontCount > effectiveFontLimit) {
+    throw new Error(
+      `Reachable font count ${reachableFontCount} exceeds maxFontCacheEntries. Supply a larger host-owned cache or reduce fonts.`,
+    );
+  }
   const images = new Map<string, ImageBitmap>();
   const fonts = new Map<string, FontFace>();
   const videos = new Map<string, VideoClip>();
   const audio = new Map<string, AudioClip>();
   const lotties = new Map<string, LottieClip>();
-  const resolvedSources = new Map<string, string>();
+  const resolvedSources = new Map<string, ResolvedAssetSource>();
   let decodedImageBytes = 0;
-
-  await Promise.all(
-    Object.values(parsed.assets)
-      .filter((asset) => reachableAssetIds.has(asset.id))
-      .map(async (asset) => {
-        assertNotAborted(options.signal);
-        const src = resolveAssetSource(asset, options.preferProxy ?? false);
-        resolvedSources.set(asset.id, src);
-        try {
-          if (asset.type === "image") {
-            const response = await fetchAsset(src);
-            const image = await decodeImageBlob(await response.blob());
-            decodedImageBytes += image.width * image.height * 4;
-            if (decodedImageBytes > budget.maxDecodedImageBytes) {
-              image.close();
-              throw new Error(
-                `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
-              );
-            }
-            images.set(asset.id, image);
-          } else if (asset.type === "font") {
-            fonts.set(asset.id, await loadFont(asset.id, src));
-          } else if (asset.type === "video") {
-            videos.set(
-              asset.id,
-              await openVideoClip(src, asset.sourceMode ?? "auto", budget),
-            );
-          } else if (asset.type === "audio") {
-            audio.set(
-              asset.id,
-              await openAudioClip(src, asset.sourceMode ?? "auto", budget),
-            );
-          } else if (asset.type === "lottie") {
-            lotties.set(asset.id, await openLottieClip(src));
-          }
-        } catch (cause) {
-          throw new Error(
-            `Failed to load ${asset.type} asset "${asset.id}" from ${truncateSrc(src)}: ${cause instanceof Error ? cause.message : String(cause)}`,
-            { cause },
-          );
-        }
-      }),
-  );
-
-  const assetDefinitions = new Map(Object.entries(parsed.assets));
-  const extensionNodes = new Map<string, ResolvedCanvas2DExtensionNode>();
-  await Promise.all(
-    extensionPreflight.nodes.map(async (resolvedNode) => {
-      assertNotAborted(options.signal);
-      const adapter = extensionAdapters.get(resolvedNode.node.id);
-      if (!adapter) {
-        throw new Error(
-          `Canvas2D extension adapter for node "${resolvedNode.node.id}" disappeared after preflight.`,
-        );
-      }
-      const resolvedAssets = resolvedNode.definition.resolveAssets
-        ? await Promise.resolve(
-            resolvedNode.definition.resolveAssets({
-              scene: parsed,
-              node: resolvedNode.node,
-              params: resolvedNode.params,
-              requirements: resolvedNode.requirements,
-              assets: assetDefinitions,
-              signal: options.signal,
-            }),
-          ).catch((cause: unknown) => {
-            throw new Error(
-              `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
-              { cause },
-            );
-          })
-        : undefined;
-      extensionNodes.set(resolvedNode.node.id, {
-        node: resolvedNode.node,
-        definition: resolvedNode.definition,
-        params: resolvedNode.params,
-        requirements: resolvedNode.requirements,
-        adapter,
-        resolvedAssets,
-      });
-    }),
-  );
-
-  const spectrumAssetIds = collectSpectrumAssetIds(parsed.nodes);
-  const analysisAssetIds = new Set([
-    ...(options.analyzeWaveforms ? audio.keys() : []),
-    ...spectrumAssetIds,
-  ]);
-  const audioSpectra = new Map<string, AudioSpectrum>();
-  const audioWaveforms = new Map<string, AudioWaveform>();
-  const analysisCache = options.analysisCache ?? sharedAudioAnalysisCache;
-  await Promise.all(
-    Array.from(analysisAssetIds).map(async (assetId) => {
-      const clip = audio.get(assetId);
-
-      if (!clip) {
-        throw new Error(
-          `Audio-reactive effect references audio asset "${assetId}", but that asset could not be resolved.`,
-        );
-      }
-
-      const analysisKey = `${resolvedSources.get(assetId) ?? assetId}\u0000${parsed.fps}\u0000${parsed.duration}`;
-      let analysis = analysisCache.get(analysisKey);
-      const analysisDuration = Math.min(
-        clip.duration,
-        parsed.duration / parsed.fps,
-      );
-      if (!analysis || (spectrumAssetIds.has(assetId) && !analysis.spectrum)) {
-        analysis = spectrumAssetIds.has(assetId)
-          ? await analyzeAudio(clip, analysisDuration, parsed.fps)
-          : {
-              waveform: await analyzeAudioWaveform(clip, analysisDuration),
-            };
-        analysisCache.set(analysisKey, analysis);
-      }
-      if (spectrumAssetIds.has(assetId) && analysis.spectrum) {
-        audioSpectra.set(assetId, analysis.spectrum);
-      }
-      audioWaveforms.set(assetId, analysis.waveform);
-    }),
-  );
-
-  return {
+  const resolvedAssets: ResolvedAssets = {
     images,
     fonts,
     videos,
     videoFrames: new Map(),
     audio,
-    audioSpectra,
-    audioWaveforms,
+    audioSpectra: new Map(),
+    audioWaveforms: new Map(),
     lotties,
     lottieFrames: new Map(),
-    extensionNodes,
+    extensionNodes: new Map(),
     extensionFrames: new Map(),
     budget,
     resourceUsage: {
-      decodedImageBytes,
+      decodedImageBytes: 0,
       reachableAssets: reachableAssetIds.size,
       declaredAssets: Object.keys(parsed.assets).length,
     },
+    resolvedSources,
   };
+  const lifecycle = getResolvedAssetsLifecycle(resolvedAssets);
+  const failureController = new AbortController();
+  const combined = combineAbortSignals([
+    options.signal,
+    failureController.signal,
+    lifecycle.controller.signal,
+  ]);
+  const signal = combined.signal;
+  const assetPolicy = withAssetByteBudget(
+    options.assetPolicy,
+    budget.maxAssetBytes ??
+      defaultMediaResourceBudget.maxAssetBytes ??
+      512 * 1024 * 1024,
+  );
+
+  try {
+    await runResolutionTasks(
+      Object.values(parsed.assets)
+        .filter((asset) => reachableAssetIds.has(asset.id))
+        .map((asset) => async () => {
+          assertNotAborted(signal);
+          const preferAssetProxy =
+            (options.preferProxy ?? false) && asset.type !== "font";
+          const request = await prepareAssetRequest(asset, {
+            policy: assetPolicy,
+            signal,
+            preferProxy: preferAssetProxy,
+          });
+          const src = request.source;
+          const declaredSource =
+            request.sourceKind === "declared-proxy"
+              ? (asset.proxy?.src ?? request.source)
+              : request.sourceKind === "primary"
+                ? asset.src
+                : request.source;
+          resolvedSources.set(asset.id, {
+            assetId: asset.id,
+            declaredSource,
+            resolvedSource: src,
+            contentKey: request.contentKey,
+            usingProxy:
+              request.sourceKind === "declared-proxy" ||
+              request.sourceKind === "derived-proxy",
+            sourceKind: request.sourceKind,
+            declarationKey: request.declarationKey,
+          });
+          try {
+            if (asset.type === "image") {
+              const image = await decodeImageBlob(
+                await readPreparedAssetBlob(asset, request, signal),
+              );
+              if (signal.aborted) {
+                image.close();
+                assertNotAborted(signal);
+              }
+              decodedImageBytes += image.width * image.height * 4;
+              if (decodedImageBytes > budget.maxDecodedImageBytes) {
+                image.close();
+                throw new Error(
+                  `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
+                );
+              }
+              images.set(asset.id, image);
+            } else if (asset.type === "font") {
+              const lease = await loadFont(
+                asset.id,
+                asset,
+                request,
+                options.fontCache,
+                signal,
+              );
+              lifecycle.fontLeases.set(asset.id, lease);
+              fonts.set(asset.id, lease.face);
+            } else if (asset.type === "video") {
+              videos.set(
+                asset.id,
+                await openVideoClip(
+                  asset,
+                  request,
+                  asset.sourceMode ?? "auto",
+                  budget,
+                  signal,
+                  lifecycle.abortCleanups,
+                ),
+              );
+            } else if (asset.type === "audio") {
+              audio.set(
+                asset.id,
+                await openAudioClip(
+                  asset,
+                  request,
+                  asset.sourceMode ?? "auto",
+                  budget,
+                  signal,
+                  lifecycle.abortCleanups,
+                ),
+              );
+            } else if (asset.type === "lottie") {
+              lotties.set(
+                asset.id,
+                await openLottieClip(
+                  asset,
+                  request,
+                  signal,
+                  budget.maxLottieWaitMs ??
+                    defaultMediaResourceBudget.maxLottieWaitMs ??
+                    15_000,
+                ),
+              );
+            }
+          } catch (cause) {
+            throw new Error(
+              `Failed to load ${asset.type} asset "${asset.id}" from ${truncateSrc(src)}: ${cause instanceof Error ? cause.message : String(cause)}`,
+              { cause },
+            );
+          }
+        }),
+      failureController,
+    );
+
+    const assetDefinitions = new Map(Object.entries(parsed.assets));
+    const extensionNodes = resolvedAssets.extensionNodes ?? new Map();
+    await runResolutionTasks(
+      extensionPreflight.nodes.map((resolvedNode) => async () => {
+        assertNotAborted(signal);
+        const adapter = extensionAdapters.get(resolvedNode.node.id);
+        if (!adapter) {
+          throw new Error(
+            `Canvas2D extension adapter for node "${resolvedNode.node.id}" disappeared after preflight.`,
+          );
+        }
+        const resolvedAssets = resolvedNode.definition.resolveAssets
+          ? await Promise.resolve(
+              resolvedNode.definition.resolveAssets({
+                scene: parsed,
+                node: resolvedNode.node,
+                params: resolvedNode.params,
+                requirements: resolvedNode.requirements,
+                assets: assetDefinitions,
+                signal,
+              }),
+            ).catch((cause: unknown) => {
+              throw new Error(
+                `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
+                { cause },
+              );
+            })
+          : undefined;
+        extensionNodes.set(resolvedNode.node.id, {
+          node: resolvedNode.node,
+          definition: resolvedNode.definition,
+          params: resolvedNode.params,
+          requirements: resolvedNode.requirements,
+          adapter,
+          resolvedAssets,
+        });
+      }),
+      failureController,
+    );
+
+    const spectrumAssetIds = collectSpectrumAssetIds(parsed.nodes);
+    const analysisAssetIds = new Set([
+      ...(options.analyzeWaveforms ? audio.keys() : []),
+      ...spectrumAssetIds,
+    ]);
+    const audioSpectra = resolvedAssets.audioSpectra ?? new Map();
+    const audioWaveforms = resolvedAssets.audioWaveforms ?? new Map();
+    const configuredAnalysisBytes =
+      budget.maxAudioAnalysisCacheBytes ??
+      defaultMediaResourceBudget.maxAudioAnalysisCacheBytes ??
+      64 * 1024 * 1024;
+    const analysisCache =
+      options.analysisCache ??
+      (configuredAnalysisBytes ===
+      defaultMediaResourceBudget.maxAudioAnalysisCacheBytes
+        ? sharedAudioAnalysisCache
+        : createAudioAnalysisCache(configuredAnalysisBytes));
+    const retainedAnalyses = new Set<AudioAnalysis>();
+    let retainedAnalysisBytes = 0;
+    await runResolutionTasksSequential(
+      Array.from(analysisAssetIds).map((assetId) => async () => {
+        assertNotAborted(signal);
+        const clip = audio.get(assetId);
+
+        if (!clip) {
+          throw new Error(
+            `Audio-reactive effect references audio asset "${assetId}", but that asset could not be resolved.`,
+          );
+        }
+
+        const needsSpectrum = spectrumAssetIds.has(assetId);
+        const contentKey =
+          resolvedSources.get(assetId)?.contentKey ?? `asset:${assetId}`;
+        const analysisKey = `${contentKey}\u0000audio-analysis-v1\u0000${needsSpectrum ? "spectrum" : "waveform"}\u0000${parsed.fps}\u0000${parsed.duration}`;
+        const analysisDuration = Math.min(
+          clip.duration,
+          parsed.duration / parsed.fps,
+        );
+        const createAnalysis = async (): Promise<AudioAnalysis> => {
+          const analysis = needsSpectrum
+            ? await analyzeAudio(clip, analysisDuration, parsed.fps, signal)
+            : {
+                waveform: await analyzeAudioWaveform(
+                  clip,
+                  analysisDuration,
+                  2048,
+                  signal,
+                ),
+              };
+          assertNotAborted(signal);
+          return analysis;
+        };
+        let analysis: AudioAnalysis;
+        if (analysisCache.getOrCreate) {
+          analysis = await analysisCache.getOrCreate(
+            analysisKey,
+            createAnalysis,
+          );
+        } else {
+          analysis = analysisCache.get(analysisKey) ?? (await createAnalysis());
+          analysisCache.set(analysisKey, analysis);
+        }
+        if (!retainedAnalyses.has(analysis)) {
+          retainedAnalyses.add(analysis);
+          retainedAnalysisBytes +=
+            analysis.waveform.values.byteLength +
+            (analysis.spectrum?.values.byteLength ?? 0);
+          if (retainedAnalysisBytes > configuredAnalysisBytes) {
+            throw new Error(
+              `Resolved audio analysis exceeds the ${configuredAnalysisBytes}-byte budget. Analyze fewer assets or raise maxAudioAnalysisCacheBytes.`,
+            );
+          }
+        }
+        if (needsSpectrum && analysis.spectrum) {
+          audioSpectra.set(assetId, analysis.spectrum);
+        }
+        audioWaveforms.set(assetId, analysis.waveform);
+      }),
+      failureController,
+    );
+
+    if (resolvedAssets.resourceUsage) {
+      resolvedAssets.resourceUsage.decodedImageBytes = decodedImageBytes;
+    }
+    assertNotAborted(signal);
+    lifecycle.abortCleanups.forEach((cleanup) => cleanup());
+    lifecycle.abortCleanups.clear();
+    return resolvedAssets;
+  } catch (cause) {
+    if (!failureController.signal.aborted) failureController.abort(cause);
+    try {
+      await disposeAssetsAsync(resolvedAssets);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [cause, cleanupError],
+        "MotionForge asset resolution failed and rollback reported errors.",
+        { cause },
+      );
+    }
+    throw cause;
+  } finally {
+    combined.dispose();
+  }
+}
+
+async function runResolutionTasks(
+  tasks: Array<() => Promise<void>>,
+  failureController: AbortController,
+): Promise<void> {
+  const results = await Promise.allSettled(
+    tasks.map(async (task) => {
+      try {
+        await task();
+      } catch (error) {
+        if (!failureController.signal.aborted) failureController.abort(error);
+        throw error;
+      }
+    }),
+  );
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+  if (failed) {
+    throw failureController.signal.aborted
+      ? failureController.signal.reason
+      : failed.reason;
+  }
+}
+
+async function runResolutionTasksSequential(
+  tasks: Array<() => Promise<void>>,
+  failureController: AbortController,
+): Promise<void> {
+  for (const task of tasks) {
+    try {
+      await task();
+    } catch (error) {
+      if (!failureController.signal.aborted) failureController.abort(error);
+      throw error;
+    }
+  }
 }
 
 /**
- * Releases decoder and file resources held by resolved assets (video and
- * audio inputs). Call when a scene's assets are no longer needed.
+ * Starts best-effort disposal for backwards compatibility. New lifecycle
+ * owners should await disposeAssetsAsync() so decoder shutdown completes
+ * before the underlying Inputs are closed.
  */
 export function disposeAssets(assets: ResolvedAssets): void {
-  const disposalErrors: unknown[] = [];
-  Array.from(assets.extensionNodes?.values() ?? []).forEach((runtime) => {
-    try {
-      runtime.definition.disposeAssets?.(runtime.resolvedAssets);
-    } catch (error) {
-      disposalErrors.push(error);
+  void disposeAssetsAsync(assets).catch(() => {
+    // The legacy void API has nowhere to deliver asynchronous teardown errors.
+  });
+}
+
+/** Transactional, idempotent teardown for every built-in and extension resource. */
+export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
+  const lifecycle = getResolvedAssetsLifecycle(assets);
+  if (lifecycle.disposal) return lifecycle.disposal;
+  lifecycle.disposed = true;
+  lifecycle.controller.abort(
+    createAbortError("Resolved assets were disposed."),
+  );
+
+  lifecycle.disposal = (async () => {
+    const preparation = framePreparationQueues.get(assets);
+    if (preparation) await preparation.catch(() => undefined);
+
+    const disposalErrors: unknown[] = [];
+    const extensionDisposals: Array<Promise<void>> = [];
+    const cursorDisposals: Array<Promise<void>> = [];
+    const videos = Array.from(assets.videos.values());
+    const audio = Array.from(assets.audio.values());
+
+    lifecycle.abortCleanups.forEach((cleanup) => {
+      try {
+        cleanup();
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+    lifecycle.abortCleanups.clear();
+
+    Array.from(assets.extensionNodes?.values() ?? []).forEach((runtime) => {
+      try {
+        extensionDisposals.push(
+          Promise.resolve(
+            runtime.definition.disposeAssets?.(runtime.resolvedAssets),
+          ),
+        );
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+    Array.from(assets.videoCursors?.values() ?? []).forEach((cursor) => {
+      try {
+        cursorDisposals.push(cursor.dispose());
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+    assets.images.forEach((image) => {
+      try {
+        image.close();
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+    lifecycle.fontLeases.forEach((lease) => {
+      try {
+        lease.release();
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+    Array.from(assets.lotties.values()).forEach((clip) => {
+      try {
+        clip.animation.destroy();
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
+
+    assets.extensionNodes?.clear();
+    assets.extensionFrames?.clear();
+    assets.images.clear();
+    assets.fonts.clear();
+    lifecycle.fontLeases.clear();
+    assets.videoCursors?.clear();
+    assets.videos.clear();
+    assets.videoFrames.clear();
+    assets.audio.clear();
+    assets.audioSpectra?.clear();
+    assets.audioWaveforms?.clear();
+    assets.lotties.clear();
+    assets.lottieFrames.clear();
+    assets.resolvedSources?.clear();
+
+    for (const result of await Promise.allSettled([
+      ...extensionDisposals,
+      ...cursorDisposals,
+    ])) {
+      if (result.status === "rejected") disposalErrors.push(result.reason);
     }
-  });
-  assets.extensionNodes?.clear();
-  assets.extensionFrames?.clear();
-  assets.images.forEach((image) => image.close());
-  assets.images.clear();
-  assets.fonts.clear();
-  Array.from(assets.videoCursors?.values() ?? []).forEach((cursor) => {
-    void cursor.dispose();
-  });
-  assets.videoCursors?.clear();
 
-  Array.from(assets.videos.values()).forEach((clip) => {
-    clip.input.dispose();
-  });
+    // Cursors must stop before their shared Inputs are closed.
+    [...videos, ...audio].forEach((clip) => {
+      try {
+        disposeMediaInputSafely(clip.input);
+      } catch (error) {
+        disposalErrors.push(error);
+      }
+    });
 
-  Array.from(assets.audio.values()).forEach((clip) => {
-    clip.input.dispose();
-  });
+    if (disposalErrors.length > 0) {
+      throw new AggregateError(
+        disposalErrors,
+        "One or more MotionForge media resources failed to dispose.",
+      );
+    }
+  })();
 
-  Array.from(assets.lotties.values()).forEach((clip) => {
-    clip.animation.destroy();
-  });
+  return lifecycle.disposal;
+}
 
-  assets.videos.clear();
-  assets.videoFrames.clear();
-  assets.audio.clear();
-  assets.audioSpectra?.clear();
-  assets.audioWaveforms?.clear();
-  assets.lotties.clear();
-  assets.lottieFrames.clear();
-
-  if (disposalErrors.length > 0) {
-    throw new AggregateError(
-      disposalErrors,
-      "One or more MotionForge extension resources failed to dispose.",
-    );
+function createAbortError(message: string): Error {
+  if (typeof DOMException === "function") {
+    return new DOMException(message, "AbortError");
   }
+  const error = new Error(message);
+  error.name = "AbortError";
+  return error;
 }
 
 export function collectReachableAssetIds(
@@ -1018,11 +1610,39 @@ export function collectReachableAssetIds(
   return ids;
 }
 
+/** Rejects reuse when a Scene asset id now points at different source content. */
+export function assertResolvedAssetsCompatible(
+  sceneInput: unknown,
+  assets: ResolvedAssets,
+): void {
+  const scene = parseScene(sceneInput);
+  assets.resolvedSources?.forEach((resolved, assetId) => {
+    const current = scene.assets[assetId];
+    if (!current) {
+      throw new Error(
+        `Resolved asset "${assetId}" is absent from the current Scene. Resolve a new asset lease.`,
+      );
+    }
+    if (
+      current.metadata?.contentHash &&
+      current.metadata.contentHash === resolved.contentKey
+    ) {
+      return;
+    }
+    if (assetDeclarationKey(current) !== resolved.declarationKey) {
+      throw new Error(
+        `Scene asset "${assetId}" changed source after resolution. Resolve assets again or provide a stable metadata.contentHash through the host policy.`,
+      );
+    }
+  });
+}
+
 export function estimateMediaResources(
   sceneInput: unknown,
+  extensionNodes: readonly ResolvedExtensionNode[] = [],
 ): MediaResourceEstimate {
   const scene = parseScene(sceneInput);
-  const reachable = collectReachableAssetIds(scene);
+  const reachable = collectReachableAssetIds(scene, extensionNodes);
   const events: Array<{ frame: number; delta: number }> = [];
   const visit = (
     nodes: Scene["nodes"],
@@ -1078,13 +1698,75 @@ export function estimateMediaResources(
   };
 }
 
-function resolveAssetSource(
-  asset: Scene["assets"][string],
-  preferProxy: boolean,
-): string {
-  return preferProxy && asset.type !== "font" && asset.proxy?.src
-    ? asset.proxy.src
-    : asset.src;
+function withAssetByteBudget(
+  policy: AssetPolicy | undefined,
+  maximum: number,
+): AssetPolicy {
+  const base = policy ?? {};
+  return {
+    ...base,
+    maxBytes: (asset, context) => {
+      const configured =
+        typeof base.maxBytes === "function"
+          ? base.maxBytes(asset, context)
+          : base.maxBytes;
+      return Math.min(maximum, configured ?? Number.POSITIVE_INFINITY);
+    },
+  };
+}
+
+function withoutSignal(init: RequestInit): Omit<RequestInit, "signal"> {
+  const { signal: _signal, ...rest } = init;
+  return rest;
+}
+
+async function readPreparedAssetBytes(
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  signal?: AbortSignal,
+): Promise<Uint8Array> {
+  const response = await fetchPreparedAssetResponse(asset, request, signal);
+  return readResponseBytes(response, {
+    maxBytes: request.maxBytes,
+    signal,
+  });
+}
+
+async function fetchPreparedAssetResponse(
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  signal?: AbortSignal,
+): Promise<Response> {
+  return fetchAssetBounded(asset, {
+    policy: request.policy,
+    signal,
+    source: request.source,
+    requestInit: withoutSignal(request.init),
+  });
+}
+
+async function readPreparedAssetBlob(
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const response = await fetchPreparedAssetResponse(asset, request, signal);
+  const bytes = await readResponseBytes(response, {
+    maxBytes: request.maxBytes,
+    signal,
+  });
+  return new Blob([ownedArrayBuffer(bytes)], {
+    type:
+      asset.metadata?.mimeType ??
+      response.headers.get("content-type")?.split(";", 1)[0] ??
+      "",
+  });
+}
+
+function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
 }
 
 function collectSpectrumAssetIds(nodes: Scene["nodes"]): Set<string> {
@@ -1116,7 +1798,9 @@ async function analyzeAudio(
   clip: AudioClip,
   durationSeconds: number,
   sceneFps: number,
+  signal?: AbortSignal,
 ): Promise<AudioAnalysis> {
+  assertNotAborted(signal);
   const sampleCount = Math.max(
     1,
     Math.ceil(durationSeconds * SPECTRUM_SAMPLE_RATE),
@@ -1125,6 +1809,7 @@ async function analyzeAudio(
 
   for await (const sample of clip.sink.samples(0, durationSeconds)) {
     try {
+      assertNotAborted(signal);
       const sourceRate = sample.sampleRate;
       const channels = copyAudioSampleChannels(sample);
       const startIndex = Math.max(
@@ -1170,6 +1855,7 @@ async function analyzeAudio(
   const magnitudes = new Float64Array(SPECTRUM_FFT_SIZE / 2);
 
   for (let frame = 0; frame < frameCount; frame += 1) {
+    if (frame % 8 === 0) assertNotAborted(signal);
     const center = Math.round((frame / fps) * SPECTRUM_SAMPLE_RATE);
     const start = center - Math.floor(SPECTRUM_FFT_SIZE / 2);
 
@@ -1248,16 +1934,20 @@ async function analyzeAudioWaveform(
   clip: AudioClip,
   duration: number,
   pointCount = 2048,
+  signal?: AbortSignal,
 ): Promise<AudioWaveform> {
+  assertNotAborted(signal);
   const values = new Float32Array(Math.max(1, pointCount));
   for await (const sample of clip.sink.samples(0, duration)) {
     try {
+      assertNotAborted(signal);
       const channels = copyAudioSampleChannels(sample);
       for (
         let sampleIndex = 0;
         sampleIndex < sample.numberOfFrames;
         sampleIndex += 1
       ) {
+        if (sampleIndex % 4096 === 0) assertNotAborted(signal);
         const at = sample.timestamp + sampleIndex / sample.sampleRate;
         if (at < 0 || at >= duration) continue;
         const point = Math.min(
@@ -1312,84 +2002,127 @@ function fftInPlace(real: Float64Array, imag: Float64Array): void {
 }
 
 async function openAudioClip(
-  src: string,
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
   sourceMode: "auto" | "stream" | "buffer",
   budget: MediaResourceBudget,
+  signal?: AbortSignal,
+  abortCleanups?: Set<() => void>,
 ): Promise<AudioClip> {
   const input = new Input({
     formats: ALL_FORMATS,
-    source: await createMediaSource(src, sourceMode, budget),
+    source: await createMediaSource(asset, request, sourceMode, budget, signal),
   });
-  const track = await input.getPrimaryAudioTrack();
+  const unlinkAbort = disposeInputOnAbort(input, signal);
+  try {
+    const track = await input.getPrimaryAudioTrack();
+    assertNotAborted(signal);
+    if (!track) {
+      throw new Error("the file has no audio track");
+    }
 
-  if (!track) {
-    input.dispose();
-    throw new Error("the file has no audio track");
+    const duration = await input.computeDuration([track]);
+    assertNotAborted(signal);
+    if (abortCleanups) abortCleanups.add(unlinkAbort);
+    else unlinkAbort();
+    return {
+      duration,
+      sampleRate: track.sampleRate,
+      numberOfChannels: track.numberOfChannels,
+      sink: new AudioSampleSink(track),
+      input,
+    };
+  } catch (error) {
+    unlinkAbort();
+    disposeMediaInputSafely(input);
+    throw error;
   }
-
-  return {
-    duration: await input.computeDuration([track]),
-    sampleRate: track.sampleRate,
-    numberOfChannels: track.numberOfChannels,
-    sink: new AudioSampleSink(track),
-    input,
-  };
 }
 
 async function openVideoClip(
-  src: string,
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
   sourceMode: "auto" | "stream" | "buffer",
   budget: MediaResourceBudget,
+  signal?: AbortSignal,
+  abortCleanups?: Set<() => void>,
 ): Promise<VideoClip> {
   const input = new Input({
     formats: ALL_FORMATS,
-    source: await createMediaSource(src, sourceMode, budget),
+    source: await createMediaSource(asset, request, sourceMode, budget, signal),
   });
-  const track = await input.getPrimaryVideoTrack();
+  const unlinkAbort = disposeInputOnAbort(input, signal);
+  try {
+    const track = await input.getPrimaryVideoTrack();
+    assertNotAborted(signal);
+    if (!track) {
+      throw new Error("the file has no video track");
+    }
 
-  if (!track) {
-    input.dispose();
-    throw new Error("the file has no video track");
+    const duration = await input.computeDuration([track]);
+
+    // Silent clips are normal; only wire audio when a track exists. The audio
+    // sink shares the clip's input, so disposal releases both at once.
+    const audioTrack = await input.getPrimaryAudioTrack();
+    assertNotAborted(signal);
+    const audio = audioTrack
+      ? {
+          duration: await input.computeDuration([audioTrack]),
+          sampleRate: audioTrack.sampleRate,
+          numberOfChannels: audioTrack.numberOfChannels,
+          sink: new AudioSampleSink(audioTrack),
+        }
+      : undefined;
+    assertNotAborted(signal);
+    if (abortCleanups) abortCleanups.add(unlinkAbort);
+    else unlinkAbort();
+    return {
+      duration,
+      width: track.displayWidth,
+      height: track.displayHeight,
+      track,
+      input,
+      ...(audio ? { audio } : {}),
+    };
+  } catch (error) {
+    unlinkAbort();
+    disposeMediaInputSafely(input);
+    throw error;
   }
-
-  const duration = await input.computeDuration([track]);
-
-  // Silent clips are normal; only wire audio when a track exists. The audio
-  // sink shares the clip's input, so disposeAssets() releases both at once.
-  const audioTrack = await input.getPrimaryAudioTrack();
-  const audio = audioTrack
-    ? {
-        duration: await input.computeDuration([audioTrack]),
-        sampleRate: audioTrack.sampleRate,
-        numberOfChannels: audioTrack.numberOfChannels,
-        sink: new AudioSampleSink(audioTrack),
-      }
-    : undefined;
-
-  return {
-    duration,
-    width: track.displayWidth,
-    height: track.displayHeight,
-    track,
-    input,
-    ...(audio ? { audio } : {}),
-  };
 }
 
 async function createMediaSource(
-  src: string,
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
   sourceMode: "auto" | "stream" | "buffer",
   budget: MediaResourceBudget,
+  signal?: AbortSignal,
 ): Promise<BlobSource | UrlSource> {
+  assertNotAborted(signal);
+  const src = request.source;
   const shouldBuffer =
     sourceMode === "buffer" ||
     (sourceMode === "auto" &&
       (src.startsWith("data:") || src.startsWith("blob:")));
   if (shouldBuffer) {
-    const response = await fetchAsset(src);
-    return new BlobSource(await response.blob());
+    return new BlobSource(await readPreparedAssetBlob(asset, request, signal));
   }
-  return new UrlSource(src, { maxCacheSize: budget.maxSourceCacheBytes });
+  return new UrlSource(src, {
+    maxCacheSize: budget.maxSourceCacheBytes,
+    requestInit: withoutSignal(request.init),
+    fetchFn: createBoundedAssetFetch(asset, {
+      policy: request.policy,
+      source: request.source,
+      requestInit: withoutSignal(request.init),
+    }),
+  });
+}
+
+function disposeInputOnAbort(input: Input, signal?: AbortSignal): () => void {
+  if (!signal) return () => undefined;
+  const dispose = () => disposeMediaInputSafely(input);
+  signal.addEventListener("abort", dispose, { once: true });
+  return () => signal.removeEventListener("abort", dispose);
 }
 
 /**
@@ -1419,12 +2152,54 @@ export function videoSourceTime(
  * frame and stages them in assets.videoFrames. Must be awaited before
  * renderStill() for scenes containing video nodes; a no-op otherwise.
  */
+export type PrepareFrameOptions = { signal?: AbortSignal };
+
 export async function prepareFrame(
   scene: Scene,
   frame: number,
   assets: ResolvedAssets,
+  options: PrepareFrameOptions = {},
 ): Promise<ResolvedScene> {
+  assertAssetsAlive(assets);
+  const lifecycle = getResolvedAssetsLifecycle(assets);
+  const combined = combineAbortSignals([
+    options.signal,
+    lifecycle.controller.signal,
+  ]);
+  const previous = framePreparationQueues.get(assets) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const queued = previous.catch(() => undefined).then(() => gate);
+  framePreparationQueues.set(assets, queued);
+  void queued.then(() => {
+    if (framePreparationQueues.get(assets) === queued) {
+      framePreparationQueues.delete(assets);
+    }
+  });
+  try {
+    await awaitWithAbort(
+      previous.catch(() => undefined),
+      combined.signal,
+    );
+    assertAssetsAlive(assets);
+    return await prepareFrameExclusive(scene, frame, assets, combined.signal);
+  } finally {
+    release();
+    combined.dispose();
+  }
+}
+
+async function prepareFrameExclusive(
+  scene: Scene,
+  frame: number,
+  assets: ResolvedAssets,
+  signal: AbortSignal,
+): Promise<ResolvedScene> {
+  assertNotAborted(signal);
   const parsed = parseScene(scene);
+  assertResolvedAssetsCompatible(parsed, assets);
   const resolved = evaluateScene(parsed, frame);
 
   if (
@@ -1435,7 +2210,14 @@ export async function prepareFrame(
     return resolved;
   }
 
+  const failureController = new AbortController();
+  const frameAbort = combineAbortSignals([signal, failureController.signal]);
+  const frameSignal = frameAbort.signal;
+
   const tasks: Array<Promise<void>> = [];
+  const nextVideoFrames = new Map<string, PreparedVideoFrame>();
+  const nextLottieFrames = new Map<string, PreparedVideoFrame>();
+  const nextExtensionFrames = new Map<string, PreparedExtensionFrame>();
   const cursors = (assets.videoCursors ??= new Map<
     string,
     VideoPlaybackCursor
@@ -1443,6 +2225,7 @@ export async function prepareFrame(
   const activeCursorKeys = new Set<string>();
 
   const visit = (node: ResolvedNode): void => {
+    assertNotAborted(frameSignal);
     if (node.type === "extension" && node.extension) {
       const runtime = assets.extensionNodes?.get(node.id);
       if (!runtime) {
@@ -1461,10 +2244,12 @@ export async function prepareFrame(
               resolvedAssets: runtime.resolvedAssets,
               frame: resolved.frame,
               localFrame: node.localFrame,
+              signal: frameSignal,
             }),
           )
             .then((value) => {
-              (assets.extensionFrames ??= new Map()).set(node.id, {
+              assertNotAborted(frameSignal);
+              nextExtensionFrames.set(node.id, {
                 sceneFrame: resolved.frame,
                 value,
               });
@@ -1520,22 +2305,41 @@ export async function prepareFrame(
         );
         cursors.set(cursorKey, cursor);
       }
+      const activeCursor = cursor;
 
       tasks.push(
-        cursor.frameAt(timestamp).then((wrapped) => {
-          if (!wrapped) {
-            throw new Error(
-              `Video asset "${assetId}" produced no frame at ${timestamp.toFixed(3)}s for node "${node.id}".`,
-            );
-          }
+        awaitWithAbort(
+          activeCursor.frameAt(timestamp),
+          frameSignal,
+          async () => {
+            cursors.delete(cursorKey);
+            await activeCursor.dispose();
+          },
+        )
+          .then((wrapped) => {
+            assertNotAborted(frameSignal);
+            if (!wrapped) {
+              throw new Error(
+                `Video asset "${assetId}" produced no frame at ${timestamp.toFixed(3)}s for node "${node.id}".`,
+              );
+            }
 
-          assets.videoFrames.set(node.id, {
-            image: wrapped.canvas,
-            width: wrapped.canvas.width,
-            height: wrapped.canvas.height,
-            sceneFrame: resolved.frame,
-          });
-        }),
+            nextVideoFrames.set(node.id, {
+              image: wrapped.canvas,
+              width: wrapped.canvas.width,
+              height: wrapped.canvas.height,
+              sceneFrame: resolved.frame,
+            });
+          })
+          .catch(async (cause: unknown) => {
+            cursors.delete(cursorKey);
+            try {
+              await activeCursor.dispose();
+            } catch {
+              // Preserve the decode/abort error; final disposal retries cleanup.
+            }
+            throw cause;
+          }),
       );
     }
 
@@ -1551,6 +2355,7 @@ export async function prepareFrame(
 
       // Seeking is synchronous; the staged copy isolates this node from
       // other nodes sharing the same animation instance at other times.
+      assertNotAborted(frameSignal);
       clip.animation.goToAndStop(
         lottieSourceFrame(
           node.localFrame,
@@ -1581,7 +2386,7 @@ export async function prepareFrame(
 
       stagedContext.clearRect(0, 0, clip.width, clip.height);
       stagedContext.drawImage(clip.canvas, 0, 0);
-      assets.lottieFrames.set(node.id, {
+      nextLottieFrames.set(node.id, {
         image: staged,
         width: clip.width,
         height: clip.height,
@@ -1594,23 +2399,65 @@ export async function prepareFrame(
     }
   };
 
-  for (const node of resolved.nodes) {
-    visit(node);
+  let traversalError: unknown;
+  try {
+    for (const node of resolved.nodes) visit(node);
+  } catch (error) {
+    traversalError = error;
+    failureController.abort(error);
   }
 
   // Decoders are a scarce resource (hardware decode sessions are capped):
   // release cursors for nodes not active at this frame. Reactivation costs
   // one keyframe seek, which the node was paying anyway.
   const disposeTasks: Array<Promise<void>> = [];
-  cursors.forEach((cursor, key) => {
-    if (!activeCursorKeys.has(key)) {
-      disposeTasks.push(cursor.dispose());
-      cursors.delete(key);
-    }
-  });
+  if (traversalError === undefined) {
+    cursors.forEach((cursor, key) => {
+      if (!activeCursorKeys.has(key)) {
+        disposeTasks.push(cursor.dispose());
+        cursors.delete(key);
+      }
+    });
+  }
 
-  await Promise.all([...tasks, ...disposeTasks]);
-  return resolved;
+  try {
+    const results = await Promise.allSettled(
+      [...tasks, ...disposeTasks].map(async (task) => {
+        try {
+          await task;
+        } catch (error) {
+          if (!failureController.signal.aborted) {
+            failureController.abort(error);
+          }
+          throw error;
+        }
+      }),
+    );
+    const rejected = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
+    const failure =
+      traversalError ??
+      (failureController.signal.aborted
+        ? failureController.signal.reason
+        : rejected?.reason);
+    if (failure !== undefined) throw failure;
+    assertNotAborted(frameSignal);
+    replaceMapContents(assets.videoFrames, nextVideoFrames);
+    replaceMapContents(assets.lottieFrames, nextLottieFrames);
+    replaceMapContents(
+      (assets.extensionFrames ??= new Map()),
+      nextExtensionFrames,
+    );
+    return resolved;
+  } finally {
+    frameAbort.dispose();
+  }
+}
+
+function replaceMapContents<K, V>(target: Map<K, V>, source: Map<K, V>): void {
+  target.clear();
+  source.forEach((value, key) => target.set(key, value));
 }
 
 function createStagingCanvas(
@@ -1721,15 +2568,25 @@ function containsExpression(value: unknown): boolean {
   return false;
 }
 
-async function openLottieClip(src: string): Promise<LottieClip> {
-  const response = await fetchAsset(src);
-  const data = (await response.json()) as {
+async function openLottieClip(
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  signal?: AbortSignal,
+  timeoutMs = 15_000,
+): Promise<LottieClip> {
+  const bytes = await readPreparedAssetBytes(asset, request, signal);
+  let data: {
     fr: number;
     ip?: number;
     op: number;
     w?: number;
     h?: number;
   };
+  try {
+    data = JSON.parse(new TextDecoder().decode(bytes)) as typeof data;
+  } catch (cause) {
+    throw new Error("Lottie asset is not valid UTF-8 JSON.", { cause });
+  }
 
   const problems = validateLottieDocument(data);
 
@@ -1761,39 +2618,32 @@ async function openLottieClip(src: string): Promise<LottieClip> {
     throw new Error("Canvas2D unavailable for the lottie player.");
   }
 
-  const animation = lottie.loadAnimation({
-    renderer: "canvas",
-    loop: false,
-    autoplay: false,
-    animationData: data,
-    rendererSettings: { context, clearCanvas: true },
-  } as never) as unknown as LottieClip["animation"] & {
-    addEventListener(name: string, handler: () => void): void;
-  };
+  let animation: LottieReadyAnimation | undefined;
+  try {
+    animation = lottie.loadAnimation({
+      renderer: "canvas",
+      loop: false,
+      autoplay: false,
+      animationData: data,
+      rendererSettings: { context, clearCanvas: true },
+    } as never) as typeof animation;
+    if (!animation) throw new Error("lottie-web returned no animation.");
 
-  await new Promise<void>((resolve) => {
-    animation.addEventListener("DOMLoaded", () => resolve());
-  });
-
-  return {
-    fr: data.fr,
-    ip: data.ip ?? 0,
-    op: data.op,
-    width,
-    height,
-    animation,
-    canvas,
-  };
-}
-
-async function fetchAsset(src: string): Promise<Response> {
-  const response = await fetch(src);
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+    await waitForLottieReady(animation, signal, timeoutMs);
+    assertNotAborted(signal);
+    return {
+      fr: data.fr,
+      ip: data.ip ?? 0,
+      op: data.op,
+      width,
+      height,
+      animation,
+      canvas,
+    };
+  } catch (error) {
+    animation?.destroy();
+    throw error;
   }
-
-  return response;
 }
 
 /**
@@ -1801,14 +2651,13 @@ async function fetchAsset(src: string): Promise<Response> {
  * under the asset id, so styles reference it as fontFamily: "<asset id>".
  * Registration is idempotent per (id, src) pair.
  */
-async function loadFont(id: string, src: string): Promise<FontFace> {
-  const cacheKey = `${id} ${src}`;
-  const cached = registeredFonts.get(cacheKey);
-
-  if (cached) {
-    return cached;
-  }
-
+async function loadFont(
+  id: string,
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  configuredCache: FontAssetCache<FontFace> | undefined,
+  signal?: AbortSignal,
+): Promise<{ readonly face: FontFace; release(): void }> {
   // Windows expose the set as document.fonts, workers as self.fonts.
   const fontSet =
     typeof document !== "undefined"
@@ -1821,16 +2670,40 @@ async function loadFont(id: string, src: string): Promise<FontFace> {
     );
   }
 
-  const response = await fetchAsset(src);
-  const face = new FontFace(id, await response.arrayBuffer());
-  await face.load();
-  fontSet.add(face);
-  registeredFonts.set(cacheKey, face);
-  return face;
+  const cache = configuredCache ?? getSharedFontCache(fontSet);
+  const lease = await cache.acquire(
+    `${id}\u0000${request.contentKey}`,
+    async () => {
+      const bytes = await readPreparedAssetBytes(asset, request, signal);
+      const face = new FontFace(id, ownedArrayBuffer(bytes));
+      await face.load();
+      assertNotAborted(signal);
+      return face;
+    },
+    asset.metadata?.byteLength,
+  );
+  fontSet.add(lease.face);
+  return lease;
 }
 
 function truncateSrc(src: string): string {
-  return src.length > 96 ? `${src.slice(0, 96)}…` : src;
+  if (src.startsWith("data:")) return "data:[redacted]";
+  let redacted = src;
+  try {
+    const parsed = new URL(src, "https://motionforge.invalid");
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    redacted = src.startsWith("/")
+      ? `${parsed.pathname}`
+      : parsed.origin === "https://motionforge.invalid"
+        ? parsed.pathname
+        : parsed.toString();
+  } catch {
+    redacted = src.split(/[?#]/, 1)[0] ?? "[invalid source]";
+  }
+  return redacted.length > 96 ? `${redacted.slice(0, 96)}…` : redacted;
 }
 
 /**
@@ -1864,6 +2737,7 @@ export function renderStill(
   frame: number,
   options: RenderOptions = {},
 ): void {
+  if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
   const resolved = options.resolvedScene ?? evaluateScene(scene, frame);
   const layout = layoutScene(resolved, {
     measureTextLine: createContextTextMeasurer(

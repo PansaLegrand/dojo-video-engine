@@ -11,7 +11,12 @@ npm install @motionforge/renderer-canvas2d
 ## Usage
 
 ```ts
-import { renderStill, resolveAssets } from "@motionforge/renderer-canvas2d";
+import {
+  disposeAssetsAsync,
+  prepareFrame,
+  renderStill,
+  resolveAssets,
+} from "@motionforge/renderer-canvas2d";
 
 const canvas = document.createElement("canvas");
 canvas.width = scene.width;
@@ -19,9 +24,16 @@ canvas.height = scene.height;
 
 // Asset loading is the only async phase: fetch + decode once per scene.
 const assets = await resolveAssets(scene);
-
-const context = canvas.getContext("2d");
-renderStill(context, scene, /* frame */ 30, { assets });
+try {
+  const frame = 30;
+  const resolvedScene = await prepareFrame(scene, frame, assets);
+  renderStill(canvas.getContext("2d"), scene, frame, {
+    assets,
+    resolvedScene,
+  });
+} finally {
+  await disposeAssetsAsync(assets);
+}
 ```
 
 Works with both `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2D`.
@@ -51,7 +63,8 @@ Pass a trusted `ExtensionRegistry` with
 `extension` nodes. Resolution preflights identity, exact version, params,
 assets, renderer support, and optional worker support before any extension
 hook runs. `prepareFrame()` stages per-frame extension data, `renderStill()`
-invokes the Canvas2D adapter, and `disposeAssets()` releases node resources.
+invokes the Canvas2D adapter, and `disposeAssetsAsync()` awaits node-resource
+release.
 
 Adapters receive resolved layout geometry and node-local time through
 `Canvas2DExtensionDrawContext`. Scene JSON never carries a draw function.
@@ -70,7 +83,7 @@ text runs provide metric-stable inline paint.
 
 Call `preflightCanvas2D(scene, environment, { extensions, worker })` before
 resolving assets when the host may run in browsers, workers, or server-like
-environments. It combines declared scene features with Canvas,
+environments. It combines reachable scene features with Canvas,
 image/video/audio decoder, font, current DOM-Lottie, and extension-registry
 requirements and returns typed issues without fetching media.
 
@@ -82,17 +95,31 @@ Options select declared proxies, source/image/decoder budgets, and opt-in
 waveform analysis. `estimateMediaResources()` reports reachable/declared assets,
 proxy coverage, image decode estimates, and peak simultaneous video decoders.
 
+Resolution is transactional: partial failure or cancellation settles all
+started work and rolls back acquired media. `AssetPolicy` lets the host own
+scheme/origin authorization, credentials, signed-URL refresh, derived proxies,
+MIME/response checks, stable content identity, custom fetch, and byte ceilings.
+The engine supplies bounded LRU audio-analysis and reference-counted font
+caches; hosts may inject their own bounded instances.
+
+`prepareFrame()` serializes work per resolved lease and rejects stale reuse if
+an asset id changes source without a stable content hash. Use separate resolved
+leases for genuinely concurrent preview/export sessions.
+
 ## API Stability
 
 Stable for 1.x integrations:
 
-- `resolveAssets(scene, options)`, `prepareFrame(scene, frame, assets)`, `renderStill(context, scene, frame, options)`, and `disposeAssets(assets)`.
+- `resolveAssets(scene, options)`, `prepareFrame(scene, frame, assets, options?)`, `renderStill(context, scene, frame, options)`, `disposeAssets(assets)`, and awaitable `disposeAssetsAsync(assets)`.
 - `RenderOptions` and `ResolvedAssets` as the handoff shape between preview, export, and custom render loops.
 - `videoSourceTime()` and `lottieSourceFrame()` for tools that need to mirror source-time labels.
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
 - `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime, Path2D, DOMMatrix, and extension capability checks.
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
-- `MediaResourceBudget`, `estimateMediaResources()`, `collectReachableAssetIds()`, waveform/cache types, and resource usage reporting.
+- `AssetPolicy`, `MediaResourceBudget`, bounded font/audio-analysis caches,
+  `assertResolvedAssetsCompatible()`, `estimateMediaResources()`,
+  `collectReachableAssetIds()`, waveform/cache types, and resource usage
+  reporting.
 - `parseLinearGradient()`, `parseRadialGradient()`, `parseConicGradient()`, and `shapePointInBox()` for deterministic editor/renderer mirrors.
 
 Evolving additively in 1.x:

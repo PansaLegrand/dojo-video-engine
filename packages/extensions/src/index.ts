@@ -46,6 +46,7 @@ export type ExtensionPrepareContext<P, ResolvedAssets> = {
   resolvedAssets: ResolvedAssets;
   frame: number;
   localFrame: number;
+  signal?: AbortSignal;
 };
 
 // Definitions are registered heterogeneously, so hooks use the same
@@ -81,7 +82,7 @@ export type MotionForgeExtensionDefinition<
     ExtensionPrepareContext<P, ResolvedAssets>,
     PreparedFrame | Promise<PreparedFrame>
   >;
-  disposeAssets?: ExtensionHook<ResolvedAssets, void>;
+  disposeAssets?: ExtensionHook<ResolvedAssets, void | Promise<void>>;
 };
 
 export type RegisteredExtensionDefinition = MotionForgeExtensionDefinition<

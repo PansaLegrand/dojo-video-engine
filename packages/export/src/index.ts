@@ -1,5 +1,6 @@
 import {
   prepareFrame,
+  disposeAssetsAsync,
   estimateMediaResources,
   preflightCanvas2D,
   renderStill,
@@ -35,6 +36,17 @@ import {
   type Quality,
   type VideoCodec,
 } from "mediabunny";
+import {
+  unverifiedExportForSink,
+  verifyExportBlob,
+  verifyExportWithSink,
+  type ExportVerificationExpectation,
+  type ExportVerificationMode,
+  type ExportVerificationResult,
+  type ExportVerificationSink,
+} from "./verification.js";
+
+export * from "./verification.js";
 
 export type ExportCapability = {
   webCodecs: boolean;
@@ -62,6 +74,22 @@ export type ExportPreflightResult = {
     code: string;
     message: string;
   }>;
+};
+
+export type HostExportFallbackRequest = {
+  options: ExportVideoOptions;
+  preflight: ExportPreflightResult;
+};
+
+/** Host-owned fallback; MotionForge does not select or operate a cloud renderer. */
+export type HostExportFallback = (
+  request: HostExportFallbackRequest,
+) => Promise<ExportVideoResult>;
+
+export type ExportExecutionResult = {
+  executor: "browser" | "host";
+  result: ExportVideoResult;
+  preflight: ExportPreflightResult;
 };
 
 export type ExportVideoOptions = {
@@ -99,12 +127,19 @@ export type ExportVideoOptions = {
   /** Final export uses original sources by default; opt in for draft proxy export. */
   preferProxy?: boolean;
   budget?: ResolveAssetsOptions["budget"];
+  assetPolicy?: ResolveAssetsOptions["assetPolicy"];
+  analysisCache?: ResolveAssetsOptions["analysisCache"];
+  fontCache?: ResolveAssetsOptions["fontCache"];
   /**
    * Audio is mixed and fed to the encoder in windows of this many seconds
    * (default 10), so audio memory stays flat regardless of scene length.
    * Exposed mainly for tests; the default is fine.
    */
   audioChunkSeconds?: number;
+  /** Blob exports default to container verification; deeper modes stay bounded. */
+  verification?: ExportVerificationMode;
+  /** Host-owned reread callback for stream/file/custom sinks. */
+  verificationSink?: ExportVerificationSink;
 };
 
 export type ExportVideoResult = {
@@ -113,11 +148,24 @@ export type ExportVideoResult = {
   /** Audio codec of the mixed track, or null when the scene has no audio. */
   audioCodec: AudioCodec | null;
   totalFrames: number;
+  /** Present on exports produced by MF2-aware runtimes. */
+  verification?: ExportVerificationResult;
 };
 
 export type ExportVideoStreamResult = Omit<ExportVideoResult, "blob"> & {
   mimeType: string;
 };
+
+export class ExportVerificationError extends Error {
+  constructor(readonly verification: ExportVerificationResult) {
+    super(
+      `MotionForge output verification failed: ${verification.issues
+        .map((issue) => `[${issue.code}] ${issue.message}`)
+        .join("; ")}`,
+    );
+    this.name = "ExportVerificationError";
+  }
+}
 
 /** An audible node's absolute active window in scene frames, ancestors applied. */
 export type AudioPlacement = {
@@ -397,12 +445,13 @@ export function detectExportCapability(
   globalObject: Partial<typeof globalThis> = globalThis,
 ): ExportCapability {
   return {
-    webCodecs: "VideoFrame" in globalObject,
-    videoEncoder: "VideoEncoder" in globalObject,
-    offscreenCanvas: "OffscreenCanvas" in globalObject,
-    worker: "Worker" in globalObject,
+    webCodecs: typeof globalObject.VideoFrame === "function",
+    videoEncoder: typeof globalObject.VideoEncoder === "function",
+    offscreenCanvas: typeof globalObject.OffscreenCanvas === "function",
+    worker: typeof globalObject.Worker === "function",
     streamingTarget:
-      "WritableStream" in globalObject && "TransformStream" in globalObject,
+      typeof globalObject.WritableStream === "function" &&
+      typeof globalObject.TransformStream === "function",
   };
 }
 
@@ -421,7 +470,11 @@ export function estimateExport(
       1_000_000,
       Math.round(scene.width * scene.height * scene.fps * 0.08),
     );
-  const hasAudio = collectAudioPlacements(scene).length > 0;
+  const hasAudio = collectAudioPlacements(scene).some(({ node }) => {
+    if (node.type === "audio") return true;
+    const asset = node.assetId ? scene.assets[node.assetId] : undefined;
+    return asset?.metadata?.hasAudio !== false;
+  });
   return {
     totalFrames,
     durationSeconds,
@@ -439,7 +492,13 @@ export function preflightExport(
   globalObject: Partial<typeof globalThis> = globalThis,
   options: Pick<
     ExportVideoOptions,
-    "startFrame" | "endFrame" | "bitrate" | "extensions" | "worker" | "budget"
+    | "startFrame"
+    | "endFrame"
+    | "bitrate"
+    | "extensions"
+    | "worker"
+    | "budget"
+    | "assets"
   > = {},
 ): ExportPreflightResult {
   const capability = detectExportCapability(globalObject);
@@ -453,7 +512,25 @@ export function preflightExport(
     worker: options.worker,
     budget: options.budget,
   });
-  const issues: ExportPreflightResult["issues"] = [...canvas.issues];
+  const resolutionOnlyCodes = new Set([
+    "image_decoder_unavailable",
+    "font_loading_unavailable",
+    "lottie_requires_dom",
+    "asset_byte_budget_exceeded",
+  ]);
+  const issues: ExportPreflightResult["issues"] = canvas.issues.filter(
+    (issue) =>
+      !options.assets ||
+      (!resolutionOnlyCodes.has(issue.code) &&
+        !issue.code.startsWith("extension_")),
+  );
+  if (!capability.webCodecs) {
+    issues.push({
+      severity: "error",
+      code: "video_frame_unavailable",
+      message: "MP4 export requires the WebCodecs VideoFrame API.",
+    });
+  }
   if (!capability.videoEncoder) {
     issues.push({
       severity: "error",
@@ -481,6 +558,43 @@ export function preflightExport(
     capability,
     estimate,
     issues,
+  };
+}
+
+/** Uses local browser export when capable, otherwise delegates explicitly to the host. */
+export async function exportVideoWithFallback(
+  options: ExportVideoOptions,
+  fallback?: HostExportFallback,
+  globalObject: Partial<typeof globalThis> = globalThis,
+): Promise<ExportExecutionResult> {
+  const preflight = preflightExport(options.scene, globalObject, {
+    startFrame: options.startFrame,
+    endFrame: options.endFrame,
+    bitrate: options.bitrate,
+    extensions: options.extensions,
+    worker: options.worker,
+    budget: options.budget,
+    assets: options.assets,
+  });
+  if (preflight.ok) {
+    return {
+      executor: "browser",
+      result: await exportVideo(options),
+      preflight,
+    };
+  }
+  if (!fallback) {
+    throw new Error(
+      `Local MotionForge export is unavailable and no host fallback was supplied:\n${preflight.issues
+        .filter((issue) => issue.severity === "error")
+        .map((issue) => `- [${issue.code}] ${issue.message}`)
+        .join("\n")}`,
+    );
+  }
+  return {
+    executor: "host",
+    result: await fallback({ options, preflight }),
+    preflight,
   };
 }
 
@@ -520,7 +634,9 @@ export async function renderFrameSequence(
     if (options.assets) {
       // Stages decoded video frames for this scene frame; no-op for scenes
       // without video assets.
-      resolvedScene = await prepareFrame(options.scene, frame, options.assets);
+      resolvedScene = await prepareFrame(options.scene, frame, options.assets, {
+        signal: options.signal,
+      });
     }
 
     renderFrame(
@@ -583,9 +699,20 @@ export async function exportVideo(
     throw new Error("MP4 muxing finished without producing an output buffer.");
   }
   const { mimeType, ...metadata } = result;
+  const blob = new Blob([target.buffer], { type: mimeType });
+  const verification = await verifyExportBlob(
+    blob,
+    exportVerificationExpectation(options, result),
+    options.verification ?? "container",
+    options.signal,
+  );
+  if (verification.status === "failed") {
+    throw new ExportVerificationError(verification);
+  }
   return {
     ...metadata,
-    blob: new Blob([target.buffer], { type: mimeType }),
+    blob,
+    verification,
   };
 }
 
@@ -598,7 +725,39 @@ export async function exportVideoToStream(
     options,
     new StreamTarget(writable, streamOptions),
   );
-  return result;
+  const expectation = exportVerificationExpectation(options, result);
+  const mode = options.verification ?? "container";
+  const request = {
+    mode,
+    expectation,
+    metadata: {
+      source: "custom" as const,
+      byteLength: null,
+      mimeType: result.mimeType,
+      label: "WritableStream",
+    },
+    signal: options.signal,
+  };
+  const verification = options.verificationSink
+    ? await verifyExportWithSink(options.verificationSink, request)
+    : unverifiedExportForSink(expectation, mode, request.metadata);
+  if (verification.status === "failed") {
+    throw new ExportVerificationError(verification);
+  }
+  return { ...result, verification };
+}
+
+function exportVerificationExpectation(
+  options: ExportVideoOptions,
+  result: Pick<InternalExportResult, "audioCodec" | "totalFrames">,
+): ExportVerificationExpectation {
+  return {
+    width: options.scene.width,
+    height: options.scene.height,
+    durationSeconds: result.totalFrames / options.scene.fps,
+    hasAudio: result.audioCodec !== null,
+    fps: options.scene.fps,
+  };
 }
 
 type InternalExportResult = ExportVideoStreamResult;
@@ -608,11 +767,24 @@ async function runExportVideo(
   target: Target,
 ): Promise<InternalExportResult> {
   const { scene } = options;
-  const capability = detectExportCapability();
+  const preflight = preflightExport(scene, globalThis, {
+    startFrame: options.startFrame,
+    endFrame: options.endFrame,
+    bitrate: options.bitrate,
+    extensions: options.extensions,
+    worker: options.worker,
+    budget: options.budget,
+    assets: options.assets,
+  });
 
-  if (!capability.videoEncoder) {
+  if (!preflight.ok) {
     throw new Error(
-      "exportVideo() needs WebCodecs (VideoEncoder) which this environment does not provide. Gate export UI with detectExportCapability().",
+      `MotionForge export preflight failed before encoding:\n${preflight.issues
+        .filter((issue) => issue.severity === "error")
+        .map((issue) => `- [${issue.code}] ${issue.message}`)
+        .join(
+          "\n",
+        )}\nGate export UI with preflightExport() or detectExportCapability().`,
     );
   }
 
@@ -636,134 +808,187 @@ async function runExportVideo(
       signal: options.signal,
       preferProxy: options.preferProxy ?? false,
       budget: options.budget,
+      assetPolicy: options.assetPolicy,
+      analysisCache: options.analysisCache,
+      fontCache: options.fontCache,
     }));
-  const { canvas, context } = createExportCanvas(scene.width, scene.height);
-  const output = new Output({ format, target });
-  const source = new CanvasSource(canvas, {
-    codec,
-    bitrate: options.bitrate ?? QUALITY_HIGH,
-  });
-  output.addVideoTrack(source, { frameRate: scene.fps });
-
-  // Tracks can only be added while the output is pending, so probe for
-  // audible content up front (no decoding); the actual mix happens in
-  // chunks after the frame loop so audio memory stays flat.
-  const startFrame = options.startFrame ?? 0;
-  const endFrame = options.endFrame ?? scene.duration - 1;
-  const hasAudio = sceneHasAudibleContent(scene, assets, startFrame, endFrame);
-  let audioSource: AudioSampleSource | null = null;
-  let audioCodec: AudioCodec | null = null;
-
-  if (hasAudio) {
-    audioCodec = await getFirstEncodableAudioCodec(
-      format.getSupportedAudioCodecs(),
-      {
-        numberOfChannels: MIX_CHANNELS,
-        sampleRate: MIX_SAMPLE_RATE,
-      },
-    );
-
-    if (!audioCodec) {
+  const ownsAssets = options.assets === undefined;
+  return withResolvedAssetOwnership(assets, ownsAssets, async () => {
+    if (
+      Array.from(assets.videos.values()).some((clip) => Boolean(clip.audio)) &&
+      typeof globalThis.AudioDecoder !== "function"
+    ) {
       throw new Error(
-        "The scene has audio nodes but this browser cannot encode any MP4-compatible audio codec.",
+        "Resolved video media contains an embedded soundtrack, but this environment has no AudioDecoder. Declare metadata.hasAudio for earlier preflight or use a host fallback.",
       );
     }
-
-    // AudioSampleSource over AudioBufferSource: samples are built from raw
-    // Float32Arrays, so the whole export runs in workers, where AudioBuffer
-    // does not exist.
-    audioSource = new AudioSampleSource({
-      codec: audioCodec,
-      bitrate: QUALITY_HIGH,
+    const { canvas, context } = createExportCanvas(scene.width, scene.height);
+    const output = new Output({ format, target });
+    const source = new CanvasSource(canvas, {
+      codec,
+      bitrate: options.bitrate ?? QUALITY_HIGH,
     });
-    output.addAudioTrack(audioSource);
-  }
+    output.addVideoTrack(source, { frameRate: scene.fps });
 
-  await output.start();
-
-  const frameDuration = 1 / scene.fps;
-  let result: RenderFrameSequenceResult;
-
-  try {
-    result = await renderFrameSequence({
+    // Tracks can only be added while the output is pending, so probe for
+    // audible content up front (no decoding); the actual mix happens in
+    // chunks after the frame loop so audio memory stays flat.
+    const startFrame = options.startFrame ?? 0;
+    const endFrame = options.endFrame ?? scene.duration - 1;
+    const hasAudio = sceneHasAudibleContent(
       scene,
-      context,
       assets,
-      startFrame: options.startFrame,
-      endFrame: options.endFrame,
-      signal: options.signal,
-      // Awaiting add() respects encoder backpressure before the next frame
-      // is drawn over the shared canvas.
-      onFrame: async ({ timestampUs }) => {
-        await source.add(timestampUs / 1_000_000, frameDuration);
-      },
-      onProgress: options.onProgress,
-      progressIntervalMs: options.progressIntervalMs,
-    });
+      startFrame,
+      endFrame,
+    );
+    let audioSource: AudioSampleSource | null = null;
+    let audioCodec: AudioCodec | null = null;
 
-    if (audioSource) {
-      // Sequential appends: every chunk must be added, so silent windows
-      // become explicit silence rather than skipped (skipping would shift
-      // everything after them earlier).
-      const ranges = audioChunkRanges(
-        startFrame,
-        endFrame,
-        scene.fps,
-        options.audioChunkSeconds ?? 10,
-      );
-
-      for (const [chunkStart, chunkEnd] of ranges) {
-        const mixed = await mixSceneAudioData(
-          scene,
-          assets,
-          chunkStart,
-          chunkEnd,
-        );
-        const sampleCount = Math.max(
-          1,
-          Math.round(
-            ((chunkEnd - chunkStart + 1) / scene.fps) * MIX_SAMPLE_RATE,
-          ),
-        );
-        // Planar f32 layout: all of channel 0, then all of channel 1. An
-        // absent mix leaves the zero-filled buffer — explicit silence.
-        const data = new Float32Array(sampleCount * MIX_CHANNELS);
-
-        if (mixed) {
-          mixed.channels.forEach((channel, index) => {
-            data.set(channel.subarray(0, sampleCount), index * sampleCount);
-          });
-        }
-
-        const sample = new AudioSample({
-          data,
-          format: "f32-planar",
+    if (hasAudio) {
+      audioCodec = await getFirstEncodableAudioCodec(
+        format.getSupportedAudioCodecs(),
+        {
           numberOfChannels: MIX_CHANNELS,
           sampleRate: MIX_SAMPLE_RATE,
-          timestamp: (chunkStart - startFrame) / scene.fps,
-        });
-        await audioSource.add(sample);
-        sample.close();
+        },
+      );
+
+      if (!audioCodec) {
+        throw new Error(
+          "The scene has audio nodes but this browser cannot encode any MP4-compatible audio codec.",
+        );
+      }
+
+      // AudioSampleSource over AudioBufferSource: samples are built from raw
+      // Float32Arrays, so the whole export runs in workers, where AudioBuffer
+      // does not exist.
+      audioSource = new AudioSampleSource({
+        codec: audioCodec,
+        bitrate: QUALITY_HIGH,
+      });
+      output.addAudioTrack(audioSource);
+    }
+
+    const frameDuration = 1 / scene.fps;
+    let result: RenderFrameSequenceResult;
+
+    try {
+      await output.start();
+      result = await renderFrameSequence({
+        scene,
+        context,
+        assets,
+        startFrame: options.startFrame,
+        endFrame: options.endFrame,
+        signal: options.signal,
+        // Awaiting add() respects encoder backpressure before the next frame
+        // is drawn over the shared canvas.
+        onFrame: async ({ timestampUs }) => {
+          await source.add(timestampUs / 1_000_000, frameDuration);
+        },
+        onProgress: options.onProgress,
+        progressIntervalMs: options.progressIntervalMs,
+      });
+
+      if (audioSource) {
+        // Sequential appends: every chunk must be added, so silent windows
+        // become explicit silence rather than skipped (skipping would shift
+        // everything after them earlier).
+        const ranges = audioChunkRanges(
+          startFrame,
+          endFrame,
+          scene.fps,
+          options.audioChunkSeconds ?? 10,
+        );
+
+        for (const [chunkStart, chunkEnd] of ranges) {
+          const mixed = await mixSceneAudioData(
+            scene,
+            assets,
+            chunkStart,
+            chunkEnd,
+            options.signal,
+          );
+          const sampleCount = Math.max(
+            1,
+            Math.round(
+              ((chunkEnd - chunkStart + 1) / scene.fps) * MIX_SAMPLE_RATE,
+            ),
+          );
+          // Planar f32 layout: all of channel 0, then all of channel 1. An
+          // absent mix leaves the zero-filled buffer — explicit silence.
+          const data = new Float32Array(sampleCount * MIX_CHANNELS);
+
+          if (mixed) {
+            mixed.channels.forEach((channel, index) => {
+              data.set(channel.subarray(0, sampleCount), index * sampleCount);
+            });
+          }
+
+          const sample = new AudioSample({
+            data,
+            format: "f32-planar",
+            numberOfChannels: MIX_CHANNELS,
+            sampleRate: MIX_SAMPLE_RATE,
+            timestamp: (chunkStart - startFrame) / scene.fps,
+          });
+          try {
+            throwIfAborted(options.signal);
+            await audioSource.add(sample);
+          } finally {
+            sample.close();
+          }
+        }
+      }
+
+      await output.finalize();
+    } catch (error) {
+      try {
+        await output.cancel();
+      } catch {
+        // The render/encode error is the one worth surfacing.
+      }
+
+      throw error;
+    }
+
+    return {
+      mimeType: format.mimeType,
+      codec,
+      audioCodec,
+      totalFrames: result.totalFrames,
+    };
+  });
+}
+
+/** @internal Ownership transaction shared by browser and worker export paths. */
+export async function withResolvedAssetOwnership<T>(
+  assets: ResolvedAssets,
+  ownsAssets: boolean,
+  operation: () => Promise<T>,
+): Promise<T> {
+  let operationError: unknown;
+  try {
+    return await operation();
+  } catch (error) {
+    operationError = error;
+    throw error;
+  } finally {
+    if (ownsAssets) {
+      try {
+        await disposeAssetsAsync(assets);
+      } catch (cleanupError) {
+        if (operationError !== undefined) {
+          throw new AggregateError(
+            [operationError, cleanupError],
+            "MotionForge export failed and owned media cleanup also failed.",
+            { cause: operationError },
+          );
+        }
+        throw cleanupError;
       }
     }
-
-    await output.finalize();
-  } catch (error) {
-    try {
-      await output.cancel();
-    } catch {
-      // The render/encode error is the one worth surfacing.
-    }
-
-    throw error;
   }
-
-  return {
-    mimeType: format.mimeType,
-    codec,
-    audioCodec,
-    totalFrames: result.totalFrames,
-  };
 }
 
 const MIX_SAMPLE_RATE = 48_000;
@@ -858,7 +1083,9 @@ export async function mixSceneAudioData(
   assets: ResolvedAssets,
   startFrame: number,
   endFrame: number,
+  signal?: AbortSignal,
 ): Promise<MixedAudioData | null> {
+  throwIfAborted(signal);
   const placements = collectAudioPlacements(scene);
 
   if (placements.length === 0) {
@@ -868,6 +1095,7 @@ export async function mixSceneAudioData(
   const segments: AudioSegment[] = [];
 
   for (const placement of placements) {
+    throwIfAborted(signal);
     const assetId = placement.node.assetId ?? "";
     const isVideo = placement.node.type === "video";
     const clip = isVideo
@@ -921,11 +1149,13 @@ export async function mixSceneAudioData(
     }
 
     for (const range of sourceRanges) {
+      throwIfAborted(signal);
       segments.push({
         channels: await decodeAudioRange(
           clip,
           range.sourceStart,
           range.sourceEnd,
+          signal,
         ),
         sampleRate: clip.sampleRate * rate,
         startTime:
@@ -955,6 +1185,7 @@ export async function mixSceneAudioData(
   });
   const busMixes = new Map<string, Float32Array<ArrayBuffer>[]>();
   for (const [name, busSegments] of byBus) {
+    throwIfAborted(signal);
     const channels = mixAudioSegments(
       busSegments,
       durationSeconds,
@@ -983,6 +1214,7 @@ export async function mixSceneAudioData(
       : [],
   );
   for (const [name, channels] of busMixes) {
+    throwIfAborted(signal);
     applyDucking(
       channels,
       duckingWindows.filter((window) => window.bus === name),
@@ -998,6 +1230,7 @@ export async function mixSceneAudioData(
     () => new Float32Array(length),
   );
   for (const channels of busMixes.values()) {
+    throwIfAborted(signal);
     channels.forEach((channel, channelIndex) => {
       const target = mixed[channelIndex];
       if (!target) return;
@@ -1131,8 +1364,15 @@ export async function mixSceneAudio(
   assets: ResolvedAssets,
   startFrame: number,
   endFrame: number,
+  signal?: AbortSignal,
 ): Promise<AudioBuffer | null> {
-  const mixed = await mixSceneAudioData(scene, assets, startFrame, endFrame);
+  const mixed = await mixSceneAudioData(
+    scene,
+    assets,
+    startFrame,
+    endFrame,
+    signal,
+  );
 
   if (!mixed) {
     return null;
@@ -1159,7 +1399,9 @@ async function decodeAudioRange(
   clip: Pick<AudioClip, "sampleRate" | "numberOfChannels" | "sink">,
   start: number,
   end: number,
+  signal?: AbortSignal,
 ): Promise<Float32Array[]> {
+  throwIfAborted(signal);
   const totalSamples = Math.max(1, Math.ceil((end - start) * clip.sampleRate));
   const channels = Array.from(
     { length: Math.max(1, clip.numberOfChannels) },
@@ -1167,11 +1409,11 @@ async function decodeAudioRange(
   );
 
   for await (const sample of clip.sink.samples(start, end)) {
-    const offsetSamples = Math.round(
-      (sample.timestamp - start) * clip.sampleRate,
-    );
-
     try {
+      throwIfAborted(signal);
+      const offsetSamples = Math.round(
+        (sample.timestamp - start) * clip.sampleRate,
+      );
       for (let channel = 0; channel < channels.length; channel += 1) {
         const target = channels[channel];
 
@@ -1186,6 +1428,7 @@ async function decodeAudioRange(
         });
 
         for (let index = 0; index < data.length; index += 1) {
+          if (index % 4096 === 0) throwIfAborted(signal);
           const targetIndex = offsetSamples + index;
 
           if (targetIndex >= 0 && targetIndex < totalSamples) {

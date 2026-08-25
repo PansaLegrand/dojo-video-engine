@@ -395,7 +395,9 @@ renderStill(context, scene, frame, { assets }); // pure given (scene, frame, ass
 - Rendering a scene that draws an `img` node without resolved assets **throws** with the asset id and the fix — a frame never renders with silently missing media.
 - A failed fetch or decode rejects with the asset id and src; there is no placeholder fallback by design.
 - **Audio assets** open the same way (mediabunny decode); the export mixer pulls PCM from them. Player/Studio preview uses the same mixer path on a best-effort browser audio clock, while the exported file remains the source of truth for final audio.
-- Call `disposeAssets(assets)` when done with a scene to release video and audio decoder resources.
+- Await `disposeAssetsAsync(assets)` when done with a scene so cursors stop
+  before video/audio Inputs close. `disposeAssets()` remains a best-effort void
+  compatibility facade.
 - Resolution is reachable-only. HTTP audio/video uses bounded range requests;
   proxy selection and source/image/decoder budgets are explicit host options.
   Optional waveform analysis streams into a bounded cached peak array.

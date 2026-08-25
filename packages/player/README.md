@@ -12,7 +12,7 @@ player.play();
 player.on("frame", (frame) => (slider.value = String(frame)));
 player.pause();
 await player.seek(45);
-player.dispose();
+await player.disposeAsync();
 ```
 
 For extension scenes, pass the host registry as `extensions`; pass
@@ -22,15 +22,24 @@ worker compatibility.
 ## Design
 
 - **Wall-clock time exists only in the clock.** `FrameClock` maps `performance.now()` to integer frames anchored at the last play/seek; rendering stays the engine's pure `(scene, frame)` function. Playback at 30 fps shows the same pixels as export at 30 fps.
-- **Latest frame wins.** The loop awaits `prepareFrame()` (video decode) per displayed frame. If a decode is slow, the next tick re-reads the clock and skips ahead — no stale-frame queue, no tearing.
+- **Clock ticks skip stale work; explicit seeks are serialized.** The loop awaits
+  `prepareFrame()` and re-reads the clock after a slow decode. Concurrent
+  `seek()` calls each resolve only after their requested frame paints.
 - **First paint does not wait for audio.** Preview audio mixing begins alongside
   the initial render. If it finishes after playback starts, it joins at the
   current scene position instead of delaying the visible player.
 - **Injectable time and scheduler.** `now`, `requestFrame`, and `cancelFrame` are constructor options, so the full play/pause/seek/ended/loop behavior is unit-tested in Node with a fake driver — no timers, no flake.
-- **Asset ownership is explicit.** Pass `assets` and you own their lifetime; omit them and the player resolves reachable proxy sources by default and releases them on `dispose()`. Budgets are forwarded to the resolver.
+- **Asset ownership is explicit.** Pass `assets` and you own their lifetime;
+  omit them and the player resolves reachable proxy sources by default and
+  releases them transactionally. `dispose()` remains the void compatibility
+  facade; `disposeAsync()` observes completion/errors. Budgets, `AssetPolicy`,
+  caches, and cancellation are forwarded to the resolver.
 - **Extension ownership follows assets.** An internally resolved registry runs resolve/prepare/draw/dispose through the same player lifecycle; caller-provided `assets` remain caller-owned.
 
-Events: `frame`, `play`, `pause`, `ended` (non-looping playback pauses on the final frame). `currentFrame` is the last rendered frame.
+Events: `frame`, `play`, `pause`, `ended` (non-looping playback pauses on the
+final frame). `currentFrame` is the last rendered frame. `onError()` and
+`player.error` expose asynchronous render-loop failure without an unhandled
+promise rejection.
 
 ## Audio preview
 
@@ -51,7 +60,8 @@ buffer for short projects.
 Stable for 1.x integrations:
 
 - `createPlayer()`, `Player`, `PlayerOptions`, `PlayerEvent`, `FrameClock`, and event names `frame`, `play`, `pause`, and `ended`.
-- `play()`, `pause()`, `seek(frame)`, `dispose()`, `currentFrame`, and `on(event, callback)`.
+- `play()`, `pause()`, `seek(frame)`, `dispose()`, `disposeAsync()`,
+  `currentFrame`, `on(event, callback)`, and `onError(callback)`.
 - Audio extension point: `AudioPreview`, `ChunkedWebAudioPreview`, and `WebAudioPreview`.
 
 Evolving additively in 1.x:

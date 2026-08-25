@@ -99,9 +99,56 @@
                     "type": "integer",
                     "exclusiveMinimum": 0
                   },
+                  "mimeType": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 127
+                  },
                   "codec": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "hasAudio": {
+                    "type": "boolean"
+                  },
+                  "audioCodec": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "audioSampleRate": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "audioChannels": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32
+                  },
+                  "frameRate": {
+                    "type": "object",
+                    "properties": {
+                      "numerator": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      "denominator": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "numerator",
+                      "denominator"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "variableFrameRate": {
+                    "type": "boolean"
+                  },
+                  "contentHash": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
                   }
                 },
                 "additionalProperties": false
