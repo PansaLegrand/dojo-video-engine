@@ -3,6 +3,17 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+## Unreleased
+
+### Worker audio export
+
+- Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for
+  resolved audio assets and embedded video soundtracks.
+- Waveform, spectrum, and export mixing now copy raw planar PCM directly and
+  no longer construct Web Audio `AudioBuffer` values in dedicated workers.
+- Added regressions for explicit audio and video-embedded audio with the
+  `AudioBuffer` global absent.
+
 ## 1.0.0 — 2026-08-24
 
 The first stable MotionForge release. Scene v1, public packages, extension

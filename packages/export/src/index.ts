@@ -1166,29 +1166,35 @@ async function decodeAudioRange(
     () => new Float32Array(totalSamples),
   );
 
-  for await (const wrapped of clip.sink.buffers(start, end)) {
+  for await (const sample of clip.sink.samples(start, end)) {
     const offsetSamples = Math.round(
-      (wrapped.timestamp - start) * clip.sampleRate,
+      (sample.timestamp - start) * clip.sampleRate,
     );
 
-    for (let channel = 0; channel < channels.length; channel += 1) {
-      const target = channels[channel];
+    try {
+      for (let channel = 0; channel < channels.length; channel += 1) {
+        const target = channels[channel];
 
-      if (!target) {
-        continue;
-      }
+        if (!target) {
+          continue;
+        }
 
-      const data = wrapped.buffer.getChannelData(
-        Math.min(channel, wrapped.buffer.numberOfChannels - 1),
-      );
+        const data = new Float32Array(sample.numberOfFrames);
+        sample.copyTo(data, {
+          planeIndex: Math.min(channel, sample.numberOfChannels - 1),
+          format: "f32-planar",
+        });
 
-      for (let index = 0; index < data.length; index += 1) {
-        const targetIndex = offsetSamples + index;
+        for (let index = 0; index < data.length; index += 1) {
+          const targetIndex = offsetSamples + index;
 
-        if (targetIndex >= 0 && targetIndex < totalSamples) {
-          target[targetIndex] = data[index] ?? 0;
+          if (targetIndex >= 0 && targetIndex < totalSamples) {
+            target[targetIndex] = data[index] ?? 0;
+          }
         }
       }
+    } finally {
+      sample.close();
     }
   }
 

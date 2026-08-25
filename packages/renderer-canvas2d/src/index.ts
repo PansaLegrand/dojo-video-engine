@@ -31,11 +31,12 @@ import {
 export { wrapTextLines };
 import {
   ALL_FORMATS,
-  AudioBufferSink,
+  AudioSampleSink,
   BlobSource,
   CanvasSink,
   Input,
   UrlSource,
+  type AudioSample,
   type InputVideoTrack,
   type WrappedCanvas,
 } from "mediabunny";
@@ -329,7 +330,7 @@ export type VideoClip = {
     duration: number;
     sampleRate: number;
     numberOfChannels: number;
-    sink: AudioBufferSink;
+    sink: AudioSampleSink;
   };
 };
 
@@ -340,10 +341,19 @@ export type AudioClip = {
   sampleRate: number;
   numberOfChannels: number;
   /** Decoded PCM access; consumed by the export mixer. */
-  sink: AudioBufferSink;
+  sink: AudioSampleSink;
   /** Underlying input; closed by disposeAssets(). */
   input: Input;
 };
+
+/** Copies decoded PCM without constructing a Web Audio AudioBuffer. */
+function copyAudioSampleChannels(sample: AudioSample): Float32Array[] {
+  return Array.from({ length: sample.numberOfChannels }, (_, planeIndex) => {
+    const channel = new Float32Array(sample.numberOfFrames);
+    sample.copyTo(channel, { planeIndex, format: "f32-planar" });
+    return channel;
+  });
+}
 
 export type AudioSpectrum = {
   fps: number;
@@ -964,38 +974,42 @@ async function analyzeAudio(
   );
   const mono = new Float32Array(sampleCount);
 
-  for await (const wrapped of clip.sink.buffers(0, durationSeconds)) {
-    const source = wrapped.buffer;
-    const sourceRate = source.sampleRate;
-    const startIndex = Math.max(
-      0,
-      Math.floor(wrapped.timestamp * SPECTRUM_SAMPLE_RATE),
-    );
-    const endIndex = Math.min(
-      sampleCount,
-      Math.ceil((wrapped.timestamp + source.duration) * SPECTRUM_SAMPLE_RATE),
-    );
-
-    for (
-      let targetIndex = startIndex;
-      targetIndex < endIndex;
-      targetIndex += 1
-    ) {
-      const sourceIndex = Math.min(
-        source.length - 1,
-        Math.max(
-          0,
-          Math.floor(
-            (targetIndex / SPECTRUM_SAMPLE_RATE - wrapped.timestamp) *
-              sourceRate,
-          ),
-        ),
+  for await (const sample of clip.sink.samples(0, durationSeconds)) {
+    try {
+      const sourceRate = sample.sampleRate;
+      const channels = copyAudioSampleChannels(sample);
+      const startIndex = Math.max(
+        0,
+        Math.floor(sample.timestamp * SPECTRUM_SAMPLE_RATE),
       );
-      let value = 0;
-      for (let channel = 0; channel < source.numberOfChannels; channel += 1) {
-        value += source.getChannelData(channel)[sourceIndex] ?? 0;
+      const endIndex = Math.min(
+        sampleCount,
+        Math.ceil((sample.timestamp + sample.duration) * SPECTRUM_SAMPLE_RATE),
+      );
+
+      for (
+        let targetIndex = startIndex;
+        targetIndex < endIndex;
+        targetIndex += 1
+      ) {
+        const sourceIndex = Math.min(
+          sample.numberOfFrames - 1,
+          Math.max(
+            0,
+            Math.floor(
+              (targetIndex / SPECTRUM_SAMPLE_RATE - sample.timestamp) *
+                sourceRate,
+            ),
+          ),
+        );
+        let value = 0;
+        for (const channel of channels) {
+          value += channel[sourceIndex] ?? 0;
+        }
+        mono[targetIndex] = value / Math.max(1, channels.length);
       }
-      mono[targetIndex] = value / Math.max(1, source.numberOfChannels);
+    } finally {
+      sample.close();
     }
   }
 
@@ -1087,23 +1101,28 @@ async function analyzeAudioWaveform(
   pointCount = 2048,
 ): Promise<AudioWaveform> {
   const values = new Float32Array(Math.max(1, pointCount));
-  for await (const wrapped of clip.sink.buffers(0, duration)) {
-    const buffer = wrapped.buffer;
-    for (let sample = 0; sample < buffer.length; sample += 1) {
-      const at = wrapped.timestamp + sample / buffer.sampleRate;
-      if (at < 0 || at >= duration) continue;
-      const point = Math.min(
-        values.length - 1,
-        Math.floor((at / Math.max(duration, 0.001)) * values.length),
-      );
-      let peak = 0;
-      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
-        peak = Math.max(
-          peak,
-          Math.abs(buffer.getChannelData(channel)[sample] ?? 0),
+  for await (const sample of clip.sink.samples(0, duration)) {
+    try {
+      const channels = copyAudioSampleChannels(sample);
+      for (
+        let sampleIndex = 0;
+        sampleIndex < sample.numberOfFrames;
+        sampleIndex += 1
+      ) {
+        const at = sample.timestamp + sampleIndex / sample.sampleRate;
+        if (at < 0 || at >= duration) continue;
+        const point = Math.min(
+          values.length - 1,
+          Math.floor((at / Math.max(duration, 0.001)) * values.length),
         );
+        let peak = 0;
+        for (const channel of channels) {
+          peak = Math.max(peak, Math.abs(channel[sampleIndex] ?? 0));
+        }
+        values[point] = Math.max(values[point] ?? 0, peak);
       }
-      values[point] = Math.max(values[point] ?? 0, peak);
+    } finally {
+      sample.close();
     }
   }
   return { duration, values };
@@ -1163,7 +1182,7 @@ async function openAudioClip(
     duration: await input.computeDuration([track]),
     sampleRate: track.sampleRate,
     numberOfChannels: track.numberOfChannels,
-    sink: new AudioBufferSink(track),
+    sink: new AudioSampleSink(track),
     input,
   };
 }
@@ -1194,7 +1213,7 @@ async function openVideoClip(
         duration: await input.computeDuration([audioTrack]),
         sampleRate: audioTrack.sampleRate,
         numberOfChannels: audioTrack.numberOfChannels,
-        sink: new AudioBufferSink(audioTrack),
+        sink: new AudioSampleSink(audioTrack),
       }
     : undefined;
 

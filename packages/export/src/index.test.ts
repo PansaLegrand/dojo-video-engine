@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Scene } from "@motionforge/schema";
+import type { ResolvedAssets } from "@motionforge/renderer-canvas2d";
 import {
   audioChunkRanges,
   collectAudioPlacements,
@@ -11,6 +12,7 @@ import {
   loopedSourceRanges,
   limitAudioPeak,
   measureAudioLoudness,
+  mixSceneAudioData,
   mixAudioSegments,
   preflightExport,
   renderFrameSequence,
@@ -390,6 +392,143 @@ describe("mixAudioSegments with rate-scaled segments", () => {
 
     expect(firstHalf.every((v) => Math.abs(v - 0.5) < 1e-6)).toBe(true);
     expect(secondHalf.every((v) => v === 0)).toBe(true);
+  });
+});
+
+describe("worker-safe decoded audio", () => {
+  it("mixes raw AudioSamples when the AudioBuffer global is absent", async () => {
+    const globals = globalThis as unknown as {
+      AudioBuffer?: typeof AudioBuffer;
+    };
+    const originalAudioBuffer = globals.AudioBuffer;
+    delete globals.AudioBuffer;
+    const close = vi.fn();
+    const sink = {
+      async *samples() {
+        yield {
+          sampleRate: 48_000,
+          numberOfChannels: 1,
+          numberOfFrames: 4,
+          timestamp: 0,
+          duration: 4 / 48_000,
+          copyTo(target: Float32Array) {
+            target.set([0.25, 0.5, -0.25, -0.5]);
+          },
+          close,
+        };
+      },
+    };
+    const audioScene: Scene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 4,
+      duration: 4,
+      assets: { tone: { id: "tone", type: "audio", src: "tone.wav" } },
+      nodes: [
+        {
+          id: "tone-node",
+          type: "audio",
+          assetId: "tone",
+          from: 0,
+          duration: 4,
+        },
+      ],
+    };
+    const assets = {
+      audio: new Map([
+        [
+          "tone",
+          {
+            duration: 1,
+            sampleRate: 48_000,
+            numberOfChannels: 1,
+            sink,
+          },
+        ],
+      ]),
+      videos: new Map(),
+    } as unknown as ResolvedAssets;
+
+    try {
+      const mixed = await mixSceneAudioData(audioScene, assets, 0, 3);
+      expect(mixed).not.toBeNull();
+      expect(Array.from(mixed?.channels[0]?.slice(0, 4) ?? [])).toEqual([
+        0.25, 0.5, -0.25, -0.5,
+      ]);
+      expect(close).toHaveBeenCalledOnce();
+      expect(typeof globals.AudioBuffer).toBe("undefined");
+    } finally {
+      if (originalAudioBuffer) globals.AudioBuffer = originalAudioBuffer;
+    }
+  });
+
+  it("mixes an embedded video soundtrack without AudioBuffer", async () => {
+    const globals = globalThis as unknown as {
+      AudioBuffer?: typeof AudioBuffer;
+    };
+    const originalAudioBuffer = globals.AudioBuffer;
+    delete globals.AudioBuffer;
+    const close = vi.fn();
+    const sink = {
+      async *samples() {
+        yield {
+          sampleRate: 48_000,
+          numberOfChannels: 1,
+          numberOfFrames: 2,
+          timestamp: 0,
+          duration: 2 / 48_000,
+          copyTo(target: Float32Array) {
+            target.set([0.4, -0.4]);
+          },
+          close,
+        };
+      },
+    };
+    const videoScene: Scene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 2,
+      duration: 2,
+      assets: { clip: { id: "clip", type: "video", src: "clip.mp4" } },
+      nodes: [
+        {
+          id: "clip-node",
+          type: "video",
+          assetId: "clip",
+          from: 0,
+          duration: 2,
+        },
+      ],
+    };
+    const assets = {
+      audio: new Map(),
+      videos: new Map([
+        [
+          "clip",
+          {
+            duration: 1,
+            audio: {
+              duration: 1,
+              sampleRate: 48_000,
+              numberOfChannels: 1,
+              sink,
+            },
+          },
+        ],
+      ]),
+    } as unknown as ResolvedAssets;
+
+    try {
+      const mixed = await mixSceneAudioData(videoScene, assets, 0, 1);
+      expect(mixed?.channels[0]?.[0]).toBeCloseTo(0.4, 6);
+      expect(mixed?.channels[0]?.[1]).toBeCloseTo(-0.4, 6);
+      expect(close).toHaveBeenCalledOnce();
+      expect(typeof globals.AudioBuffer).toBe("undefined");
+    } finally {
+      if (originalAudioBuffer) globals.AudioBuffer = originalAudioBuffer;
+    }
   });
 });
 
