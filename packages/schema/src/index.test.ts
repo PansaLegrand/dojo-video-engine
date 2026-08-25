@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  animationStyleTargets,
   CURRENT_SCENE_VERSION,
   legacySceneV0JsonSchema,
   migrateScene,
   parseScene,
+  repairSceneInput,
   sceneJsonSchema,
   sceneSchema,
+  supportedStyleKeys,
   validateScene,
 } from "./index.js";
 
@@ -734,6 +737,154 @@ describe("scene schema", () => {
     );
   });
 
+  it("rejects unknown animation targets and target-incompatible values", () => {
+    const unknown = validateScene({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "animated",
+          type: "div",
+          animations: [
+            {
+              kind: "keyframes",
+              property: "fontColour",
+              frames: [{ frame: 0, value: "red" }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(unknown.ok).toBe(false);
+    expect(unknown.ok ? "" : unknown.errors.join("\n")).toContain(
+      "Invalid enum value",
+    );
+
+    const wrongOpacity = validateScene({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "animated",
+          type: "div",
+          animations: [
+            {
+              kind: "keyframes",
+              property: "opacity",
+              frames: [{ frame: 0, value: "visible" }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(wrongOpacity.ok).toBe(false);
+    expect(wrongOpacity.ok ? "" : wrongOpacity.errors.join("\n")).toContain(
+      "Expected number",
+    );
+  });
+
+  it("retains every Scene v1 scalar style animation target", () => {
+    const structuredOrBoolean = new Set([
+      "safeArea",
+      "strokeDash",
+      "isolation",
+    ]);
+    expect(animationStyleTargets).toEqual(
+      supportedStyleKeys.filter((key) => !structuredOrBoolean.has(key)),
+    );
+
+    const result = validateScene({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "animated-scalars",
+          type: "div",
+          animations: [
+            ["objectFit", "contain", "cover"],
+            ["objectPosition", "left top", "right bottom"],
+            ["fontFamily", "Inter", "serif"],
+            ["textAlign", "left", "center"],
+            ["overflow", "visible", "hidden"],
+            ["blendMode", "source-over", "screen"],
+            ["transformOrigin", "left top", "right bottom"],
+          ].map(([property, from, to]) => ({
+            kind: "keyframes",
+            property,
+            frames: [
+              { frame: 0, value: from },
+              { frame: 10, value: to },
+            ],
+          })),
+        },
+      ],
+    });
+
+    expect(result.ok, result.ok ? "" : result.errors.join("\n")).toBe(true);
+  });
+
+  it("requires compatible masks for mask animation targets", () => {
+    const missing = validateScene({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "masked",
+          type: "div",
+          animations: [
+            {
+              kind: "keyframes",
+              property: "mask.opacity",
+              frames: [{ frame: 0, value: 0.5 }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(missing.ok).toBe(false);
+    expect(missing.ok ? "" : missing.errors.join("\n")).toContain(
+      "require a mask descriptor",
+    );
+
+    const wrongShape = validateScene({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "masked",
+          type: "div",
+          mask: { shape: { kind: "ellipse" } },
+          animations: [
+            {
+              kind: "keyframes",
+              property: "mask.radius",
+              frames: [{ frame: 0, value: 12 }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(wrongShape.ok).toBe(false);
+    expect(wrongShape.ok ? "" : wrongShape.errors.join("\n")).toContain(
+      "rectangular mask",
+    );
+  });
+
   it("validates repeat/yoyo playback and named scene markers", () => {
     const valid = validateScene({
       schemaVersion: 1,
@@ -1187,6 +1338,27 @@ describe("scene schema", () => {
     expect(validateScene(sceneWith("")).ok).toBe(false);
   });
 
+  it("rejects transform origins the renderer would otherwise ignore", () => {
+    const sceneWith = (transformOrigin: string) => ({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "n",
+          type: "div",
+          style: { transform: "rotate(10deg)", transformOrigin },
+        },
+      ],
+    });
+    expect(validateScene(sceneWith("left bottom")).ok).toBe(true);
+    expect(validateScene(sceneWith("25% 10px")).ok).toBe(true);
+    expect(validateScene(sceneWith("banana center")).ok).toBe(false);
+    expect(validateScene(sceneWith("top left")).ok).toBe(false);
+  });
+
   it("accepts deterministic media image rendering modes", () => {
     const sceneWith = (imageRendering: string, pixelSize = 12) => ({
       schemaVersion: 1,
@@ -1234,6 +1406,162 @@ describe("scene schema", () => {
     expect(validated.ok && validated.scene).toBe(scene);
   });
 
+  it("rejects unknown keys at every canonical Scene nesting layer", () => {
+    const input = sceneWithUnknownKeys();
+    const result = validateScene(input);
+
+    expect(result.ok).toBe(false);
+    const errors = result.ok ? "" : result.errors.join("\n");
+    for (const key of expectedRemovedUnknownKeys) {
+      expect(errors, key).toContain(key);
+    }
+    expect(() => parseScene(input)).toThrow("Unsupported key");
+  });
+
+  it("repairs only unknown keys explicitly, reports every removal, and preserves input", () => {
+    const input = sceneWithUnknownKeys();
+    const snapshot = structuredClone(input);
+    const result = repairSceneInput(input);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.fromVersion).toBe(1);
+    expect(result.migrations).toEqual([]);
+    expect(input).toEqual(snapshot);
+    expect(validateScene(result.scene)).toMatchObject({ ok: true });
+
+    const removed = result.diagnostics.map((entry) => entry.key).sort();
+    expect(removed).toEqual([...expectedRemovedUnknownKeys].sort());
+    expect(
+      result.diagnostics.every(
+        (entry) =>
+          entry.code === "unknown_key_removed" &&
+          entry.path.at(-1) === entry.key,
+      ),
+    ).toBe(true);
+
+    const extension = result.scene.nodes.find(
+      (node) => node.id === "extension",
+    );
+    expect(extension?.extension?.params).toEqual({
+      arbitraryHostParam: { nested: true },
+    });
+
+    // Explicit repair never makes canonical parsing of the original tolerant.
+    expect(() => parseScene(input)).toThrow("Unsupported key");
+  });
+
+  it("repairs strict legacy input before deterministic v0 migration", () => {
+    const legacy = {
+      schemaVersion: 0,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [{ id: "box", type: "div", unknownNode: true }],
+      unknownTop: true,
+    };
+    const result = repairSceneInput(legacy);
+
+    expect(result).toMatchObject({
+      ok: true,
+      scene: { schemaVersion: 1 },
+      fromVersion: 0,
+      migrations: ["scene-v0-to-v1"],
+      diagnostics: [
+        { code: "unknown_key_removed", key: "unknownNode" },
+        { code: "unknown_key_removed", key: "unknownTop" },
+      ],
+    });
+  });
+
+  it("does not guess invalid values while repairing unknown keys", () => {
+    const input = {
+      schemaVersion: 1,
+      width: "320",
+      height: 180,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [],
+      unknownTop: true,
+    };
+    const result = repairSceneInput(input);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.diagnostics).toMatchObject([
+      { code: "unknown_key_removed", key: "unknownTop" },
+    ]);
+    expect(result.errors.join("\n")).toContain("width");
+  });
+
+  it("rejects cyclic/shared repair input before recursive validation", () => {
+    const node: Record<string, unknown> = { id: "node", type: "div" };
+    node.children = [node];
+    const result = repairSceneInput({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [node],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join("\n")).toContain("without cycles");
+  });
+
+  it("bounds strict validation before recursive Zod parsing", () => {
+    let params: Record<string, unknown> = { leaf: true };
+    for (let depth = 0; depth < 5_000; depth += 1) {
+      params = { nested: params };
+    }
+    const input = {
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [
+        {
+          id: "deep",
+          type: "extension",
+          extension: { name: "example.deep", version: "1.0.0", params },
+        },
+      ],
+    };
+
+    expect(() => validateScene(input)).not.toThrow();
+    const result = validateScene(input);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join("\n")).toContain(
+      "hard parser-safety ceiling 256",
+    );
+  });
+
+  it("bounds primitive-heavy repair input before cloning or validation", () => {
+    const result = repairSceneInput({
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 30,
+      assets: {},
+      nodes: [],
+      oversized: Array.from({ length: 100_001 }, () => 0),
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join("\n")).toContain("100000-value");
+  });
+
   it("exports a JSON Schema covering the recursive node structure", () => {
     const jsonSchema = sceneJsonSchema() as {
       $ref?: string;
@@ -1245,6 +1573,139 @@ describe("scene schema", () => {
     const scene = jsonSchema.definitions?.MotionforgeScene;
     expect(scene?.properties).toHaveProperty("schemaVersion");
     expect(scene?.properties).toHaveProperty("nodes");
-    expect(JSON.stringify(jsonSchema)).toContain('"opacity"');
+    const serialized = JSON.stringify(jsonSchema);
+    expect(serialized).toContain('"opacity"');
+    expect(serialized).toContain('"mask.opacity"');
+    expect(serialized).toContain("supported Canvas2D filter chain");
   });
 });
+
+const expectedRemovedUnknownKeys = [
+  "unknownAnimation",
+  "unknownAsset",
+  "unknownBus",
+  "unknownDucking",
+  "unknownEffectParam",
+  "unknownEnvelope",
+  "unknownExtension",
+  "unknownKeyframe",
+  "unknownMask",
+  "unknownMaskShape",
+  "unknownMetadata",
+  "unknownNode",
+  "unknownProxy",
+  "unknownRun",
+  "unknownRunStyle",
+  "unknownSafeArea",
+  "unknownShape",
+  "unknownStyle",
+  "unknownTop",
+] as const;
+
+function sceneWithUnknownKeys() {
+  return {
+    schemaVersion: 1,
+    width: 640,
+    height: 360,
+    fps: 30,
+    duration: 60,
+    unknownTop: true,
+    assets: {
+      poster: {
+        id: "poster",
+        type: "image",
+        src: "poster.png",
+        unknownAsset: true,
+        proxy: {
+          src: "poster-proxy.png",
+          width: 320,
+          height: 180,
+          unknownProxy: true,
+        },
+        metadata: {
+          width: 640,
+          height: 360,
+          unknownMetadata: true,
+        },
+      },
+      music: { id: "music", type: "audio", src: "music.wav" },
+    },
+    audioBuses: {
+      music: { gain: 0.5, unknownBus: true },
+    },
+    nodes: [
+      {
+        id: "container",
+        type: "div",
+        unknownNode: true,
+        style: {
+          width: "100%",
+          height: "100%",
+          unknownStyle: true,
+          safeArea: { top: 12, unknownSafeArea: true },
+        },
+        animations: [
+          {
+            kind: "keyframes",
+            property: "opacity",
+            unknownAnimation: true,
+            frames: [
+              { frame: 0, value: 0, unknownKeyframe: true },
+              { frame: 10, value: 1 },
+            ],
+          },
+        ],
+        children: [
+          {
+            id: "rich-text",
+            type: "text",
+            runs: [
+              {
+                text: "Hello",
+                unknownRun: true,
+                style: { color: "#fff", unknownRunStyle: true },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "music",
+        type: "audio",
+        assetId: "music",
+        audioBus: "music",
+        ducks: { bus: "music", gain: 0.4, unknownDucking: true },
+        volumeEnvelope: [
+          { frame: 0, value: 0, unknownEnvelope: true },
+          { frame: 10, value: 1 },
+        ],
+      },
+      {
+        id: "shape",
+        type: "shape",
+        shape: { kind: "rect", radius: 8, unknownShape: true },
+        mask: {
+          shape: { kind: "ellipse", unknownMaskShape: true },
+          opacity: 0.8,
+          unknownMask: true,
+        },
+      },
+      {
+        id: "effect",
+        type: "effect",
+        effect: "cartoonBurst",
+        params: { seed: 7, unknownEffectParam: true },
+      },
+      {
+        id: "extension",
+        type: "extension",
+        extension: {
+          name: "example.test",
+          version: "1.0.0",
+          unknownExtension: true,
+          params: { arbitraryHostParam: { nested: true } },
+        },
+      },
+    ],
+  };
+}

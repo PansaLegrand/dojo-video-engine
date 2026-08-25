@@ -14,6 +14,10 @@ const server = await createServer({
         rootDir,
         "packages/presets/src/macros.ts",
       ),
+      "@motionforge/schema/values": resolve(
+        rootDir,
+        "packages/schema/src/values.ts",
+      ),
       ...Object.fromEntries(
         [
           "agent-tools",

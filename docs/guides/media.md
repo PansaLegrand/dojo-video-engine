@@ -94,7 +94,12 @@ Audio preview is best-effort in browsers; exported MP4 audio is mixed through th
 Font assets register under their asset id:
 
 ```ts
-import { defineAssets, makeScene, publicAsset, seconds } from "@motionforge/authoring";
+import {
+  defineAssets,
+  makeScene,
+  publicAsset,
+  seconds,
+} from "@motionforge/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -130,15 +135,17 @@ Lottie assets must be self-contained vector JSON. Expressions and external image
 `@motionforge/presets` ships named media looks that compile to plain style fragments:
 
 ```ts
-mediaLook("punchySocial")
-mediaLook("cinematicWarm")
-mediaLook("coolNoir")
-mediaLook("retroTape")
-mediaLook("softPortrait")
-mediaLook("blurredBackdrop")
+mediaLook("punchySocial");
+mediaLook("cinematicWarm");
+mediaLook("coolNoir");
+mediaLook("retroTape");
+mediaLook("softPortrait");
+mediaLook("blurredBackdrop");
 ```
 
-These use the supported Canvas2D `filter` subset. Safari may ignore some filters during preview/export.
+These use the supported Canvas2D `filter` subset. Preview/export preflight
+rejects a Canvas runtime that cannot paint filters instead of silently dropping
+the look.
 
 ## Clip Layouts
 

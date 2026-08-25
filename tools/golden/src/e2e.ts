@@ -15,7 +15,9 @@ const checks: Array<{ label: string; pass: boolean; detail?: string }> = [];
 
 function check(label: string, pass: boolean, detail?: string): void {
   checks.push({ label, pass, detail });
-  console.log(`${pass ? "ok " : "not ok"} ${label}${detail ? ` (${detail})` : ""}`);
+  console.log(
+    `${pass ? "ok " : "not ok"} ${label}${detail ? ` (${detail})` : ""}`,
+  );
 }
 
 async function waitForCanvasPaint(page: Page): Promise<void> {
@@ -45,20 +47,26 @@ const server: ViteDevServer = await createServer({
   root: resolve(rootDir, "apps/playground"),
   logLevel: "error",
   resolve: {
-    alias: Object.fromEntries(
-      [
-        "schema",
-        "core",
-        "presets",
-        "showcase",
-        "renderer-canvas2d",
-        "export",
-        "player",
-      ].map((name) => [
-        `@motionforge/${name}`,
-        resolve(rootDir, `packages/${name}/src/index.ts`),
-      ]),
-    ),
+    alias: {
+      "@motionforge/schema/values": resolve(
+        rootDir,
+        "packages/schema/src/values.ts",
+      ),
+      ...Object.fromEntries(
+        [
+          "schema",
+          "core",
+          "presets",
+          "showcase",
+          "renderer-canvas2d",
+          "export",
+          "player",
+        ].map((name) => [
+          `@motionforge/${name}`,
+          resolve(rootDir, `packages/${name}/src/index.ts`),
+        ]),
+      ),
+    },
   },
   server: { host: "127.0.0.1", port: 0, strictPort: false },
 });
@@ -109,7 +117,9 @@ try {
   // --- agent console -------------------------------------------------------
   await page.fill(
     "#agent-input",
-    JSON.stringify([{ op: "setStyle", id: "subtitel", style: { opacity: 0.5 } }]),
+    JSON.stringify([
+      { op: "setStyle", id: "subtitel", style: { opacity: 0.5 } },
+    ]),
   );
   await page.click("#agent-apply");
   const hint = (await page.locator("#agent-output").textContent()) ?? "";
@@ -148,7 +158,11 @@ try {
   await page.click("#play");
   await page.waitForTimeout(600);
   const audioFrame = await readFrame(page);
-  check("audio scene plays with WebAudio attached", audioFrame > 3, `frame ${audioFrame}`);
+  check(
+    "audio scene plays with WebAudio attached",
+    audioFrame > 3,
+    `frame ${audioFrame}`,
+  );
   await page.click("#play");
 
   // --- lottie scene ---------------------------------------------------------
@@ -173,8 +187,11 @@ try {
   await page.waitForTimeout(500);
   check("lottie scene plays", (await readFrame(page)) > 3);
 
-  check("no console errors across the run", consoleErrors.length === 0,
-    consoleErrors.slice(0, 2).join("; ") || undefined);
+  check(
+    "no console errors across the run",
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 2).join("; ") || undefined,
+  );
 } finally {
   await browser?.close();
   await server.close();

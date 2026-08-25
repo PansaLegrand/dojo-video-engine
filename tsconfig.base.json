@@ -7,6 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "@motionforge/schema": ["packages/schema/src/index.ts"],
+      "@motionforge/schema/values": ["packages/schema/src/values.ts"],
       "@motionforge/authoring": ["packages/authoring/src/index.ts"],
       "@motionforge/cli": ["packages/cli/src/index.ts"],
       "@motionforge/core": ["packages/core/src/index.ts"],

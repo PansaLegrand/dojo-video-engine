@@ -7,7 +7,7 @@ MotionForge is designed so LLMs and coding agents can generate and edit videos w
 Agents should treat the scene document as the canonical artifact:
 
 ```txt
-prompt -> scene JSON -> validate -> repair -> preview/export
+prompt -> scene JSON -> explicit repair (if allowed) -> validate -> preview/export
 ```
 
 For follow-up edits:
@@ -36,6 +36,12 @@ motionforge dev src/video.ts
 ```
 
 Validation errors are intentionally actionable. They name the path, the issue, and usually the repair.
+
+Canonical Scene parsing is strict and never drops unknown keys. A host that
+chooses tolerant model ingestion should call `repairSceneInput()` explicitly,
+surface its removal diagnostics, and reject the result if any other validation
+error remains. Do not use tolerant ingestion for already-stored canonical
+documents.
 
 Example:
 

@@ -5,6 +5,45 @@ starter packages.
 
 ## Unreleased
 
+### Canonical Scene integrity
+
+- Canonical v0/v1 parsing now rejects unknown keys at every object nesting layer
+  instead of relying on Zod's implicit stripping behavior.
+- Added explicit `repairSceneInput()` tolerant ingestion, which removes unknown
+  keys on a clone, reports every removal, and preserves all other validation
+  failures.
+- Added configurable `preflightScene()` host execution limits for canvas size,
+  complete document values/depth, frames, assets, node count/depth, geometry,
+  animations, and keyframes without changing Scene v1 document validity.
+- Added compatibility coverage spanning top-level, asset, node, style, text-run,
+  animation, keyframe, envelope, audio, shape/mask, effect, and extension data.
+- Added the shared `@motionforge/schema/values` portable grammar for lengths,
+  named/hex/legacy-and-modern RGB/HSL colors, gradients, transforms/origins,
+  filters, borders, shadows, text strokes, and easing; schema, core
+  interpolation, and Canvas2D now consume the same parsed semantics.
+- Accepted RFC 0010 for the portable Scene v1 value policy, including explicit
+  CSS Color 4/P3 exclusion and capability-failure semantics. The generated
+  JSON Schema now carries a registered custom-format vocabulary and enforces
+  target-dependent animation values against the same valid/invalid corpus.
+- Animation targets are a typed supported union with target-specific value and
+  mask compatibility checks while retaining all previously supported scalar
+  Scene v1 targets; misspelled or type-incompatible tracks fail before
+  evaluation.
+- Canvas2D preflight now reports missing filter, conic-gradient, and text
+  letter-spacing support, and schema-valid text shadows use the shared shadow
+  parser instead of silently disappearing.
+- Object-position axes and Canvas font family/weight descriptors now use
+  bounded shared grammars, preventing invalid values from falling back to
+  center or retaining stale font state.
+- Scene patch operation envelopes are strict, clip mutations require closed
+  geometry, and muted reverse-video playback now has patch parity with Scene
+  validation.
+- Core/authoring round trips preserve repeat/yoyo animation playback. Media
+  asset helpers preserve source/proxy/metadata options, include fonts, and
+  video clips support the same gain envelopes/fade compiler as audio clips.
+  Helper identity fields cannot be overwritten at runtime, and fade-out gain
+  reaches zero on the final active node frame.
+
 ### Post-1.0 architecture contract
 
 - Accepted RFC 0009 defining the standalone engine boundary, target dependency

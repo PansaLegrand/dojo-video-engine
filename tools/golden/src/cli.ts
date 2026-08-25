@@ -42,6 +42,10 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/presets/src/macros.ts",
         ),
+        "@motionforge/schema/values": resolve(
+          rootDir,
+          "packages/schema/src/values.ts",
+        ),
         "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
         "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
         "@motionforge/agent-tools": resolve(

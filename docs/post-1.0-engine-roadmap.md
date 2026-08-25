@@ -254,13 +254,16 @@ Deliver:
 - schema/patch/builder/authoring feature-parity corrections;
 - an RFC defining the portable supported value grammar, including named/color
   syntax, gradients, transforms, borders, shadows, filters, and the explicit
-  P3/CSS Color 4 policy;
-- configurable `preflightScene(scene, limits)` execution policy for pixels,
-  frames, nodes, depth, assets, paths, animations, and keyframes; host limits
-  do not change canonical Scene validity;
+  P3/CSS Color 4 policy, recorded as
+  [`RFC 0010`](rfcs/0010-portable-scene-values.md);
+- configurable `preflightScene(scene, limits)` execution policy for full
+  document values/depth, pixels, frames, nodes, assets, paths, animations, and
+  keyframes; host limits do not change canonical Scene validity;
 - compatibility audit of real example/downstream scenes, reporting every key
   currently stripped and providing repair/migration diagnostics before strict
   parsing is enabled by default;
+- the evidence/remaining downstream gate recorded in
+  [`mf1-compatibility-audit.md`](mf1-compatibility-audit.md);
 - corrected generated JSON Schema and documentation.
 
 Non-goals:

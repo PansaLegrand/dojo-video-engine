@@ -1,4 +1,8 @@
-import { isEasingExpression, type SceneAnimation } from "@motionforge/schema";
+import {
+  isEasingExpression,
+  type SceneAnimation,
+  type SceneAnimationTarget,
+} from "@motionforge/schema";
 import { z } from "zod";
 
 export const motionPresetParamsSchema = z
@@ -228,7 +232,7 @@ function compileSpec(
   const playback = { repeat: params.repeat, yoyo: params.yoyo };
   const at = (progress: number) => delay + Math.round(duration * progress);
   const track = (
-    property: string,
+    property: SceneAnimationTarget,
     values: Array<[number, string | number, string?]>,
   ): SceneAnimation => ({
     kind: "keyframes",
@@ -553,7 +557,7 @@ export function motionPath(
 }
 
 export function seededSignal(
-  property: string,
+  property: SceneAnimationTarget,
   options: {
     seed: number;
     durationInFrames: number;

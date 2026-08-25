@@ -71,7 +71,11 @@ import {
 } from "@motionforge/authoring";
 
 const logo = imageAsset("logo", publicAsset("assets/logo.png"));
-const clip = videoAsset("clip", publicAsset("assets/clip.mp4"));
+const clip = videoAsset("clip", publicAsset("assets/clip.mp4"), {
+  sourceMode: "stream",
+  proxy: { src: "/assets/clip-proxy.mp4", width: 640, height: 360 },
+  metadata: { duration: 20, width: 1920, height: 1080 },
+});
 
 export default makeScene({
   size: "landscape",
@@ -82,12 +86,18 @@ export default makeScene({
     videoClip(clip, {
       trimStart: seconds(5),
       duration: seconds(5),
+      fadeIn: seconds(0.25),
+      fadeOut: seconds(0.5),
     }),
   ],
 });
 ```
 
 `publicAsset()` normalizes local public-folder paths and leaves absolute URLs alone. The emitted scene JSON still contains explicit asset entries and fetchable `src` strings; there is no hidden resolver.
+
+Asset helpers accept the common SceneAsset source/proxy/metadata options and
+`fontAsset()` declares font resources. Video clips accept an explicit
+`volumeEnvelope` or the same `fadeIn`/`fadeOut` compiler used by audio tracks.
 
 You can still pass an existing asset id when assets are defined elsewhere:
 
@@ -245,7 +255,10 @@ export default makeScene({
 });
 ```
 
-The helper emits normal `audio` nodes and auto-registers audio asset objects in `scene.assets`. It controls timing, source trim, static volume, looped beds, and fade-in/fade-out gain automation through `volumeEnvelope`; ducking remains future mixer work.
+The helper emits normal `audio` nodes and auto-registers audio asset objects in
+`scene.assets`. It controls timing, source trim, static volume, looped beds,
+fade-in/fade-out gain automation through `volumeEnvelope`, buses, panning, and
+ducking.
 
 ## Subtitles
 
@@ -294,7 +307,7 @@ Stable for 1.x integrations:
 
 - Scene helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textBox()`, `textNode()`, `richTextNode()`, `richTextBlock()`, `image()`, `videoClip()`, `lottieClip()`, `effectLayer()`, `extensionLayer()`, `shapeLayer()`, and `audioTrack()`.
 - Overlay/media helpers: `imageOverlay()`, `videoOverlay()`, `audioOverlay()`, `subtitleTrack()`, `captionTrack()`, and aliases `subtitles` / `captions`.
-- Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `lottieAsset()`, and `defineAssets()`.
+- Time and asset helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, `toSeconds()`, `publicAsset()`, `imageAsset()`, `videoAsset()`, `audioAsset()`, `fontAsset()`, `lottieAsset()`, and `defineAssets()`.
 - Re-exported preset helpers for common authoring flows, including motion presets, subtitle parsers/templates, overlay template metadata, safe-area helpers, and `audioFadeEnvelope()`.
 
 Evolving additively in 1.x:

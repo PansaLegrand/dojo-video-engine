@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { SceneAnimation } from "@motionforge/schema";
 import {
   audio,
   composition,
@@ -63,6 +64,29 @@ describe("builder", () => {
       "text-1",
       "text-2",
     ]);
+  });
+
+  it("preserves complete repeat/yoyo animations through the builder", () => {
+    const animation = {
+      kind: "keyframes" as const,
+      property: "opacity",
+      frames: [
+        { frame: 0, value: 0 },
+        { frame: 10, value: 1 },
+      ],
+      repeat: 2,
+      yoyo: true,
+    } satisfies SceneAnimation;
+    const scene = composition({
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 40,
+    })
+      .children(div({ id: "pulse" }).animate(animation))
+      .toJSON();
+
+    expect(scene.nodes[0]?.animations).toEqual([animation]);
   });
 
   it("builds versioned extension nodes", () => {
@@ -319,20 +343,19 @@ describe("animation evaluator", () => {
     expect(inner?.localFrame).toBe(3);
   });
 
-  it("does not assign non-string transform animation values into resolved style", () => {
-    const scene = composition({
-      width: 100,
-      height: 100,
-      fps: 30,
-      duration: 10,
-    })
-      .children(
-        div({ id: "box" }).animate("transform", [{ frame: 0, value: 1 }]),
-      )
-      .toJSON();
-
-    const resolved = evaluateScene(scene, 0);
-    expect(resolved.nodes[0]?.style.transform).toBeUndefined();
+  it("rejects non-string transform animation values before evaluation", () => {
+    expect(() =>
+      composition({
+        width: 100,
+        height: 100,
+        fps: 30,
+        duration: 10,
+      })
+        .children(
+          div({ id: "box" }).animate("transform", [{ frame: 0, value: 1 }]),
+        )
+        .toJSON(),
+    ).toThrow("Expected string");
   });
 
   it("interpolates hex colors in RGBA space", () => {
@@ -357,6 +380,18 @@ describe("animation evaluator", () => {
         5,
       ),
     ).toBe("rgba(255, 0, 0, 0.5)");
+  });
+
+  it("interpolates legacy HSL and modern space/slash RGB colors", () => {
+    expect(
+      evaluateKeyframes(
+        [
+          { frame: 0, value: "hsl(0, 100%, 50%)" },
+          { frame: 10, value: "rgb(0 0 255 / 50%)" },
+        ],
+        5,
+      ),
+    ).toBe("rgba(128, 0, 128, 0.75)");
   });
 
   it("supports short hex and applies easing to color segments", () => {
@@ -393,7 +428,7 @@ describe("animation playback", () => {
     ],
     repeat: 2,
     yoyo: true,
-  };
+  } satisfies SceneAnimation;
 
   it("maps repeated and yoyo cycles deterministically", () => {
     expect(resolveAnimationFrame(repeated, 0)).toBe(0);

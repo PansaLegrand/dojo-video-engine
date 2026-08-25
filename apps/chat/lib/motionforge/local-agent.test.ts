@@ -337,8 +337,8 @@ describe("local motionforge agent", () => {
         volumeEnvelope: [
           { frame: 0, value: 0 },
           { frame: 30, value: 1, easing: "easeOut" },
-          { frame: scene.duration - 60, value: 1 },
-          { frame: scene.duration, value: 0, easing: "easeIn" },
+          { frame: scene.duration - 61, value: 1 },
+          { frame: scene.duration - 1, value: 0, easing: "easeIn" },
         ],
       },
     });
@@ -352,8 +352,8 @@ describe("local motionforge agent", () => {
       volumeEnvelope: [
         { frame: 0, value: 0 },
         { frame: 30, value: 1, easing: "easeOut" },
-        { frame: scene.duration - 60, value: 1 },
-        { frame: scene.duration, value: 0, easing: "easeIn" },
+        { frame: scene.duration - 61, value: 1 },
+        { frame: scene.duration - 1, value: 0, easing: "easeIn" },
       ],
     });
     expect(validateScene(result.scene)).toMatchObject({ ok: true });
@@ -514,6 +514,42 @@ describe("local motionforge agent", () => {
     expect(validateScene(result.scene)).toMatchObject({ ok: true });
   });
 
+  it("uses explicit unknown-key repair at the model Scene boundary", () => {
+    const result = normalizeModelOutput(
+      {
+        scene: {
+          schemaVersion: 1,
+          width: 320,
+          height: 180,
+          fps: 30,
+          duration: 30,
+          assets: {},
+          unknownTop: true,
+          nodes: [
+            {
+              id: "title",
+              type: "text",
+              text: "Hello",
+              unknownNode: true,
+            },
+          ],
+        },
+        summary: "Generated a title.",
+      },
+      null,
+    );
+
+    expect(result.mode).toBe("scene");
+    expect(result.scene).not.toHaveProperty("unknownTop");
+    expect(result.scene.nodes[0]).not.toHaveProperty("unknownNode");
+    expect(result.diagnostics.join("\n")).toContain(
+      'removed unknown key "unknownTop"',
+    );
+    expect(result.diagnostics.join("\n")).toContain(
+      'removed unknown key "unknownNode"',
+    );
+  });
+
   it("repairs model patch ops that put timing inside setNodeProps", () => {
     const scene: Scene = {
       schemaVersion: 1,
@@ -672,7 +708,10 @@ describe("local motionforge agent", () => {
                 {
                   kind: "keyframes",
                   property: "opacity",
-                  frames: [{ offset: 0, opacity: 0 }, { offset: 1, opacity: 1 }],
+                  frames: [
+                    { offset: 0, opacity: 0 },
+                    { offset: 1, opacity: 1 },
+                  ],
                 },
                 {
                   property: "transform",

@@ -3,6 +3,7 @@ import {
   animationSchema,
   assetSchema,
   audioBusSchema,
+  closedShapeGeometrySchema,
   duckingSchema,
   extensionDescriptorSchema,
   maskDescriptorSchema,
@@ -27,153 +28,185 @@ import {
  * scene is never mutated.
  */
 
-const setStyleOp = z.object({
-  op: z.literal("setStyle"),
-  id: z.string().min(1),
-  /** Merged into the node's style; a null value deletes that key. */
-  style: z.record(z.unknown()),
-});
+const setStyleOp = z
+  .object({
+    op: z.literal("setStyle"),
+    id: z.string().min(1),
+    /** Merged into the node's style; a null value deletes that key. */
+    style: z.record(z.unknown()),
+  })
+  .strict();
 
-const setTextOp = z.object({
-  op: z.literal("setText"),
-  id: z.string().min(1),
-  text: z.string(),
-});
+const setTextOp = z
+  .object({
+    op: z.literal("setText"),
+    id: z.string().min(1),
+    text: z.string(),
+  })
+  .strict();
 
-const setNodePropsOp = z.object({
-  op: z.literal("setNodeProps"),
-  id: z.string().min(1),
-  props: z
-    .object({
-      assetId: z.string().min(1).nullable().optional(),
-      text: z.string().nullable().optional(),
-      effect: z.string().min(1).nullable().optional(),
-      params: z.record(z.unknown()).nullable().optional(),
-      runs: z
-        .array(z.lazy(() => textRunSchema))
-        .min(1)
-        .max(256)
-        .nullable()
-        .optional(),
-      extension: z
-        .lazy(() => extensionDescriptorSchema)
-        .nullable()
-        .optional(),
-      shape: z
-        .lazy(() => shapeGeometrySchema)
-        .nullable()
-        .optional(),
-      clip: z
-        .lazy(() => shapeGeometrySchema)
-        .nullable()
-        .optional(),
-      mask: z
-        .lazy(() => maskDescriptorSchema)
-        .nullable()
-        .optional(),
-      videoStartTime: z.number().nonnegative().nullable().optional(),
-      playbackRate: z.number().positive().nullable().optional(),
-      audioStartTime: z.number().nonnegative().nullable().optional(),
-      volume: z.number().min(0).max(1).nullable().optional(),
-      volumeEnvelope: z
-        .lazy(() => volumeEnvelopeSchema)
-        .nullable()
-        .optional(),
-      audioBus: z.string().min(1).max(64).nullable().optional(),
-      pan: z.number().min(-1).max(1).nullable().optional(),
-      ducks: z
-        .lazy(() => duckingSchema)
-        .nullable()
-        .optional(),
-      videoEndBehavior: z.enum(["hold", "loop"]).nullable().optional(),
-      loop: z.boolean().nullable().optional(),
-    })
-    .strict()
-    .refine((props) => Object.keys(props).length > 0, {
-      message: "props must include at least one supported node field.",
-    }),
-});
+const setNodePropsOp = z
+  .object({
+    op: z.literal("setNodeProps"),
+    id: z.string().min(1),
+    props: z
+      .object({
+        assetId: z.string().min(1).nullable().optional(),
+        text: z.string().nullable().optional(),
+        effect: z.string().min(1).nullable().optional(),
+        params: z.record(z.unknown()).nullable().optional(),
+        runs: z
+          .array(z.lazy(() => textRunSchema))
+          .min(1)
+          .max(256)
+          .nullable()
+          .optional(),
+        extension: z
+          .lazy(() => extensionDescriptorSchema)
+          .nullable()
+          .optional(),
+        shape: z
+          .lazy(() => shapeGeometrySchema)
+          .nullable()
+          .optional(),
+        clip: z
+          .lazy(() => closedShapeGeometrySchema)
+          .nullable()
+          .optional(),
+        mask: z
+          .lazy(() => maskDescriptorSchema)
+          .nullable()
+          .optional(),
+        videoStartTime: z.number().nonnegative().nullable().optional(),
+        playbackRate: z
+          .number()
+          .min(-16)
+          .max(16)
+          .refine((value) => value !== 0, "playbackRate cannot be zero.")
+          .nullable()
+          .optional(),
+        audioStartTime: z.number().nonnegative().nullable().optional(),
+        volume: z.number().min(0).max(1).nullable().optional(),
+        volumeEnvelope: z
+          .lazy(() => volumeEnvelopeSchema)
+          .nullable()
+          .optional(),
+        audioBus: z.string().min(1).max(64).nullable().optional(),
+        pan: z.number().min(-1).max(1).nullable().optional(),
+        ducks: z
+          .lazy(() => duckingSchema)
+          .nullable()
+          .optional(),
+        videoEndBehavior: z.enum(["hold", "loop"]).nullable().optional(),
+        loop: z.boolean().nullable().optional(),
+      })
+      .strict()
+      .refine((props) => Object.keys(props).length > 0, {
+        message: "props must include at least one supported node field.",
+      }),
+  })
+  .strict();
 
-const retimeOp = z.object({
-  op: z.literal("retime"),
-  id: z.string().min(1),
-  from: z.number().int().optional(),
-  duration: z
-    .number()
-    .int()
-    .positive({
-      message:
-        "duration must be a positive integer. To hide a node, removeNode it instead.",
-    })
-    .optional(),
-});
+const retimeOp = z
+  .object({
+    op: z.literal("retime"),
+    id: z.string().min(1),
+    from: z.number().int().optional(),
+    duration: z
+      .number()
+      .int()
+      .positive({
+        message:
+          "duration must be a positive integer. To hide a node, removeNode it instead.",
+      })
+      .optional(),
+  })
+  .strict();
 
-const setAnimationsOp = z.object({
-  op: z.literal("setAnimations"),
-  id: z.string().min(1),
-  /** Replaces the node's animation list as a unit. */
-  // z.lazy breaks the index<->patch ESM evaluation cycle: these schemas live
-  // in index.ts, which re-exports this module.
-  animations: z.array(z.lazy(() => animationSchema)),
-});
+const setAnimationsOp = z
+  .object({
+    op: z.literal("setAnimations"),
+    id: z.string().min(1),
+    /** Replaces the node's animation list as a unit. */
+    // z.lazy breaks the index<->patch ESM evaluation cycle: these schemas live
+    // in index.ts, which re-exports this module.
+    animations: z.array(z.lazy(() => animationSchema)),
+  })
+  .strict();
 
 const optionalIdSchema = z.preprocess(
   (value) => (value === null ? undefined : value),
   z.string().min(1).optional(),
 );
 
-const insertNodeOp = z.object({
-  op: z.literal("insertNode"),
-  node: z.lazy(() => sceneNodeSchema),
-  /** Omitted/null = insert at the scene root. */
-  parentId: optionalIdSchema,
-  /** Omitted/null = append after existing siblings. */
-  beforeId: optionalIdSchema,
-});
+const insertNodeOp = z
+  .object({
+    op: z.literal("insertNode"),
+    node: z.lazy(() => sceneNodeSchema),
+    /** Omitted/null = insert at the scene root. */
+    parentId: optionalIdSchema,
+    /** Omitted/null = append after existing siblings. */
+    beforeId: optionalIdSchema,
+  })
+  .strict();
 
-const removeNodeOp = z.object({
-  op: z.literal("removeNode"),
-  id: z.string().min(1),
-});
+const removeNodeOp = z
+  .object({
+    op: z.literal("removeNode"),
+    id: z.string().min(1),
+  })
+  .strict();
 
-const moveNodeOp = z.object({
-  op: z.literal("moveNode"),
-  id: z.string().min(1),
-  parentId: optionalIdSchema,
-  beforeId: optionalIdSchema,
-});
+const moveNodeOp = z
+  .object({
+    op: z.literal("moveNode"),
+    id: z.string().min(1),
+    parentId: optionalIdSchema,
+    beforeId: optionalIdSchema,
+  })
+  .strict();
 
-const setAssetOp = z.object({
-  op: z.literal("setAsset"),
-  asset: z.lazy(() => assetSchema),
-});
+const setAssetOp = z
+  .object({
+    op: z.literal("setAsset"),
+    asset: z.lazy(() => assetSchema),
+  })
+  .strict();
 
-const removeAssetOp = z.object({
-  op: z.literal("removeAsset"),
-  id: z.string().min(1),
-});
+const removeAssetOp = z
+  .object({
+    op: z.literal("removeAsset"),
+    id: z.string().min(1),
+  })
+  .strict();
 
-const setSceneMetaOp = z.object({
-  op: z.literal("setSceneMeta"),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-  fps: z.number().int().positive().optional(),
-  duration: z.number().int().positive().optional(),
-});
+const setSceneMetaOp = z
+  .object({
+    op: z.literal("setSceneMeta"),
+    width: z.number().int().positive().optional(),
+    height: z.number().int().positive().optional(),
+    fps: z.number().int().positive().optional(),
+    duration: z.number().int().positive().optional(),
+  })
+  .strict();
 
-const setMarkerOp = z.object({
-  op: z.literal("setMarker"),
-  name: z.string().min(1),
-  /** Null removes the marker. */
-  frame: z.number().int().nonnegative().nullable(),
-});
+const setMarkerOp = z
+  .object({
+    op: z.literal("setMarker"),
+    name: z.string().min(1),
+    /** Null removes the marker. */
+    frame: z.number().int().nonnegative().nullable(),
+  })
+  .strict();
 
-const setAudioBusOp = z.object({
-  op: z.literal("setAudioBus"),
-  name: z.string().min(1),
-  /** Null removes the bus. */
-  bus: z.lazy(() => audioBusSchema).nullable(),
-});
+const setAudioBusOp = z
+  .object({
+    op: z.literal("setAudioBus"),
+    name: z.string().min(1),
+    /** Null removes the bus. */
+    bus: z.lazy(() => audioBusSchema).nullable(),
+  })
+  .strict();
 
 export const sceneOpSchema = z.discriminatedUnion("op", [
   setStyleOp,

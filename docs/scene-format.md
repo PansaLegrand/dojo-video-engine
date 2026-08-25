@@ -2,7 +2,13 @@
 
 The scene document is the stable contract between humans, framework adapters, agents, renderers, and exporters. Everything else in motionforge sits above or below this format.
 
-A machine-readable JSON Schema for this format ships with the schema package at [`packages/schema/scene.schema.json`](../packages/schema/scene.schema.json) and is exported at runtime as `sceneJsonSchema()`. The JSON Schema covers structure; the cross-field invariants listed below are enforced by `parseScene` / `validateScene`.
+A machine-readable JSON Schema for this format ships with the schema package at
+[`packages/schema/scene.schema.json`](../packages/schema/scene.schema.json) and
+is exported at runtime as `sceneJsonSchema()`. It covers canonical structure,
+portable visual-value formats, and target-specific animation values. Register
+`motionforgeJsonSchemaFormats` before compiling it; a validator must not ignore
+unknown formats. Cross-field invariants listed below remain enforced by
+`parseScene` / `validateScene`.
 
 Scene v1 is canonical. `sceneSchema` accepts v1 only, while `parseScene()`,
 `validateScene()`, and `migrateScene()` also accept valid legacy v0 documents
@@ -287,57 +293,60 @@ Style properties that take lengths accept:
 
 ## Style support matrix
 
-Validation is intentionally stricter than implementation: a property may validate today and gain behavior in a later release without a format change. The matrix below is the source of truth for what actually happens at each stage. **Validated** means the schema accepts it; **Layout** means it affects box geometry; **Render** means it affects pixels.
+Validation and renderer semantics are kept in lockstep: a Scene v1 style value
+must not validate as a planned no-op. The matrix below is the source of truth
+for what happens at each stage. **Validated** means the schema accepts it;
+**Layout** means it affects box geometry; **Render** means it affects pixels.
 
-| Property                                         | Validated | Layout | Render | Notes                                                                                                                                                                                     |
-| ------------------------------------------------ | :-------: | :----: | :----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `width`, `height`                                |    ✅     |   ✅   |   —    | number, `px`, or `%`                                                                                                                                                                      |
-| `aspectRatio`                                    |    ✅     |   ✅   |   —    | positive number or `width/height` string; derives an unspecified dimension                                                                                                                |
-| `safeArea`                                       |    ✅     |   ✅   |   —    | top/right/bottom/left insets constrain the node against its containing block                                                                                                              |
-| `position`                                       |    ✅     |   ✅   |   —    | `relative` (default) or `absolute`                                                                                                                                                        |
-| `left`, `top`, `right`, `bottom`                 |    ✅     |   ✅   |   —    | `right`/`bottom` only apply with `position: absolute`                                                                                                                                     |
-| `inset`                                          |    ✅     |   ✅   |   —    | fallback for `left`/`top` and implied size                                                                                                                                                |
-| `padding`, `paddingTop/Right/Bottom/Left`        |    ✅     |   ✅   |   —    | per-side values override the shorthand                                                                                                                                                    |
-| `display: "flex"`                                |    ✅     |   ✅   |   —    | the only non-default display                                                                                                                                                              |
-| `flexDirection`                                  |    ✅     |   ✅   |   —    | `row` (default) or `column`                                                                                                                                                               |
-| `gap`                                            |    ✅     |   ✅   |   —    | main-axis gap between flex children                                                                                                                                                       |
-| `justifyContent`                                 |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `space-between` (distributes leftover space on top of `gap`)                                                                                |
-| `alignItems`                                     |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `stretch` (fills the cross axis for children without an explicit size)                                                                      |
-| `backgroundColor`                                |    ✅     |   —    |   ✅   | any Canvas2D fill style string                                                                                                                                                            |
-| `background`                                     |    ✅     |   —    |   ✅   | solid, linear, circular radial, or conic gradients; percentage stops/centers and degree angles                                                                                            |
-| `fill`, `stroke`, `strokeWidth`, `stroke*`       |    ✅     |   —    |   ✅   | shape paint, line cap/join, and bounded dash arrays; fill/stroke accept supported gradients                                                                                               |
-| `borderRadius`, per-corner radius fields         |    ✅     |   —    |   ✅   | corner overrides apply to background, media, overflow, border, and rectangle shapes                                                                                                       |
-| `overflow`                                       |    ✅     |   —    |   ✅   | `visible` (default) or `hidden` — clips the node's content and subtree to the border box, following `borderRadius`                                                                        |
-| `opacity`                                        |    ✅     |   —    |   ✅   | `0`–`1`, multiplies down the subtree                                                                                                                                                      |
-| `blendMode`                                      |    ✅     |   —    |   ✅   | bounded Canvas composite operations; inherited by descendant draw calls, without isolated-group semantics                                                                                 |
-| `isolation`                                      |    ✅     |   —    |   ✅   | stages the subtree and applies node opacity/blend once to the group                                                                                                                       |
-| `transform`                                      |    ✅     |   —    |   ✅   | `translate()`, `scale()`, `rotate()` lists; pivot via `transformOrigin`; keyframes with matching function sequences tween                                                                 |
-| `fontSize`                                       |    ✅     |   ✅   |   ✅   | also drives intrinsic text size in flex layout                                                                                                                                            |
-| `fontFamily`, `fontWeight`                       |    ✅     |   —    |   ✅   | font assets register under their asset id; reference as `fontFamily: "<asset id>"`                                                                                                        |
-| `color`                                          |    ✅     |   —    |   ✅   | text fill                                                                                                                                                                                 |
-| `textAlign`                                      |    ✅     |   —    |   ✅   | `left` (default), `center`, `right`                                                                                                                                                       |
-| `direction`                                      |    ✅     |   —    |   ✅   | explicit `ltr`, `rtl`, or inherited Canvas bidi direction                                                                                                                                 |
-| `textShadow`                                     |    ✅     |   —    |   ✅   | single `x y blur color` shadow                                                                                                                                                            |
-| `textStroke`                                     |    ✅     |   —    |   ✅   | single `<width> <color>` outline; width accepts number, `px`, or `%` of `fontSize`; stroke paints before fill                                                                             |
-| `textBackgroundColor`                            |    ✅     |   —    |   ✅   | fitted per-line text background, measured after wrapping and before stroke/fill                                                                                                           |
-| `textBackgroundPadding*`, `textBackgroundRadius` |    ✅     |   —    |   ✅   | `textBackgroundPadding`, `X`, `Y`, and radius accept number, `px`, or `%` of `fontSize`                                                                                                   |
-| `fontStyle`                                      |    ✅     |   —    |   ✅   | `normal` (default) or `italic`                                                                                                                                                            |
-| `lineHeight`                                     |    ✅     |   ✅   |   ✅   | unitless number = multiplier of `fontSize` (CSS semantics); `px`/`%` lengths also accepted; default `1.25`                                                                                |
-| `letterSpacing`                                  |    ✅     |   —    |   ✅   | number or `px`; uses the Canvas2D `letterSpacing` API (Chromium-class browsers)                                                                                                           |
-| `margin`, `marginTop/Right/Bottom/Left`          |    ✅     |   ✅   |   —    | per-side values override the shorthand and participate in auto size/anchoring                                                                                                             |
-| `minWidth`, `minHeight`, `maxWidth`, `maxHeight` |    ✅     |   ✅   |   —    | clamp the resolved size; `min` wins over `max` (CSS semantics)                                                                                                                            |
-| `transformOrigin`                                |    ✅     |   —    |   ✅   | `left`/`center`/`right`, `top`/`center`/`bottom`, `px`, or `%` per axis; default center                                                                                                   |
-| `objectFit`                                      |    ✅     |   —    |   ✅   | `fill` (default), `contain`, `cover`, `none`, `scale-down`; applies to `img` and `video` nodes                                                                                            |
-| `objectPosition`                                 |    ✅     |   —    |   ✅   | keywords (`left`/`center`/`right`, `top`/`center`/`bottom`), `%` (CSS alignment semantics), or `px` per axis                                                                              |
-| `border`                                         |    ✅     |   —    |   ✅   | `<width> [solid] <color>`; strokes inside the border box, follows `borderRadius`; only solid lines                                                                                        |
-| `boxShadow`                                      |    ✅     |   —    |   ✅   | one or more comma-separated `<x> <y> [blur] <color>` shadows; no `inset`/spread                                                                                                           |
-| `filter`                                         |    ✅     |   —    |   ✅   | chain of `brightness`/`contrast`/`saturate`/`grayscale`/`sepia`/`invert`/`opacity` (number or `%`), `hue-rotate(deg)`, `blur(px)`; per draw call, not composited subtree; no-op in Safari |
-| `zIndex`                                         |    ✅     |   —    |   ✅   | integer; reorders painting among siblings (ascending, document order ties); never affects layout                                                                                          |
-| `maxLines`, `minFontSize`                        |    ✅     |   ✅   |   ✅   | bound text layout and the minimum size used by shrink fitting                                                                                                                             |
-| `textFit`, `textOverflow`                        |    ✅     |   ✅   |   ✅   | `wrap`, `shrink`, or `truncate`; overflow may clip or append an ellipsis                                                                                                                  |
-| `imageRendering`, `pixelSize`                    |    ✅     |   —    |   ✅   | normal or deliberately pixelated image/video/Lottie rendering with a bounded low-resolution staging size                                                                                  |
+| Property                                         | Validated | Layout | Render | Notes                                                                                                                                                                                       |
+| ------------------------------------------------ | :-------: | :----: | :----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `width`, `height`                                |    ✅     |   ✅   |   —    | number, `px`, or `%`                                                                                                                                                                        |
+| `aspectRatio`                                    |    ✅     |   ✅   |   —    | positive number or `width/height` string; derives an unspecified dimension                                                                                                                  |
+| `safeArea`                                       |    ✅     |   ✅   |   —    | top/right/bottom/left insets constrain the node against its containing block                                                                                                                |
+| `position`                                       |    ✅     |   ✅   |   —    | `relative` (default) or `absolute`                                                                                                                                                          |
+| `left`, `top`, `right`, `bottom`                 |    ✅     |   ✅   |   —    | `right`/`bottom` only apply with `position: absolute`                                                                                                                                       |
+| `inset`                                          |    ✅     |   ✅   |   —    | fallback for `left`/`top` and implied size                                                                                                                                                  |
+| `padding`, `paddingTop/Right/Bottom/Left`        |    ✅     |   ✅   |   —    | per-side values override the shorthand                                                                                                                                                      |
+| `display: "flex"`                                |    ✅     |   ✅   |   —    | the only non-default display                                                                                                                                                                |
+| `flexDirection`                                  |    ✅     |   ✅   |   —    | `row` (default) or `column`                                                                                                                                                                 |
+| `gap`                                            |    ✅     |   ✅   |   —    | main-axis gap between flex children                                                                                                                                                         |
+| `justifyContent`                                 |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `space-between` (distributes leftover space on top of `gap`)                                                                                  |
+| `alignItems`                                     |    ✅     |   ✅   |   —    | `flex-start` (default), `center`, `flex-end`, `stretch` (fills the cross axis for children without an explicit size)                                                                        |
+| `backgroundColor`                                |    ✅     |   —    |   ✅   | portable named/hex and legacy or modern space/slash `rgb()`/`rgba()`/`hsl()`/`hsla()` color                                                                                                 |
+| `background`                                     |    ✅     |   —    |   ✅   | solid, linear, circular radial, or conic gradients; percentage stops/centers and degree angles                                                                                              |
+| `fill`, `stroke`, `strokeWidth`, `stroke*`       |    ✅     |   —    |   ✅   | shape paint, line cap/join, and bounded dash arrays; fill/stroke accept supported gradients                                                                                                 |
+| `borderRadius`, per-corner radius fields         |    ✅     |   —    |   ✅   | corner overrides apply to background, media, overflow, border, and rectangle shapes                                                                                                         |
+| `overflow`                                       |    ✅     |   —    |   ✅   | `visible` (default) or `hidden` — clips the node's content and subtree to the border box, following `borderRadius`                                                                          |
+| `opacity`                                        |    ✅     |   —    |   ✅   | `0`–`1`, multiplies down the subtree                                                                                                                                                        |
+| `blendMode`                                      |    ✅     |   —    |   ✅   | bounded Canvas composite operations; inherited by descendant draw calls, without isolated-group semantics                                                                                   |
+| `isolation`                                      |    ✅     |   —    |   ✅   | stages the subtree and applies node opacity/blend once to the group                                                                                                                         |
+| `transform`                                      |    ✅     |   —    |   ✅   | `translate()`, `scale()`, `rotate()` lists; pivot via `transformOrigin`; keyframes with matching function sequences tween                                                                   |
+| `fontSize`                                       |    ✅     |   ✅   |   ✅   | also drives intrinsic text size in flex layout                                                                                                                                              |
+| `fontFamily`, `fontWeight`                       |    ✅     |   —    |   ✅   | bounded family lists and CSS keyword or numeric `1..1000` weights; font assets register under their asset id                                                                                |
+| `color`                                          |    ✅     |   —    |   ✅   | text fill                                                                                                                                                                                   |
+| `textAlign`                                      |    ✅     |   —    |   ✅   | `left` (default), `center`, `right`                                                                                                                                                         |
+| `direction`                                      |    ✅     |   —    |   ✅   | explicit `ltr`, `rtl`, or inherited Canvas bidi direction                                                                                                                                   |
+| `textShadow`                                     |    ✅     |   —    |   ✅   | single `x y blur color` shadow                                                                                                                                                              |
+| `textStroke`                                     |    ✅     |   —    |   ✅   | single `<width> <color>` outline; width accepts number, `px`, or `%` of `fontSize`; stroke paints before fill                                                                               |
+| `textBackgroundColor`                            |    ✅     |   —    |   ✅   | fitted per-line text background, measured after wrapping and before stroke/fill                                                                                                             |
+| `textBackgroundPadding*`, `textBackgroundRadius` |    ✅     |   —    |   ✅   | `textBackgroundPadding`, `X`, `Y`, and radius accept number, `px`, or `%` of `fontSize`                                                                                                     |
+| `fontStyle`                                      |    ✅     |   —    |   ✅   | `normal` (default) or `italic`                                                                                                                                                              |
+| `lineHeight`                                     |    ✅     |   ✅   |   ✅   | unitless number = multiplier of `fontSize` (CSS semantics); `px`/`%` lengths also accepted; default `1.25`                                                                                  |
+| `letterSpacing`                                  |    ✅     |   —    |   ✅   | number or `px`; preflight rejects Canvas runtimes without the `letterSpacing` API                                                                                                           |
+| `margin`, `marginTop/Right/Bottom/Left`          |    ✅     |   ✅   |   —    | per-side values override the shorthand and participate in auto size/anchoring                                                                                                               |
+| `minWidth`, `minHeight`, `maxWidth`, `maxHeight` |    ✅     |   ✅   |   —    | clamp the resolved size; `min` wins over `max` (CSS semantics)                                                                                                                              |
+| `transformOrigin`                                |    ✅     |   —    |   ✅   | `left`/`center`/`right`, `top`/`center`/`bottom`, `px`, or `%` per axis; default center                                                                                                     |
+| `objectFit`                                      |    ✅     |   —    |   ✅   | `fill` (default), `contain`, `cover`, `none`, `scale-down`; applies to `img` and `video` nodes                                                                                              |
+| `objectPosition`                                 |    ✅     |   —    |   ✅   | keywords (`left`/`center`/`right`, `top`/`center`/`bottom`), `%` (CSS alignment semantics), or `px` per axis                                                                                |
+| `border`                                         |    ✅     |   —    |   ✅   | `<width> [solid] <color>`; strokes inside the border box, follows `borderRadius`; only solid lines                                                                                          |
+| `boxShadow`                                      |    ✅     |   —    |   ✅   | one or more comma-separated `<x> <y> [blur] <color>` shadows; no `inset`/spread                                                                                                             |
+| `filter`                                         |    ✅     |   —    |   ✅   | chain of `brightness`/`contrast`/`saturate`/`grayscale`/`sepia`/`invert`/`opacity` (number or `%`), `hue-rotate(deg)`, `blur(px)`; preflight rejects Canvas runtimes without filter support |
+| `zIndex`                                         |    ✅     |   —    |   ✅   | integer; reorders painting among siblings (ascending, document order ties); never affects layout                                                                                            |
+| `maxLines`, `minFontSize`                        |    ✅     |   ✅   |   ✅   | bound text layout and the minimum size used by shrink fitting                                                                                                                               |
+| `textFit`, `textOverflow`                        |    ✅     |   ✅   |   ✅   | `wrap`, `shrink`, or `truncate`; overflow may clip or append an ellipsis                                                                                                                    |
+| `imageRendering`, `pixelSize`                    |    ✅     |   —    |   ✅   | normal or deliberately pixelated image/video/Lottie rendering with a bounded low-resolution staging size                                                                                    |
 
-✅ implemented · ⚠️ partial (see note) · 📋 validated only, planned · — not applicable
+✅ implemented · — not applicable
 
 ### Text behavior
 
@@ -396,7 +405,7 @@ renderStill(context, scene, frame, { assets }); // pure given (scene, frame, ass
 ```ts
 type SceneAnimation = {
   kind: "keyframes";
-  property: string; // a style property name, e.g. "opacity"
+  property: SceneAnimationTarget; // a supported target, e.g. "opacity"
   frames: Array<{
     frame: number; // node-local frame, integer >= 0
     value: number | string;
@@ -411,8 +420,20 @@ type SceneAnimation = {
 ```
 
 - Keyframe `frame` values are local to the node's own timeline (frame 0 = the node's `from`) and must be **strictly increasing** — validation rejects unsorted or duplicate frames.
+- Targets are a schema enum, not arbitrary strings. Supported groups are
+  numeric/length layout and typography properties; portable paint/color,
+  border/shadow, transform, and filter properties; and `mask.opacity`,
+  `mask.feather`, and rectangle `mask.radius`. Layout-mode/identity fields such
+  as `display`, `position`, `objectFit`, asset IDs, and media trims are not
+  animation targets. Use patches/commands for those edits.
+- Every keyframe value is validated against its target before evaluation (for
+  example, opacity requires `0..1`, transform requires a supported transform
+  string, and colors use the portable color grammar).
 - Numeric values interpolate; `easing` on a keyframe shapes the segment _arriving at_ that keyframe (quadratic ease curves).
-- String values that both parse as colors (`#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()`) interpolate per-channel in RGBA space, emitting `rgba(...)` strings. Named colors, gradients, and other strings do not interpolate.
+- String values that both parse as portable colors (`#rgb`, `#rrggbb`, alpha
+  hex, and legacy or modern `rgb()`/`rgba()`/`hsl()`/`hsla()`) interpolate
+  per-channel in RGBA space, emitting `rgba(...)` strings. Named colors,
+  gradients, and other strings step.
 - **Transform strings tween** when both keyframes are `translate`/`scale`/`rotate` lists with matching function sequences and matching units per slot (`scale(1) → scale(1.4)`, `translate(0px, -40px) → translate(0px, 40px)`). Mismatched sequences or unit conflicts (e.g. `px` → `%`) step instead, like CSS.
 - Matching filter chains interpolate numeric arguments; mismatched functions or units step.
 - `spring` easings may overshoot past the target value mid-tween (that is the point); the final keyframe value is always exact.
@@ -435,7 +456,10 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
   effect name; extension nodes require a name, exact version, and JSON params;
   shape nodes require bounded geometry. Clips and masks must be closed.
 - Audio-reactive effects require `params.audioAssetId`.
-- Unknown style properties are rejected, with a message explaining the curated-subset policy.
+- Unknown properties are rejected at every canonical object layer (Scene, asset,
+  node, style, animation/keyframe, envelope, geometry, extension descriptor,
+  audio bus, and nested descriptors); canonical parsing never silently strips
+  them.
 
 `parseScene(input)` throws `SceneValidationError` (with structured `issues`); `validateScene(input)` returns `{ ok: true, scene }` or `{ ok: false, errors: string[] }` with messages like:
 
@@ -443,6 +467,31 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 nodes.0.children.1.id: Duplicate node id "title". Node ids must be unique across the scene so tools can patch and diff nodes reliably.
 nodes.0.style: Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.
 ```
+
+For intentionally tolerant model/import boundaries, `repairSceneInput(input)`
+works on a clone, removes only unknown keys, and returns one structured
+`unknown_key_removed` diagnostic per removal. It does not coerce invalid values,
+fill missing fields, accept future versions, mutate the input, or make a later
+`parseScene(input)` call tolerant.
+
+Host execution policy is separate from canonical validation:
+
+```ts
+const result = preflightScene(scene, {
+  maxCanvasPixels: 3840 * 2160,
+  maxNodes: 2_000,
+  maxFrames: 18_000,
+});
+```
+
+`preflightScene()` scans raw scene-like input iteratively under bounded
+traversal, rejects non-tree object graphs, then returns the canonical Scene only
+when both validation and the host's explicit pixel/dimension/frame/asset/node/
+depth/path/shape/animation/keyframe limits pass. A whole-document value/depth
+guard covers recursive extension parameters before Zod validation. These limits
+do not change Scene v1 validity or portability. Host policy may tighten but
+cannot raise the exported `sceneIngestionHardLimits` parser-safety ceilings;
+strict parsing applies those ceilings before recursive Zod validation too.
 
 ## Complete example
 

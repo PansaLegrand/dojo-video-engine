@@ -15,6 +15,12 @@ import {
   type VolumeEnvelope,
   parseScene,
 } from "@motionforge/schema";
+import {
+  parseColorValue,
+  parseEasingValue,
+  parseFilterValue,
+  parseTransformValue,
+} from "@motionforge/schema/values";
 
 export type CompositionOptions = {
   width: number;
@@ -224,15 +230,30 @@ export class NodeBuilder {
     return this;
   }
 
+  animate(animation: SceneAnimation): this;
   animate(
-    property: keyof SceneStyle | string,
+    property: SceneAnimation["property"],
     frames: SceneAnimation["frames"],
+    playback?: Pick<SceneAnimation, "repeat" | "yoyo">,
+  ): this;
+  animate(
+    animationOrProperty: SceneAnimation | SceneAnimation["property"],
+    frames?: SceneAnimation["frames"],
+    playback: Pick<SceneAnimation, "repeat" | "yoyo"> = {},
   ): this {
-    this.animations.push({
-      kind: "keyframes",
-      property: String(property),
-      frames,
-    });
+    const animation: SceneAnimation =
+      typeof animationOrProperty === "object"
+        ? structuredClone(animationOrProperty)
+        : {
+            kind: "keyframes",
+            property: animationOrProperty,
+            frames: structuredClone(frames ?? []),
+            ...(playback.repeat === undefined
+              ? {}
+              : { repeat: playback.repeat }),
+            ...(playback.yoyo === undefined ? {} : { yoyo: playback.yoyo }),
+          };
+    this.animations.push(animation);
     return this;
   }
 
@@ -555,35 +576,14 @@ export type FilterFunction = {
 };
 
 export function parseFilter(value: string): FilterFunction[] | null {
-  const trimmed = value.trim();
-  if (trimmed === "" || trimmed === "none") return null;
-  const matches = Array.from(trimmed.matchAll(/([a-z-]+)\(([^)]+)\)/g));
-  if (trimmed.replace(/([a-z-]+)\(([^)]+)\)/g, "").trim() !== "") return null;
-  const allowed = new Set<FilterFunction["name"]>([
-    "brightness",
-    "contrast",
-    "saturate",
-    "grayscale",
-    "sepia",
-    "invert",
-    "opacity",
-    "hue-rotate",
-    "blur",
-  ]);
-  const result: FilterFunction[] = [];
-  for (const match of matches) {
-    const name = match[1] as FilterFunction["name"];
-    const parsed = (match[2] ?? "")
-      .trim()
-      .match(/^(-?\d+(?:\.\d+)?)(%|deg|px)?$/);
-    if (!allowed.has(name) || !parsed) return null;
-    result.push({
-      name,
-      value: Number.parseFloat(parsed[1] ?? "0"),
-      unit: (parsed[2] ?? "") as FilterFunction["unit"],
-    });
-  }
-  return result.length > 0 ? result : null;
+  const parsed = parseFilterValue(value);
+  return parsed?.kind === "filter-list"
+    ? parsed.functions.map((fn) => ({
+        name: fn.kind,
+        value: fn.value,
+        unit: fn.unit,
+      }))
+    : null;
 }
 
 function mixFilters(
@@ -621,99 +621,26 @@ function formatInterpolatedNumber(value: number): string {
  * anything that is not purely such a list, which makes the value step.
  */
 export function parseTransform(value: string): TransformFunction[] | null {
-  const trimmed = value.trim();
-
-  if (trimmed === "") {
-    return null;
-  }
-
-  const pattern = /([a-zA-Z]+)\(([^)]*)\)/g;
-  const rest = trimmed.replace(pattern, "").trim();
-
-  if (rest !== "") {
-    return null;
-  }
-
-  const functions: TransformFunction[] = [];
-
-  const matches = Array.from(trimmed.matchAll(pattern));
-
-  for (let matchIndex = 0; matchIndex < matches.length; matchIndex += 1) {
-    const match = matches[matchIndex];
-    if (!match) {
-      continue;
+  const parsed = parseTransformValue(value);
+  if (parsed?.kind !== "transform-list") return null;
+  return parsed.functions.map((fn): TransformFunction => {
+    if (fn.kind === "translate") {
+      return { name: "translate", args: [fn.x, fn.y] };
     }
-
-    const name = match[1];
-    const rawArgs = (match[2] ?? "")
-      .split(",")
-      .map((arg: string) => arg.trim())
-      .filter((arg) => arg !== "");
-    const args: Array<{ value: number; unit: "px" | "%" | "deg" | "" }> = [];
-
-    for (const raw of rawArgs) {
-      const parsed = raw.match(/^(-?\d+(?:\.\d+)?)(px|%|deg)?$/);
-
-      if (!parsed) {
-        return null;
-      }
-
-      args.push({
-        value: Number.parseFloat(parsed[1] ?? "0"),
-        unit: (parsed[2] ?? "") as "px" | "%" | "deg" | "",
-      });
-    }
-
-    if (name === "translate") {
-      if (args.length < 1 || args.length > 2) {
-        return null;
-      }
-
-      const x = args[0] ?? { value: 0, unit: "" as const };
-      const y = args[1] ?? { value: 0, unit: "" as const };
-      functions.push({
-        name,
+    if (fn.kind === "scale") {
+      return {
+        name: "scale",
         args: [
-          { value: x.value, unit: x.unit === "" ? "px" : x.unit },
-          { value: y.value, unit: y.unit === "" ? "px" : y.unit },
+          { value: fn.x, unit: "" },
+          { value: fn.y, unit: "" },
         ],
-      });
-    } else if (name === "scale") {
-      if (
-        args.length < 1 ||
-        args.length > 2 ||
-        args.some((arg) => arg.unit !== "")
-      ) {
-        return null;
-      }
-
-      const sx = args[0] ?? { value: 1, unit: "" as const };
-      const sy = args[1] ?? sx;
-      functions.push({
-        name,
-        args: [
-          { value: sx.value, unit: "" },
-          { value: sy.value, unit: "" },
-        ],
-      });
-    } else if (name === "rotate") {
-      const angle = args[0];
-
-      if (
-        args.length !== 1 ||
-        !angle ||
-        (angle.unit !== "deg" && angle.unit !== "")
-      ) {
-        return null;
-      }
-
-      functions.push({ name, args: [{ value: angle.value, unit: "deg" }] });
-    } else {
-      return null;
+      };
     }
-  }
-
-  return functions.length > 0 ? functions : null;
+    return {
+      name: "rotate",
+      args: [{ value: fn.degrees, unit: "deg" }],
+    };
+  });
 }
 
 /**
@@ -767,62 +694,15 @@ export type RgbaColor = { r: number; g: number; b: number; a: number };
  * makes the value step instead of interpolate.
  */
 export function parseColor(value: string): RgbaColor | null {
-  const trimmed = value.trim();
-  const hex = trimmed.match(/^#([0-9a-fA-F]+)$/);
-
-  if (hex) {
-    const digits = hex[1] ?? "";
-
-    if (digits.length === 3 || digits.length === 4) {
-      const channels = digits
-        .split("")
-        .map((digit) => Number.parseInt(digit + digit, 16));
-      const [r, g, b, a] = channels;
-      return {
-        r: r ?? 0,
-        g: g ?? 0,
-        b: b ?? 0,
-        a: digits.length === 4 ? (a ?? 255) / 255 : 1,
-      };
-    }
-
-    if (digits.length === 6 || digits.length === 8) {
-      return {
-        r: Number.parseInt(digits.slice(0, 2), 16),
-        g: Number.parseInt(digits.slice(2, 4), 16),
-        b: Number.parseInt(digits.slice(4, 6), 16),
-        a:
-          digits.length === 8
-            ? Number.parseInt(digits.slice(6, 8), 16) / 255
-            : 1,
-      };
-    }
-
-    return null;
-  }
-
-  const fn = trimmed.match(/^rgba?\(([^)]+)\)$/);
-
-  if (!fn) {
-    return null;
-  }
-
-  const parts = (fn[1] ?? "").split(",").map((part) => part.trim());
-
-  if (parts.length !== 3 && parts.length !== 4) {
-    return null;
-  }
-
-  const r = Number.parseFloat(parts[0] ?? "");
-  const g = Number.parseFloat(parts[1] ?? "");
-  const b = Number.parseFloat(parts[2] ?? "");
-  const a = parts.length === 4 ? Number.parseFloat(parts[3] ?? "") : 1;
-
-  if (![r, g, b, a].every(Number.isFinite)) {
-    return null;
-  }
-
-  return { r, g, b, a };
+  const parsed = parseColorValue(value);
+  return parsed?.kind === "rgba"
+    ? {
+        r: parsed.red,
+        g: parsed.green,
+        b: parsed.blue,
+        a: parsed.alpha,
+      }
+    : null;
 }
 
 function mixColors(from: RgbaColor, to: RgbaColor, t: number): string {
@@ -847,27 +727,13 @@ export function applyEasing(t: number, easing: string): number {
       break;
   }
 
-  const bezier = easing.match(
-    /^cubic-bezier\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)$/,
-  );
-
-  if (bezier) {
-    return cubicBezierEasing(
-      t,
-      Number.parseFloat(bezier[1] ?? "0"),
-      Number.parseFloat(bezier[2] ?? "0"),
-      Number.parseFloat(bezier[3] ?? "1"),
-      Number.parseFloat(bezier[4] ?? "1"),
-    );
+  const parsed = parseEasingValue(easing);
+  if (parsed?.kind === "cubic-bezier") {
+    return cubicBezierEasing(t, parsed.x1, parsed.y1, parsed.x2, parsed.y2);
   }
 
-  const spring = easing.match(/^spring(?:\(\s*(\d+(?:\.\d+)?)\s*\))?$/);
-
-  if (spring) {
-    return springEasing(
-      t,
-      spring[1] === undefined ? 0.25 : Number.parseFloat(spring[1]),
-    );
+  if (parsed?.kind === "spring") {
+    return springEasing(t, parsed.bounce);
   }
 
   // Unknown expressions cannot pass validation; degrade to linear.

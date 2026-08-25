@@ -157,6 +157,11 @@ export type VideoClipOptions = MediaOptions & {
   trimStart?: TimeValue;
   playbackRate?: number;
   volume?: number;
+  volumeEnvelope?: VolumeEnvelope;
+  fadeIn?: TimeValue;
+  fadeOut?: TimeValue;
+  fadeInEasing?: string;
+  fadeOutEasing?: string;
   audioBus?: string;
   pan?: number;
   ducks?: SceneDucking;
@@ -234,6 +239,8 @@ export type AuthorAsset<T extends SceneAsset["type"] = SceneAsset["type"]> =
     type: T;
   };
 
+export type AuthorAssetOptions = Omit<SceneAsset, "id" | "type" | "src">;
+
 export type AssetReference<T extends SceneAsset["type"]> =
   | string
   | AuthorAsset<T>;
@@ -303,20 +310,44 @@ export function publicAsset(path: string): string {
   return `/${segments.join("/")}`;
 }
 
-export function imageAsset(id: string, src: string): AuthorAsset<"image"> {
-  return makeAsset(id, "image", src);
+export function imageAsset(
+  id: string,
+  src: string,
+  options: AuthorAssetOptions = {},
+): AuthorAsset<"image"> {
+  return makeAsset(id, "image", src, options);
 }
 
-export function videoAsset(id: string, src: string): AuthorAsset<"video"> {
-  return makeAsset(id, "video", src);
+export function videoAsset(
+  id: string,
+  src: string,
+  options: AuthorAssetOptions = {},
+): AuthorAsset<"video"> {
+  return makeAsset(id, "video", src, options);
 }
 
-export function audioAsset(id: string, src: string): AuthorAsset<"audio"> {
-  return makeAsset(id, "audio", src);
+export function audioAsset(
+  id: string,
+  src: string,
+  options: AuthorAssetOptions = {},
+): AuthorAsset<"audio"> {
+  return makeAsset(id, "audio", src, options);
 }
 
-export function lottieAsset(id: string, src: string): AuthorAsset<"lottie"> {
-  return makeAsset(id, "lottie", src);
+export function fontAsset(
+  id: string,
+  src: string,
+  options: AuthorAssetOptions = {},
+): AuthorAsset<"font"> {
+  return makeAsset(id, "font", src, options);
+}
+
+export function lottieAsset(
+  id: string,
+  src: string,
+  options: AuthorAssetOptions = {},
+): AuthorAsset<"lottie"> {
+  return makeAsset(id, "lottie", src, options);
 }
 
 export function defineAssets(
@@ -394,7 +425,7 @@ export function box(options: BoxOptions = {}): AuthorNode {
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       if (options.children?.length) {
@@ -473,7 +504,7 @@ export function textNode(value: string, options: TextOptions = {}): AuthorNode {
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -492,7 +523,7 @@ export function richTextNode(
         style: options.style,
       });
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
       return node;
     },
@@ -534,7 +565,7 @@ export function image(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -549,8 +580,9 @@ export function videoClip(
   return {
     assets: assetsFromReference(asset),
     toNode(fps, scene) {
+      const timing = timedNodeOptions(options, fps);
       const nodeOptions: VideoNodeOptions = {
-        ...timedNodeOptions(options, fps),
+        ...timing,
         style: mediaStyle(scene, options),
         videoStartTime: toSeconds(options.trimStart, fps),
         playbackRate: options.playbackRate,
@@ -558,6 +590,15 @@ export function videoClip(
         pan: options.pan,
         ducks: options.ducks,
         videoEndBehavior: options.endBehavior,
+        volumeEnvelope:
+          options.volumeEnvelope ??
+          audioFadeEnvelope({
+            duration: timing.duration,
+            fadeInDuration: toOptionalFrames(options.fadeIn, fps),
+            fadeOutDuration: toOptionalFrames(options.fadeOut, fps),
+            fadeInEasing: options.fadeInEasing,
+            fadeOutEasing: options.fadeOutEasing,
+          }),
       };
       const node = video(assetIdFromReference(asset), {
         ...nodeOptions,
@@ -565,7 +606,7 @@ export function videoClip(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -587,7 +628,7 @@ export function lottieClip(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -611,7 +652,7 @@ export function effectLayer(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -635,7 +676,7 @@ export function extensionLayer(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -658,7 +699,7 @@ export function shapeLayer(
       });
 
       for (const animation of options.enter ?? []) {
-        node.animate(animation.property, animation.frames);
+        node.animate(animation);
       }
 
       return node;
@@ -829,8 +870,9 @@ function makeAsset<T extends SceneAsset["type"]>(
   id: string,
   type: T,
   src: string,
+  options: AuthorAssetOptions = {},
 ): AuthorAsset<T> {
-  return { id, type, src };
+  return { ...options, id, type, src } as AuthorAsset<T>;
 }
 
 function assetIdFromReference(asset: AssetReference<SceneAsset["type"]>) {
@@ -921,7 +963,7 @@ function builderFromSceneNode(node: SceneNode): ReturnType<typeof div> {
   }
 
   for (const animation of node.animations ?? []) {
-    builder.animate(animation.property, animation.frames);
+    builder.animate(animation);
   }
 
   if (node.children?.length) {

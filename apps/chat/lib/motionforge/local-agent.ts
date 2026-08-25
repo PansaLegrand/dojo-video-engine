@@ -1,6 +1,7 @@
 import type {
   Scene,
   SceneAnimation,
+  SceneAnimationTarget,
   SceneNode,
   SceneOp,
   ScenePatch,
@@ -10,6 +11,7 @@ import {
   isEasingExpression,
   isFilterExpression,
   parseScene,
+  repairSceneInput,
   supportedStyleKeys,
   validateScene,
 } from "@motionforge/schema";
@@ -914,9 +916,7 @@ function selectCaptionTemplate(instruction: string): CaptionTemplateKey | null {
     : null;
 }
 
-function selectImageOverlayIntent(
-  instruction: string,
-): {
+function selectImageOverlayIntent(instruction: string): {
   template: ImageOverlayTemplateKey;
   placement?: ImageOverlayPlacement;
 } | null {
@@ -1011,9 +1011,7 @@ function selectImageOverlayPlacement(
   return undefined;
 }
 
-function selectVideoOverlayIntent(
-  instruction: string,
-): {
+function selectVideoOverlayIntent(instruction: string): {
   template: VideoOverlayTemplateKey;
   placement?: VideoOverlayPlacement;
 } | null {
@@ -1585,7 +1583,7 @@ export function normalizeModelOutput(
     };
 
     if (object.scene !== undefined) {
-      const sceneResult = validateScene(normalizeModelScene(object.scene));
+      const sceneResult = repairSceneInput(normalizeModelScene(object.scene));
       if (!sceneResult.ok) {
         throw new Error(sceneResult.errors.join("\n"));
       }
@@ -1597,7 +1595,9 @@ export function normalizeModelOutput(
           typeof object.summary === "string"
             ? object.summary
             : "Generated a new scene.",
-        diagnostics: [],
+        diagnostics: sceneResult.diagnostics.map(
+          (diagnostic) => diagnostic.message,
+        ),
       };
     }
 
@@ -1622,14 +1622,16 @@ export function normalizeModelOutput(
     );
   }
 
-  const sceneResult = validateScene(normalizeModelScene(payload));
+  const sceneResult = repairSceneInput(normalizeModelScene(payload));
 
   if (sceneResult.ok) {
     return {
       mode: "scene",
       scene: sceneResult.scene,
       summary: "Generated a new scene.",
-      diagnostics: [],
+      diagnostics: sceneResult.diagnostics.map(
+        (diagnostic) => diagnostic.message,
+      ),
     };
   }
 
@@ -1764,7 +1766,10 @@ function normalizeModelPatch(input: unknown): unknown {
 
     const normalized: Record<string, unknown> = { ...op };
 
-    if (normalized.op === "setAnimations" && Array.isArray(normalized.animations)) {
+    if (
+      normalized.op === "setAnimations" &&
+      Array.isArray(normalized.animations)
+    ) {
       normalized.animations = normalizeModelAnimations(normalized.animations);
     }
 
@@ -1965,12 +1970,7 @@ function normalizeModelKeyframe(
     return frame;
   }
 
-  const frameNumber = readModelKeyframeFrame(
-    frame,
-    timing,
-    index,
-    totalFrames,
-  );
+  const frameNumber = readModelKeyframeFrame(frame, timing, index, totalFrames);
   const value = readModelKeyframeValue(frame, property);
 
   if (frameNumber === null || value === null) {
@@ -2019,10 +2019,7 @@ function readModelKeyframeFrame(
 
   if (time !== null) {
     if (timing?.duration && time >= 0 && time <= 1) {
-      return Math.max(
-        0,
-        Math.round(time * Math.max(0, timing.duration - 1)),
-      );
+      return Math.max(0, Math.round(time * Math.max(0, timing.duration - 1)));
     }
 
     return Math.max(0, Math.round(time));
@@ -2054,7 +2051,10 @@ function readModelKeyframeValue(
   }
 
   if (isRecord(frame.style)) {
-    const styleValue = normalizeModelKeyframeValue(frame.style[property], property);
+    const styleValue = normalizeModelKeyframeValue(
+      frame.style[property],
+      property,
+    );
 
     if (styleValue !== null) {
       return styleValue;
@@ -2130,8 +2130,12 @@ function sortAndDedupeModelKeyframes(frames: unknown[]) {
 
   return [...frames]
     .sort((left, right) => {
-      const leftFrame = isRecord(left) ? readFiniteNumber(left.frame) ?? 0 : 0;
-      const rightFrame = isRecord(right) ? readFiniteNumber(right.frame) ?? 0 : 0;
+      const leftFrame = isRecord(left)
+        ? (readFiniteNumber(left.frame) ?? 0)
+        : 0;
+      const rightFrame = isRecord(right)
+        ? (readFiniteNumber(right.frame) ?? 0)
+        : 0;
       return leftFrame - rightFrame;
     })
     .filter((frame, index, sorted) => {
@@ -2194,7 +2198,9 @@ const numericKeyframeProperties = new Set([
   "height",
 ]);
 
-function transformFromModelRecord(record: Record<string, unknown>): string | null {
+function transformFromModelRecord(
+  record: Record<string, unknown>,
+): string | null {
   const translate = translateFromModelRecord(record);
   const scale = scaleFromModelRecord(record);
   const rotate = rotateFromModelRecord(record);
@@ -2483,7 +2489,10 @@ function getNodeStyleNumber(
 
 type KeyframeTuple = [number, string | number, string?];
 
-function keyframes(property: string, frames: KeyframeTuple[]) {
+function keyframes(
+  property: SceneAnimationTarget,
+  frames: KeyframeTuple[],
+): SceneAnimation {
   return {
     kind: "keyframes" as const,
     property,

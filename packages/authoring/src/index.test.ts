@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateScene } from "@motionforge/schema";
+import { evaluateKeyframes } from "@motionforge/core";
 import {
   audioOverlay,
   audioTrack,
@@ -10,6 +11,7 @@ import {
   effectLayer,
   extensionLayer,
   fadeUp,
+  fontAsset,
   frames,
   image,
   imageAsset,
@@ -85,15 +87,68 @@ describe("@motionforge/authoring", () => {
     });
   });
 
+  it("preserves repeat and yoyo from authoring animations", () => {
+    const scene = makeScene({
+      size: "square",
+      fps: 30,
+      duration: seconds(2),
+      children: [
+        textBlock("Pulse", {
+          id: "pulse",
+          enter: [
+            {
+              kind: "keyframes",
+              property: "opacity",
+              frames: [
+                { frame: 0, value: 0 },
+                { frame: 10, value: 1 },
+              ],
+              repeat: 2,
+              yoyo: true,
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(scene.nodes[0]?.animations).toEqual([
+      expect.objectContaining({ repeat: 2, yoyo: true }),
+    ]);
+    expect(validateScene(scene)).toMatchObject({ ok: true });
+  });
+
+  it("keeps asset helper identity authoritative for untyped callers", () => {
+    const asset = videoAsset("clip", "/assets/clip.mp4", {
+      id: "overridden-id",
+      type: "audio",
+      src: "/assets/other.mp3",
+      metadata: { duration: 12 },
+    } as unknown as Parameters<typeof videoAsset>[2]);
+
+    expect(asset).toEqual({
+      id: "clip",
+      type: "video",
+      src: "/assets/clip.mp4",
+      metadata: { duration: 12 },
+    });
+  });
+
   it("builds media nodes with source trims and scene assets", () => {
     const poster = imageAsset("poster", publicAsset("assets/poster.png"));
-    const clip = videoAsset("clip", publicAsset("public/assets/clip.mp4"));
+    const clip = videoAsset("clip", publicAsset("public/assets/clip.mp4"), {
+      sourceMode: "stream",
+      proxy: { src: "/assets/clip-proxy.mp4", width: 640, height: 360 },
+      metadata: { duration: 20, width: 1920, height: 1080 },
+    });
+    const inter = fontAsset("Inter", "/assets/inter.woff2", {
+      metadata: { byteLength: 12_345 },
+    });
 
     const scene = makeScene({
       size: "landscape",
       fps: 24,
       duration: seconds(4),
-      assets: defineAssets(audioAsset("music", "/music.mp3")),
+      assets: defineAssets(audioAsset("music", "/music.mp3"), inter),
       children: [
         image(poster, { id: "poster-node", duration: seconds(1) }),
         videoClip(clip, {
@@ -103,6 +158,8 @@ describe("@motionforge/authoring", () => {
           trimStart: seconds(5),
           playbackRate: 1.25,
           volume: 0.5,
+          fadeIn: frames(6),
+          fadeOut: frames(8),
         }),
         audioTrack("music", {
           id: "music-node",
@@ -117,7 +174,14 @@ describe("@motionforge/authoring", () => {
       poster: { id: "poster", type: "image", src: "/assets/poster.png" },
       clip: { id: "clip", type: "video", src: "/assets/clip.mp4" },
       music: { id: "music", type: "audio", src: "/music.mp3" },
+      Inter: {
+        id: "Inter",
+        type: "font",
+        src: "/assets/inter.woff2",
+        metadata: { byteLength: 12_345 },
+      },
     });
+    expect(scene.assets.clip).toEqual(clip);
     expect(scene.nodes[1]).toMatchObject({
       id: "clip-node",
       type: "video",
@@ -126,7 +190,15 @@ describe("@motionforge/authoring", () => {
       videoStartTime: 5,
       playbackRate: 1.25,
       volume: 0.5,
+      volumeEnvelope: [
+        { frame: 0, value: 0 },
+        { frame: 6, value: 1 },
+        { frame: 39, value: 1 },
+        { frame: 47, value: 0 },
+      ],
     });
+    const clipNode = scene.nodes[1];
+    expect(evaluateKeyframes(clipNode?.volumeEnvelope ?? [], 47)).toBe(0);
     expect(scene.nodes[2]).toMatchObject({
       id: "music-node",
       type: "audio",
@@ -318,8 +390,8 @@ describe("@motionforge/authoring", () => {
       volumeEnvelope: [
         { frame: 0, value: 0 },
         { frame: 24, value: 1, easing: "easeOut" },
-        { frame: 180, value: 1 },
-        { frame: 192, value: 0, easing: "easeIn" },
+        { frame: 179, value: 1 },
+        { frame: 191, value: 0, easing: "easeIn" },
       ],
     });
     expect(scene.nodes[1]).toMatchObject({
@@ -398,8 +470,8 @@ describe("@motionforge/authoring", () => {
       volumeEnvelope: [
         { frame: 0, value: 0 },
         { frame: 15, value: 1, easing: "easeOut" },
-        { frame: 120, value: 1 },
-        { frame: 150, value: 0, easing: "easeIn" },
+        { frame: 119, value: 1 },
+        { frame: 149, value: 0, easing: "easeIn" },
       ],
     });
   });

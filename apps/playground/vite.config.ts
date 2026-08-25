@@ -19,6 +19,9 @@ export default defineConfig({
       ),
       "@motionforge/presets": workspacePackage("presets"),
       "@motionforge/renderer-canvas2d": workspacePackage("renderer-canvas2d"),
+      "@motionforge/schema/values": fileURLToPath(
+        new URL("../../packages/schema/src/values.ts", import.meta.url),
+      ),
       "@motionforge/schema": workspacePackage("schema"),
       "@motionforge/showcase": workspacePackage("showcase"),
     },

@@ -203,6 +203,61 @@ describe("Canvas2D preflight", () => {
     });
   });
 
+  it("preflights filter and conic-gradient canvas capabilities", () => {
+    const visualScene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 10,
+      assets: {},
+      nodes: [
+        {
+          id: "visual",
+          type: "div",
+          style: {
+            filter: "blur(2px)",
+            background: "conic-gradient(red 0%, blue 100%)",
+            letterSpacing: 1,
+          },
+        },
+      ],
+    };
+    class MissingCanvasFeatures {
+      getContext() {
+        return {};
+      }
+    }
+    const missing = preflightCanvas2D(visualScene, {
+      OffscreenCanvas: MissingCanvasFeatures,
+    } as unknown as Partial<typeof globalThis>);
+    expect(missing.issues.map((issue) => issue.code)).toEqual([
+      "filter_unavailable",
+      "conic_gradient_unavailable",
+      "letter_spacing_unavailable",
+    ]);
+    expect(missing.requirements).toMatchObject({
+      filter: true,
+      conicGradient: true,
+      letterSpacing: true,
+    });
+
+    class CompleteCanvasFeatures {
+      getContext() {
+        return {
+          filter: "none",
+          letterSpacing: "0px",
+          createConicGradient: () => ({ addColorStop: () => undefined }),
+        };
+      }
+    }
+    expect(
+      preflightCanvas2D(visualScene, {
+        OffscreenCanvas: CompleteCanvasFeatures,
+      } as unknown as Partial<typeof globalThis>),
+    ).toMatchObject({ ok: true, issues: [] });
+  });
+
   it("reports decoder and decoded-image budget estimates", () => {
     const budgetScene = {
       schemaVersion: 1,
@@ -314,7 +369,7 @@ describe("renderStill", () => {
     expect(sampleScene().width).toBe(1080);
   });
 
-  it("ignores non-string transform values from malformed runtime animation data", () => {
+  it("rejects non-string transform values before rendering", () => {
     const context = {
       globalAlpha: 1,
       save: () => undefined,
@@ -351,7 +406,86 @@ describe("renderStill", () => {
       ],
     };
 
-    expect(() => renderStill(context, scene as never, 0)).not.toThrow();
+    expect(() => renderStill(context, scene as never, 0)).toThrow(
+      "Expected string",
+    );
+  });
+
+  it("rejects invalid font descriptors before mutating Canvas font state", () => {
+    let fontAssignments = 0;
+    const context = {
+      globalAlpha: 1,
+      get font() {
+        return "normal 400 10px sans-serif";
+      },
+      set font(_value: string) {
+        fontAssignments += 1;
+      },
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+    const scene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "bad-font",
+          type: "text",
+          text: "stale",
+          style: { fontWeight: "banana" },
+        },
+      ],
+    };
+
+    expect(() => renderStill(context, scene as never, 0)).toThrow(
+      "Expected normal/bold/bolder/lighter",
+    );
+    expect(fontAssignments).toBe(0);
+  });
+
+  it("applies validated transform-origin components to the resolved box", () => {
+    const translations: Array<[number, number]> = [];
+    const context = {
+      globalAlpha: 1,
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+      translate: (x: number, y: number) => translations.push([x, y]),
+      rotate: () => undefined,
+    } as unknown as CanvasRenderingContext2D;
+    renderStill(
+      context,
+      {
+        schemaVersion: 1,
+        width: 100,
+        height: 80,
+        fps: 30,
+        duration: 1,
+        assets: {},
+        nodes: [
+          {
+            id: "box",
+            type: "div",
+            style: {
+              width: 100,
+              height: 80,
+              transform: "rotate(10deg)",
+              transformOrigin: "left bottom",
+            },
+          },
+        ],
+      },
+      0,
+    );
+    expect(translations).toEqual([
+      [0, 80],
+      [-0, -80],
+    ]);
   });
 
   it("runs the extension resolve, prepare, draw, and dispose lifecycle", async () => {
@@ -533,6 +667,12 @@ describe("computeObjectFit", () => {
     expect(computeObjectFit("cover", "left top", box, square)).toEqual({
       x: 0,
       y: 0,
+      width: 200,
+      height: 200,
+    });
+    expect(computeObjectFit("cover", "bottom right", box, square)).toEqual({
+      x: 0,
+      y: -100,
       width: 200,
       height: 200,
     });
@@ -811,6 +951,9 @@ describe("parseLinearGradient", () => {
   it("returns null for non-gradient fills", () => {
     expect(parseLinearGradient("#ff0000")).toBeNull();
     expect(parseLinearGradient("rgba(0, 0, 0, 0.5)")).toBeNull();
+    expect(
+      parseLinearGradient("linear-gradient(#not-a-color, #ffffff)"),
+    ).toBeNull();
   });
 
   it("defaults to 180deg (to bottom) when no direction is given", () => {
@@ -846,15 +989,12 @@ describe("parseLinearGradient", () => {
     ]);
   });
 
-  it("strips px stop positions so Canvas receives only colors", () => {
-    const parsed = parseLinearGradient(
-      "linear-gradient(180deg, rgba(90,120,255,0.10) 1px, rgba(255,255,255,0.92) 100%)",
-    );
-
-    expect(parsed?.stops).toEqual([
-      { color: "rgba(90,120,255,0.10)", offset: 0 },
-      { color: "rgba(255,255,255,0.92)", offset: 1 },
-    ]);
+  it("rejects nonzero px stops instead of silently discarding them", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(180deg, rgba(90,120,255,0.10) 1px, rgba(255,255,255,0.92) 100%)",
+      ),
+    ).toBeNull();
   });
 
   it("distributes omitted stop positions evenly like CSS", () => {
@@ -1145,6 +1285,60 @@ describe("renderStill with video nodes", () => {
 });
 
 describe("renderStill bounded text", () => {
+  it("paints schema-valid unitless text shadows", () => {
+    let painted:
+      | { color: string; x: number; y: number; blur: number }
+      | undefined;
+    const scene = {
+      schemaVersion: 1,
+      width: 100,
+      height: 100,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "title",
+          type: "text",
+          text: "shadow",
+          style: { width: 100, fontSize: 20, textShadow: "0 2 6 #000" },
+        },
+      ],
+    };
+    const context = {
+      globalAlpha: 1,
+      font: "",
+      fillStyle: "",
+      textAlign: "left",
+      textBaseline: "alphabetic",
+      shadowColor: "transparent",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowBlur: 0,
+      save: () => undefined,
+      restore: () => undefined,
+      clearRect: () => undefined,
+      translate: () => undefined,
+      measureText: (line: string) => ({ width: line.length * 10 }),
+      fillText: function (this: {
+        shadowColor: string;
+        shadowOffsetX: number;
+        shadowOffsetY: number;
+        shadowBlur: number;
+      }) {
+        painted = {
+          color: this.shadowColor,
+          x: this.shadowOffsetX,
+          y: this.shadowOffsetY,
+          blur: this.shadowBlur,
+        };
+      },
+    } as unknown as CanvasRenderingContext2D;
+
+    renderStill(context, scene as never, 0);
+    expect(painted).toEqual({ color: "#000", x: 0, y: 2, blur: 6 });
+  });
+
   it("draws only maxLines and ellipsizes the final visible line", () => {
     const drawn: string[] = [];
     const scene = {
@@ -1272,6 +1466,7 @@ describe("parseBoxShadow", () => {
     expect(parseBoxShadow("2px 2px 4px 6px #000")).toBeNull();
     expect(parseBoxShadow("2px #000")).toBeNull();
     expect(parseBoxShadow("2px 2px 4px")).toBeNull();
+    expect(parseBoxShadow("2px 2px 4px #not-a-color")).toBeNull();
   });
 
   it("parses comma-separated shadows without splitting rgba colors", () => {
@@ -1302,6 +1497,7 @@ describe("parseBorder", () => {
     expect(parseBorder("solid #fff")).toBeNull();
     expect(parseBorder("2px solid")).toBeNull();
     expect(parseBorder("0 solid #fff")).toBeNull();
+    expect(parseBorder("2px solid #not-a-color")).toBeNull();
   });
 });
 

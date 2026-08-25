@@ -68,6 +68,10 @@ function resolveStudioRuntimeAliases() {
       "@motionforge/renderer-canvas2d",
       "packages/renderer-canvas2d/src/index.ts",
     ),
+    "@motionforge/schema/values": resolveStudioRuntimePackage(
+      "@motionforge/schema/values",
+      "packages/schema/src/values.ts",
+    ),
     "@motionforge/schema": resolveStudioRuntimePackage(
       "@motionforge/schema",
       "packages/schema/src/index.ts",
@@ -167,11 +171,7 @@ function sendHtml(response: ServerResponse, html: string) {
   response.end(html);
 }
 
-function sendJson(
-  response: ServerResponse,
-  status: number,
-  payload: unknown,
-) {
+function sendJson(response: ServerResponse, status: number, payload: unknown) {
   response.statusCode = status;
   response.setHeader("content-type", "application/json; charset=utf-8");
   response.end(JSON.stringify(payload));

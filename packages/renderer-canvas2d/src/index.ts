@@ -13,10 +13,24 @@ import {
   parseScene,
   isAudioReactiveEffect,
   type Scene,
+  type SceneNode,
   type SceneShapeGeometry,
   type SceneStyle,
   type SceneTextRun,
 } from "@motionforge/schema";
+import {
+  parseBorderValue,
+  parseConicGradientValue,
+  parseLinearGradientValue,
+  parseObjectPositionValue,
+  parseRadialGradientValue,
+  parseShadowListValue,
+  parseShadowValue,
+  parseTransformOriginValue,
+  parseTransformValue,
+  resolveGradientStopOffsets,
+  type TransformOriginComponent,
+} from "@motionforge/schema/values";
 import {
   createExtensionRegistry,
   preflightExtensions,
@@ -125,11 +139,14 @@ export type Canvas2DPreflightIssue = {
     | "audio_decoder_unavailable"
     | "canvas_unavailable"
     | "font_loading_unavailable"
+    | "filter_unavailable"
+    | "letter_spacing_unavailable"
     | "image_decoder_unavailable"
     | "lottie_requires_dom"
     | "extension_adapter_invalid"
     | "dom_matrix_unavailable"
     | "path2d_unavailable"
+    | "conic_gradient_unavailable"
     | "video_decoder_budget_exceeded"
     | "decoded_image_budget_estimate_exceeded"
     | "video_decoder_unavailable";
@@ -149,6 +166,9 @@ export type Canvas2DPreflightResult = {
     extensions: boolean;
     path2d: boolean;
     domMatrix: boolean;
+    filter: boolean;
+    conicGradient: boolean;
+    letterSpacing: boolean;
   };
   issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue>;
   resourceEstimate: MediaResourceEstimate;
@@ -195,6 +215,19 @@ export function preflightCanvas2D(
     (documentObject?.fonts ||
       (globalObject as Partial<typeof globalThis> & { fonts?: FontFaceSet })
         .fonts),
+  );
+  const visualRequirements = inspectVisualRuntimeRequirements(scene.nodes);
+  const canvasContext = probeCanvas2DContext(
+    globalObject,
+    documentObject,
+    options.worker === true,
+  );
+  const hasCanvasFilter = Boolean(canvasContext && "filter" in canvasContext);
+  const hasLetterSpacing = Boolean(
+    canvasContext && "letterSpacing" in canvasContext,
+  );
+  const hasConicGradient = Boolean(
+    canvasContext && typeof canvasContext.createConicGradient === "function",
   );
   const issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue> = [];
 
@@ -263,6 +296,30 @@ export function preflightCanvas2D(
         "SVG path geometry needs DOMMatrix to map its viewBox into the node box.",
     });
   }
+  if (visualRequirements.filter && !hasCanvasFilter) {
+    issues.push({
+      severity: "error",
+      code: "filter_unavailable",
+      message:
+        "This scene uses Canvas2D filters, but the selected canvas runtime has no context.filter support.",
+    });
+  }
+  if (visualRequirements.conicGradient && !hasConicGradient) {
+    issues.push({
+      severity: "error",
+      code: "conic_gradient_unavailable",
+      message:
+        "This scene uses a conic gradient, but the selected canvas runtime has no createConicGradient() support.",
+    });
+  }
+  if (visualRequirements.letterSpacing && !hasLetterSpacing) {
+    issues.push({
+      severity: "error",
+      code: "letter_spacing_unavailable",
+      message:
+        "This scene uses text letter spacing, but the selected canvas runtime has no context.letterSpacing support.",
+    });
+  }
   if (resourceEstimate.maxSimultaneousVideoDecoders > budget.maxVideoDecoders) {
     issues.push({
       severity: "error",
@@ -308,10 +365,102 @@ export function preflightCanvas2D(
       extensions: inspection.capabilities.hasExtensions,
       path2d: needsPath2D,
       domMatrix: inspection.capabilities.hasVectorPaths,
+      filter: visualRequirements.filter,
+      conicGradient: visualRequirements.conicGradient,
+      letterSpacing: visualRequirements.letterSpacing,
     },
     issues,
     resourceEstimate,
   };
+}
+
+function inspectVisualRuntimeRequirements(nodes: readonly SceneNode[]): {
+  filter: boolean;
+  conicGradient: boolean;
+  letterSpacing: boolean;
+} {
+  let filter = false;
+  let conicGradient = false;
+  let letterSpacing = false;
+  const stack = [...nodes];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) continue;
+    if (node.style?.filter && node.style.filter !== "none") filter = true;
+    if (isNonzeroLength(node.style?.letterSpacing)) letterSpacing = true;
+    for (const paint of [
+      node.style?.background,
+      node.style?.fill,
+      node.style?.stroke,
+    ]) {
+      if (paint && parseConicGradientValue(paint)) conicGradient = true;
+    }
+    for (const animation of node.animations ?? []) {
+      if (
+        animation.property === "filter" &&
+        animation.frames.some(
+          (frame) => typeof frame.value === "string" && frame.value !== "none",
+        )
+      ) {
+        filter = true;
+      }
+      if (
+        (animation.property === "background" ||
+          animation.property === "fill" ||
+          animation.property === "stroke") &&
+        animation.frames.some(
+          (frame) =>
+            typeof frame.value === "string" &&
+            parseConicGradientValue(frame.value) !== null,
+        )
+      ) {
+        conicGradient = true;
+      }
+      if (
+        animation.property === "letterSpacing" &&
+        animation.frames.some((frame) => isNonzeroLength(frame.value))
+      ) {
+        letterSpacing = true;
+      }
+    }
+    stack.push(...(node.children ?? []));
+  }
+  return { filter, conicGradient, letterSpacing };
+}
+
+function isNonzeroLength(value: unknown): boolean {
+  if (typeof value === "number") return value !== 0;
+  if (typeof value !== "string") return false;
+  const amount = Number.parseFloat(value);
+  return Number.isFinite(amount) && amount !== 0;
+}
+
+function probeCanvas2DContext(
+  globalObject: Partial<typeof globalThis>,
+  documentObject: Document | undefined,
+  preferOffscreen: boolean,
+): CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null {
+  const offscreen = () => {
+    const Constructor = globalObject.OffscreenCanvas;
+    if (typeof Constructor === "function") {
+      return new Constructor(1, 1).getContext("2d");
+    }
+    return null;
+  };
+  try {
+    if (preferOffscreen) return offscreen();
+    const canvas = documentObject?.createElement?.("canvas");
+    const context = canvas?.getContext?.("2d");
+    if (context) return context;
+    return offscreen();
+  } catch {
+    try {
+      return offscreen();
+    } catch {
+      // Capability remains unavailable.
+    }
+  }
+  return null;
 }
 
 /** A decodable video clip opened by resolveAssets(). */
@@ -2341,44 +2490,44 @@ export function computeObjectFit(
       break;
   }
 
-  const parts = (position ?? "").trim().split(/\s+/).filter(Boolean);
-  const xPart = parts[0] ?? "center";
-  const yPart = parts[1] ?? "center";
+  const parsedPosition =
+    parseObjectPositionValue(position ?? "center") ??
+    parseObjectPositionValue("center");
+
+  if (!parsedPosition) {
+    throw new Error(
+      "MotionForge internal error: center object position failed to parse.",
+    );
+  }
 
   return {
-    x: resolvePositionComponent(xPart, box.width, width),
-    y: resolvePositionComponent(yPart, box.height, height),
+    x: resolvePositionComponent(parsedPosition.x, box.width, width),
+    y: resolvePositionComponent(parsedPosition.y, box.height, height),
     width,
     height,
   };
 }
 
 function resolvePositionComponent(
-  part: string,
+  part: TransformOriginComponent,
   boxSize: number,
   drawnSize: number,
 ): number {
-  if (part === "left" || part === "top") {
+  if (part.kind === "length") {
+    return part.value.unit === "%"
+      ? (boxSize - drawnSize) * (part.value.value / 100)
+      : part.value.value;
+  }
+
+  if (part.value === "left" || part.value === "top") {
     return 0;
   }
 
-  if (part === "right" || part === "bottom") {
+  if (part.value === "right" || part.value === "bottom") {
     return boxSize - drawnSize;
   }
 
-  if (part === "center") {
-    return (boxSize - drawnSize) / 2;
-  }
-
-  // CSS: percentages align the image's X% point with the box's X% point;
-  // px values offset the image's edge from the box's edge.
-  if (part.endsWith("%")) {
-    const fraction = Number.parseFloat(part) / 100;
-    return Number.isFinite(fraction) ? (boxSize - drawnSize) * fraction : 0;
-  }
-
-  const px = Number.parseFloat(part);
-  return Number.isFinite(px) ? px : (boxSize - drawnSize) / 2;
+  return (boxSize - drawnSize) / 2;
 }
 
 function drawImage(
@@ -4417,12 +4566,12 @@ export type ParsedBoxShadow = {
 };
 
 export function parseBoxShadows(value: string): ParsedBoxShadow[] {
-  const parts = splitTopLevel(value);
-  if (parts.length === 0) return [];
-  const parsed = parts.map(parseBoxShadow);
-  return parsed.every((shadow): shadow is ParsedBoxShadow => shadow !== null)
-    ? parsed
-    : [];
+  return (parseShadowListValue(value) ?? []).map((shadow) => ({
+    offsetX: shadow.offsetX,
+    offsetY: shadow.offsetY,
+    blur: shadow.blur,
+    color: shadow.color.source,
+  }));
 }
 
 function drawBoxShadowLayer(
@@ -4479,36 +4628,15 @@ function drawBoxShadowLayer(
  * review rather than subtly wrong.
  */
 export function parseBoxShadow(value: string): ParsedBoxShadow | null {
-  const tokens: string[] =
-    value.trim().match(/(?:[^\s()]+\([^)]*\)|[^\s()]+)/g) ?? [];
-
-  if (tokens.includes("inset")) {
-    return null;
-  }
-
-  const lengths: number[] = [];
-  const colorParts: string[] = [];
-
-  for (const token of tokens) {
-    const length = token.match(/^(-?\d+(?:\.\d+)?)(?:px)?$/);
-
-    if (length && colorParts.length === 0) {
-      lengths.push(Number.parseFloat(length[1] ?? "0"));
-    } else {
-      colorParts.push(token);
-    }
-  }
-
-  if (lengths.length < 2 || lengths.length > 3 || colorParts.length === 0) {
-    return null;
-  }
-
-  return {
-    offsetX: lengths[0] ?? 0,
-    offsetY: lengths[1] ?? 0,
-    blur: Math.max(0, lengths[2] ?? 0),
-    color: colorParts.join(" "),
-  };
+  const shadow = parseShadowValue(value);
+  return shadow
+    ? {
+        offsetX: shadow.offsetX,
+        offsetY: shadow.offsetY,
+        blur: shadow.blur,
+        color: shadow.color.source,
+      }
+    : null;
 }
 
 export type ParsedBorder = { width: number; color: string };
@@ -4518,34 +4646,10 @@ export type ParsedBorder = { width: number; color: string };
  * line styles make the value null.
  */
 export function parseBorder(value: string): ParsedBorder | null {
-  const tokens = value.trim().match(/(?:[^\s()]+\([^)]*\)|[^\s()]+)/g) ?? [];
-  let width: number | null = null;
-  const colorParts: string[] = [];
-
-  for (const token of tokens) {
-    const length = token.match(/^(\d+(?:\.\d+)?)(?:px)?$/);
-
-    if (length && width === null) {
-      width = Number.parseFloat(length[1] ?? "0");
-      continue;
-    }
-
-    if (token === "solid") {
-      continue;
-    }
-
-    if (["dashed", "dotted", "double", "groove", "ridge"].includes(token)) {
-      return null;
-    }
-
-    colorParts.push(token);
-  }
-
-  if (width === null || width <= 0 || colorParts.length === 0) {
-    return null;
-  }
-
-  return { width, color: colorParts.join(" ") };
+  const border = parseBorderValue(value);
+  return border && border.width > 0
+    ? { width: border.width, color: border.color.source }
+    : null;
 }
 
 /**
@@ -4870,30 +4974,32 @@ function resolveTransformOrigin(
   value: string | undefined,
   box: LayoutBox,
 ): { x: number; y: number } {
-  const parts = (value ?? "").trim().split(/\s+/).filter(Boolean);
-  const xPart = parts[0] ?? "center";
-  const yPart = parts[1] ?? "center";
+  const parsed = value ? parseTransformOriginValue(value) : null;
 
   return {
-    x: box.x + resolveOriginComponent(xPart, box.width),
-    y: box.y + resolveOriginComponent(yPart, box.height),
+    x: box.x + resolveOriginComponent(parsed?.x, box.width),
+    y: box.y + resolveOriginComponent(parsed?.y, box.height),
   };
 }
 
-function resolveOriginComponent(part: string, size: number): number {
-  if (part === "left" || part === "top") {
+function resolveOriginComponent(
+  part: TransformOriginComponent | undefined,
+  size: number,
+): number {
+  if (!part) return size / 2;
+  if (part.kind === "length") {
+    return part.value.unit === "%"
+      ? (part.value.value / 100) * size
+      : part.value.value;
+  }
+  if (part.value === "left" || part.value === "top") {
     return 0;
   }
 
-  if (part === "right" || part === "bottom") {
+  if (part.value === "right" || part.value === "bottom") {
     return size;
   }
-
-  if (part === "center") {
-    return size / 2;
-  }
-
-  return readLength(part, size, size / 2);
+  return size / 2;
 }
 
 function applyTransform(
@@ -4912,35 +5018,19 @@ function applyTransform(
   const origin = resolveTransformOrigin(style.transformOrigin, box);
   context.translate(origin.x, origin.y);
 
-  const transformParts = Array.from(
-    style.transform.matchAll(/(translate|scale|rotate)\(([^)]+)\)/g),
-  );
-
-  for (let partIndex = 0; partIndex < transformParts.length; partIndex += 1) {
-    const part = transformParts[partIndex];
-    if (!part) {
-      continue;
-    }
-
-    const fn = part[1];
-    const args = part[2]?.split(",").map((arg: string) => arg.trim()) ?? [];
-
-    if (fn === "translate") {
-      context.translate(
-        readLength(args[0], box.width, 0),
-        readLength(args[1], box.height, 0),
-      );
-    }
-
-    if (fn === "scale") {
-      const sx = Number.parseFloat(args[0] ?? "1");
-      const sy = args[1] === undefined ? sx : Number.parseFloat(args[1]);
-      context.scale(sx, sy);
-    }
-
-    if (fn === "rotate") {
-      const degrees = Number.parseFloat(args[0] ?? "0");
-      context.rotate((degrees * Math.PI) / 180);
+  const transform = parseTransformValue(style.transform);
+  if (transform?.kind === "transform-list") {
+    for (const fn of transform.functions) {
+      if (fn.kind === "translate") {
+        context.translate(
+          fn.x.unit === "%" ? (fn.x.value / 100) * box.width : fn.x.value,
+          fn.y.unit === "%" ? (fn.y.value / 100) * box.height : fn.y.value,
+        );
+      } else if (fn.kind === "scale") {
+        context.scale(fn.x, fn.y);
+      } else {
+        context.rotate((fn.degrees * Math.PI) / 180);
+      }
     }
   }
 
@@ -4962,43 +5052,13 @@ export type ParsedLinearGradient = {
 export function parseLinearGradient(
   value: string,
 ): ParsedLinearGradient | null {
-  const match = value.trim().match(/^linear-gradient\((.+)\)$/);
-
-  if (!match) {
-    return null;
-  }
-
-  const parts = splitTopLevel(match[1] ?? "");
-
-  if (parts.length === 0) {
-    return null;
-  }
-
-  let angleDeg = 180;
-  const first = parts[0] ?? "";
-  const angle = first.match(/^(-?\d+(?:\.\d+)?)deg$/);
-  const side = first.match(/^to\s+(top|right|bottom|left)$/);
-
-  if (angle || side) {
-    parts.shift();
-
-    if (angle) {
-      angleDeg = Number.parseFloat(angle[1] ?? "180");
-    } else if (side) {
-      angleDeg = { top: 0, right: 90, bottom: 180, left: 270 }[
-        (side[1] ?? "bottom") as "top" | "right" | "bottom" | "left"
-      ];
-    }
-  }
-
-  if (parts.length < 2) {
-    return null;
-  }
-
-  return {
-    angleDeg,
-    stops: normalizeGradientStops(parts),
-  };
+  const parsed = parseLinearGradientValue(value);
+  return parsed
+    ? {
+        angleDeg: parsed.angleDeg,
+        stops: resolveGradientStopOffsets(parsed.stops),
+      }
+    : null;
 }
 
 export type ParsedRadialGradient = {
@@ -5010,23 +5070,14 @@ export type ParsedRadialGradient = {
 export function parseRadialGradient(
   value: string,
 ): ParsedRadialGradient | null {
-  const match = value.trim().match(/^radial-gradient\((.+)\)$/);
-  if (!match) return null;
-  const parts = splitTopLevel(match[1] ?? "");
-  let centerX = 0.5;
-  let centerY = 0.5;
-  const position = (parts[0] ?? "").match(
-    /^(?:circle\s+)?at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/,
-  );
-  if (position) {
-    centerX = Number.parseFloat(position[1] ?? "50") / 100;
-    centerY = Number.parseFloat(position[2] ?? "50") / 100;
-    parts.shift();
-  } else if (/^(?:circle|ellipse|at\s+)/.test(parts[0] ?? "")) {
-    return null;
-  }
-  if (parts.length < 2) return null;
-  return { centerX, centerY, stops: normalizeGradientStops(parts) };
+  const parsed = parseRadialGradientValue(value);
+  return parsed
+    ? {
+        centerX: parsed.centerX,
+        centerY: parsed.centerY,
+        stops: resolveGradientStopOffsets(parsed.stops),
+      }
+    : null;
 }
 
 export type ParsedConicGradient = {
@@ -5037,113 +5088,15 @@ export type ParsedConicGradient = {
 };
 
 export function parseConicGradient(value: string): ParsedConicGradient | null {
-  const match = value.trim().match(/^conic-gradient\((.+)\)$/);
-  if (!match) return null;
-  const parts = splitTopLevel(match[1] ?? "");
-  let angleDeg = 0;
-  let centerX = 0.5;
-  let centerY = 0.5;
-  const prefix = (parts[0] ?? "").match(
-    /^(?:from\s+(-?\d+(?:\.\d+)?)deg\s*)?(?:at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%)?$/,
-  );
-  if (prefix && (prefix[1] !== undefined || prefix[2] !== undefined)) {
-    angleDeg = Number.parseFloat(prefix[1] ?? "0");
-    centerX = Number.parseFloat(prefix[2] ?? "50") / 100;
-    centerY = Number.parseFloat(prefix[3] ?? "50") / 100;
-    parts.shift();
-  } else if (/^(?:from|at)\s+/.test(parts[0] ?? "")) {
-    return null;
-  }
-  if (parts.length < 2) return null;
-  return {
-    angleDeg,
-    centerX,
-    centerY,
-    stops: normalizeGradientStops(parts),
-  };
-}
-
-function normalizeGradientStops(
-  parts: string[],
-): Array<{ color: string; offset: number }> {
-  const stops = parts.map((part) => parseLinearGradientStop(part));
-  const firstStop = stops[0];
-  const lastStop = stops[stops.length - 1];
-
-  if (firstStop && firstStop.offset === undefined) firstStop.offset = 0;
-  if (lastStop && lastStop.offset === undefined) lastStop.offset = 1;
-
-  for (let index = 1; index < stops.length - 1; index += 1) {
-    if (stops[index]?.offset !== undefined) continue;
-    const prevIndex = index - 1;
-    let nextIndex = index + 1;
-    while (stops[nextIndex]?.offset === undefined) nextIndex += 1;
-    const start = stops[prevIndex]?.offset ?? 0;
-    const end = stops[nextIndex]?.offset ?? 1;
-    const span = nextIndex - prevIndex;
-    for (let fill = index; fill < nextIndex; fill += 1) {
-      const target = stops[fill];
-      if (target) {
-        target.offset = start + ((end - start) * (fill - prevIndex)) / span;
+  const parsed = parseConicGradientValue(value);
+  return parsed
+    ? {
+        angleDeg: parsed.angleDeg,
+        centerX: parsed.centerX,
+        centerY: parsed.centerY,
+        stops: resolveGradientStopOffsets(parsed.stops),
       }
-    }
-  }
-
-  let running = 0;
-  return stops.map((stop) => {
-    running = Math.min(1, Math.max(running, stop.offset ?? 0));
-    return { color: stop.color, offset: running };
-  });
-}
-
-function parseLinearGradientStop(value: string): {
-  color: string;
-  offset: number | undefined;
-} {
-  const tokens = value.trim().match(/(?:[^\s()]+\([^)]*\)|[^\s()]+)/g) ?? [];
-  const last = tokens[tokens.length - 1] ?? "";
-  const positioned = last.match(/^(-?\d+(?:\.\d+)?)(%|px)$/);
-
-  if (!positioned || tokens.length < 2) {
-    return { color: value.trim(), offset: undefined };
-  }
-
-  const amount = Number.parseFloat(positioned[1] ?? "0");
-  const offset =
-    positioned[2] === "%" ? amount / 100 : amount === 0 ? 0 : undefined;
-
-  return {
-    color: tokens.slice(0, -1).join(" "),
-    offset,
-  };
-}
-
-/** Splits on commas that are not inside parentheses (rgba(...) stops). */
-function splitTopLevel(value: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let current = "";
-
-  for (const char of value) {
-    if (char === "(") {
-      depth += 1;
-    } else if (char === ")") {
-      depth -= 1;
-    }
-
-    if (char === "," && depth === 0) {
-      parts.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.trim() !== "") {
-    parts.push(current.trim());
-  }
-
-  return parts.filter((part) => part !== "");
+    : null;
 }
 
 function parseFill(
@@ -5229,24 +5182,15 @@ function parseFill(
 function parseTextShadow(
   value: string | undefined,
 ): { x: number; y: number; blur: number; color: string } | null {
-  if (!value) {
-    return null;
-  }
-
-  const match = value.match(
-    /^(-?\d+(?:\.\d+)?)px?\s+(-?\d+(?:\.\d+)?)px?\s+(\d+(?:\.\d+)?)px?\s+(.+)$/,
-  );
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    x: Number.parseFloat(match[1] ?? "0"),
-    y: Number.parseFloat(match[2] ?? "0"),
-    blur: Number.parseFloat(match[3] ?? "0"),
-    color: match[4] ?? "rgba(0,0,0,0.4)",
-  };
+  const shadow = value ? parseShadowValue(value) : null;
+  return shadow
+    ? {
+        x: shadow.offsetX,
+        y: shadow.offsetY,
+        blur: shadow.blur,
+        color: shadow.color.source,
+      }
+    : null;
 }
 
 export function parseTextStroke(

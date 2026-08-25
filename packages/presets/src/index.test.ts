@@ -1344,8 +1344,8 @@ describe("audio overlay template catalog", () => {
     expect(overlay.volumeEnvelope).toEqual([
       { frame: 0, value: 0 },
       { frame: 30, value: 1, easing: "easeOut" },
-      { frame: 105, value: 1 },
-      { frame: 150, value: 0, easing: "easeIn" },
+      { frame: 104, value: 1 },
+      { frame: 149, value: 0, easing: "easeIn" },
     ]);
     expect(validateScene(sceneWith(overlay)).ok).toBe(true);
   });
@@ -1385,6 +1385,9 @@ describe("audio overlay template catalog", () => {
     expect(() => audioFadeEnvelope({ fadeInDuration: 1.5 })).toThrow(
       "non-negative integer",
     );
+    expect(audioFadeEnvelope({ duration: 1, fadeOutDuration: 1 })).toEqual([
+      { frame: 0, value: 0, easing: "easeIn" },
+    ]);
   });
 
   it("builds paired crossfade envelopes", () => {

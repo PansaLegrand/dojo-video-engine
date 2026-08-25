@@ -1,5 +1,32 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import {
+  borderValueSchema,
+  colorValueSchema,
+  easingValueSchema,
+  filterValueSchema,
+  fontFamilyValueSchema,
+  fontWeightValueSchema,
+  isEasingValue,
+  isFilterValue,
+  lengthValueSchema,
+  namedEasingValues,
+  objectPositionValueSchema,
+  paintValueSchema,
+  shadowValueSchema,
+  singleShadowValueSchema,
+  textStrokeValueSchema,
+  transformOriginValueSchema,
+  transformValueSchema,
+} from "./values.js";
+import { decorateSceneJsonSchema } from "./json-schema.js";
+import {
+  inspectJsonTreeSafety,
+  sceneIngestionHardLimits,
+  type JsonTreeSafetyIssue,
+} from "./ingestion.js";
+
+export { sceneIngestionHardLimits } from "./ingestion.js";
 
 export const supportedStyleKeys = [
   "display",
@@ -82,8 +109,6 @@ export const supportedStyleKeys = [
 
 export type SupportedStyleKey = (typeof supportedStyleKeys)[number];
 
-const lengthValueSchema = z.union([z.number(), z.string()]);
-
 export const safeAreaSchema = z
   .object({
     top: lengthValueSchema.optional(),
@@ -162,10 +187,10 @@ export const styleSchema = z
     top: lengthValueSchema.optional(),
     bottom: lengthValueSchema.optional(),
     inset: lengthValueSchema.optional(),
-    background: z.string().optional(),
-    backgroundColor: z.string().optional(),
-    fill: z.string().min(1).optional(),
-    stroke: z.string().min(1).optional(),
+    background: paintValueSchema.optional(),
+    backgroundColor: colorValueSchema.optional(),
+    fill: paintValueSchema.optional(),
+    stroke: paintValueSchema.optional(),
     strokeWidth: z.number().min(0).max(1024).optional(),
     strokeLineCap: z.enum(["butt", "round", "square"]).optional(),
     strokeLineJoin: z.enum(["bevel", "round", "miter"]).optional(),
@@ -180,43 +205,37 @@ export const styleSchema = z
         },
       )
       .optional(),
-    border: z.string().optional(),
+    border: borderValueSchema.optional(),
     borderRadius: lengthValueSchema.optional(),
     borderTopLeftRadius: lengthValueSchema.optional(),
     borderTopRightRadius: lengthValueSchema.optional(),
     borderBottomRightRadius: lengthValueSchema.optional(),
     borderBottomLeftRadius: lengthValueSchema.optional(),
-    boxShadow: z.string().optional(),
+    boxShadow: shadowValueSchema.optional(),
     overflow: z.enum(["visible", "hidden"]).optional(),
     opacity: z.number().min(0).max(1).optional(),
     blendMode: z.enum(blendModes).optional(),
     isolation: z.boolean().optional(),
-    filter: z
-      .string()
-      .refine(isFilterExpression, {
-        message:
-          "filter must be `none` or a space-separated chain of brightness()/contrast()/saturate()/grayscale()/sepia()/invert()/opacity() with a number or percentage, hue-rotate(<deg>), and blur(<px>).",
-      })
-      .optional(),
+    filter: filterValueSchema.optional(),
     zIndex: z.number().int().optional(),
-    transform: z.string().optional(),
-    transformOrigin: z.string().optional(),
-    fontFamily: z.string().optional(),
+    transform: transformValueSchema.optional(),
+    transformOrigin: transformOriginValueSchema.optional(),
+    fontFamily: fontFamilyValueSchema.optional(),
     fontSize: lengthValueSchema.optional(),
-    fontWeight: z.union([z.number(), z.string()]).optional(),
+    fontWeight: fontWeightValueSchema.optional(),
     fontStyle: z.enum(["normal", "italic"]).optional(),
-    color: z.string().optional(),
-    lineHeight: z.union([z.number(), z.string()]).optional(),
+    color: colorValueSchema.optional(),
+    lineHeight: lengthValueSchema.optional(),
     letterSpacing: lengthValueSchema.optional(),
     textAlign: z.enum(["left", "center", "right"]).optional(),
     direction: z.enum(["ltr", "rtl", "inherit"]).optional(),
-    textShadow: z.string().optional(),
-    textStroke: z.string().optional(),
+    textShadow: singleShadowValueSchema.optional(),
+    textStroke: textStrokeValueSchema.optional(),
     maxLines: z.number().int().positive().optional(),
     minFontSize: lengthValueSchema.optional(),
     textFit: z.enum(["wrap", "shrink", "truncate"]).optional(),
     textOverflow: z.enum(["clip", "ellipsis"]).optional(),
-    textBackgroundColor: z.string().optional(),
+    textBackgroundColor: colorValueSchema.optional(),
     textBackgroundPadding: lengthValueSchema.optional(),
     textBackgroundPaddingX: lengthValueSchema.optional(),
     textBackgroundPaddingY: lengthValueSchema.optional(),
@@ -224,7 +243,7 @@ export const styleSchema = z
     objectFit: z
       .enum(["contain", "cover", "fill", "none", "scale-down"])
       .optional(),
-    objectPosition: z.string().optional(),
+    objectPosition: objectPositionValueSchema.optional(),
     imageRendering: z.enum(["auto", "pixelated"]).optional(),
     pixelSize: z.number().min(1).max(256).optional(),
   })
@@ -237,9 +256,9 @@ export type SceneStyle = z.infer<typeof styleSchema>;
 
 export const textRunStyleSchema = z
   .object({
-    color: z.string().optional(),
-    textStroke: z.string().optional(),
-    textBackgroundColor: z.string().optional(),
+    color: colorValueSchema.optional(),
+    textStroke: textStrokeValueSchema.optional(),
+    textBackgroundColor: colorValueSchema.optional(),
     opacity: z.number().min(0).max(1).optional(),
   })
   .strict();
@@ -253,9 +272,6 @@ export const textRunSchema = z
 
 export type SceneTextRun = z.infer<typeof textRunSchema>;
 
-const filterFunctionPattern =
-  /^(?:(?:brightness|contrast|saturate|grayscale|sepia|invert|opacity)\(\s*\d+(?:\.\d+)?%?\s*\)|hue-rotate\(\s*-?\d+(?:\.\d+)?deg\s*\)|blur\(\s*\d+(?:\.\d+)?px\s*\))$/;
-
 /**
  * Validates a filter expression: `none` or a space-separated chain of
  * brightness()/contrast()/saturate()/grayscale()/sepia()/invert()/opacity()
@@ -263,25 +279,10 @@ const filterFunctionPattern =
  * subset Canvas2D `context.filter` accepts with deterministic output.
  */
 export function isFilterExpression(value: string): boolean {
-  const trimmed = value.trim();
-
-  if (trimmed === "none") {
-    return true;
-  }
-
-  const parts = trimmed.split(/\s+(?![^(]*\))/).filter(Boolean);
-
-  return (
-    parts.length > 0 && parts.every((part) => filterFunctionPattern.test(part))
-  );
+  return isFilterValue(value);
 }
 
-export const namedEasings = [
-  "linear",
-  "easeIn",
-  "easeOut",
-  "easeInOut",
-] as const;
+export const namedEasings = namedEasingValues;
 
 /**
  * Validates an easing expression: a named easing, `cubic-bezier(x1, y1, x2,
@@ -289,54 +290,161 @@ export const namedEasings = [
  * [0, 1).
  */
 export function isEasingExpression(value: string): boolean {
-  if ((namedEasings as readonly string[]).includes(value)) {
-    return true;
-  }
-
-  const bezier = value.match(
-    /^cubic-bezier\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)$/,
-  );
-
-  if (bezier) {
-    const x1 = Number.parseFloat(bezier[1] ?? "");
-    const x2 = Number.parseFloat(bezier[3] ?? "");
-    return x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1;
-  }
-
-  const spring = value.match(/^spring(?:\(\s*(\d+(?:\.\d+)?)\s*\))?$/);
-
-  if (spring) {
-    const bounce =
-      spring[1] === undefined ? 0.25 : Number.parseFloat(spring[1]);
-    return bounce >= 0 && bounce < 1;
-  }
-
-  return false;
+  return isEasingValue(value);
 }
 
-export const keyframeSchema = z.object({
-  frame: z.number().int().nonnegative(),
-  value: z.union([z.number(), z.string()]),
-  easing: z
-    .string()
-    .refine(isEasingExpression, {
-      message:
-        "Easing must be linear/easeIn/easeOut/easeInOut, cubic-bezier(x1, y1, x2, y2) with x1 and x2 in [0, 1], or spring(bounce) with bounce in [0, 1).",
-    })
-    .optional(),
-});
+export const keyframeSchema = z
+  .object({
+    frame: z.number().int().nonnegative(),
+    value: z.union([z.number(), z.string()]),
+    easing: easingValueSchema.optional(),
+  })
+  .strict();
+
+/**
+ * Scene v1 properties with deliberate per-frame evaluation semantics.
+ * Numeric values interpolate; compatible color/transform/filter strings
+ * interpolate; other valid string values step between keyframes.
+ */
+export const animationStyleTargets = [
+  "display",
+  "flexDirection",
+  "justifyContent",
+  "alignItems",
+  "gap",
+  "width",
+  "height",
+  "minWidth",
+  "minHeight",
+  "maxWidth",
+  "maxHeight",
+  "aspectRatio",
+  "padding",
+  "paddingTop",
+  "paddingRight",
+  "paddingBottom",
+  "paddingLeft",
+  "margin",
+  "marginTop",
+  "marginRight",
+  "marginBottom",
+  "marginLeft",
+  "position",
+  "left",
+  "right",
+  "top",
+  "bottom",
+  "inset",
+  "background",
+  "backgroundColor",
+  "fill",
+  "stroke",
+  "strokeWidth",
+  "strokeLineCap",
+  "strokeLineJoin",
+  "border",
+  "borderRadius",
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomRightRadius",
+  "borderBottomLeftRadius",
+  "boxShadow",
+  "overflow",
+  "opacity",
+  "blendMode",
+  "filter",
+  "zIndex",
+  "transform",
+  "transformOrigin",
+  "fontFamily",
+  "fontSize",
+  "fontWeight",
+  "fontStyle",
+  "color",
+  "lineHeight",
+  "letterSpacing",
+  "textAlign",
+  "direction",
+  "textShadow",
+  "textStroke",
+  "maxLines",
+  "minFontSize",
+  "textFit",
+  "textOverflow",
+  "textBackgroundColor",
+  "textBackgroundPadding",
+  "textBackgroundPaddingX",
+  "textBackgroundPaddingY",
+  "textBackgroundRadius",
+  "objectFit",
+  "objectPosition",
+  "imageRendering",
+  "pixelSize",
+] as const satisfies readonly SupportedStyleKey[];
+
+export const animationTargets = [
+  ...animationStyleTargets,
+  "mask.opacity",
+  "mask.feather",
+  "mask.radius",
+] as const;
+
+export type SceneAnimationTarget = (typeof animationTargets)[number];
+
+const animationTargetSchema = z.enum(animationTargets);
+
+function validateAnimationFrameValue(
+  target: SceneAnimationTarget,
+  value: string | number,
+): string | null {
+  if (target === "mask.opacity") {
+    return typeof value === "number" && value >= 0 && value <= 1
+      ? null
+      : "mask.opacity keyframes require numbers from 0 to 1.";
+  }
+  if (target === "mask.feather") {
+    return typeof value === "number" && value >= 0 && value <= 256
+      ? null
+      : "mask.feather keyframes require numbers from 0 to 256.";
+  }
+  if (target === "mask.radius") {
+    return lengthValueSchema.safeParse(value).success
+      ? null
+      : "mask.radius keyframes require a supported numeric, px, or % length.";
+  }
+
+  const parsed = styleSchema.safeParse({ [target]: value });
+  return parsed.success
+    ? null
+    : parsed.error.issues.map((issue) => issue.message).join("; ");
+}
 
 export const animationSchema = z
   .object({
     kind: z.literal("keyframes"),
-    property: z.string().min(1),
+    property: animationTargetSchema,
     frames: z.array(keyframeSchema).min(1),
     repeat: z
       .union([z.number().int().min(0).max(1000), z.literal("infinite")])
       .optional(),
     yoyo: z.boolean().optional(),
   })
+  .strict()
   .superRefine((animation, ctx) => {
+    animation.frames.forEach((frame, index) => {
+      const issue = validateAnimationFrameValue(
+        animation.property,
+        frame.value,
+      );
+      if (issue) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["frames", index, "value"],
+          message: issue,
+        });
+      }
+    });
+
     for (let index = 1; index < animation.frames.length; index += 1) {
       const previous = animation.frames[index - 1];
       const current = animation.frames[index];
@@ -353,17 +461,13 @@ export const animationSchema = z
 
 export type SceneAnimation = z.infer<typeof animationSchema>;
 
-export const volumeEnvelopePointSchema = z.object({
-  frame: z.number().int().nonnegative(),
-  value: z.number().min(0).max(1),
-  easing: z
-    .string()
-    .refine(isEasingExpression, {
-      message:
-        "Easing must be linear/easeIn/easeOut/easeInOut, cubic-bezier(x1, y1, x2, y2) with x1 and x2 in [0, 1], or spring(bounce) with bounce in [0, 1).",
-    })
-    .optional(),
-});
+export const volumeEnvelopePointSchema = z
+  .object({
+    frame: z.number().int().nonnegative(),
+    value: z.number().min(0).max(1),
+    easing: easingValueSchema.optional(),
+  })
+  .strict();
 
 export const volumeEnvelopeSchema = z
   .array(volumeEnvelopePointSchema)
@@ -445,7 +549,7 @@ export const effectParamsSchema = z
   .object({
     intensity: z.enum(["low", "medium", "high"]).optional(),
     seed: z.number().int().nonnegative().optional(),
-    colors: z.array(z.string().min(1)).min(1).max(8).optional(),
+    colors: z.array(colorValueSchema).min(1).max(8).optional(),
     particleCount: z.number().int().min(1).max(240).optional(),
     shockwave: z.boolean().optional(),
     emoji: z.string().min(1).max(12).optional(),
@@ -592,7 +696,7 @@ export const shapeGeometrySchema = z.discriminatedUnion(
 
 export type SceneShapeGeometry = z.infer<typeof shapeGeometrySchema>;
 
-const closedShapeGeometrySchema = shapeGeometrySchema.refine(
+export const closedShapeGeometrySchema = shapeGeometrySchema.refine(
   (shape) => shape.kind !== "line" && shape.kind !== "polyline",
   { message: "Clip and mask geometry must be closed." },
 );
@@ -798,6 +902,7 @@ function createSceneNodeSchema(
         animations: z.array(animationSchema).default([]),
         children: z.array(nodeSchema).default([]),
       })
+      .strict()
       .superRefine((node, ctx) => {
         if (
           node.type === "text" &&
@@ -902,6 +1007,30 @@ function createSceneNodeSchema(
             path: node.clip ? ["clip"] : ["mask"],
             message:
               "Audio nodes are not visual and cannot carry clip or mask geometry.",
+          });
+        }
+
+        const maskAnimations = (node.animations ?? []).filter((animation) =>
+          animation.property.startsWith("mask."),
+        );
+        if (maskAnimations.length > 0 && !node.mask) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["animations"],
+            message:
+              "mask.* animations require a mask descriptor on the same node.",
+          });
+        }
+        if (
+          maskAnimations.some(
+            (animation) => animation.property === "mask.radius",
+          ) &&
+          node.mask?.shape.kind !== "rect"
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["animations"],
+            message: "mask.radius animations require a rectangular mask shape.",
           });
         }
 
@@ -1237,6 +1366,7 @@ export const legacySceneV0Schema = z
     schemaVersion: z.literal(0),
     ...sceneDocumentFields(legacySceneNodeSchema, false),
   })
+  .strict()
   .superRefine(validateSceneDocument);
 
 /** Current canonical Scene v1 document. */
@@ -1245,6 +1375,7 @@ export const sceneSchema = z
     schemaVersion: z.literal(1),
     ...sceneDocumentFields(sceneNodeSchema, true),
   })
+  .strict()
   .superRefine(validateSceneDocument);
 
 export type LegacySceneV0 = z.infer<typeof legacySceneV0Schema>;
@@ -1286,6 +1417,20 @@ function safeMigrateScene(input: unknown): SafeSceneMigrationResult {
     if (cached) {
       return { ok: true, result: cached };
     }
+  }
+
+  const treeSafety = inspectJsonTreeSafety(input, sceneIngestionHardLimits);
+  if (!treeSafety.ok) {
+    return {
+      ok: false,
+      issues: [
+        {
+          code: z.ZodIssueCode.custom,
+          path: treeSafety.issue.path,
+          message: formatJsonTreeSafetyIssue(treeSafety.issue, "Scene input"),
+        },
+      ],
+    };
   }
 
   const version =
@@ -1381,6 +1526,128 @@ export function parseScene(input: unknown): Scene {
   return migrateScene(input).scene;
 }
 
+export type SceneRepairDiagnostic = {
+  severity: "warning";
+  code: "unknown_key_removed";
+  /** Full path to the removed key in the supplied document. */
+  path: Array<string | number>;
+  key: string;
+  message: string;
+};
+
+export type SceneRepairResult =
+  | {
+      ok: true;
+      scene: Scene;
+      fromVersion: 0 | 1;
+      toVersion: typeof CURRENT_SCENE_VERSION;
+      migrations: readonly string[];
+      diagnostics: SceneRepairDiagnostic[];
+    }
+  | {
+      ok: false;
+      errors: string[];
+      diagnostics: SceneRepairDiagnostic[];
+    };
+
+/**
+ * Explicit tolerant ingestion for model, legacy-adapter, and import boundaries.
+ * Only unknown object keys are removed; invalid values, missing fields,
+ * unsupported versions, and cross-field errors remain failures. The input is
+ * never mutated, and calling this function does not make later parseScene(input)
+ * calls tolerant — canonical parsing remains strict.
+ */
+export function repairSceneInput(input: unknown): SceneRepairResult {
+  const treeError = validateRepairTree(input);
+  if (treeError) {
+    return { ok: false, errors: [treeError], diagnostics: [] };
+  }
+
+  let candidate: unknown;
+  try {
+    candidate = structuredClone(input);
+  } catch (error) {
+    return {
+      ok: false,
+      errors: [
+        `scene: repair input must be structured-cloneable data: ${error instanceof Error ? error.message : String(error)}`,
+      ],
+      diagnostics: [],
+    };
+  }
+
+  const diagnostics: SceneRepairDiagnostic[] = [];
+
+  // Nested strict-object errors are normally returned together. The bounded
+  // retry handles cases where removing an outer unknown key lets Zod expose a
+  // deeper strict-object issue on the next pass.
+  for (let pass = 0; pass < 32; pass += 1) {
+    const result = safeMigrateScene(candidate);
+    if (result.ok) {
+      cacheNormalizedScene(candidate, result.result);
+      diagnostics.sort((left, right) =>
+        formatRepairPath(left.path).localeCompare(formatRepairPath(right.path)),
+      );
+      return {
+        ok: true,
+        scene: result.result.scene,
+        fromVersion: result.result.fromVersion,
+        toVersion: result.result.toVersion,
+        migrations: result.result.migrations,
+        diagnostics,
+      };
+    }
+
+    const unknownIssues = result.issues.filter(
+      (
+        issue,
+      ): issue is z.ZodIssue & {
+        code: typeof z.ZodIssueCode.unrecognized_keys;
+        keys: string[];
+      } => issue.code === z.ZodIssueCode.unrecognized_keys,
+    );
+    let removed = 0;
+
+    for (const issue of unknownIssues) {
+      const owner = valueAtRepairPath(candidate, issue.path);
+      if (!isRepairRecord(owner)) continue;
+
+      for (const key of issue.keys) {
+        if (!Object.hasOwn(owner, key)) continue;
+        delete owner[key];
+        removed += 1;
+        const path = [...issue.path, key].filter(
+          (part): part is string | number =>
+            typeof part === "string" || typeof part === "number",
+        );
+        diagnostics.push({
+          severity: "warning",
+          code: "unknown_key_removed",
+          path,
+          key,
+          message: `${formatRepairPath(path)}: removed unknown key ${JSON.stringify(key)} during explicit repair.`,
+        });
+      }
+    }
+
+    if (removed === 0) {
+      return {
+        ok: false,
+        errors: result.issues.map(formatSceneIssue),
+        diagnostics,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    errors: [
+      "scene: repair exceeded 32 unknown-key passes; reject the document instead of guessing further.",
+    ],
+    diagnostics,
+  };
+}
+
 export function validateScene(
   input: unknown,
 ): { ok: true; scene: Scene } | { ok: false; errors: string[] } {
@@ -1394,6 +1661,57 @@ export function validateScene(
     ok: false,
     errors: migrated.issues.map(formatSceneIssue),
   };
+}
+
+function isRepairRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateRepairTree(value: unknown): string | null {
+  const maxValues = 100_000;
+  const maxDepth = 256;
+  const result = inspectJsonTreeSafety(value, {
+    maxDocumentValues: maxValues,
+    maxDocumentDepth: maxDepth,
+  });
+  if (result.ok) return null;
+  if (result.issue.code === "non_tree_reference") {
+    return `${formatRepairPath(result.issue.path)}: repair input must be a JSON tree without cycles or shared object references.`;
+  }
+  return `${formatRepairPath(result.issue.path)}: repair input exceeds the bounded ${maxValues}-value / ${maxDepth}-depth ingestion guard.`;
+}
+
+function formatJsonTreeSafetyIssue(
+  issue: JsonTreeSafetyIssue,
+  label: string,
+): string {
+  if (issue.code === "non_tree_reference") {
+    return `${label} must form a JSON tree without cycles or shared object references.`;
+  }
+  const dimension = issue.code === "depth_exceeded" ? "depth" : "value count";
+  return `${label} ${dimension} ${issue.actual} exceeds the hard parser-safety ceiling ${issue.limit}.`;
+}
+
+function valueAtRepairPath(
+  value: unknown,
+  path: ReadonlyArray<PropertyKey>,
+): unknown {
+  let current = value;
+  for (const part of path) {
+    if (
+      (typeof part !== "string" && typeof part !== "number") ||
+      typeof current !== "object" ||
+      current === null
+    ) {
+      return undefined;
+    }
+    current = (current as Record<PropertyKey, unknown>)[part];
+  }
+  return current;
+}
+
+function formatRepairPath(path: ReadonlyArray<string | number>): string {
+  return path.length > 0 ? path.join(".") : "scene";
 }
 
 function formatSceneIssue(issue: z.ZodIssue): string {
@@ -1410,15 +1728,19 @@ function formatSceneIssues(issues: z.ZodIssue[]): string {
 
 /**
  * JSON Schema (draft-07) for the scene document, so editors and agents can
- * validate scenes without executing motionforge code. Covers structure only;
- * cross-field invariants (unique node ids, asset key = asset.id, text/assetId
- * requirements per node type) are enforced by parseScene/validateScene.
+ * validate canonical structure, portable values, and target-specific
+ * animation values without executing Zod. Cross-field invariants (unique node
+ * ids, asset key = asset.id, node/asset and mask compatibility) remain
+ * enforced by parseScene/validateScene.
  */
 export function sceneJsonSchema(): Record<string, unknown> {
-  return zodToJsonSchema(sceneSchema, {
-    name: "MotionforgeScene",
-    target: "jsonSchema7",
-  }) as Record<string, unknown>;
+  return decorateSceneJsonSchema(
+    zodToJsonSchema(sceneSchema, {
+      name: "MotionforgeScene",
+      target: "jsonSchema7",
+    }) as Record<string, unknown>,
+    animationTargets,
+  );
 }
 
 /** Structural JSON Schema for legacy v0 ingestion and migration tooling. */
@@ -1447,3 +1769,24 @@ export {
   type SceneLintIssue,
   type SceneLintResult,
 } from "./inspect.js";
+
+export {
+  defaultSceneComplexityLimits,
+  preflightScene,
+  type SceneComplexityIssue,
+  type SceneComplexityIssueCode,
+  type SceneComplexityLimits,
+  type SceneComplexityPreflightResult,
+  type SceneComplexityUsage,
+} from "./preflight.js";
+
+export {
+  motionforgeJsonSchemaFormatNames,
+  motionforgeJsonSchemaFormats,
+  registerMotionforgeJsonSchemaFormats,
+  type JsonSchemaFormatRegistrar,
+  type MotionforgeJsonSchemaFormatName,
+  type MotionforgeJsonSchemaFormatPredicate,
+} from "./json-schema.js";
+
+export * from "./values.js";

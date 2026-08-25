@@ -1,5 +1,6 @@
 import type {
   SceneAnimation,
+  SceneAnimationTarget,
   SceneDucking,
   SceneNode,
   SceneStyle,
@@ -34,7 +35,10 @@ function delayed(frames: Keyframes, delay: number): Keyframes {
   return first ? [{ frame: 0, value: first.value }, ...shifted] : shifted;
 }
 
-function animation(property: string, frames: Keyframes): SceneAnimation {
+function animation(
+  property: SceneAnimationTarget,
+  frames: Keyframes,
+): SceneAnimation {
   return { kind: "keyframes", property, frames };
 }
 
@@ -195,8 +199,8 @@ export function pulse(
 export function mergeAnimationsByProperty(
   animations: SceneAnimation[],
 ): SceneAnimation[] {
-  const order: string[] = [];
-  const byProperty = new Map<string, SceneAnimation[]>();
+  const order: SceneAnimationTarget[] = [];
+  const byProperty = new Map<SceneAnimationTarget, SceneAnimation[]>();
 
   for (const entry of animations) {
     const group = byProperty.get(entry.property);
@@ -2519,11 +2523,18 @@ export function audioFadeEnvelope(
     );
   }
 
+  const finalActiveFrame =
+    duration === undefined ? undefined : Math.max(0, duration - 1);
+  const fadeOutStartFrame =
+    finalActiveFrame === undefined
+      ? undefined
+      : Math.max(0, finalActiveFrame - fadeOutDuration);
+
   if (
-    duration !== undefined &&
+    fadeOutStartFrame !== undefined &&
     fadeInDuration > 0 &&
     fadeOutDuration > 0 &&
-    fadeInDuration > duration - fadeOutDuration
+    fadeInDuration > fadeOutStartFrame
   ) {
     throw new Error(
       "audioFadeEnvelope() fadeInDuration and fadeOutDuration overlap; shorten the fades or pass an explicit volumeEnvelope.",
@@ -2541,13 +2552,19 @@ export function audioFadeEnvelope(
     });
   }
 
-  if (fadeOutDuration > 0 && duration !== undefined) {
+  if (
+    fadeOutDuration > 0 &&
+    finalActiveFrame !== undefined &&
+    fadeOutStartFrame !== undefined
+  ) {
+    if (fadeOutStartFrame < finalActiveFrame) {
+      pushVolumePoint(points, {
+        frame: fadeOutStartFrame,
+        value: 1,
+      });
+    }
     pushVolumePoint(points, {
-      frame: duration - fadeOutDuration,
-      value: 1,
-    });
-    pushVolumePoint(points, {
-      frame: duration,
+      frame: finalActiveFrame,
       value: 0,
       easing: options.fadeOutEasing ?? "easeIn",
     });

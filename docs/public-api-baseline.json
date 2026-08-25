@@ -135,6 +135,10 @@
         ".": {
           "types": "./dist/index.d.ts",
           "import": "./dist/index.js"
+        },
+        "./values": {
+          "types": "./dist/values.d.ts",
+          "import": "./dist/values.js"
         }
       },
       "bin": null

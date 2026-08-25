@@ -326,6 +326,101 @@ describe("applyScenePatch", () => {
     ).toContain("Unrecognized key");
   });
 
+  it("rejects unknown fields on every patch operation", () => {
+    const errors = rejected([
+      {
+        op: "setText",
+        id: "title",
+        text: "Updated",
+        unknownOperationField: true,
+      },
+    ]);
+
+    expect(errors[0]?.message).toContain("Unrecognized key");
+    expect(errors[0]?.message).toContain("unknownOperationField");
+  });
+
+  it("supports muted reverse-video patches and rejects invalid reverse targets", () => {
+    const reversed = applied(
+      [
+        {
+          op: "setNodeProps",
+          id: "shot",
+          props: { playbackRate: -1, volume: 0 },
+        },
+      ],
+      mediaScene(),
+    );
+    expect(reversed.nodes.find((node) => node.id === "shot")).toMatchObject({
+      playbackRate: -1,
+      volume: 0,
+    });
+
+    expect(
+      rejected(
+        [{ op: "setNodeProps", id: "shot", props: { playbackRate: -1 } }],
+        mediaScene(),
+      )
+        .map((error) => error.message)
+        .join("\n"),
+    ).toContain("Reverse video playback is visual-only");
+
+    expect(
+      rejected(
+        [
+          {
+            op: "setNodeProps",
+            id: "sticker",
+            props: { playbackRate: -1 },
+          },
+        ],
+        {
+          schemaVersion: 1,
+          width: 100,
+          height: 100,
+          fps: 30,
+          duration: 30,
+          assets: {
+            sticker: {
+              id: "sticker",
+              type: "lottie",
+              src: "sticker.json",
+            },
+          },
+          nodes: [
+            {
+              id: "sticker",
+              type: "lottie",
+              assetId: "sticker",
+            },
+          ],
+        },
+      )
+        .map((error) => error.message)
+        .join("\n"),
+    ).toContain("Negative playbackRate is currently supported for video");
+  });
+
+  it("rejects open clip geometry at the patch boundary", () => {
+    expect(
+      rejected([
+        {
+          op: "setNodeProps",
+          id: "badge",
+          props: {
+            clip: {
+              kind: "line",
+              points: [
+                { x: 0, y: 0 },
+                { x: 1, y: 1 },
+              ],
+            },
+          },
+        },
+      ])[0]?.message,
+    ).toContain("Clip and mask geometry must be closed");
+  });
+
   it("setStyle validates the merged style against the schema", () => {
     const errors = rejected([
       { op: "setStyle", id: "title", style: { backdropFilter: "blur(4px)" } },

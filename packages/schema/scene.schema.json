@@ -155,13 +155,21 @@
                       "type": "object",
                       "properties": {
                         "color": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 8192,
+                          "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                          "format": "motionforge-color"
                         },
                         "textStroke": {
-                          "type": "string"
+                          "type": "string",
+                          "maxLength": 8192,
+                          "description": "Expected a positive px width followed by a supported color.",
+                          "format": "motionforge-text-stroke"
                         },
                         "textBackgroundColor": {
-                          "type": "string"
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                          "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                          "format": "motionforge-color"
                         },
                         "opacity": {
                           "type": "number",
@@ -230,8 +238,7 @@
                   "colors": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "minLength": 1
+                      "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color"
                     },
                     "minItems": 1,
                     "maxItems": 8
@@ -406,9 +413,16 @@
                         "const": "rect"
                       },
                       "radius": {
-                        "type": [
-                          "number",
-                          "string"
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string",
+                            "maxLength": 128,
+                            "description": "Finite number string with optional px or % unit.",
+                            "format": "motionforge-length"
+                          }
                         ]
                       }
                     },
@@ -635,7 +649,10 @@
                       "maximum": 1
                     },
                     "easing": {
-                      "type": "string"
+                      "type": "string",
+                      "maxLength": 8192,
+                      "description": "Expected a named easing, cubic-bezier(), or spring().",
+                      "format": "motionforge-easing"
                     }
                   },
                   "required": [
@@ -765,7 +782,8 @@
                       },
                       {
                         "type": "string",
-                        "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$"
+                        "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$",
+                        "format": "motionforge-aspect-ratio"
                       }
                     ]
                   },
@@ -840,18 +858,25 @@
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "background": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected a supported color or linear/radial/conic gradient.",
+                    "format": "motionforge-paint"
                   },
                   "backgroundColor": {
-                    "type": "string"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                    "format": "motionforge-color"
                   },
                   "fill": {
-                    "type": "string",
-                    "minLength": 1
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                    "description": "Expected a supported color or linear/radial/conic gradient.",
+                    "format": "motionforge-paint"
                   },
                   "stroke": {
-                    "type": "string",
-                    "minLength": 1
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                    "description": "Expected a supported color or linear/radial/conic gradient.",
+                    "format": "motionforge-paint"
                   },
                   "strokeWidth": {
                     "type": "number",
@@ -883,7 +908,10 @@
                     "maxItems": 32
                   },
                   "border": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected a nonnegative px width, optional solid keyword, and color.",
+                    "format": "motionforge-border"
                   },
                   "borderRadius": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
@@ -901,7 +929,10 @@
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "boxShadow": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected comma-separated x/y/optional-blur/color shadows without spread or inset.",
+                    "format": "motionforge-shadow-list"
                   },
                   "overflow": {
                     "type": "string",
@@ -941,27 +972,48 @@
                     "type": "boolean"
                   },
                   "filter": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected none or a supported Canvas2D filter chain.",
+                    "format": "motionforge-filter"
                   },
                   "zIndex": {
                     "type": "integer"
                   },
                   "transform": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected none or a translate()/scale()/rotate() transform list.",
+                    "format": "motionforge-transform"
                   },
                   "transformOrigin": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected horizontal left/center/right/px/% and optional vertical top/center/bottom/px/% origin components.",
+                    "format": "motionforge-transform-origin"
                   },
                   "fontFamily": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected a bounded comma-separated Canvas font-family list.",
+                    "format": "motionforge-font-family"
                   },
                   "fontSize": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "fontWeight": {
-                    "type": [
-                      "number",
-                      "string"
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 1000
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 8192,
+                        "description": "Expected normal/bold/bolder/lighter or a font weight from 1 to 1000.",
+                        "format": "motionforge-font-weight"
+                      }
                     ]
                   },
                   "fontStyle": {
@@ -972,13 +1024,12 @@
                     ]
                   },
                   "color": {
-                    "type": "string"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                    "format": "motionforge-color"
                   },
                   "lineHeight": {
-                    "type": [
-                      "number",
-                      "string"
-                    ]
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
                   },
                   "letterSpacing": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
@@ -1000,10 +1051,15 @@
                     ]
                   },
                   "textShadow": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected one x/y/optional-blur/color shadow without spread or inset.",
+                    "format": "motionforge-single-shadow"
                   },
                   "textStroke": {
-                    "type": "string"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
+                    "description": "Expected a positive px width followed by a supported color.",
+                    "format": "motionforge-text-stroke"
                   },
                   "maxLines": {
                     "type": "integer",
@@ -1028,7 +1084,9 @@
                     ]
                   },
                   "textBackgroundColor": {
-                    "type": "string"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                    "format": "motionforge-color"
                   },
                   "textBackgroundPadding": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
@@ -1053,7 +1111,10 @@
                     ]
                   },
                   "objectPosition": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Expected one or two left/center/right/top/bottom/px/% object-position components.",
+                    "format": "motionforge-object-position"
                   },
                   "imageRendering": {
                     "type": "string",
@@ -1082,7 +1143,84 @@
                     },
                     "property": {
                       "type": "string",
-                      "minLength": 1
+                      "enum": [
+                        "display",
+                        "flexDirection",
+                        "justifyContent",
+                        "alignItems",
+                        "gap",
+                        "width",
+                        "height",
+                        "minWidth",
+                        "minHeight",
+                        "maxWidth",
+                        "maxHeight",
+                        "aspectRatio",
+                        "padding",
+                        "paddingTop",
+                        "paddingRight",
+                        "paddingBottom",
+                        "paddingLeft",
+                        "margin",
+                        "marginTop",
+                        "marginRight",
+                        "marginBottom",
+                        "marginLeft",
+                        "position",
+                        "left",
+                        "right",
+                        "top",
+                        "bottom",
+                        "inset",
+                        "background",
+                        "backgroundColor",
+                        "fill",
+                        "stroke",
+                        "strokeWidth",
+                        "strokeLineCap",
+                        "strokeLineJoin",
+                        "border",
+                        "borderRadius",
+                        "borderTopLeftRadius",
+                        "borderTopRightRadius",
+                        "borderBottomRightRadius",
+                        "borderBottomLeftRadius",
+                        "boxShadow",
+                        "overflow",
+                        "opacity",
+                        "blendMode",
+                        "filter",
+                        "zIndex",
+                        "transform",
+                        "transformOrigin",
+                        "fontFamily",
+                        "fontSize",
+                        "fontWeight",
+                        "fontStyle",
+                        "color",
+                        "lineHeight",
+                        "letterSpacing",
+                        "textAlign",
+                        "direction",
+                        "textShadow",
+                        "textStroke",
+                        "maxLines",
+                        "minFontSize",
+                        "textFit",
+                        "textOverflow",
+                        "textBackgroundColor",
+                        "textBackgroundPadding",
+                        "textBackgroundPaddingX",
+                        "textBackgroundPaddingY",
+                        "textBackgroundRadius",
+                        "objectFit",
+                        "objectPosition",
+                        "imageRendering",
+                        "pixelSize",
+                        "mask.opacity",
+                        "mask.feather",
+                        "mask.radius"
+                      ]
                     },
                     "frames": {
                       "type": "array",
@@ -1100,7 +1238,9 @@
                             ]
                           },
                           "easing": {
-                            "type": "string"
+                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/volumeEnvelope/items/properties/easing",
+                            "description": "Expected a named easing, cubic-bezier(), or spring().",
+                            "format": "motionforge-easing"
                           }
                         },
                         "required": [
@@ -1133,7 +1273,1133 @@
                     "property",
                     "frames"
                   ],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "display"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "const": "flex"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "flexDirection"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "row",
+                                    "column"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "justifyContent"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "flex-start",
+                                    "center",
+                                    "flex-end",
+                                    "space-between"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "alignItems"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "flex-start",
+                                    "center",
+                                    "flex-end",
+                                    "stretch"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "enum": [
+                              "gap",
+                              "width",
+                              "height",
+                              "minWidth",
+                              "minHeight",
+                              "maxWidth",
+                              "maxHeight",
+                              "padding",
+                              "paddingTop",
+                              "paddingRight",
+                              "paddingBottom",
+                              "paddingLeft",
+                              "margin",
+                              "marginTop",
+                              "marginRight",
+                              "marginBottom",
+                              "marginLeft",
+                              "left",
+                              "right",
+                              "top",
+                              "bottom",
+                              "inset",
+                              "borderRadius",
+                              "borderTopLeftRadius",
+                              "borderTopRightRadius",
+                              "borderBottomRightRadius",
+                              "borderBottomLeftRadius",
+                              "fontSize",
+                              "lineHeight",
+                              "letterSpacing",
+                              "minFontSize",
+                              "textBackgroundPadding",
+                              "textBackgroundPaddingX",
+                              "textBackgroundPaddingY",
+                              "textBackgroundRadius",
+                              "mask.radius"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "aspectRatio"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number",
+                                      "exclusiveMinimum": 0
+                                    },
+                                    {
+                                      "type": "string",
+                                      "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$",
+                                      "format": "motionforge-aspect-ratio"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "position"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "relative",
+                                    "absolute"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "background"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected a supported color or linear/radial/conic gradient.",
+                                  "format": "motionforge-paint"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "enum": [
+                              "backgroundColor",
+                              "color",
+                              "textBackgroundColor"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                                  "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
+                                  "format": "motionforge-color"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "enum": [
+                              "fill",
+                              "stroke"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                                  "description": "Expected a supported color or linear/radial/conic gradient.",
+                                  "format": "motionforge-paint"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "strokeWidth"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1024
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "strokeLineCap"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "butt",
+                                    "round",
+                                    "square"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "strokeLineJoin"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bevel",
+                                    "round",
+                                    "miter"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "border"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected a nonnegative px width, optional solid keyword, and color.",
+                                  "format": "motionforge-border"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "boxShadow"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected comma-separated x/y/optional-blur/color shadows without spread or inset.",
+                                  "format": "motionforge-shadow-list"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "overflow"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "visible",
+                                    "hidden"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "enum": [
+                              "opacity",
+                              "mask.opacity"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "blendMode"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "source-over",
+                                    "lighter",
+                                    "multiply",
+                                    "screen",
+                                    "overlay",
+                                    "darken",
+                                    "lighten",
+                                    "color-dodge",
+                                    "color-burn",
+                                    "hard-light",
+                                    "soft-light",
+                                    "difference",
+                                    "exclusion",
+                                    "hue",
+                                    "saturation",
+                                    "color",
+                                    "luminosity"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "filter"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected none or a supported Canvas2D filter chain.",
+                                  "format": "motionforge-filter"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "zIndex"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "transform"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected none or a translate()/scale()/rotate() transform list.",
+                                  "format": "motionforge-transform"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "transformOrigin"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected horizontal left/center/right/px/% and optional vertical top/center/bottom/px/% origin components.",
+                                  "format": "motionforge-transform-origin"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "fontFamily"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected a bounded comma-separated Canvas font-family list.",
+                                  "format": "motionforge-font-family"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "fontWeight"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number",
+                                      "minimum": 1,
+                                      "maximum": 1000
+                                    },
+                                    {
+                                      "type": "string",
+                                      "maxLength": 8192,
+                                      "description": "Expected normal/bold/bolder/lighter or a font weight from 1 to 1000.",
+                                      "format": "motionforge-font-weight"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "fontStyle"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "normal",
+                                    "italic"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "textAlign"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "direction"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ltr",
+                                    "rtl",
+                                    "inherit"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "textShadow"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected one x/y/optional-blur/color shadow without spread or inset.",
+                                  "format": "motionforge-single-shadow"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "textStroke"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
+                                  "description": "Expected a positive px width followed by a supported color.",
+                                  "format": "motionforge-text-stroke"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "maxLines"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "textFit"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "wrap",
+                                    "shrink",
+                                    "truncate"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "textOverflow"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "clip",
+                                    "ellipsis"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "objectFit"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "contain",
+                                    "cover",
+                                    "fill",
+                                    "none",
+                                    "scale-down"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "objectPosition"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Expected one or two left/center/right/top/bottom/px/% object-position components.",
+                                  "format": "motionforge-object-position"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "imageRendering"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto",
+                                    "pixelated"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "pixelSize"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "number",
+                                  "minimum": 1,
+                                  "maximum": 256
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "mask.feather"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 256
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
                 },
                 "default": []
               },
@@ -1198,5 +2464,23 @@
       "additionalProperties": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "x-motionforge-format-vocabulary": [
+    "motionforge-length",
+    "motionforge-aspect-ratio",
+    "motionforge-color",
+    "motionforge-paint",
+    "motionforge-transform",
+    "motionforge-transform-origin",
+    "motionforge-object-position",
+    "motionforge-filter",
+    "motionforge-font-family",
+    "motionforge-font-weight",
+    "motionforge-border",
+    "motionforge-shadow-list",
+    "motionforge-single-shadow",
+    "motionforge-text-stroke",
+    "motionforge-easing"
+  ],
+  "$comment": "Register @motionforge/schema motionforgeJsonSchemaFormats before compiling this schema; unknown formats must not be ignored."
 }

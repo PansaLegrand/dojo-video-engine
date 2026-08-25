@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
+      "@motionforge/schema/values": fileURLToPath(
+        new URL("./packages/schema/src/values.ts", import.meta.url),
+      ),
       "@motionforge/schema": fileURLToPath(
         new URL("./packages/schema/src/index.ts", import.meta.url),
       ),
