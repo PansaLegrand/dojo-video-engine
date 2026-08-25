@@ -23,6 +23,10 @@
       "@motionforge/renderer-canvas2d": [
         "packages/renderer-canvas2d/src/index.ts"
       ],
+      "@motionforge/renderer-canvas2d/runtime": [
+        "packages/renderer-canvas2d/src/runtime.ts"
+      ],
+      "@motionforge/runtime": ["packages/runtime/src/index.ts"],
       "@motionforge/export": ["packages/export/src/index.ts"],
       "@motionforge/player": ["packages/player/src/index.ts"]
     },

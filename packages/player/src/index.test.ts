@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPlayer, FrameClock } from "./index.js";
+import { createPlayer, createPlayerFromRuntime, FrameClock } from "./index.js";
 import {
   disposeAssetsAsync,
   prepareFrame,
   resolveAssets,
   type ResolvedAssets,
 } from "@motionforge/renderer-canvas2d";
+import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
 
 vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
   const actual =
@@ -160,6 +161,87 @@ function fakeDriver() {
     },
     get pending() {
       return queue.size;
+    },
+  };
+}
+
+function emptyAssets(): ResolvedAssets {
+  return {
+    images: new Map(),
+    fonts: new Map(),
+    videos: new Map(),
+    videoFrames: new Map(),
+    audio: new Map(),
+    lotties: new Map(),
+    lottieFrames: new Map(),
+  };
+}
+
+function borrowedRuntime(
+  runtimeScene: typeof testScene,
+  assets: ResolvedAssets,
+): {
+  runtime: Canvas2DSceneRuntime;
+  abortActive(reason?: unknown): Promise<void>;
+  readonly activeScopes: number;
+  readonly preparedGeneration: number;
+} {
+  const state = {
+    assets,
+    textMeasureCaches: new WeakMap(),
+    disposed: false,
+    preparedGeneration: 0,
+  };
+  let activeScopes = 0;
+  let active:
+    | { controller: AbortController; settled: Promise<unknown> }
+    | undefined;
+  const runtime = {
+    useBackendState: <Result>(
+      backendId: string,
+      callback: (context: {
+        state: typeof state;
+        scene: typeof testScene;
+        revision: number;
+        signal: AbortSignal;
+      }) => Result | Promise<Result>,
+      options: { signal?: AbortSignal } = {},
+    ): Promise<Result> => {
+      if (backendId !== "canvas2d") {
+        return Promise.reject(new Error(`Unexpected backend ${backendId}.`));
+      }
+      const controller = new AbortController();
+      const abort = () => controller.abort(options.signal?.reason);
+      if (options.signal?.aborted) abort();
+      else options.signal?.addEventListener("abort", abort, { once: true });
+      activeScopes += 1;
+      const settled = Promise.resolve(
+        callback({
+          state,
+          scene: runtimeScene,
+          revision: 0,
+          signal: controller.signal,
+        }),
+      ).finally(() => {
+        options.signal?.removeEventListener("abort", abort);
+        activeScopes -= 1;
+      });
+      active = { controller, settled };
+      return settled;
+    },
+  } as unknown as Canvas2DSceneRuntime;
+
+  return {
+    runtime,
+    async abortActive(reason = new Error("runtime revision changed")) {
+      active?.controller.abort(reason);
+      await active?.settled.catch(() => undefined);
+    },
+    get activeScopes() {
+      return activeScopes;
+    },
+    get preparedGeneration() {
+      return state.preparedGeneration;
     },
   };
 }
@@ -402,6 +484,72 @@ describe("Player", () => {
     await renderPromise;
     expect(disposeAssetsMock).toHaveBeenCalledWith(assets);
     finishFrame();
+  });
+});
+
+describe("Canvas2D prepared runtime player compatibility", () => {
+  it("holds borrowed assets until async player disposal completes", async () => {
+    const assets = emptyAssets();
+    const scope = borrowedRuntime(testScene, assets);
+    const disposeAssetsMock = vi.mocked(disposeAssetsAsync);
+    disposeAssetsMock.mockClear();
+
+    const player = await createPlayerFromRuntime(scope.runtime, {
+      context: fakeContext(),
+      audio: false,
+    });
+
+    expect(scope.activeScopes).toBe(1);
+    expect(scope.preparedGeneration).toBe(1);
+    await player.disposeAsync();
+    await vi.waitFor(() => expect(scope.activeScopes).toBe(0));
+    expect(scope.preparedGeneration).toBe(2);
+    expect(disposeAssetsMock).not.toHaveBeenCalledWith(assets);
+  });
+
+  it("disposes and releases a player before a runtime update continues", async () => {
+    const scope = borrowedRuntime(testScene, emptyAssets());
+    const player = await createPlayerFromRuntime(scope.runtime, {
+      context: fakeContext(),
+      audio: false,
+    });
+
+    await scope.abortActive();
+
+    expect(scope.activeScopes).toBe(0);
+    expect(() => player.play()).toThrow(/disposed/);
+  });
+
+  it("links caller cancellation to player disposal and scope release", async () => {
+    const controller = new AbortController();
+    const scope = borrowedRuntime(testScene, emptyAssets());
+    const player = await createPlayerFromRuntime(scope.runtime, {
+      context: fakeContext(),
+      audio: false,
+      signal: controller.signal,
+    });
+
+    controller.abort(new Error("close preview"));
+    await scope.abortActive(controller.signal.reason);
+
+    expect(scope.activeScopes).toBe(0);
+    await expect(player.seek(1)).rejects.toThrow(/disposed/);
+  });
+
+  it("releases the borrow when initial rendering fails", async () => {
+    const scope = borrowedRuntime(testScene, emptyAssets());
+    vi.mocked(prepareFrame).mockRejectedValueOnce(new Error("initial decode"));
+
+    await expect(
+      createPlayerFromRuntime(scope.runtime, {
+        context: fakeContext(),
+        audio: false,
+      }),
+    ).rejects.toThrow("initial decode");
+    await Promise.resolve();
+
+    expect(scope.activeScopes).toBe(0);
+    expect(scope.preparedGeneration).toBe(2);
   });
 });
 

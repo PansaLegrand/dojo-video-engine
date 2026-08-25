@@ -11,6 +11,10 @@ import {
   type MediaResourceEstimate,
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
+import {
+  withCanvas2DResolvedAssets,
+  type Canvas2DSceneRuntime,
+} from "@motionforge/renderer-canvas2d/runtime";
 import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
 import type {
   Scene,
@@ -141,6 +145,23 @@ export type ExportVideoOptions = {
   /** Host-owned reread callback for stream/file/custom sinks. */
   verificationSink?: ExportVerificationSink;
 };
+
+type RuntimeOwnedExportOption =
+  | "scene"
+  | "assets"
+  | "extensions"
+  | "worker"
+  | "preferProxy"
+  | "budget"
+  | "assetPolicy"
+  | "analysisCache"
+  | "fontCache";
+
+/** Export options for media already prepared by a Canvas2D runtime. */
+export type RuntimeExportVideoOptions = Omit<
+  ExportVideoOptions,
+  RuntimeOwnedExportOption
+>;
 
 export type ExportVideoResult = {
   blob: Blob;
@@ -434,6 +455,12 @@ export type RenderFrameSequenceOptions = {
   progressIntervalMs?: number;
 };
 
+/** Frame-loop options for media already prepared by a Canvas2D runtime. */
+export type RuntimeRenderFrameSequenceOptions = Omit<
+  RenderFrameSequenceOptions,
+  "scene" | "assets"
+>;
+
 export type RenderFrameSequenceResult = {
   startFrame: number;
   endFrame: number;
@@ -686,6 +713,23 @@ export async function renderFrameSequence(
 }
 
 /**
+ * Runs the legacy deterministic frame loop against the runtime's current
+ * Scene and resolved assets. The borrow remains active through async frame
+ * callbacks and is released on success, failure, or cancellation.
+ */
+export async function renderFrameSequenceFromRuntime(
+  runtime: Canvas2DSceneRuntime,
+  options: RuntimeRenderFrameSequenceOptions,
+): Promise<RenderFrameSequenceResult> {
+  return await withCanvas2DResolvedAssets(
+    runtime,
+    ({ assets, scene, signal }) =>
+      renderFrameSequence({ ...options, scene, assets, signal }),
+    { signal: options.signal },
+  );
+}
+
+/**
  * Renders the scene frame by frame through the shared Canvas2D renderer and
  * encodes it to an MP4 in the browser via WebCodecs (encoding and muxing by
  * mediabunny). Resolves with the finished file as a Blob.
@@ -714,6 +758,19 @@ export async function exportVideo(
     blob,
     verification,
   };
+}
+
+/** Encodes the runtime's current prepared revision to an MP4 Blob. */
+export async function exportVideoFromRuntime(
+  runtime: Canvas2DSceneRuntime,
+  options: RuntimeExportVideoOptions = {},
+): Promise<ExportVideoResult> {
+  return await withCanvas2DResolvedAssets(
+    runtime,
+    ({ assets, scene, signal }) =>
+      exportVideo({ ...options, scene, assets, signal }),
+    { signal: options.signal },
+  );
 }
 
 export async function exportVideoToStream(
@@ -745,6 +802,25 @@ export async function exportVideoToStream(
     throw new ExportVerificationError(verification);
   }
   return { ...result, verification };
+}
+
+/** Streams an MP4 from the runtime's current prepared revision. */
+export async function exportVideoToStreamFromRuntime(
+  runtime: Canvas2DSceneRuntime,
+  options: RuntimeExportVideoOptions,
+  writable: WritableStream<StreamTargetChunk>,
+  streamOptions: StreamTargetOptions = {},
+): Promise<ExportVideoStreamResult> {
+  return await withCanvas2DResolvedAssets(
+    runtime,
+    ({ assets, scene, signal }) =>
+      exportVideoToStream(
+        { ...options, scene, assets, signal },
+        writable,
+        streamOptions,
+      ),
+    { signal: options.signal },
+  );
 }
 
 function exportVerificationExpectation(
@@ -1247,6 +1323,21 @@ export async function mixSceneAudioData(
   }
 
   return { channels: mixed, sampleRate: MIX_SAMPLE_RATE };
+}
+
+/** Mixes PCM from the runtime's exact current Scene/assets revision. */
+export async function mixSceneAudioDataFromRuntime(
+  runtime: Canvas2DSceneRuntime,
+  startFrame: number,
+  endFrame: number,
+  signal?: AbortSignal,
+): Promise<MixedAudioData | null> {
+  return await withCanvas2DResolvedAssets(
+    runtime,
+    ({ assets, scene, signal: runtimeSignal }) =>
+      mixSceneAudioData(scene, assets, startFrame, endFrame, runtimeSignal),
+    { signal },
+  );
 }
 
 type DuckingWindow = {

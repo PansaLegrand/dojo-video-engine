@@ -9,6 +9,10 @@ import {
   type TextMeasureCache,
 } from "@motionforge/renderer-canvas2d";
 import {
+  withCanvas2DResolvedAssets,
+  type Canvas2DSceneRuntime,
+} from "@motionforge/renderer-canvas2d/runtime";
+import {
   ChunkedWebAudioPreview,
   WebAudioPreview,
   type AudioPreview,
@@ -191,6 +195,31 @@ export type PlayerOptions = {
   cancelFrame?: (handle: number) => void;
 };
 
+type PlayerRuntimeOwnedOption =
+  | "scene"
+  | "assets"
+  | "extensions"
+  | "worker"
+  | "preferProxy"
+  | "budget"
+  | "assetPolicy"
+  | "analysisCache"
+  | "fontCache"
+  | "analyzeWaveforms";
+
+/**
+ * Player options for an already-prepared Canvas2D runtime. Media resolution
+ * belongs to the runtime; the player only borrows its current Scene/assets.
+ */
+export type RuntimePlayerOptions = Omit<
+  PlayerOptions,
+  PlayerRuntimeOwnedOption
+>;
+
+type PlayerLifecycle = {
+  onDisposeRequested?: () => void;
+};
+
 /**
  * A playing/seekable view of a scene on a canvas. Create with createPlayer().
  *
@@ -227,6 +256,7 @@ export class Player {
   private readonly disposedAudio = new WeakSet<AudioPreview>();
   private audioReadyPromise: Promise<void> = Promise.resolve();
   private readonly textMeasureCache: TextMeasureCache = new Map();
+  private onDisposeRequested: (() => void) | null;
 
   /** @internal — use createPlayer(). */
   constructor(
@@ -234,11 +264,13 @@ export class Player {
     options: PlayerOptions,
     assets: ResolvedAssets | undefined,
     ownsAssets: boolean,
+    lifecycle: PlayerLifecycle = {},
   ) {
     this.scene = scene;
     this.context = options.context;
     this.assets = assets;
     this.ownsAssets = ownsAssets;
+    this.onDisposeRequested = lifecycle.onDisposeRequested ?? null;
     this.signal = this.renderController.signal;
     if (options.signal) {
       const abort = () => this.renderController.abort(options.signal?.reason);
@@ -358,6 +390,9 @@ export class Player {
 
     this.stopTicking();
     this.disposed = true;
+    const notifyDisposeRequested = this.onDisposeRequested;
+    this.onDisposeRequested = null;
+    notifyDisposeRequested?.();
     this.renderController.abort(
       typeof DOMException === "function"
         ? new DOMException("Player disposed.", "AbortError")
@@ -590,6 +625,13 @@ export class Player {
  * and returns a ready Player.
  */
 export async function createPlayer(options: PlayerOptions): Promise<Player> {
+  return await createPlayerInternal(options);
+}
+
+async function createPlayerInternal(
+  options: PlayerOptions,
+  lifecycle: PlayerLifecycle = {},
+): Promise<Player> {
   const scene = parseScene(options.scene);
   const inspection = inspectScene(scene);
   const needsAssets =
@@ -612,7 +654,7 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
         })
       : undefined);
 
-  const player = new Player(scene, options, assets, ownsAssets);
+  const player = new Player(scene, options, assets, ownsAssets, lifecycle);
 
   try {
     // Best-effort audio preview: attach only when the scene actually has
@@ -651,4 +693,79 @@ export async function createPlayer(options: PlayerOptions): Promise<Player> {
     await player.disposeAsync();
     throw error;
   }
+}
+
+/**
+ * Creates a player that borrows the current prepared Canvas2D runtime state.
+ *
+ * The compatibility scope stays open until the player is fully disposed, so
+ * the runtime cannot replace or release media while a frame/audio task still
+ * uses it. A runtime update/disposal or caller abort disposes the player and
+ * releases the scope before the newer runtime operation can continue.
+ */
+export async function createPlayerFromRuntime(
+  runtime: Canvas2DSceneRuntime,
+  options: RuntimePlayerOptions,
+): Promise<Player> {
+  let settleReady = (_player: Player): void => undefined;
+  let rejectReady = (_error: unknown): void => undefined;
+  let readySettled = false;
+  const ready = new Promise<Player>((resolve, reject) => {
+    settleReady = (player) => {
+      if (readySettled) return;
+      readySettled = true;
+      resolve(player);
+    };
+    rejectReady = (error) => {
+      if (readySettled) return;
+      readySettled = true;
+      reject(error);
+    };
+  });
+
+  const scope = withCanvas2DResolvedAssets(
+    runtime,
+    async ({ assets, scene, signal }) => {
+      let releaseScope = (): void => undefined;
+      const releaseRequested = new Promise<void>((resolve) => {
+        releaseScope = resolve;
+      });
+      let player: Player | undefined;
+      const abort = () => player?.dispose();
+      signal.addEventListener("abort", abort, { once: true });
+
+      try {
+        player = await createPlayerInternal(
+          {
+            ...options,
+            scene,
+            assets,
+            signal,
+          },
+          { onDisposeRequested: releaseScope },
+        );
+
+        if (signal.aborted) {
+          player.dispose();
+          await player.disposeAsync();
+          throw signal.reason instanceof Error
+            ? signal.reason
+            : new Error("Runtime player creation was aborted.");
+        }
+
+        settleReady(player);
+        await releaseRequested;
+        await player.disposeAsync();
+      } finally {
+        signal.removeEventListener("abort", abort);
+        if (player && !readySettled) {
+          await player.disposeAsync();
+        }
+      }
+    },
+    { signal: options.signal },
+  );
+
+  void scope.catch((error: unknown) => rejectReady(error));
+  return await ready;
 }

@@ -64,9 +64,17 @@ function resolveStudioRuntimeAliases() {
       "@motionforge/player",
       "packages/player/src/index.ts",
     ),
+    "@motionforge/renderer-canvas2d/runtime": resolveStudioRuntimePackage(
+      "@motionforge/renderer-canvas2d/runtime",
+      "packages/renderer-canvas2d/src/runtime.ts",
+    ),
     "@motionforge/renderer-canvas2d": resolveStudioRuntimePackage(
       "@motionforge/renderer-canvas2d",
       "packages/renderer-canvas2d/src/index.ts",
+    ),
+    "@motionforge/runtime": resolveStudioRuntimePackage(
+      "@motionforge/runtime",
+      "packages/runtime/src/index.ts",
     ),
     "@motionforge/schema/values": resolveStudioRuntimePackage(
       "@motionforge/schema/values",

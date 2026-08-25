@@ -41,6 +41,13 @@ export type AssetFetch = (
 ) => Promise<Response>;
 
 export type AssetPolicy = {
+  /**
+   * Stable host policy generation for decoded-resource reuse. Rotate this
+   * whenever credentials, authorization, response validation, or fetch
+   * semantics change. Without it, reuse is scoped to this policy object's
+   * identity.
+   */
+  reuseKey?: string;
   /** Resolve a host-derived proxy. Returning null explicitly disables proxy use. */
   resolveProxy?: (
     asset: MediaAssetLike,

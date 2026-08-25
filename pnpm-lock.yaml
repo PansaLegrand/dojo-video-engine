@@ -335,6 +335,9 @@ importers:
       '@motionforge/extensions':
         specifier: workspace:*
         version: link:../extensions
+      '@motionforge/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@motionforge/schema':
         specifier: workspace:*
         version: link:../schema
@@ -351,6 +354,19 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.76
+
+  packages/runtime:
+    dependencies:
+      '@motionforge/core':
+        specifier: workspace:*
+        version: link:../core
+      '@motionforge/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.6(@types/node@22.19.21)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
 
   packages/schema:
     dependencies:
@@ -414,12 +430,18 @@ importers:
       '@motionforge/extensions':
         specifier: workspace:*
         version: link:../../packages/extensions
+      '@motionforge/player':
+        specifier: workspace:*
+        version: link:../../packages/player
       '@motionforge/presets':
         specifier: workspace:*
         version: link:../../packages/presets
       '@motionforge/renderer-canvas2d':
         specifier: workspace:*
         version: link:../../packages/renderer-canvas2d
+      '@motionforge/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@motionforge/schema':
         specifier: workspace:*
         version: link:../../packages/schema

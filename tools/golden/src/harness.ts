@@ -1,12 +1,22 @@
-import { exportVideo, exportVideoToStream } from "@motionforge/export";
+import {
+  exportVideo,
+  exportVideoToStream,
+  mixSceneAudioData,
+  mixSceneAudioDataFromRuntime,
+  renderFrameSequenceFromRuntime,
+  type MixedAudioData,
+} from "@motionforge/export";
 import { renderContactSheet, renderSceneStill } from "@motionforge/agent-tools";
+import { createPlayerFromRuntime } from "@motionforge/player";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
+  disposeAssetsAsync,
   disposeAssets,
   prepareFrame,
   renderStill,
   resolveAssets,
 } from "@motionforge/renderer-canvas2d";
+import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
 import type { Scene } from "@motionforge/schema";
 import {
   ALL_FORMATS,
@@ -66,8 +76,113 @@ declare global {
     }) => Promise<BenchmarkResult>;
     runGoldenVideoChecks: () => Promise<VideoCheck[]>;
     runGoldenAudioChecks: () => Promise<VideoCheck[]>;
+    runGoldenRuntimeParityChecks: () => Promise<VideoCheck[]>;
     runGoldenAgentToolChecks: () => Promise<VideoCheck[]>;
   }
+}
+
+type CaptureContext = {
+  canvas: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
+};
+
+function createCaptureContext(width: number, height: number): CaptureContext {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context)
+    throw new Error("Canvas2D is unavailable in the golden harness.");
+  return { canvas, context };
+}
+
+function captureRgba(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): RenderedFrame {
+  return {
+    width,
+    height,
+    rgba: Array.from(context.getImageData(0, 0, width, height).data),
+  };
+}
+
+function frameDifference(
+  expected: RenderedFrame,
+  received: RenderedFrame,
+): string | null {
+  if (
+    expected.width !== received.width ||
+    expected.height !== received.height
+  ) {
+    return `dimensions ${received.width}x${received.height}, expected ${expected.width}x${expected.height}`;
+  }
+  if (expected.rgba.length !== received.rgba.length) {
+    return `RGBA length ${received.rgba.length}, expected ${expected.rgba.length}`;
+  }
+  for (let index = 0; index < expected.rgba.length; index += 1) {
+    if (expected.rgba[index] !== received.rgba[index]) {
+      const pixel = Math.floor(index / 4);
+      const channel = ["r", "g", "b", "a"][index % 4];
+      return `pixel ${pixel} ${channel}: ${received.rgba[index]}, expected ${expected.rgba[index]}`;
+    }
+  }
+  return null;
+}
+
+function sequenceDifference(
+  expected: RenderedFrame[],
+  received: RenderedFrame[],
+): string | null {
+  if (expected.length !== received.length) {
+    return `${received.length} frames, expected ${expected.length}`;
+  }
+  for (let index = 0; index < expected.length; index += 1) {
+    const difference = frameDifference(expected[index]!, received[index]!);
+    if (difference) return `frame ${index}: ${difference}`;
+  }
+  return null;
+}
+
+function mixedAudioDifference(
+  expected: MixedAudioData | null,
+  received: MixedAudioData | null,
+): string | null {
+  if (!expected || !received) {
+    return expected === received
+      ? null
+      : `received ${received ? "PCM" : "silence"}, expected ${expected ? "PCM" : "silence"}`;
+  }
+  if (expected.sampleRate !== received.sampleRate) {
+    return `sample rate ${received.sampleRate}, expected ${expected.sampleRate}`;
+  }
+  if (expected.channels.length !== received.channels.length) {
+    return `${received.channels.length} channels, expected ${expected.channels.length}`;
+  }
+  for (let channel = 0; channel < expected.channels.length; channel += 1) {
+    const expectedSamples = expected.channels[channel]!;
+    const receivedSamples = received.channels[channel]!;
+    if (expectedSamples.length !== receivedSamples.length) {
+      return `channel ${channel} has ${receivedSamples.length} samples, expected ${expectedSamples.length}`;
+    }
+    const expectedBits = new Uint32Array(
+      expectedSamples.buffer,
+      expectedSamples.byteOffset,
+      expectedSamples.length,
+    );
+    const receivedBits = new Uint32Array(
+      receivedSamples.buffer,
+      receivedSamples.byteOffset,
+      receivedSamples.length,
+    );
+    for (let sample = 0; sample < expectedBits.length; sample += 1) {
+      if (expectedBits[sample] !== receivedBits[sample]) {
+        return `channel ${channel} sample ${sample}: bits 0x${receivedBits[sample]!.toString(16)}, expected 0x${expectedBits[sample]!.toString(16)}`;
+      }
+    }
+  }
+  return null;
 }
 
 window.runGoldenAgentToolChecks = async (): Promise<VideoCheck[]> => {
@@ -506,6 +621,238 @@ function buildToneWav(
 
   return new Blob([view.buffer], { type: "audio/wav" });
 }
+
+/**
+ * Pinned-Chromium equivalence gate for the MF5 prepared runtime. The legacy
+ * renderer is the compatibility oracle: runtime, player, and export paths
+ * must return every RGBA byte unchanged. PCM is compared by Float32 bit
+ * pattern rather than tolerance so signed zero and NaN payloads cannot hide.
+ */
+window.runGoldenRuntimeParityChecks = async (): Promise<VideoCheck[]> => {
+  const checks: VideoCheck[] = [];
+  const scene: Scene = {
+    schemaVersion: 1,
+    width: 64,
+    height: 40,
+    fps: 30,
+    duration: 2,
+    assets: {},
+    nodes: [
+      {
+        id: "opaque-first-frame",
+        type: "div",
+        from: 0,
+        duration: 1,
+        style: {
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#3578e5",
+        },
+      },
+    ],
+  };
+
+  const legacyCapture = createCaptureContext(scene.width, scene.height);
+  const legacyFrames: RenderedFrame[] = [];
+  for (let frame = 0; frame < scene.duration; frame += 1) {
+    renderStill(legacyCapture.context, scene, frame);
+    legacyFrames.push(
+      captureRgba(legacyCapture.context, scene.width, scene.height),
+    );
+  }
+
+  const opaque = legacyFrames[0]!.rgba.every(
+    (value, index) => index % 4 !== 3 || value === 255,
+  );
+  const transparent = legacyFrames[1]!.rgba.every((value) => value === 0);
+  checks.push({
+    label: "legacy oracle is opaque then fully transparent",
+    pass: opaque && transparent,
+    detail:
+      opaque && transparent ? "2 exact RGBA frames" : "oracle invariant failed",
+  });
+
+  const runtime = await createCanvas2DSceneRuntime({
+    scene,
+    resolve: { extensions: goldenExtensionRegistry },
+  });
+
+  try {
+    const preparedCapture = createCaptureContext(scene.width, scene.height);
+    const poison = {
+      a: 0.75,
+      b: 0.2,
+      c: -0.1,
+      d: 1.25,
+      e: 7,
+      f: -3,
+      alpha: 0.17,
+      composite: "destination-out" as GlobalCompositeOperation,
+      filter: "blur(2px)",
+    };
+    preparedCapture.context.setTransform(
+      poison.a,
+      poison.b,
+      poison.c,
+      poison.d,
+      poison.e,
+      poison.f,
+    );
+    preparedCapture.context.globalAlpha = poison.alpha;
+    preparedCapture.context.globalCompositeOperation = poison.composite;
+    preparedCapture.context.filter = poison.filter;
+    preparedCapture.context.shadowBlur = 9;
+    preparedCapture.context.shadowColor = "#ff00ff";
+    preparedCapture.context.shadowOffsetX = 13;
+    preparedCapture.context.shadowOffsetY = -11;
+    const poisonedTransform = preparedCapture.context.getTransform();
+    const poisonedState = {
+      alpha: preparedCapture.context.globalAlpha,
+      composite: preparedCapture.context.globalCompositeOperation,
+      filter: preparedCapture.context.filter,
+      shadowBlur: preparedCapture.context.shadowBlur,
+      shadowColor: preparedCapture.context.shadowColor,
+      shadowOffsetX: preparedCapture.context.shadowOffsetX,
+      shadowOffsetY: preparedCapture.context.shadowOffsetY,
+    };
+
+    const preparedFrames: RenderedFrame[] = [];
+    for (let frame = 0; frame < scene.duration; frame += 1) {
+      const token = await runtime.prepareFrame(frame);
+      await runtime.renderPrepared(token, preparedCapture.context);
+      preparedFrames.push(
+        captureRgba(preparedCapture.context, scene.width, scene.height),
+      );
+    }
+
+    const preparedDifference = sequenceDifference(legacyFrames, preparedFrames);
+    checks.push({
+      label: "prepared runtime matches legacy RGBA under poisoned caller state",
+      pass: preparedDifference === null,
+      detail:
+        preparedDifference ??
+        `${preparedFrames[0]!.rgba.length * 2} bytes exact`,
+    });
+
+    const restoredTransform = preparedCapture.context.getTransform();
+    const poisonRestored =
+      restoredTransform.a === poisonedTransform.a &&
+      restoredTransform.b === poisonedTransform.b &&
+      restoredTransform.c === poisonedTransform.c &&
+      restoredTransform.d === poisonedTransform.d &&
+      restoredTransform.e === poisonedTransform.e &&
+      restoredTransform.f === poisonedTransform.f &&
+      preparedCapture.context.globalAlpha === poisonedState.alpha &&
+      preparedCapture.context.globalCompositeOperation ===
+        poisonedState.composite &&
+      preparedCapture.context.filter === poisonedState.filter &&
+      preparedCapture.context.shadowBlur === poisonedState.shadowBlur &&
+      preparedCapture.context.shadowColor === poisonedState.shadowColor &&
+      preparedCapture.context.shadowOffsetX === poisonedState.shadowOffsetX &&
+      preparedCapture.context.shadowOffsetY === poisonedState.shadowOffsetY;
+    checks.push({
+      label: "prepared runtime preserves the caller draw state",
+      pass: poisonRestored,
+      detail: poisonRestored
+        ? "transform, alpha, composite, filter, and shadow restored"
+        : "one or more poisoned properties leaked",
+    });
+
+    const playerCapture = createCaptureContext(scene.width, scene.height);
+    const player = await createPlayerFromRuntime(runtime, {
+      context: playerCapture.context,
+      audio: false,
+    });
+    const playerFrames: RenderedFrame[] = [];
+    try {
+      playerFrames.push(
+        captureRgba(playerCapture.context, scene.width, scene.height),
+      );
+      await player.seek(1);
+      playerFrames.push(
+        captureRgba(playerCapture.context, scene.width, scene.height),
+      );
+    } finally {
+      await player.disposeAsync();
+    }
+    const playerDifference = sequenceDifference(legacyFrames, playerFrames);
+    checks.push({
+      label: "player-from-runtime matches legacy RGBA",
+      pass: playerDifference === null,
+      detail:
+        playerDifference ?? `${playerFrames[0]!.rgba.length * 2} bytes exact`,
+    });
+
+    const exportCapture = createCaptureContext(scene.width, scene.height);
+    const exportFrames: RenderedFrame[] = [];
+    await renderFrameSequenceFromRuntime(runtime, {
+      context: exportCapture.context,
+      startFrame: 0,
+      endFrame: 1,
+      onFrame: () => {
+        exportFrames.push(
+          captureRgba(exportCapture.context, scene.width, scene.height),
+        );
+      },
+    });
+    const exportDifference = sequenceDifference(legacyFrames, exportFrames);
+    checks.push({
+      label: "export frame-sequence-from-runtime matches legacy RGBA",
+      pass: exportDifference === null,
+      detail:
+        exportDifference ?? `${exportFrames[0]!.rgba.length * 2} bytes exact`,
+    });
+  } finally {
+    await runtime.disposeAsync();
+  }
+
+  const toneUrl = URL.createObjectURL(buildToneWav(0.25, 523.25));
+  const audioScene: Scene = {
+    schemaVersion: 1,
+    width: 64,
+    height: 40,
+    fps: 30,
+    duration: 6,
+    assets: {
+      tone: { id: "tone", type: "audio", src: toneUrl },
+    },
+    nodes: [
+      {
+        id: "timed-tone",
+        type: "audio",
+        assetId: "tone",
+        from: 1,
+        duration: 4,
+        audioStartTime: 0.02,
+        volume: 0.625,
+      },
+    ],
+  };
+  let directAssets: Awaited<ReturnType<typeof resolveAssets>> | undefined;
+  let audioRuntime:
+    | Awaited<ReturnType<typeof createCanvas2DSceneRuntime>>
+    | undefined;
+  try {
+    directAssets = await resolveAssets(audioScene);
+    const direct = await mixSceneAudioData(audioScene, directAssets, 0, 5);
+    audioRuntime = await createCanvas2DSceneRuntime({ scene: audioScene });
+    const borrowed = await mixSceneAudioDataFromRuntime(audioRuntime, 0, 5);
+    const difference = mixedAudioDifference(direct, borrowed);
+    const sampleCount =
+      direct?.channels.reduce((sum, channel) => sum + channel.length, 0) ?? 0;
+    checks.push({
+      label: "runtime-borrowed audio matches direct Float32 PCM",
+      pass: difference === null,
+      detail: difference ?? `${sampleCount} Float32 samples bit-exact`,
+    });
+  } finally {
+    await audioRuntime?.disposeAsync();
+    if (directAssets) await disposeAssetsAsync(directAssets);
+    URL.revokeObjectURL(toneUrl);
+  }
+
+  return checks;
+};
 
 async function rmsOver(
   sink: AudioBufferSink,

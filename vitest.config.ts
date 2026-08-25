@@ -13,8 +13,14 @@ export default defineConfig({
       "@motionforge/core": fileURLToPath(
         new URL("./packages/core/src/index.ts", import.meta.url),
       ),
+      "@motionforge/renderer-canvas2d/runtime": fileURLToPath(
+        new URL("./packages/renderer-canvas2d/src/runtime.ts", import.meta.url),
+      ),
       "@motionforge/renderer-canvas2d": fileURLToPath(
         new URL("./packages/renderer-canvas2d/src/index.ts", import.meta.url),
+      ),
+      "@motionforge/runtime": fileURLToPath(
+        new URL("./packages/runtime/src/index.ts", import.meta.url),
       ),
       "@motionforge/export": fileURLToPath(
         new URL("./packages/export/src/index.ts", import.meta.url),

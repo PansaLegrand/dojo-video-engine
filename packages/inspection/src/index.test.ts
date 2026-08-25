@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  createBoundedTextMetricsProvider,
+  evaluateScene,
+  layoutScene,
+} from "@motionforge/core";
+import {
   analyzeComposition,
   checkScene,
   hitTest,
@@ -91,6 +96,44 @@ describe("tree and timeline inspection", () => {
       intrinsicDuration: 9,
       measurement: "declared",
       reason: "Scene asset metadata",
+    });
+  });
+
+  it("merges partial exact metrics with declared duration/frame rate provenance", () => {
+    const scene = structuredClone(timingScene) as any;
+    scene.assets.clip.metadata.frameRate = {
+      numerator: 30_000,
+      denominator: 1001,
+    };
+    const partial: MediaMetricsProvider = {
+      measure: () => ({
+        width: 1920,
+        height: 1080,
+        measurement: "exact",
+        reason: "decoded video track",
+      }),
+    };
+    const source = inspectTimeline(scene, { mediaMetrics: partial }).nodes.find(
+      (node) => node.id === "clip-node",
+    )?.source;
+    expect(source).toMatchObject({
+      intrinsicDuration: 9,
+      frameRate: { numerator: 30_000, denominator: 1001 },
+      measurement: "declared",
+      reason: "Scene asset metadata",
+    });
+    const media = inspectLayout(scene, 5, { mediaMetrics: partial }).nodes.find(
+      (node) => node.id === "clip-node",
+    )?.media;
+    expect(media).toMatchObject({
+      intrinsic: {
+        width: 1920,
+        height: 1080,
+        durationSeconds: 9,
+        frameRate: { numerator: 30_000, denominator: 1001 },
+      },
+      measurement: "exact",
+      reason: "decoded video track",
     });
   });
 });
@@ -199,6 +242,46 @@ describe("layout and hit testing", () => {
       measurement: "exact",
     });
     expect(JSON.parse(JSON.stringify(layout))).toEqual(layout);
+  });
+
+  it("uses the same bounded text provider for core and inspection layout", () => {
+    let calls = 0;
+    const shared = createBoundedTextMetricsProvider(
+      {
+        measureLine: ({ text, fontSize }) => {
+          calls += 1;
+          return {
+            width: text.length * fontSize,
+            ascent: fontSize * 0.75,
+            descent: fontSize * 0.25,
+            measurement: "exact",
+            reason: "shared prepared font",
+          };
+        },
+      },
+      { maxEntries: 64 },
+    );
+    const autoHeightScene = structuredClone(visualScene) as any;
+    delete autoHeightScene.nodes[1].style.height;
+    const core = layoutScene(evaluateScene(autoHeightScene, 0), {
+      textMetrics: shared,
+    });
+    const inspected = inspectLayout(autoHeightScene, 0, {
+      textMetrics: shared,
+    });
+    const coreTitle = core.boxes.find((box) => box.id === "title");
+    const inspectedTitle = inspected.nodes.find((node) => node.id === "title");
+    expect(inspectedTitle?.layoutBounds).toMatchObject({
+      x: coreTitle?.x,
+      y: coreTitle?.y,
+      width: coreTitle?.width,
+      height: coreTitle?.height,
+    });
+    expect(inspectedTitle?.text?.measurement).toBe("exact");
+    expect(shared.cacheStats().hits).toBeGreaterThan(0);
+    expect(calls).toBeLessThan(
+      shared.cacheStats().hits + shared.cacheStats().misses,
+    );
   });
 
   it("returns topmost hits first and respects transforms", () => {

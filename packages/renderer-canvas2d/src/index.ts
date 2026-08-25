@@ -1,4 +1,5 @@
 import {
+  createBoundedTextMetricsProvider,
   evaluateScene,
   layoutScene,
   normalizeLayoutCornerRadii,
@@ -9,6 +10,7 @@ import {
   type LayoutCornerRadii,
   type LayoutBox,
   type MeasureTextLine,
+  type TextMetricsProvider,
   type ResolvedNode,
   type ResolvedScene,
 } from "@motionforge/core";
@@ -37,6 +39,7 @@ import {
 } from "@motionforge/schema/values";
 import {
   createExtensionRegistry,
+  extensionResourceReuseKey,
   preflightExtensions,
   type ExtensionRegistry,
   type ExtensionPreflightIssue,
@@ -112,6 +115,12 @@ export type ResolveAssetsOptions = {
   fontCache?: FontAssetCache<FontFace>;
   /** Precompute cached editor waveforms for reachable audio assets. */
   analyzeWaveforms?: boolean;
+  /**
+   * A live lease from an earlier Scene revision. Matching reachable resources
+   * are retained by stable content identity instead of fetched/decoded again.
+   * The old and new leases remain independently disposable.
+   */
+  reuseFrom?: { scene: unknown; assets: ResolvedAssets };
 };
 
 export type MediaResourceBudget = {
@@ -337,7 +346,7 @@ export function preflightCanvas2D(
   );
   const issues: Array<Canvas2DPreflightIssue | ExtensionPreflightIssue> = [];
 
-  if (!hasCanvas) {
+  if (!hasCanvas || !canvasContext) {
     issues.push({
       severity: "error",
       code: "canvas_unavailable",
@@ -777,6 +786,10 @@ export type ResolvedAssetSource = {
   usingProxy: boolean;
   sourceKind: AssetSourceKind;
   declarationKey: string;
+  /** Decode/lifetime compatibility, stronger than content identity alone. */
+  resourceKey?: string;
+  assetType?: SceneAsset["type"];
+  sourceMode?: NonNullable<SceneAsset["sourceMode"]>;
 };
 
 /**
@@ -827,6 +840,37 @@ type ResolvedAssetsLifecycle = {
   disposal?: Promise<void>;
   abortCleanups: Set<() => void>;
   fontLeases: Map<string, { release(): void }>;
+  assetResources: Map<string, SharedAssetResource>;
+  extensionResources: Map<string, SharedExtensionResource>;
+};
+
+type SharedAssetResourceValue =
+  | ImageBitmap
+  | FontFace
+  | VideoClip
+  | AudioClip
+  | LottieClip;
+
+type SharedAssetResource = {
+  readonly type: SceneAsset["type"];
+  readonly resourceKey: string;
+  readonly value: SharedAssetResourceValue;
+  retain(): void;
+  release(): Promise<void>;
+  runExclusive<T>(operation: () => T | Promise<T>): Promise<T>;
+};
+
+type SharedExtensionResource = {
+  readonly definition: ResolvedExtensionNode["definition"];
+  readonly adapter: Canvas2DExtensionAdapter;
+  readonly descriptorVersion: string;
+  readonly worker: boolean;
+  readonly reuseKey: string | null;
+  readonly requirementsKey: string;
+  readonly value: unknown;
+  retain(): void;
+  release(): Promise<void>;
+  runExclusive<T>(operation: () => T | Promise<T>): Promise<T>;
 };
 
 const resolvedAssetsLifecycles = new WeakMap<
@@ -834,6 +878,22 @@ const resolvedAssetsLifecycles = new WeakMap<
   ResolvedAssetsLifecycle
 >();
 const framePreparationQueues = new WeakMap<ResolvedAssets, Promise<void>>();
+const reuseObjectIdentities = new WeakMap<object, number>();
+let nextReuseObjectIdentity = 1;
+
+function reuseObjectIdentity(
+  value: object | undefined,
+  prefix: string,
+): string {
+  if (!value) return `${prefix}:default`;
+  let identity = reuseObjectIdentities.get(value);
+  if (!identity) {
+    identity = nextReuseObjectIdentity;
+    nextReuseObjectIdentity += 1;
+    reuseObjectIdentities.set(value, identity);
+  }
+  return `${prefix}:${identity}`;
+}
 
 function getResolvedAssetsLifecycle(
   assets: ResolvedAssets,
@@ -845,6 +905,8 @@ function getResolvedAssetsLifecycle(
       disposed: false,
       abortCleanups: new Set(),
       fontLeases: new Map(),
+      assetResources: new Map(),
+      extensionResources: new Map(),
     };
     resolvedAssetsLifecycles.set(assets, lifecycle);
   }
@@ -857,6 +919,254 @@ function assertAssetsAlive(assets: ResolvedAssets): void {
       "Resolved assets are disposed; call resolveAssets(scene) for a new lease.",
     );
   }
+}
+
+function resolvedAssetResourceKey(
+  asset: SceneAsset,
+  request: PreparedAssetRequest,
+  options: {
+    assetPolicy?: AssetPolicy;
+    fontCache?: FontAssetCache<FontFace>;
+    maxSourceCacheBytes: number;
+  },
+): string {
+  const policyIdentity = options.assetPolicy?.reuseKey
+    ? `policy-key:${options.assetPolicy.reuseKey}`
+    : reuseObjectIdentity(options.assetPolicy, "policy-object");
+  const fontCacheIdentity =
+    asset.type === "font"
+      ? reuseObjectIdentity(options.fontCache, "font-cache")
+      : "font-cache:n/a";
+  return JSON.stringify([
+    asset.id,
+    asset.type,
+    asset.sourceMode ?? "auto",
+    request.sourceKind,
+    request.contentKey,
+    request.maxBytes ?? null,
+    options.maxSourceCacheBytes,
+    policyIdentity,
+    fontCacheIdentity,
+  ]);
+}
+
+function createSharedAssetResource(
+  type: SceneAsset["type"],
+  resourceKey: string,
+  value: SharedAssetResourceValue,
+  dispose: () => void | Promise<void>,
+): SharedAssetResource {
+  let references = 1;
+  let disposal: Promise<void> | undefined;
+  let operationTail = Promise.resolve();
+  return {
+    type,
+    resourceKey,
+    value,
+    retain() {
+      if (references <= 0 || disposal) {
+        throw new Error("Cannot retain a disposed MotionForge asset resource.");
+      }
+      references += 1;
+    },
+    release() {
+      if (references <= 0) return disposal ?? Promise.resolve();
+      references -= 1;
+      if (references > 0) return Promise.resolve();
+      disposal ??= operationTail.catch(() => undefined).then(() => dispose());
+      return disposal;
+    },
+    runExclusive<T>(operation: () => T | Promise<T>): Promise<T> {
+      const result = operationTail.catch(() => undefined).then(operation);
+      operationTail = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      return result;
+    },
+  };
+}
+
+function createSharedExtensionResource(
+  resolvedNode: ResolvedExtensionNode,
+  adapter: Canvas2DExtensionAdapter,
+  reuseKey: string | null,
+  requirementsKey: string,
+  worker: boolean,
+  value: unknown,
+): SharedExtensionResource {
+  let references = 1;
+  let disposal: Promise<void> | undefined;
+  let operationTail = Promise.resolve();
+  return {
+    definition: resolvedNode.definition,
+    adapter,
+    descriptorVersion: resolvedNode.node.extension.version,
+    worker,
+    reuseKey,
+    requirementsKey,
+    value,
+    retain() {
+      if (references <= 0 || disposal) {
+        throw new Error(
+          "Cannot retain a disposed MotionForge extension resource.",
+        );
+      }
+      references += 1;
+    },
+    release() {
+      if (references <= 0) return disposal ?? Promise.resolve();
+      references -= 1;
+      if (references > 0) return Promise.resolve();
+      disposal ??= operationTail
+        .catch(() => undefined)
+        .then(() => resolvedNode.definition.disposeAssets?.(value));
+      return disposal;
+    },
+    runExclusive<T>(operation: () => T | Promise<T>): Promise<T> {
+      const result = operationTail.catch(() => undefined).then(operation);
+      operationTail = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      return result;
+    },
+  };
+}
+
+function extensionRequirementsKey(
+  requirements: ResolvedExtensionNode["requirements"],
+  assets: ReadonlyMap<string, SceneAsset>,
+  resolvedSources: ReadonlyMap<string, ResolvedAssetSource>,
+): string {
+  return JSON.stringify(
+    requirements.map((requirement) => {
+      const asset = assets.get(requirement.assetId);
+      const source = resolvedSources.get(requirement.assetId);
+      const identity = source?.resourceKey
+        ? source.resourceKey
+        : source
+          ? JSON.stringify([
+              source.assetType ?? asset?.type ?? null,
+              source.sourceKind,
+              source.contentKey,
+            ])
+          : asset
+            ? JSON.stringify([
+                asset.type,
+                asset.metadata?.contentHash ?? assetDeclarationKey(asset),
+              ])
+            : null;
+      return [
+        requirement.assetId,
+        requirement.type ?? null,
+        requirement.optional,
+        requirement.purpose ?? null,
+        identity,
+      ];
+    }),
+  );
+}
+
+function retainReusableExtensionResource(
+  reuseFrom: ResolveAssetsOptions["reuseFrom"],
+  resolvedNode: ResolvedExtensionNode,
+  adapter: Canvas2DExtensionAdapter,
+  reuseKey: string | null,
+  requirementsKey: string,
+  worker: boolean,
+): SharedExtensionResource | undefined {
+  if (!reuseFrom || reuseKey === null) return undefined;
+  const previousLifecycle = getResolvedAssetsLifecycle(reuseFrom.assets);
+  if (previousLifecycle.disposed) return undefined;
+  const previous = previousLifecycle.extensionResources.get(
+    resolvedNode.node.id,
+  );
+  const previousRuntime = reuseFrom.assets.extensionNodes?.get(
+    resolvedNode.node.id,
+  );
+  if (
+    !previous ||
+    !previousRuntime ||
+    previousRuntime.resolvedAssets !== previous.value ||
+    previousRuntime.definition !== previous.definition ||
+    previousRuntime.adapter !== previous.adapter ||
+    previous.definition !== resolvedNode.definition ||
+    previous.adapter !== adapter ||
+    previous.descriptorVersion !== resolvedNode.node.extension.version ||
+    previous.worker !== worker ||
+    previous.reuseKey !== reuseKey ||
+    previous.requirementsKey !== requirementsKey
+  ) {
+    return undefined;
+  }
+  try {
+    previous.retain();
+  } catch {
+    return undefined;
+  }
+  return previous;
+}
+
+function bindSharedAssetResource(
+  assets: ResolvedAssets,
+  lifecycle: ResolvedAssetsLifecycle,
+  assetId: string,
+  resource: SharedAssetResource,
+): void {
+  lifecycle.assetResources.set(assetId, resource);
+  switch (resource.type) {
+    case "image":
+      assets.images.set(assetId, resource.value as ImageBitmap);
+      break;
+    case "font":
+      assets.fonts.set(assetId, resource.value as FontFace);
+      break;
+    case "video":
+      assets.videos.set(assetId, resource.value as VideoClip);
+      break;
+    case "audio":
+      assets.audio.set(assetId, resource.value as AudioClip);
+      break;
+    case "lottie":
+      assets.lotties.set(assetId, resource.value as LottieClip);
+      break;
+  }
+}
+
+function retainReusableAssetResource(
+  reuseFrom: ResolveAssetsOptions["reuseFrom"],
+  asset: SceneAsset,
+  resourceKey: string,
+): SharedAssetResource | undefined {
+  if (!reuseFrom) return undefined;
+  const previousLifecycle = getResolvedAssetsLifecycle(reuseFrom.assets);
+  if (previousLifecycle.disposed) return undefined;
+  const previous = previousLifecycle.assetResources.get(asset.id);
+  if (
+    !previous ||
+    previous.type !== asset.type ||
+    previous.resourceKey !== resourceKey
+  ) {
+    return undefined;
+  }
+  const mappedValue =
+    asset.type === "image"
+      ? reuseFrom.assets.images.get(asset.id)
+      : asset.type === "font"
+        ? reuseFrom.assets.fonts.get(asset.id)
+        : asset.type === "video"
+          ? reuseFrom.assets.videos.get(asset.id)
+          : asset.type === "audio"
+            ? reuseFrom.assets.audio.get(asset.id)
+            : reuseFrom.assets.lotties.get(asset.id);
+  if (mappedValue !== previous.value) return undefined;
+  try {
+    previous.retain();
+  } catch {
+    return undefined;
+  }
+  return previous;
 }
 
 function assertNotAborted(signal: AbortSignal | undefined): void {
@@ -1087,6 +1397,13 @@ export async function resolveAssets(
   options: ResolveAssetsOptions = {},
 ): Promise<ResolvedAssets> {
   const parsed = parseScene(scene);
+  if (options.reuseFrom) {
+    assertAssetsAlive(options.reuseFrom.assets);
+    assertResolvedAssetsCompatible(
+      parseScene(options.reuseFrom.scene),
+      options.reuseFrom.assets,
+    );
+  }
   const budget = resolveMediaResourceBudget(options.budget);
   assertNotAborted(options.signal);
   const extensionPreflight = preflightExtensions(
@@ -1181,6 +1498,11 @@ export async function resolveAssets(
             preferProxy: preferAssetProxy,
           });
           const src = request.source;
+          const resourceKey = resolvedAssetResourceKey(asset, request, {
+            assetPolicy: options.assetPolicy,
+            fontCache: options.fontCache,
+            maxSourceCacheBytes: budget.maxSourceCacheBytes,
+          });
           const declaredSource =
             request.sourceKind === "declared-proxy"
               ? (asset.proxy?.src ?? request.source)
@@ -1197,8 +1519,34 @@ export async function resolveAssets(
               request.sourceKind === "derived-proxy",
             sourceKind: request.sourceKind,
             declarationKey: request.declarationKey,
+            resourceKey,
+            assetType: asset.type,
+            sourceMode: asset.sourceMode ?? "auto",
           });
           try {
+            const reused = retainReusableAssetResource(
+              options.reuseFrom,
+              asset,
+              resourceKey,
+            );
+            if (reused) {
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
+                asset.id,
+                reused,
+              );
+              if (asset.type === "image") {
+                const image = reused.value as ImageBitmap;
+                decodedImageBytes += image.width * image.height * 4;
+                if (decodedImageBytes > budget.maxDecodedImageBytes) {
+                  throw new Error(
+                    `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
+                  );
+                }
+              }
+              return;
+            }
             if (asset.type === "image") {
               const image = await decodeImageBlob(
                 await readPreparedAssetBlob(asset, request, signal),
@@ -1214,7 +1562,14 @@ export async function resolveAssets(
                   `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
                 );
               }
-              images.set(asset.id, image);
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
+                asset.id,
+                createSharedAssetResource("image", resourceKey, image, () =>
+                  image.close(),
+                ),
+              );
             } else if (asset.type === "font") {
               const lease = await loadFont(
                 asset.id,
@@ -1223,42 +1578,63 @@ export async function resolveAssets(
                 options.fontCache,
                 signal,
               );
-              lifecycle.fontLeases.set(asset.id, lease);
-              fonts.set(asset.id, lease.face);
-            } else if (asset.type === "video") {
-              videos.set(
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
                 asset.id,
-                await openVideoClip(
-                  asset,
-                  request,
-                  asset.sourceMode ?? "auto",
-                  budget,
-                  signal,
-                  lifecycle.abortCleanups,
+                createSharedAssetResource("font", resourceKey, lease.face, () =>
+                  lease.release(),
+                ),
+              );
+            } else if (asset.type === "video") {
+              const clip = await openVideoClip(
+                asset,
+                request,
+                asset.sourceMode ?? "auto",
+                budget,
+                signal,
+                lifecycle.abortCleanups,
+              );
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
+                asset.id,
+                createSharedAssetResource("video", resourceKey, clip, () =>
+                  disposeMediaInputSafely(clip.input),
                 ),
               );
             } else if (asset.type === "audio") {
-              audio.set(
+              const clip = await openAudioClip(
+                asset,
+                request,
+                asset.sourceMode ?? "auto",
+                budget,
+                signal,
+                lifecycle.abortCleanups,
+              );
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
                 asset.id,
-                await openAudioClip(
-                  asset,
-                  request,
-                  asset.sourceMode ?? "auto",
-                  budget,
-                  signal,
-                  lifecycle.abortCleanups,
+                createSharedAssetResource("audio", resourceKey, clip, () =>
+                  disposeMediaInputSafely(clip.input),
                 ),
               );
             } else if (asset.type === "lottie") {
-              lotties.set(
+              const clip = await openLottieClip(
+                asset,
+                request,
+                signal,
+                budget.maxLottieWaitMs ??
+                  defaultMediaResourceBudget.maxLottieWaitMs ??
+                  15_000,
+              );
+              bindSharedAssetResource(
+                resolvedAssets,
+                lifecycle,
                 asset.id,
-                await openLottieClip(
-                  asset,
-                  request,
-                  signal,
-                  budget.maxLottieWaitMs ??
-                    defaultMediaResourceBudget.maxLottieWaitMs ??
-                    15_000,
+                createSharedAssetResource("lottie", resourceKey, clip, () =>
+                  clip.animation.destroy(),
                 ),
               );
             }
@@ -1283,30 +1659,71 @@ export async function resolveAssets(
             `Canvas2D extension adapter for node "${resolvedNode.node.id}" disappeared after preflight.`,
           );
         }
-        const resolvedAssets = resolvedNode.definition.resolveAssets
-          ? await Promise.resolve(
-              resolvedNode.definition.resolveAssets({
-                scene: parsed,
-                node: resolvedNode.node,
-                params: resolvedNode.params,
-                requirements: resolvedNode.requirements,
-                assets: assetDefinitions,
-                signal,
-              }),
-            ).catch((cause: unknown) => {
-              throw new Error(
-                `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
-                { cause },
-              );
-            })
-          : undefined;
+        const reuseContext = {
+          scene: parsed,
+          node: resolvedNode.node,
+          params: resolvedNode.params,
+          requirements: resolvedNode.requirements,
+          assets: assetDefinitions,
+        };
+        let reuseKey: string | null;
+        try {
+          reuseKey = extensionResourceReuseKey(
+            resolvedNode.definition,
+            reuseContext,
+          );
+        } catch (cause) {
+          throw new Error(
+            `Failed to compute extension reuse key for ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} at node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
+            { cause },
+          );
+        }
+        const requirementsKey = extensionRequirementsKey(
+          resolvedNode.requirements,
+          assetDefinitions,
+          resolvedSources,
+        );
+        const reused = retainReusableExtensionResource(
+          options.reuseFrom,
+          resolvedNode,
+          adapter,
+          reuseKey,
+          requirementsKey,
+          options.worker === true,
+        );
+        const extensionAssets = reused
+          ? reused.value
+          : resolvedNode.definition.resolveAssets
+            ? await Promise.resolve(
+                resolvedNode.definition.resolveAssets({
+                  ...reuseContext,
+                  signal,
+                }),
+              ).catch((cause: unknown) => {
+                throw new Error(
+                  `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
+                  { cause },
+                );
+              })
+            : undefined;
+        const shared =
+          reused ??
+          createSharedExtensionResource(
+            resolvedNode,
+            adapter,
+            reuseKey,
+            requirementsKey,
+            options.worker === true,
+            extensionAssets,
+          );
+        lifecycle.extensionResources.set(resolvedNode.node.id, shared);
         extensionNodes.set(resolvedNode.node.id, {
           node: resolvedNode.node,
           definition: resolvedNode.definition,
           params: resolvedNode.params,
           requirements: resolvedNode.requirements,
           adapter,
-          resolvedAssets,
+          resolvedAssets: extensionAssets,
         });
       }),
       failureController,
@@ -1343,9 +1760,11 @@ export async function resolveAssets(
         }
 
         const needsSpectrum = spectrumAssetIds.has(assetId);
-        const contentKey =
-          resolvedSources.get(assetId)?.contentKey ?? `asset:${assetId}`;
-        const analysisKey = `${contentKey}\u0000audio-analysis-v1\u0000${needsSpectrum ? "spectrum" : "waveform"}\u0000${parsed.fps}\u0000${parsed.duration}`;
+        const resourceIdentity =
+          resolvedSources.get(assetId)?.resourceKey ??
+          resolvedSources.get(assetId)?.contentKey ??
+          `asset:${assetId}`;
+        const analysisKey = `${resourceIdentity}\u0000audio-analysis-v1\u0000${needsSpectrum ? "spectrum" : "waveform"}\u0000${parsed.fps}\u0000${parsed.duration}`;
         const analysisDuration = Math.min(
           clip.duration,
           parsed.duration / parsed.fps,
@@ -1482,8 +1901,27 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
     const disposalErrors: unknown[] = [];
     const extensionDisposals: Array<Promise<void>> = [];
     const cursorDisposals: Array<Promise<void>> = [];
-    const videos = Array.from(assets.videos.values());
-    const audio = Array.from(assets.audio.values());
+    const sharedExtensionResources = Array.from(
+      new Set(lifecycle.extensionResources.values()),
+    );
+    const sharedResources = Array.from(
+      new Set(lifecycle.assetResources.values()),
+    );
+    const sharedValues = new Set(
+      sharedResources.map((resource) => resource.value),
+    );
+    const unmanagedImages = Array.from(assets.images.values()).filter(
+      (image) => !sharedValues.has(image),
+    );
+    const unmanagedLotties = Array.from(assets.lotties.values()).filter(
+      (clip) => !sharedValues.has(clip),
+    );
+    const unmanagedVideos = Array.from(assets.videos.values()).filter(
+      (clip) => !sharedValues.has(clip),
+    );
+    const unmanagedAudio = Array.from(assets.audio.values()).filter(
+      (clip) => !sharedValues.has(clip),
+    );
 
     lifecycle.abortCleanups.forEach((cleanup) => {
       try {
@@ -1494,13 +1932,31 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
     });
     lifecycle.abortCleanups.clear();
 
-    Array.from(assets.extensionNodes?.values() ?? []).forEach((runtime) => {
+    Array.from(assets.extensionNodes?.entries() ?? []).forEach(
+      ([nodeId, runtime]) => {
+        const shared = lifecycle.extensionResources.get(nodeId);
+        if (
+          shared &&
+          shared.value === runtime.resolvedAssets &&
+          shared.definition === runtime.definition &&
+          shared.adapter === runtime.adapter
+        ) {
+          return;
+        }
+        try {
+          extensionDisposals.push(
+            Promise.resolve(
+              runtime.definition.disposeAssets?.(runtime.resolvedAssets),
+            ),
+          );
+        } catch (error) {
+          disposalErrors.push(error);
+        }
+      },
+    );
+    sharedExtensionResources.forEach((resource) => {
       try {
-        extensionDisposals.push(
-          Promise.resolve(
-            runtime.definition.disposeAssets?.(runtime.resolvedAssets),
-          ),
-        );
+        extensionDisposals.push(resource.release());
       } catch (error) {
         disposalErrors.push(error);
       }
@@ -1512,7 +1968,37 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
         disposalErrors.push(error);
       }
     });
-    assets.images.forEach((image) => {
+    assets.extensionNodes?.clear();
+    assets.extensionFrames?.clear();
+    assets.images.clear();
+    assets.fonts.clear();
+    assets.videoCursors?.clear();
+    assets.videos.clear();
+    assets.videoFrames.clear();
+    assets.audio.clear();
+    assets.audioSpectra?.clear();
+    assets.audioWaveforms?.clear();
+    assets.lotties.clear();
+    assets.lottieFrames.clear();
+    assets.resolvedSources?.clear();
+    lifecycle.assetResources.clear();
+    lifecycle.extensionResources.clear();
+
+    for (const result of await Promise.allSettled([
+      ...extensionDisposals,
+      ...cursorDisposals,
+    ])) {
+      if (result.status === "rejected") disposalErrors.push(result.reason);
+    }
+
+    // Extension hooks and cursors settle before any built-in resource they may
+    // reference is released. Shared inputs close only after the final lease.
+    for (const result of await Promise.allSettled(
+      sharedResources.map((resource) => resource.release()),
+    )) {
+      if (result.status === "rejected") disposalErrors.push(result.reason);
+    }
+    unmanagedImages.forEach((image) => {
       try {
         image.close();
       } catch (error) {
@@ -1526,38 +2012,15 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
         disposalErrors.push(error);
       }
     });
-    Array.from(assets.lotties.values()).forEach((clip) => {
+    lifecycle.fontLeases.clear();
+    unmanagedLotties.forEach((clip) => {
       try {
         clip.animation.destroy();
       } catch (error) {
         disposalErrors.push(error);
       }
     });
-
-    assets.extensionNodes?.clear();
-    assets.extensionFrames?.clear();
-    assets.images.clear();
-    assets.fonts.clear();
-    lifecycle.fontLeases.clear();
-    assets.videoCursors?.clear();
-    assets.videos.clear();
-    assets.videoFrames.clear();
-    assets.audio.clear();
-    assets.audioSpectra?.clear();
-    assets.audioWaveforms?.clear();
-    assets.lotties.clear();
-    assets.lottieFrames.clear();
-    assets.resolvedSources?.clear();
-
-    for (const result of await Promise.allSettled([
-      ...extensionDisposals,
-      ...cursorDisposals,
-    ])) {
-      if (result.status === "rejected") disposalErrors.push(result.reason);
-    }
-
-    // Cursors must stop before their shared Inputs are closed.
-    [...videos, ...audio].forEach((clip) => {
+    [...unmanagedVideos, ...unmanagedAudio].forEach((clip) => {
       try {
         disposeMediaInputSafely(clip.input);
       } catch (error) {
@@ -1624,6 +2087,19 @@ export function assertResolvedAssetsCompatible(
     if (!current) {
       throw new Error(
         `Resolved asset "${assetId}" is absent from the current Scene. Resolve a new asset lease.`,
+      );
+    }
+    if (resolved.assetType && current.type !== resolved.assetType) {
+      throw new Error(
+        `Scene asset "${assetId}" changed type from ${resolved.assetType} to ${current.type}. Resolve assets again; content identity cannot make decoder types interchangeable.`,
+      );
+    }
+    if (
+      resolved.sourceMode &&
+      (current.sourceMode ?? "auto") !== resolved.sourceMode
+    ) {
+      throw new Error(
+        `Scene asset "${assetId}" changed sourceMode from ${resolved.sourceMode} to ${current.sourceMode ?? "auto"}. Resolve assets again.`,
       );
     }
     if (
@@ -2116,7 +2592,10 @@ async function createMediaSource(
     fetchFn: createBoundedAssetFetch(asset, {
       policy: request.policy,
       source: request.source,
+      sourceKind: request.sourceKind,
+      declarationKey: request.declarationKey,
       requestInit: withoutSignal(request.init),
+      signal,
     }),
   });
 }
@@ -2238,9 +2717,10 @@ async function prepareFrameExclusive(
       }
 
       if (runtime.definition.prepareFrame) {
-        tasks.push(
-          Promise.resolve(
-            runtime.definition.prepareFrame({
+        const prepareExtension = () => {
+          assertNotAborted(frameSignal);
+          return Promise.resolve(
+            runtime.definition.prepareFrame?.({
               scene: parsed,
               node: node as ResolvedNode & ExtensionSceneNode,
               params: runtime.params,
@@ -2262,7 +2742,17 @@ async function prepareFrameExclusive(
                 `Failed to prepare extension ${node.extension?.name}@${runtime.definition.version} for node "${node.id}" at frame ${resolved.frame}: ${cause instanceof Error ? cause.message : String(cause)}`,
                 { cause },
               );
-            }),
+            });
+        };
+        const shared = getResolvedAssetsLifecycle(
+          assets,
+        ).extensionResources.get(node.id);
+        tasks.push(
+          shared &&
+            shared.reuseKey !== null &&
+            shared.value === runtime.resolvedAssets
+            ? shared.runExclusive(prepareExtension)
+            : prepareExtension(),
         );
       }
     }
@@ -2355,46 +2845,53 @@ async function prepareFrameExclusive(
           `Lottie node "${node.id}" references asset "${assetId}" which is not in the resolved assets. Call resolveAssets(scene) first.`,
         );
       }
+      const stageLottie = () => {
+        assertNotAborted(frameSignal);
+        clip.animation.goToAndStop(
+          lottieSourceFrame(
+            node.localFrame,
+            parsed.fps,
+            node.playbackRate ?? 1,
+            clip,
+          ),
+          true,
+        );
 
-      // Seeking is synchronous; the staged copy isolates this node from
-      // other nodes sharing the same animation instance at other times.
-      assertNotAborted(frameSignal);
-      clip.animation.goToAndStop(
-        lottieSourceFrame(
-          node.localFrame,
-          parsed.fps,
-          node.playbackRate ?? 1,
-          clip,
-        ),
-        true,
+        // The staged canvas is lease-local. Shared Lottie players serialize
+        // seek+copy through their resource owner, so two live revisions cannot
+        // copy each other's mutable animation state.
+        const previous = assets.lottieFrames.get(node.id)?.image;
+        const staged =
+          previous &&
+          previous.width === clip.width &&
+          previous.height === clip.height
+            ? previous
+            : createStagingCanvas(clip.width, clip.height);
+        const stagedContext = staged.getContext("2d") as
+          | CanvasRenderingContext2D
+          | OffscreenCanvasRenderingContext2D
+          | null;
+
+        if (!stagedContext) {
+          throw new Error("Canvas2D unavailable for lottie staging.");
+        }
+
+        stagedContext.clearRect(0, 0, clip.width, clip.height);
+        stagedContext.drawImage(clip.canvas, 0, 0);
+        nextLottieFrames.set(node.id, {
+          image: staged,
+          width: clip.width,
+          height: clip.height,
+          sceneFrame: resolved.frame,
+        });
+      };
+      const shared =
+        getResolvedAssetsLifecycle(assets).assetResources.get(assetId);
+      tasks.push(
+        shared?.type === "lottie"
+          ? shared.runExclusive(stageLottie)
+          : Promise.resolve().then(stageLottie),
       );
-
-      // Reuse the node's staging canvas across frames; allocating one per
-      // frame is pure GC churn since the staged copy is redrawn anyway.
-      const previous = assets.lottieFrames.get(node.id)?.image;
-      const staged =
-        previous &&
-        previous.width === clip.width &&
-        previous.height === clip.height
-          ? previous
-          : createStagingCanvas(clip.width, clip.height);
-      const stagedContext = staged.getContext("2d") as
-        | CanvasRenderingContext2D
-        | OffscreenCanvasRenderingContext2D
-        | null;
-
-      if (!stagedContext) {
-        throw new Error("Canvas2D unavailable for lottie staging.");
-      }
-
-      stagedContext.clearRect(0, 0, clip.width, clip.height);
-      stagedContext.drawImage(clip.canvas, 0, 0);
-      nextLottieFrames.set(node.id, {
-        image: staged,
-        width: clip.width,
-        height: clip.height,
-        sceneFrame: resolved.frame,
-      });
     }
 
     for (const child of node.children) {
@@ -2780,6 +3277,86 @@ function createContextTextMeasurer(
     measureTextLine(context, line, style, fontSize, textMeasureCache);
 }
 
+/**
+ * Canvas keeps drawing state on an implicit stack. Every internal save must
+ * be paired even when a browser API, extension, or test double throws midway
+ * through a draw; otherwise the caller's next frame inherits poisoned state.
+ */
+function withSavedContext<T>(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  draw: () => T,
+): T {
+  context.save();
+  try {
+    return draw();
+  } finally {
+    context.restore();
+  }
+}
+
+export type CanvasTextMetricsProviderOptions = {
+  maxEntries?: number;
+  /** Include prepared font/content identity so replacements cannot hit old metrics. */
+  generationKey?: string;
+};
+
+/** Exact synchronous metrics over an already-prepared Canvas/font context. */
+export function createCanvasTextMetricsProvider(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  options: CanvasTextMetricsProviderOptions = {},
+): TextMetricsProvider {
+  const generationKey = options.generationKey ?? "canvas-fonts-v1";
+  return createBoundedTextMetricsProvider(
+    {
+      measureLine(input) {
+        const previousFont = context.font;
+        const previousDirection = context.direction;
+        const supportsLetterSpacing = "letterSpacing" in context;
+        const previousLetterSpacing = supportsLetterSpacing
+          ? context.letterSpacing
+          : undefined;
+        try {
+          context.font = canvasFont(input.style, input.fontSize);
+          context.direction = input.style.direction ?? "inherit";
+          if (supportsLetterSpacing) {
+            const spacing = readLength(
+              input.style.letterSpacing,
+              input.fontSize,
+              0,
+            );
+            context.letterSpacing = `${spacing}px`;
+          }
+          const measured = context.measureText(input.text);
+          const reason = `Canvas2D TextMetrics (${generationKey})`;
+          const ascent = measured.actualBoundingBoxAscent;
+          const descent = measured.actualBoundingBoxDescent;
+          return {
+            width: measured.width,
+            ...(Number.isFinite(ascent) && ascent >= 0 ? { ascent } : {}),
+            ...(Number.isFinite(descent) && descent >= 0 ? { descent } : {}),
+            fieldMeasurements: {
+              width: { measurement: "exact", reason },
+              ...(Number.isFinite(ascent) && ascent >= 0
+                ? { ascent: { measurement: "exact" as const, reason } }
+                : {}),
+              ...(Number.isFinite(descent) && descent >= 0
+                ? { descent: { measurement: "exact" as const, reason } }
+                : {}),
+            },
+          };
+        } finally {
+          context.font = previousFont;
+          context.direction = previousDirection;
+          if (supportsLetterSpacing) {
+            context.letterSpacing = previousLetterSpacing ?? "0px";
+          }
+        }
+      },
+    },
+    { maxEntries: options.maxEntries ?? 2_048 },
+  );
+}
+
 function canvasFont(style: SceneStyle, fontSize: number): string {
   const fontFamily = style.fontFamily ?? "system-ui, sans-serif";
   const fontWeight = style.fontWeight ?? 400;
@@ -2895,98 +3472,100 @@ function drawBoxDirect(
   const style = node.style;
 
   context.save();
-  if (!options.suppressRootComposite) {
-    context.globalAlpha *= style.opacity ?? 1;
-  }
-  applyTransform(context, box, style);
+  try {
+    if (!options.suppressRootComposite) {
+      context.globalAlpha *= style.opacity ?? 1;
+    }
+    applyTransform(context, box, style);
 
-  if (style.blendMode && !options.suppressRootComposite) {
-    context.globalCompositeOperation = style.blendMode;
-  }
-
-  if (style.filter && style.filter !== "none") {
-    // Canvas2D applies the filter per draw call, not to the composited
-    // subtree, and a child's own filter replaces (not stacks with) this one.
-    // Identical to CSS for leaf media/text nodes — the dominant use. Safari
-    // has no context.filter; the assignment is a silent no-op there.
-    context.filter = style.filter;
-  }
-
-  applyVectorConstraints(
-    context,
-    box,
-    node.clip,
-    options.suppressRootMask ? undefined : node.mask,
-  );
-
-  drawBackground(context, box, style);
-
-  if (style.overflow === "hidden") {
-    // Clip own content and the subtree to the border box, following
-    // borderRadius — CSS overflow:hidden semantics. The clip lives inside
-    // this box's save/restore, so siblings are unaffected.
-    const radius = resolveCornerRadii(style, box);
-
-    if (hasCornerRadius(radius)) {
-      roundedRect(context, box.x, box.y, box.width, box.height, radius);
-    } else {
-      context.beginPath();
-      context.rect(box.x, box.y, box.width, box.height);
+    if (style.blendMode && !options.suppressRootComposite) {
+      context.globalCompositeOperation = style.blendMode;
     }
 
-    context.clip();
-  }
+    if (style.filter && style.filter !== "none") {
+      // Canvas2D applies the filter per draw call, not to the composited
+      // subtree, and a child's own filter replaces (not stacks with) this one.
+      // Identical to CSS for leaf media/text nodes — the dominant use. Safari
+      // has no context.filter; the assignment is a silent no-op there.
+      context.filter = style.filter;
+    }
 
-  if (node.type === "text" && (node.text !== undefined || node.runs)) {
-    drawText(
+    applyVectorConstraints(
       context,
       box,
-      node.text ?? node.runs?.map((run) => run.text).join("") ?? "",
-      style,
-      textMeasureCache,
-      node.runs,
+      node.clip,
+      options.suppressRootMask ? undefined : node.mask,
     );
+
+    drawBackground(context, box, style);
+
+    if (style.overflow === "hidden") {
+      // Clip own content and the subtree to the border box, following
+      // borderRadius — CSS overflow:hidden semantics. The clip lives inside
+      // this box's save/restore, so siblings are unaffected.
+      const radius = resolveCornerRadii(style, box);
+
+      if (hasCornerRadius(radius)) {
+        roundedRect(context, box.x, box.y, box.width, box.height, radius);
+      } else {
+        context.beginPath();
+        context.rect(box.x, box.y, box.width, box.height);
+      }
+
+      context.clip();
+    }
+
+    if (node.type === "text" && (node.text !== undefined || node.runs)) {
+      drawText(
+        context,
+        box,
+        node.text ?? node.runs?.map((run) => run.text).join("") ?? "",
+        style,
+        textMeasureCache,
+        node.runs,
+      );
+    }
+
+    if (node.type === "img" && node.assetId) {
+      drawImage(context, box, node.assetId, style, assets);
+    }
+
+    if (node.type === "video" && node.assetId) {
+      drawVideo(context, box, node, style, assets, sceneFrame);
+    }
+
+    if (node.type === "lottie" && node.assetId) {
+      drawLottie(context, box, node, style, assets, sceneFrame);
+    }
+
+    if (node.type === "effect" && node.effect) {
+      drawEffect(context, box, node, assets, sceneFps);
+    }
+
+    if (node.type === "extension" && node.extension) {
+      drawExtension(context, box, scene, node, assets, sceneFrame, sceneFps);
+    }
+
+    if (node.type === "shape" && node.shape) {
+      drawShape(context, box, node.shape, style);
+    }
+
+    drawBorder(context, box, style);
+
+    for (const child of sortByZIndex(box.children)) {
+      drawBox(
+        context,
+        child,
+        scene,
+        assets,
+        sceneFrame,
+        sceneFps,
+        textMeasureCache,
+      );
+    }
+  } finally {
+    context.restore();
   }
-
-  if (node.type === "img" && node.assetId) {
-    drawImage(context, box, node.assetId, style, assets);
-  }
-
-  if (node.type === "video" && node.assetId) {
-    drawVideo(context, box, node, style, assets, sceneFrame);
-  }
-
-  if (node.type === "lottie" && node.assetId) {
-    drawLottie(context, box, node, style, assets, sceneFrame);
-  }
-
-  if (node.type === "effect" && node.effect) {
-    drawEffect(context, box, node, assets, sceneFps);
-  }
-
-  if (node.type === "extension" && node.extension) {
-    drawExtension(context, box, scene, node, assets, sceneFrame, sceneFps);
-  }
-
-  if (node.type === "shape" && node.shape) {
-    drawShape(context, box, node.shape, style);
-  }
-
-  drawBorder(context, box, style);
-
-  for (const child of sortByZIndex(box.children)) {
-    drawBox(
-      context,
-      child,
-      scene,
-      assets,
-      sceneFrame,
-      sceneFps,
-      textMeasureCache,
-    );
-  }
-
-  context.restore();
 }
 
 function drawIsolatedBox(
@@ -3024,12 +3603,15 @@ function drawIsolatedBox(
   }
 
   context.save();
-  context.globalAlpha *= box.node.style.opacity ?? 1;
-  if (box.node.style.blendMode) {
-    context.globalCompositeOperation = box.node.style.blendMode;
+  try {
+    context.globalAlpha *= box.node.style.opacity ?? 1;
+    if (box.node.style.blendMode) {
+      context.globalCompositeOperation = box.node.style.blendMode;
+    }
+    context.drawImage(canvas, 0, 0);
+  } finally {
+    context.restore();
   }
-  context.drawImage(canvas, 0, 0);
-  context.restore();
 }
 
 function drawExtension(
@@ -3271,20 +3853,20 @@ function applySoftMask(
     maskContext.fillRect(0, 0, scene.width, scene.height);
     maskContext.globalCompositeOperation = "destination-out";
   }
-  maskContext.save();
-  applyTransform(maskContext, box, box.node.style);
-  maskContext.globalAlpha = opacity;
-  if (feather > 0) {
-    maskContext.filter = `blur(${feather}px)`;
-  }
-  maskContext.fillStyle = "#ffffff";
-  maskContext.fill(maskPath.path, maskPath.fillRule);
-  maskContext.restore();
+  withSavedContext(maskContext, () => {
+    applyTransform(maskContext, box, box.node.style);
+    maskContext.globalAlpha = opacity;
+    if (feather > 0) {
+      maskContext.filter = `blur(${feather}px)`;
+    }
+    maskContext.fillStyle = "#ffffff";
+    maskContext.fill(maskPath.path, maskPath.fillRule);
+  });
 
-  isolatedContext.save();
-  isolatedContext.globalCompositeOperation = "destination-in";
-  isolatedContext.drawImage(maskCanvas, 0, 0);
-  isolatedContext.restore();
+  withSavedContext(isolatedContext, () => {
+    isolatedContext.globalCompositeOperation = "destination-in";
+    isolatedContext.drawImage(maskCanvas, 0, 0);
+  });
 }
 
 function drawShape(
@@ -3613,35 +4195,35 @@ function drawSpectrumBars(
   );
   const baseline = box.y + box.height;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  values.forEach((value, index) => {
-    const response = clamp01(Math.pow(value * 0.88 + 0.04, 0.62));
-    const height = Math.max(2, box.height * response);
-    const x = box.x + index * (barWidth + gap);
-    const gradient = context.createLinearGradient(
-      x,
-      baseline,
-      x,
-      baseline - height,
-    );
-    gradient.addColorStop(0, colors[1] ?? "#7c3aed");
-    gradient.addColorStop(0.55, colors[0] ?? "#00e676");
-    gradient.addColorStop(1, colors[2] ?? "#f8fbff");
-    context.fillStyle = gradient;
-    context.shadowColor = colors[0] ?? "#00e676";
-    context.shadowBlur = Math.max(4, barWidth * 1.8);
-    roundedRect(
-      context,
-      x,
-      baseline - height,
-      barWidth,
-      height,
-      Math.min(barWidth / 2, 8),
-    );
-    context.fill();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    values.forEach((value, index) => {
+      const response = clamp01(Math.pow(value * 0.88 + 0.04, 0.62));
+      const height = Math.max(2, box.height * response);
+      const x = box.x + index * (barWidth + gap);
+      const gradient = context.createLinearGradient(
+        x,
+        baseline,
+        x,
+        baseline - height,
+      );
+      gradient.addColorStop(0, colors[1] ?? "#7c3aed");
+      gradient.addColorStop(0.55, colors[0] ?? "#00e676");
+      gradient.addColorStop(1, colors[2] ?? "#f8fbff");
+      context.fillStyle = gradient;
+      context.shadowColor = colors[0] ?? "#00e676";
+      context.shadowBlur = Math.max(4, barWidth * 1.8);
+      roundedRect(
+        context,
+        x,
+        baseline - height,
+        barWidth,
+        height,
+        Math.min(barWidth / 2, 8),
+      );
+      context.fill();
+    });
   });
-  context.restore();
 }
 
 function drawMirrorBars(
@@ -3666,27 +4248,34 @@ function drawMirrorBars(
   );
   const maxHalf = Math.max(1, (box.height - centerGap) / 2);
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  values.forEach((value, index) => {
-    const response = clamp01(Math.pow(value * 0.88 + 0.04, 0.62));
-    const half = Math.max(1, maxHalf * response);
-    const x = box.x + index * (barWidth + gap);
-    const topY = centerY - centerGap / 2 - half;
-    const bottomY = centerY + centerGap / 2;
-    const gradient = context.createLinearGradient(x, topY, x, bottomY + half);
-    gradient.addColorStop(0, colors[2] ?? "#f8fbff");
-    gradient.addColorStop(0.5, colors[0] ?? "#22d3ee");
-    gradient.addColorStop(1, colors[1] ?? "#f472b6");
-    context.fillStyle = gradient;
-    context.shadowColor = colors[0] ?? "#22d3ee";
-    context.shadowBlur = Math.max(4, barWidth * 1.6);
-    roundedRect(context, x, topY, barWidth, half, Math.min(barWidth / 2, 8));
-    context.fill();
-    roundedRect(context, x, bottomY, barWidth, half, Math.min(barWidth / 2, 8));
-    context.fill();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    values.forEach((value, index) => {
+      const response = clamp01(Math.pow(value * 0.88 + 0.04, 0.62));
+      const half = Math.max(1, maxHalf * response);
+      const x = box.x + index * (barWidth + gap);
+      const topY = centerY - centerGap / 2 - half;
+      const bottomY = centerY + centerGap / 2;
+      const gradient = context.createLinearGradient(x, topY, x, bottomY + half);
+      gradient.addColorStop(0, colors[2] ?? "#f8fbff");
+      gradient.addColorStop(0.5, colors[0] ?? "#22d3ee");
+      gradient.addColorStop(1, colors[1] ?? "#f472b6");
+      context.fillStyle = gradient;
+      context.shadowColor = colors[0] ?? "#22d3ee";
+      context.shadowBlur = Math.max(4, barWidth * 1.6);
+      roundedRect(context, x, topY, barWidth, half, Math.min(barWidth / 2, 8));
+      context.fill();
+      roundedRect(
+        context,
+        x,
+        bottomY,
+        barWidth,
+        half,
+        Math.min(barWidth / 2, 8),
+      );
+      context.fill();
+    });
   });
-  context.restore();
 }
 
 function drawWaveformLine(
@@ -3710,45 +4299,46 @@ function drawWaveformLine(
       maxHalf * clamp01(Math.pow((values[index] ?? 0) * 0.9 + 0.03, 0.6)),
     );
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
 
-  // Filled ribbon between the upper wave and its mirror below the center line.
-  context.beginPath();
-  context.moveTo(xAt(0), centerY - ampAt(0));
-  for (let i = 1; i < count; i += 1) context.lineTo(xAt(i), centerY - ampAt(i));
-  for (let i = count - 1; i >= 0; i -= 1)
-    context.lineTo(xAt(i), centerY + ampAt(i));
-  context.closePath();
-  const fill = context.createLinearGradient(
-    box.x,
-    centerY - maxHalf,
-    box.x,
-    centerY + maxHalf,
-  );
-  fill.addColorStop(0, colors[0] ?? "#22d3ee");
-  fill.addColorStop(1, colors[1] ?? "#7c3aed");
-  context.globalAlpha = 0.5;
-  context.fillStyle = fill;
-  context.fill();
-  context.globalAlpha = 1;
-
-  // Bright mirrored strokes for the oscilloscope edge.
-  context.lineJoin = "round";
-  context.lineCap = "round";
-  context.lineWidth = Math.max(2, box.height * 0.012);
-  context.strokeStyle = colors[2] ?? "#f8fbff";
-  context.shadowColor = colors[0] ?? "#22d3ee";
-  context.shadowBlur = Math.max(6, box.height * 0.03);
-  for (const sign of [-1, 1]) {
+    // Filled ribbon between the upper wave and its mirror below the center line.
     context.beginPath();
-    context.moveTo(xAt(0), centerY + sign * ampAt(0));
-    for (let i = 1; i < count; i += 1) {
-      context.lineTo(xAt(i), centerY + sign * ampAt(i));
+    context.moveTo(xAt(0), centerY - ampAt(0));
+    for (let i = 1; i < count; i += 1)
+      context.lineTo(xAt(i), centerY - ampAt(i));
+    for (let i = count - 1; i >= 0; i -= 1)
+      context.lineTo(xAt(i), centerY + ampAt(i));
+    context.closePath();
+    const fill = context.createLinearGradient(
+      box.x,
+      centerY - maxHalf,
+      box.x,
+      centerY + maxHalf,
+    );
+    fill.addColorStop(0, colors[0] ?? "#22d3ee");
+    fill.addColorStop(1, colors[1] ?? "#7c3aed");
+    context.globalAlpha = 0.5;
+    context.fillStyle = fill;
+    context.fill();
+    context.globalAlpha = 1;
+
+    // Bright mirrored strokes for the oscilloscope edge.
+    context.lineJoin = "round";
+    context.lineCap = "round";
+    context.lineWidth = Math.max(2, box.height * 0.012);
+    context.strokeStyle = colors[2] ?? "#f8fbff";
+    context.shadowColor = colors[0] ?? "#22d3ee";
+    context.shadowBlur = Math.max(6, box.height * 0.03);
+    for (const sign of [-1, 1]) {
+      context.beginPath();
+      context.moveTo(xAt(0), centerY + sign * ampAt(0));
+      for (let i = 1; i < count; i += 1) {
+        context.lineTo(xAt(i), centerY + sign * ampAt(i));
+      }
+      context.stroke();
     }
-    context.stroke();
-  }
-  context.restore();
+  });
 }
 
 function spectrumBands(values: number[]): {
@@ -3798,60 +4388,60 @@ function drawCircularSpectrum(
   const maxLength = base * 0.19;
   const rotation = (localFrame / sceneFps) * 0.18;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  values.forEach((value, index) => {
-    const angle =
-      (index / values.length) * Math.PI * 2 - Math.PI / 2 + rotation;
-    const response = clamp01(Math.pow(value * 0.9 + 0.05, 0.58));
-    const outer = inner + base * 0.025 + response * maxLength;
-    const x1 = cx + Math.cos(angle) * inner;
-    const y1 = cy + Math.sin(angle) * inner;
-    const x2 = cx + Math.cos(angle) * outer;
-    const y2 = cy + Math.sin(angle) * outer;
-    context.strokeStyle = colors[index % 5 === 0 ? 1 : 0] ?? "#14f195";
-    context.lineWidth = Math.max(2, base * (0.003 + response * 0.006));
-    context.lineCap = "round";
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = Math.max(5, base * 0.018);
-    context.globalAlpha = 0.5 + response * 0.5;
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    values.forEach((value, index) => {
+      const angle =
+        (index / values.length) * Math.PI * 2 - Math.PI / 2 + rotation;
+      const response = clamp01(Math.pow(value * 0.9 + 0.05, 0.58));
+      const outer = inner + base * 0.025 + response * maxLength;
+      const x1 = cx + Math.cos(angle) * inner;
+      const y1 = cy + Math.sin(angle) * inner;
+      const x2 = cx + Math.cos(angle) * outer;
+      const y2 = cy + Math.sin(angle) * outer;
+      context.strokeStyle = colors[index % 5 === 0 ? 1 : 0] ?? "#14f195";
+      context.lineWidth = Math.max(2, base * (0.003 + response * 0.006));
+      context.lineCap = "round";
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = Math.max(5, base * 0.018);
+      context.globalAlpha = 0.5 + response * 0.5;
+      context.beginPath();
+      context.moveTo(x1, y1);
+      context.lineTo(x2, y2);
+      context.stroke();
+    });
+
+    const orb = context.createRadialGradient(
+      cx,
+      cy,
+      base * 0.025,
+      cx,
+      cy,
+      inner * 0.94,
+    );
+    orb.addColorStop(0, colors[2] ?? "#f8fbff");
+    orb.addColorStop(0.28, colors[0] ?? "#14f195");
+    orb.addColorStop(1, colors[1] ?? "#7c3aed");
+    context.globalAlpha = 0.28 + bands.energy * 0.38;
+    context.fillStyle = orb;
     context.beginPath();
-    context.moveTo(x1, y1);
-    context.lineTo(x2, y2);
-    context.stroke();
+    context.arc(cx, cy, inner * (0.83 + bands.bass * 0.12), 0, Math.PI * 2);
+    context.fill();
+
+    context.globalAlpha = 0.4;
+    context.strokeStyle = colors[2] ?? "#f8fbff";
+    context.lineWidth = Math.max(1, base * 0.003);
+    for (let ring = 0; ring < 3; ring += 1) {
+      context.setLineDash([
+        base * (0.012 + ring * 0.006),
+        base * (0.014 + ring * 0.007),
+      ]);
+      context.lineDashOffset = -localFrame * (0.8 + ring * 0.35);
+      context.beginPath();
+      context.arc(cx, cy, inner + base * (0.08 + ring * 0.055), 0, Math.PI * 2);
+      context.stroke();
+    }
   });
-
-  const orb = context.createRadialGradient(
-    cx,
-    cy,
-    base * 0.025,
-    cx,
-    cy,
-    inner * 0.94,
-  );
-  orb.addColorStop(0, colors[2] ?? "#f8fbff");
-  orb.addColorStop(0.28, colors[0] ?? "#14f195");
-  orb.addColorStop(1, colors[1] ?? "#7c3aed");
-  context.globalAlpha = 0.28 + bands.energy * 0.38;
-  context.fillStyle = orb;
-  context.beginPath();
-  context.arc(cx, cy, inner * (0.83 + bands.bass * 0.12), 0, Math.PI * 2);
-  context.fill();
-
-  context.globalAlpha = 0.4;
-  context.strokeStyle = colors[2] ?? "#f8fbff";
-  context.lineWidth = Math.max(1, base * 0.003);
-  for (let ring = 0; ring < 3; ring += 1) {
-    context.setLineDash([
-      base * (0.012 + ring * 0.006),
-      base * (0.014 + ring * 0.007),
-    ]);
-    context.lineDashOffset = -localFrame * (0.8 + ring * 0.35);
-    context.beginPath();
-    context.arc(cx, cy, inner + base * (0.08 + ring * 0.055), 0, Math.PI * 2);
-    context.stroke();
-  }
-  context.restore();
 }
 
 function drawNeonWaveform(
@@ -3873,33 +4463,33 @@ function drawNeonWaveform(
   const centerY = box.y + box.height / 2;
   const phase = (localFrame / sceneFps) * Math.PI * 2.2;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  [0, 1, 2].forEach((ribbon) => {
-    context.beginPath();
-    values.forEach((value, index) => {
-      const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
-      const response = clamp01(value * 0.92 + bands.energy * 0.18);
-      const wave = Math.sin(index * 0.58 + phase + ribbon * 1.7);
-      const y =
-        centerY +
-        wave * box.height * (0.08 + response * (0.28 - ribbon * 0.04));
-      if (index === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    [0, 1, 2].forEach((ribbon) => {
+      context.beginPath();
+      values.forEach((value, index) => {
+        const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
+        const response = clamp01(value * 0.92 + bands.energy * 0.18);
+        const wave = Math.sin(index * 0.58 + phase + ribbon * 1.7);
+        const y =
+          centerY +
+          wave * box.height * (0.08 + response * (0.28 - ribbon * 0.04));
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      context.strokeStyle = colors[ribbon === 0 ? 2 : ribbon - 1] ?? "#fff7ed";
+      context.lineWidth = Math.max(
+        2,
+        box.height * (ribbon === 0 ? 0.025 : 0.012),
+      );
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.shadowColor = colors[ribbon % 2] ?? "#ff4d6d";
+      context.shadowBlur = Math.max(8, box.height * (0.06 + bands.high * 0.05));
+      context.globalAlpha = ribbon === 0 ? 0.96 : 0.4;
+      context.stroke();
     });
-    context.strokeStyle = colors[ribbon === 0 ? 2 : ribbon - 1] ?? "#fff7ed";
-    context.lineWidth = Math.max(
-      2,
-      box.height * (ribbon === 0 ? 0.025 : 0.012),
-    );
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.shadowColor = colors[ribbon % 2] ?? "#ff4d6d";
-    context.shadowBlur = Math.max(8, box.height * (0.06 + bands.high * 0.05));
-    context.globalAlpha = ribbon === 0 ? 0.96 : 0.4;
-    context.stroke();
   });
-  context.restore();
 }
 
 function drawPulseRings(
@@ -3922,34 +4512,34 @@ function drawPulseRings(
   const cy = box.y + box.height / 2;
   const base = Math.min(box.width, box.height);
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let ring = 0; ring < 7; ring += 1) {
-    const phase = ((localFrame / sceneFps) * 0.54 + ring / 7) % 1;
-    const radius = base * (0.11 + phase * 0.39 + bands.bass * 0.025);
-    context.globalAlpha = (1 - phase) * (0.2 + bands.energy * 0.72);
-    context.strokeStyle = colors[ring % 2] ?? "#22d3ee";
-    context.lineWidth = Math.max(
-      2,
-      base * (0.004 + (1 - phase) * 0.014 + bands.bass * 0.008),
-    );
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = Math.max(6, base * 0.025);
-    context.beginPath();
-    context.arc(cx, cy, radius, 0, Math.PI * 2);
-    context.stroke();
-  }
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let ring = 0; ring < 7; ring += 1) {
+      const phase = ((localFrame / sceneFps) * 0.54 + ring / 7) % 1;
+      const radius = base * (0.11 + phase * 0.39 + bands.bass * 0.025);
+      context.globalAlpha = (1 - phase) * (0.2 + bands.energy * 0.72);
+      context.strokeStyle = colors[ring % 2] ?? "#22d3ee";
+      context.lineWidth = Math.max(
+        2,
+        base * (0.004 + (1 - phase) * 0.014 + bands.bass * 0.008),
+      );
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = Math.max(6, base * 0.025);
+      context.beginPath();
+      context.arc(cx, cy, radius, 0, Math.PI * 2);
+      context.stroke();
+    }
 
-  const core = context.createRadialGradient(cx, cy, 0, cx, cy, base * 0.13);
-  core.addColorStop(0, colors[2] ?? "#f7f7ff");
-  core.addColorStop(0.35, colors[0] ?? "#22d3ee");
-  core.addColorStop(1, "rgba(0,0,0,0)");
-  context.globalAlpha = 0.52 + bands.energy * 0.4;
-  context.fillStyle = core;
-  context.beginPath();
-  context.arc(cx, cy, base * (0.1 + bands.bass * 0.035), 0, Math.PI * 2);
-  context.fill();
-  context.restore();
+    const core = context.createRadialGradient(cx, cy, 0, cx, cy, base * 0.13);
+    core.addColorStop(0, colors[2] ?? "#f7f7ff");
+    core.addColorStop(0.35, colors[0] ?? "#22d3ee");
+    core.addColorStop(1, "rgba(0,0,0,0)");
+    context.globalAlpha = 0.52 + bands.energy * 0.4;
+    context.fillStyle = core;
+    context.beginPath();
+    context.arc(cx, cy, base * (0.1 + bands.bass * 0.035), 0, Math.PI * 2);
+    context.fill();
+  });
 }
 
 function drawParticleGalaxy(
@@ -3974,43 +4564,43 @@ function drawParticleGalaxy(
   const count = Math.max(32, Math.min(160, params.particleCount ?? 96));
   const time = localFrame / sceneFps;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let index = 0; index < count; index += 1) {
-    const lane = index % 9;
-    const random = seededRandom(9137 + index * 73);
-    const angle = index * 2.399 + time * (0.2 + lane * 0.018);
-    const radius =
-      base *
-      (0.07 +
-        lane * 0.042 +
-        random * 0.045 +
-        bands.bass * (0.018 + lane * 0.002));
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius * (0.38 + (index % 5) * 0.035);
-    const size =
-      base *
-      (0.0025 + (index % 6) * 0.0009 + bands.high * (index % 4) * 0.0008);
-    const color = colors[index % 5 === 0 ? 2 : index % 2] ?? "#ffffff";
-    context.globalAlpha = 0.35 + random * 0.42 + bands.high * 0.2;
-    context.fillStyle = color;
-    context.shadowColor = color;
-    context.shadowBlur = Math.max(3, size * 3);
-    context.beginPath();
-    context.arc(x, y, Math.max(1, size), 0, Math.PI * 2);
-    context.fill();
-  }
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let index = 0; index < count; index += 1) {
+      const lane = index % 9;
+      const random = seededRandom(9137 + index * 73);
+      const angle = index * 2.399 + time * (0.2 + lane * 0.018);
+      const radius =
+        base *
+        (0.07 +
+          lane * 0.042 +
+          random * 0.045 +
+          bands.bass * (0.018 + lane * 0.002));
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius * (0.38 + (index % 5) * 0.035);
+      const size =
+        base *
+        (0.0025 + (index % 6) * 0.0009 + bands.high * (index % 4) * 0.0008);
+      const color = colors[index % 5 === 0 ? 2 : index % 2] ?? "#ffffff";
+      context.globalAlpha = 0.35 + random * 0.42 + bands.high * 0.2;
+      context.fillStyle = color;
+      context.shadowColor = color;
+      context.shadowBlur = Math.max(3, size * 3);
+      context.beginPath();
+      context.arc(x, y, Math.max(1, size), 0, Math.PI * 2);
+      context.fill();
+    }
 
-  const core = context.createRadialGradient(cx, cy, 0, cx, cy, base * 0.13);
-  core.addColorStop(0, colors[2] ?? "#f8fbff");
-  core.addColorStop(0.28, colors[0] ?? "#14f195");
-  core.addColorStop(1, "rgba(0,0,0,0)");
-  context.globalAlpha = 0.72;
-  context.fillStyle = core;
-  context.beginPath();
-  context.arc(cx, cy, base * (0.1 + bands.bass * 0.025), 0, Math.PI * 2);
-  context.fill();
-  context.restore();
+    const core = context.createRadialGradient(cx, cy, 0, cx, cy, base * 0.13);
+    core.addColorStop(0, colors[2] ?? "#f8fbff");
+    core.addColorStop(0.28, colors[0] ?? "#14f195");
+    core.addColorStop(1, "rgba(0,0,0,0)");
+    context.globalAlpha = 0.72;
+    context.fillStyle = core;
+    context.beginPath();
+    context.arc(cx, cy, base * (0.1 + bands.bass * 0.025), 0, Math.PI * 2);
+    context.fill();
+  });
 }
 
 function drawAlbumCoverPulse(
@@ -4039,57 +4629,71 @@ function drawAlbumCoverPulse(
     ? assets?.images.get(params.coverAssetId)
     : undefined;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let ring = 0; ring < 3; ring += 1) {
-    context.globalAlpha = 0.18 + bands.energy * (0.28 - ring * 0.045);
-    context.strokeStyle = colors[ring % 2] ?? "#f59e0b";
-    context.lineWidth = Math.max(2, base * (0.004 + bands.bass * 0.008));
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = Math.max(8, base * 0.028);
-    context.beginPath();
-    context.arc(cx, cy, coverSize * (0.56 + ring * 0.15), 0, Math.PI * 2);
-    context.stroke();
-  }
-  context.restore();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let ring = 0; ring < 3; ring += 1) {
+      context.globalAlpha = 0.18 + bands.energy * (0.28 - ring * 0.045);
+      context.strokeStyle = colors[ring % 2] ?? "#f59e0b";
+      context.lineWidth = Math.max(2, base * (0.004 + bands.bass * 0.008));
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = Math.max(8, base * 0.028);
+      context.beginPath();
+      context.arc(cx, cy, coverSize * (0.56 + ring * 0.15), 0, Math.PI * 2);
+      context.stroke();
+    }
+  });
 
-  context.save();
-  context.shadowColor = colors[0] ?? "#f59e0b";
-  context.shadowBlur = Math.max(12, base * (0.035 + bands.bass * 0.06));
-  roundedRect(context, coverX, coverY, coverSize, coverSize, coverSize * 0.075);
-  context.clip();
-  if (cover) {
-    context.drawImage(cover, coverX, coverY, coverSize, coverSize);
-  } else {
-    const fallback = context.createLinearGradient(
+  withSavedContext(context, () => {
+    context.shadowColor = colors[0] ?? "#f59e0b";
+    context.shadowBlur = Math.max(12, base * (0.035 + bands.bass * 0.06));
+    roundedRect(
+      context,
       coverX,
       coverY,
-      coverX + coverSize,
-      coverY + coverSize,
+      coverSize,
+      coverSize,
+      coverSize * 0.075,
     );
-    fallback.addColorStop(0, colors[1] ?? "#ec4899");
-    fallback.addColorStop(0.58, colors[0] ?? "#f59e0b");
-    fallback.addColorStop(1, "#020617");
-    context.fillStyle = fallback;
-    context.fillRect(coverX, coverY, coverSize, coverSize);
-    context.fillStyle = "#09090b";
-    context.beginPath();
-    context.arc(cx, cy, coverSize * 0.23, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = colors[2] ?? "#fff7ed";
-    context.lineWidth = Math.max(2, coverSize * 0.015);
-    context.beginPath();
-    context.arc(cx, cy, coverSize * 0.065, 0, Math.PI * 2);
-    context.stroke();
-  }
-  context.restore();
+    context.clip();
+    if (cover) {
+      context.drawImage(cover, coverX, coverY, coverSize, coverSize);
+    } else {
+      const fallback = context.createLinearGradient(
+        coverX,
+        coverY,
+        coverX + coverSize,
+        coverY + coverSize,
+      );
+      fallback.addColorStop(0, colors[1] ?? "#ec4899");
+      fallback.addColorStop(0.58, colors[0] ?? "#f59e0b");
+      fallback.addColorStop(1, "#020617");
+      context.fillStyle = fallback;
+      context.fillRect(coverX, coverY, coverSize, coverSize);
+      context.fillStyle = "#09090b";
+      context.beginPath();
+      context.arc(cx, cy, coverSize * 0.23, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = colors[2] ?? "#fff7ed";
+      context.lineWidth = Math.max(2, coverSize * 0.015);
+      context.beginPath();
+      context.arc(cx, cy, coverSize * 0.065, 0, Math.PI * 2);
+      context.stroke();
+    }
+  });
 
-  context.save();
-  context.strokeStyle = "rgba(255,255,255,0.42)";
-  context.lineWidth = Math.max(1, base * 0.002);
-  roundedRect(context, coverX, coverY, coverSize, coverSize, coverSize * 0.075);
-  context.stroke();
-  context.restore();
+  withSavedContext(context, () => {
+    context.strokeStyle = "rgba(255,255,255,0.42)";
+    context.lineWidth = Math.max(1, base * 0.002);
+    roundedRect(
+      context,
+      coverX,
+      coverY,
+      coverSize,
+      coverSize,
+      coverSize * 0.075,
+    );
+    context.stroke();
+  });
 }
 
 function drawAudioBlob(
@@ -4112,44 +4716,44 @@ function drawAudioBlob(
   const cy = box.y + box.height / 2;
   const base = Math.min(box.width, box.height);
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let layer = 3; layer >= 0; layer -= 1) {
-    const radius = base * (0.18 + layer * 0.055 + bands.bass * 0.045);
-    const gradient = context.createRadialGradient(
-      cx - radius * 0.24,
-      cy - radius * 0.2,
-      radius * 0.04,
-      cx,
-      cy,
-      radius,
-    );
-    gradient.addColorStop(0, colors[2] ?? "#f7f7ff");
-    gradient.addColorStop(0.36, colors[layer % 2] ?? "#22d3ee");
-    gradient.addColorStop(
-      1,
-      layer === 0 ? (colors[1] ?? "#f472b6") : "rgba(0,0,0,0)",
-    );
-    context.fillStyle = gradient;
-    context.strokeStyle = colors[layer % 2] ?? "#22d3ee";
-    context.lineWidth = Math.max(1, base * (0.002 + (3 - layer) * 0.0015));
-    context.globalAlpha = layer === 0 ? 0.76 : 0.18 + bands.energy * 0.13;
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = base * (0.025 + bands.bass * 0.05);
-    context.beginPath();
-    context.ellipse(
-      cx,
-      cy,
-      radius * (1 + Math.sin(time * 1.3 + layer) * 0.12),
-      radius * (0.82 + Math.cos(time * 1.1 + layer) * 0.13),
-      time * (layer % 2 ? -0.18 : 0.15) + layer,
-      0,
-      Math.PI * 2,
-    );
-    context.fill();
-    context.stroke();
-  }
-  context.restore();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let layer = 3; layer >= 0; layer -= 1) {
+      const radius = base * (0.18 + layer * 0.055 + bands.bass * 0.045);
+      const gradient = context.createRadialGradient(
+        cx - radius * 0.24,
+        cy - radius * 0.2,
+        radius * 0.04,
+        cx,
+        cy,
+        radius,
+      );
+      gradient.addColorStop(0, colors[2] ?? "#f7f7ff");
+      gradient.addColorStop(0.36, colors[layer % 2] ?? "#22d3ee");
+      gradient.addColorStop(
+        1,
+        layer === 0 ? (colors[1] ?? "#f472b6") : "rgba(0,0,0,0)",
+      );
+      context.fillStyle = gradient;
+      context.strokeStyle = colors[layer % 2] ?? "#22d3ee";
+      context.lineWidth = Math.max(1, base * (0.002 + (3 - layer) * 0.0015));
+      context.globalAlpha = layer === 0 ? 0.76 : 0.18 + bands.energy * 0.13;
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = base * (0.025 + bands.bass * 0.05);
+      context.beginPath();
+      context.ellipse(
+        cx,
+        cy,
+        radius * (1 + Math.sin(time * 1.3 + layer) * 0.12),
+        radius * (0.82 + Math.cos(time * 1.1 + layer) * 0.13),
+        time * (layer % 2 ? -0.18 : 0.15) + layer,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+      context.stroke();
+    }
+  });
 }
 
 function drawStarfieldTunnel(
@@ -4171,34 +4775,34 @@ function drawStarfieldTunnel(
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
   const count = Math.max(48, Math.min(160, params.particleCount ?? 96));
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let index = 0; index < count; index += 1) {
-    const speed = 0.7 + (index % 7) * 0.13 + bands.energy * 1.2;
-    const phase =
-      ((((localFrame / sceneFps) * speed + index * 0.17) % 1) + 1) % 1;
-    const angle = index * 2.399 + (index % 5) * 0.17;
-    const radius =
-      Math.pow(phase, 1.65) * Math.min(box.width * 0.56, box.height * 0.84);
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius * 0.58;
-    const tail = box.width * (0.002 + phase * (0.025 + bands.bass * 0.025));
-    const color =
-      colors[index % 6 === 0 ? 1 : index % 3 === 0 ? 0 : 2] ?? "#fff";
-    context.strokeStyle = color;
-    context.lineWidth = Math.max(1, phase * 3.5);
-    context.globalAlpha = 0.15 + phase * 0.85;
-    context.shadowColor = color;
-    context.shadowBlur = 4 + phase * 10;
-    context.beginPath();
-    context.moveTo(x, y);
-    context.lineTo(
-      x + Math.cos(angle) * tail,
-      y + Math.sin(angle) * tail * 0.58,
-    );
-    context.stroke();
-  }
-  context.restore();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let index = 0; index < count; index += 1) {
+      const speed = 0.7 + (index % 7) * 0.13 + bands.energy * 1.2;
+      const phase =
+        ((((localFrame / sceneFps) * speed + index * 0.17) % 1) + 1) % 1;
+      const angle = index * 2.399 + (index % 5) * 0.17;
+      const radius =
+        Math.pow(phase, 1.65) * Math.min(box.width * 0.56, box.height * 0.84);
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius * 0.58;
+      const tail = box.width * (0.002 + phase * (0.025 + bands.bass * 0.025));
+      const color =
+        colors[index % 6 === 0 ? 1 : index % 3 === 0 ? 0 : 2] ?? "#fff";
+      context.strokeStyle = color;
+      context.lineWidth = Math.max(1, phase * 3.5);
+      context.globalAlpha = 0.15 + phase * 0.85;
+      context.shadowColor = color;
+      context.shadowBlur = 4 + phase * 10;
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(
+        x + Math.cos(angle) * tail,
+        y + Math.sin(angle) * tail * 0.58,
+      );
+      context.stroke();
+    }
+  });
 }
 
 function drawEqualizerGrid(
@@ -4221,31 +4825,31 @@ function drawEqualizerGrid(
   const gap = Math.max(2, Math.min(box.width, box.height) * 0.012);
   const cellWidth = (box.width - gap * (columns - 1)) / columns;
   const cellHeight = (box.height - gap * (rows - 1)) / rows;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let column = 0; column < columns; column += 1) {
-    const source = Math.floor((column / columns) * values.length);
-    const response = clamp01((values[source] ?? 0) * 0.92 + 0.05);
-    const active = Math.max(1, Math.round(response * rows));
-    for (let row = 0; row < rows; row += 1) {
-      const lit = rows - row <= active;
-      const color = row < 2 ? colors[1] : row < 5 ? colors[2] : colors[0];
-      context.globalAlpha = lit ? 0.48 + response * 0.48 : 0.06;
-      context.fillStyle = color ?? "#00e676";
-      context.shadowColor = context.fillStyle as string;
-      context.shadowBlur = lit ? 6 + response * 12 : 0;
-      roundedRect(
-        context,
-        box.x + column * (cellWidth + gap),
-        box.y + row * (cellHeight + gap),
-        cellWidth,
-        cellHeight,
-        Math.min(cellWidth, cellHeight) * 0.22,
-      );
-      context.fill();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let column = 0; column < columns; column += 1) {
+      const source = Math.floor((column / columns) * values.length);
+      const response = clamp01((values[source] ?? 0) * 0.92 + 0.05);
+      const active = Math.max(1, Math.round(response * rows));
+      for (let row = 0; row < rows; row += 1) {
+        const lit = rows - row <= active;
+        const color = row < 2 ? colors[1] : row < 5 ? colors[2] : colors[0];
+        context.globalAlpha = lit ? 0.48 + response * 0.48 : 0.06;
+        context.fillStyle = color ?? "#00e676";
+        context.shadowColor = context.fillStyle as string;
+        context.shadowBlur = lit ? 6 + response * 12 : 0;
+        roundedRect(
+          context,
+          box.x + column * (cellWidth + gap),
+          box.y + row * (cellHeight + gap),
+          cellWidth,
+          cellHeight,
+          Math.min(cellWidth, cellHeight) * 0.22,
+        );
+        context.fill();
+      }
     }
-  }
-  context.restore();
+  });
 }
 
 function drawLiquidGradient(
@@ -4265,46 +4869,47 @@ function drawLiquidGradient(
   const bands = spectrumBands(values);
   const colors = effectColors(params, ["#22d3ee", "#f472b6", "#f7f7ff"]);
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let blob = 0; blob < 6; blob += 1) {
-    const x =
-      box.x +
-      box.width *
-        (0.12 + ((blob * 0.23 + Math.sin(time * (0.24 + blob * 0.03))) % 0.82));
-    const y =
-      box.y +
-      box.height *
-        (0.16 + ((blob * 0.31 + Math.cos(time * (0.2 + blob * 0.02))) % 0.7));
-    const radius =
-      Math.min(box.width, box.height) *
-      (0.16 + (blob % 3) * 0.05 + bands.bass * 0.06);
-    const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
-    gradient.addColorStop(0, colors[blob % 2] ?? "#22d3ee");
-    gradient.addColorStop(1, "rgba(0,0,0,0)");
-    context.fillStyle = gradient;
-    context.globalAlpha = 0.24 + bands.energy * 0.2;
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let blob = 0; blob < 6; blob += 1) {
+      const x =
+        box.x +
+        box.width *
+          (0.12 +
+            ((blob * 0.23 + Math.sin(time * (0.24 + blob * 0.03))) % 0.82));
+      const y =
+        box.y +
+        box.height *
+          (0.16 + ((blob * 0.31 + Math.cos(time * (0.2 + blob * 0.02))) % 0.7));
+      const radius =
+        Math.min(box.width, box.height) *
+        (0.16 + (blob % 3) * 0.05 + bands.bass * 0.06);
+      const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, colors[blob % 2] ?? "#22d3ee");
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+      context.fillStyle = gradient;
+      context.globalAlpha = 0.24 + bands.energy * 0.2;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.globalAlpha = 0.86;
+    context.strokeStyle = colors[2] ?? "#f7f7ff";
+    context.lineWidth = Math.max(2, box.height * 0.01);
+    context.shadowColor = colors[0] ?? "#22d3ee";
+    context.shadowBlur = box.height * 0.04;
     context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fill();
-  }
-  context.globalAlpha = 0.86;
-  context.strokeStyle = colors[2] ?? "#f7f7ff";
-  context.lineWidth = Math.max(2, box.height * 0.01);
-  context.shadowColor = colors[0] ?? "#22d3ee";
-  context.shadowBlur = box.height * 0.04;
-  context.beginPath();
-  values.forEach((value, index) => {
-    const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
-    const y =
-      box.y +
-      box.height *
-        (0.5 + Math.sin(index * 0.42 + time * 1.6) * (0.06 + value * 0.22));
-    if (index === 0) context.moveTo(x, y);
-    else context.lineTo(x, y);
+    values.forEach((value, index) => {
+      const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
+      const y =
+        box.y +
+        box.height *
+          (0.5 + Math.sin(index * 0.42 + time * 1.6) * (0.06 + value * 0.22));
+      if (index === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    });
+    context.stroke();
   });
-  context.stroke();
-  context.restore();
 }
 
 function drawKaleidoscope(
@@ -4327,30 +4932,31 @@ function drawKaleidoscope(
   const cy = box.y + box.height / 2;
   const base = Math.min(box.width, box.height);
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let layer = 0; layer < 4; layer += 1) {
-    const radius = base * (0.16 + layer * 0.09 + bands.bass * 0.035);
-    const segments = 16;
-    context.save();
-    context.translate(cx, cy);
-    context.rotate(time * (layer % 2 ? -0.22 : 0.28) + layer * 0.35);
-    for (let segment = 0; segment < segments; segment += 1) {
-      context.rotate((Math.PI * 2) / segments);
-      context.globalAlpha = 0.18 + bands.energy * 0.25 + (segment % 2) * 0.08;
-      context.fillStyle =
-        colors[(segment + layer) % colors.length] ?? "#22d3ee";
-      context.beginPath();
-      context.moveTo(0, 0);
-      context.lineTo(radius * 0.32, -radius * 0.14);
-      context.lineTo(radius, 0);
-      context.lineTo(radius * 0.32, radius * 0.14);
-      context.closePath();
-      context.fill();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let layer = 0; layer < 4; layer += 1) {
+      const radius = base * (0.16 + layer * 0.09 + bands.bass * 0.035);
+      const segments = 16;
+      withSavedContext(context, () => {
+        context.translate(cx, cy);
+        context.rotate(time * (layer % 2 ? -0.22 : 0.28) + layer * 0.35);
+        for (let segment = 0; segment < segments; segment += 1) {
+          context.rotate((Math.PI * 2) / segments);
+          context.globalAlpha =
+            0.18 + bands.energy * 0.25 + (segment % 2) * 0.08;
+          context.fillStyle =
+            colors[(segment + layer) % colors.length] ?? "#22d3ee";
+          context.beginPath();
+          context.moveTo(0, 0);
+          context.lineTo(radius * 0.32, -radius * 0.14);
+          context.lineTo(radius, 0);
+          context.lineTo(radius * 0.32, radius * 0.14);
+          context.closePath();
+          context.fill();
+        }
+      });
     }
-    context.restore();
-  }
-  context.restore();
+  });
 }
 
 function drawVinylRecord(
@@ -4372,45 +4978,52 @@ function drawVinylRecord(
   const cx = box.x + box.width * 0.46;
   const cy = box.y + box.height * 0.55;
   const radius = Math.min(box.width, box.height) * (0.32 + bands.bass * 0.018);
-  context.save();
-  context.fillStyle = "#070707";
-  context.shadowColor = colors[0] ?? "#f59e0b";
-  context.shadowBlur = 18 + bands.bass * 50;
-  context.beginPath();
-  context.arc(cx, cy, radius, 0, Math.PI * 2);
-  context.fill();
-  context.strokeStyle = "rgba(255,255,255,.13)";
-  context.lineWidth = Math.max(1, radius * 0.006);
-  for (let groove = 1; groove < 13; groove += 1) {
+  withSavedContext(context, () => {
+    context.fillStyle = "#070707";
+    context.shadowColor = colors[0] ?? "#f59e0b";
+    context.shadowBlur = 18 + bands.bass * 50;
     context.beginPath();
-    context.arc(cx, cy, radius * (0.2 + groove * 0.062), 0, Math.PI * 2);
-    context.stroke();
-  }
-  const label = context.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.25);
-  label.addColorStop(0, colors[2] ?? "#fff7ed");
-  label.addColorStop(0.28, colors[0] ?? "#f59e0b");
-  label.addColorStop(1, colors[1] ?? "#ec4899");
-  context.fillStyle = label;
-  context.beginPath();
-  context.arc(cx, cy, radius * 0.24, 0, Math.PI * 2);
-  context.fill();
-  context.fillStyle = "#09090b";
-  context.beginPath();
-  context.arc(cx, cy, radius * 0.035, 0, Math.PI * 2);
-  context.fill();
-  context.translate(box.x + box.width * 0.82, box.y + box.height * 0.24);
-  context.rotate(0.48 + bands.mid * 0.18);
-  context.fillStyle = colors[2] ?? "#fff7ed";
-  roundedRect(
-    context,
-    0,
-    -radius * 0.035,
-    radius * 0.88,
-    radius * 0.07,
-    radius * 0.03,
-  );
-  context.fill();
-  context.restore();
+    context.arc(cx, cy, radius, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = "rgba(255,255,255,.13)";
+    context.lineWidth = Math.max(1, radius * 0.006);
+    for (let groove = 1; groove < 13; groove += 1) {
+      context.beginPath();
+      context.arc(cx, cy, radius * (0.2 + groove * 0.062), 0, Math.PI * 2);
+      context.stroke();
+    }
+    const label = context.createRadialGradient(
+      cx,
+      cy,
+      0,
+      cx,
+      cy,
+      radius * 0.25,
+    );
+    label.addColorStop(0, colors[2] ?? "#fff7ed");
+    label.addColorStop(0.28, colors[0] ?? "#f59e0b");
+    label.addColorStop(1, colors[1] ?? "#ec4899");
+    context.fillStyle = label;
+    context.beginPath();
+    context.arc(cx, cy, radius * 0.24, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#09090b";
+    context.beginPath();
+    context.arc(cx, cy, radius * 0.035, 0, Math.PI * 2);
+    context.fill();
+    context.translate(box.x + box.width * 0.82, box.y + box.height * 0.24);
+    context.rotate(0.48 + bands.mid * 0.18);
+    context.fillStyle = colors[2] ?? "#fff7ed";
+    roundedRect(
+      context,
+      0,
+      -radius * 0.035,
+      radius * 0.88,
+      radius * 0.07,
+      radius * 0.03,
+    );
+    context.fill();
+  });
 }
 
 function drawAudioTerrain(
@@ -4429,35 +5042,36 @@ function drawAudioTerrain(
   );
   const colors = effectColors(params, ["#14f195", "#7c3aed", "#f8fbff"]);
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let row = 0; row < 15; row += 1) {
-    const depth = row / 14;
-    const horizonY = box.y + box.height * (0.28 + depth * 0.68);
-    const inset = box.width * (0.04 + (1 - depth) * 0.22);
-    context.beginPath();
-    values.forEach((value, column) => {
-      const x =
-        box.x +
-        inset +
-        (column / Math.max(1, values.length - 1)) * (box.width - inset * 2);
-      const history = Math.sin(column * 0.52 + row * 0.7 - time * 1.35) * 0.16;
-      const y =
-        horizonY -
-        box.height *
-          (0.025 + value * 0.12 + history * 0.08) *
-          (0.35 + depth * 0.65);
-      if (column === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    });
-    context.strokeStyle = colors[row % 4 === 0 ? 1 : 0] ?? "#14f195";
-    context.lineWidth = Math.max(1, 1 + depth * 2.2);
-    context.globalAlpha = 0.18 + depth * 0.72;
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = depth * 8;
-    context.stroke();
-  }
-  context.restore();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let row = 0; row < 15; row += 1) {
+      const depth = row / 14;
+      const horizonY = box.y + box.height * (0.28 + depth * 0.68);
+      const inset = box.width * (0.04 + (1 - depth) * 0.22);
+      context.beginPath();
+      values.forEach((value, column) => {
+        const x =
+          box.x +
+          inset +
+          (column / Math.max(1, values.length - 1)) * (box.width - inset * 2);
+        const history =
+          Math.sin(column * 0.52 + row * 0.7 - time * 1.35) * 0.16;
+        const y =
+          horizonY -
+          box.height *
+            (0.025 + value * 0.12 + history * 0.08) *
+            (0.35 + depth * 0.65);
+        if (column === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      context.strokeStyle = colors[row % 4 === 0 ? 1 : 0] ?? "#14f195";
+      context.lineWidth = Math.max(1, 1 + depth * 2.2);
+      context.globalAlpha = 0.18 + depth * 0.72;
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = depth * 8;
+      context.stroke();
+    }
+  });
 }
 
 function drawLightningArc(
@@ -4479,38 +5093,39 @@ function drawLightningArc(
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let bolt = 0; bolt < 7; bolt += 1) {
-    const angle = bolt * ((Math.PI * 2) / 7) + time * (bolt % 2 ? -0.08 : 0.11);
-    const distance =
-      Math.min(box.width, box.height) * (0.28 + bands.high * 0.18);
-    context.beginPath();
-    context.moveTo(cx, cy);
-    for (let segment = 1; segment <= 10; segment += 1) {
-      const progress = segment / 10;
-      const jitter =
-        Math.sin(localFrame * 0.37 + bolt * 17 + segment * 11) *
-        distance *
-        0.045;
-      const x =
-        cx +
-        Math.cos(angle) * distance * progress +
-        Math.cos(angle + Math.PI / 2) * jitter;
-      const y =
-        cy +
-        Math.sin(angle) * distance * progress +
-        Math.sin(angle + Math.PI / 2) * jitter;
-      context.lineTo(x, y);
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let bolt = 0; bolt < 7; bolt += 1) {
+      const angle =
+        bolt * ((Math.PI * 2) / 7) + time * (bolt % 2 ? -0.08 : 0.11);
+      const distance =
+        Math.min(box.width, box.height) * (0.28 + bands.high * 0.18);
+      context.beginPath();
+      context.moveTo(cx, cy);
+      for (let segment = 1; segment <= 10; segment += 1) {
+        const progress = segment / 10;
+        const jitter =
+          Math.sin(localFrame * 0.37 + bolt * 17 + segment * 11) *
+          distance *
+          0.045;
+        const x =
+          cx +
+          Math.cos(angle) * distance * progress +
+          Math.cos(angle + Math.PI / 2) * jitter;
+        const y =
+          cy +
+          Math.sin(angle) * distance * progress +
+          Math.sin(angle + Math.PI / 2) * jitter;
+        context.lineTo(x, y);
+      }
+      context.strokeStyle = colors[bolt % 3] ?? "#f7f7ff";
+      context.lineWidth = Math.max(1, 1.5 + bands.high * 4);
+      context.globalAlpha = 0.26 + bands.high * 0.7;
+      context.shadowColor = context.strokeStyle as string;
+      context.shadowBlur = 9 + bands.high * 24;
+      context.stroke();
     }
-    context.strokeStyle = colors[bolt % 3] ?? "#f7f7ff";
-    context.lineWidth = Math.max(1, 1.5 + bands.high * 4);
-    context.globalAlpha = 0.26 + bands.high * 0.7;
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = 9 + bands.high * 24;
-    context.stroke();
-  }
-  context.restore();
+  });
 }
 
 function drawMinimalLineArt(
@@ -4530,30 +5145,30 @@ function drawMinimalLineArt(
   const bands = spectrumBands(values);
   const colors = effectColors(params, ["#ffffff", "#a3a3a3", "#ffffff"]);
   const time = localFrame / sceneFps;
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  for (let line = 0; line < 5; line += 1) {
-    context.beginPath();
-    values.forEach((value, index) => {
-      const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
-      const y =
-        box.y +
-        box.height *
-          (0.5 +
-            (line - 2) * 0.1 +
-            Math.sin(index * 0.55 + time * (0.75 + line * 0.08) + line) *
-              (0.03 + value * 0.1));
-      if (index === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    });
-    context.strokeStyle = colors[line === 2 ? 2 : line % 2] ?? "#ffffff";
-    context.lineWidth = line === 2 ? 2.2 : 1;
-    context.globalAlpha = line === 2 ? 0.82 : 0.24 + bands.high * 0.2;
-    context.shadowColor = colors[0] ?? "#ffffff";
-    context.shadowBlur = line === 2 ? 8 + bands.energy * 10 : 0;
-    context.stroke();
-  }
-  context.restore();
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    for (let line = 0; line < 5; line += 1) {
+      context.beginPath();
+      values.forEach((value, index) => {
+        const x = box.x + (index / Math.max(1, values.length - 1)) * box.width;
+        const y =
+          box.y +
+          box.height *
+            (0.5 +
+              (line - 2) * 0.1 +
+              Math.sin(index * 0.55 + time * (0.75 + line * 0.08) + line) *
+                (0.03 + value * 0.1));
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      context.strokeStyle = colors[line === 2 ? 2 : line % 2] ?? "#ffffff";
+      context.lineWidth = line === 2 ? 2.2 : 1;
+      context.globalAlpha = line === 2 ? 0.82 : 0.24 + bands.high * 0.2;
+      context.shadowColor = colors[0] ?? "#ffffff";
+      context.shadowBlur = line === 2 ? 8 + bands.energy * 10 : 0;
+      context.stroke();
+    }
+  });
 }
 
 function drawCassetteVuMeter(
@@ -4575,99 +5190,107 @@ function drawCassetteVuMeter(
   const bass = values.slice(0, 6).reduce((sum, value) => sum + value, 0) / 6;
   const radius = Math.min(box.width, box.height) * 0.06;
 
-  context.save();
-  context.fillStyle = "#111827";
-  roundedRect(context, box.x, box.y, box.width, box.height, radius);
-  context.fill();
-  context.strokeStyle = "rgba(255,255,255,0.18)";
-  context.lineWidth = Math.max(2, box.width * 0.006);
-  context.stroke();
-
-  const panelX = box.x + box.width * 0.08;
-  const panelY = box.y + box.height * 0.1;
-  const panelWidth = box.width * 0.84;
-  const panelHeight = box.height * 0.48;
-  const panelGradient = context.createLinearGradient(
-    panelX,
-    panelY,
-    panelX,
-    panelY + panelHeight,
-  );
-  panelGradient.addColorStop(0, "#e5e7eb");
-  panelGradient.addColorStop(1, "#94a3b8");
-  context.fillStyle = panelGradient;
-  roundedRect(context, panelX, panelY, panelWidth, panelHeight, radius * 0.55);
-  context.fill();
-
-  const reelRadius = Math.min(panelWidth, panelHeight) * 0.24;
-  [0.3, 0.7].forEach((position, index) => {
-    const cx = panelX + panelWidth * position;
-    const cy = panelY + panelHeight * 0.5;
-    context.save();
-    context.translate(cx, cy);
-    context.rotate(
-      (localFrame / sceneFps) * Math.PI * (index === 0 ? 1.8 : -1.8),
-    );
-    context.fillStyle = "#020617";
-    context.beginPath();
-    context.arc(0, 0, reelRadius * (1 + bass * 0.05), 0, Math.PI * 2);
+  withSavedContext(context, () => {
+    context.fillStyle = "#111827";
+    roundedRect(context, box.x, box.y, box.width, box.height, radius);
     context.fill();
-    context.strokeStyle = "rgba(255,255,255,0.72)";
-    context.lineWidth = reelRadius * 0.08;
-    for (let spoke = 0; spoke < 6; spoke += 1) {
-      context.rotate(Math.PI / 3);
-      context.beginPath();
-      context.moveTo(reelRadius * 0.22, 0);
-      context.lineTo(reelRadius * 0.78, 0);
-      context.stroke();
-    }
-    context.restore();
-  });
-
-  const meterY = box.y + box.height * 0.66;
-  const meterHeight = box.height * 0.18;
-  [0.1, 0.54].forEach((left, index) => {
-    const x = box.x + box.width * left;
-    const width = box.width * 0.36;
-    context.fillStyle = "#020617";
-    roundedRect(context, x, meterY, width, meterHeight, radius * 0.35);
-    context.fill();
-    const needle = -0.72 + clamp01(energy * (index === 0 ? 1.05 : 0.92)) * 1.44;
-    context.save();
-    context.translate(x + width / 2, meterY + meterHeight * 0.82);
-    context.rotate(needle);
-    context.strokeStyle = colors[index] ?? colors[0] ?? "#fb7185";
-    context.shadowColor = context.strokeStyle as string;
-    context.shadowBlur = 12;
-    context.lineWidth = Math.max(2, width * 0.012);
-    context.beginPath();
-    context.moveTo(0, 0);
-    context.lineTo(0, -meterHeight * 0.62);
+    context.strokeStyle = "rgba(255,255,255,0.18)";
+    context.lineWidth = Math.max(2, box.width * 0.006);
     context.stroke();
-    context.restore();
-  });
 
-  const ledY = box.y + box.height * 0.9;
-  const ledGap = box.width * 0.008;
-  const ledWidth =
-    (box.width * 0.8 - ledGap * (values.length - 1)) / values.length;
-  values.forEach((value, index) => {
-    const height = box.height * 0.1 * clamp01(value + 0.08);
-    context.fillStyle =
-      index > 18 ? (colors[1] ?? "#facc15") : (colors[0] ?? "#fb7185");
-    context.shadowColor = context.fillStyle as string;
-    context.shadowBlur = 8;
+    const panelX = box.x + box.width * 0.08;
+    const panelY = box.y + box.height * 0.1;
+    const panelWidth = box.width * 0.84;
+    const panelHeight = box.height * 0.48;
+    const panelGradient = context.createLinearGradient(
+      panelX,
+      panelY,
+      panelX,
+      panelY + panelHeight,
+    );
+    panelGradient.addColorStop(0, "#e5e7eb");
+    panelGradient.addColorStop(1, "#94a3b8");
+    context.fillStyle = panelGradient;
     roundedRect(
       context,
-      box.x + box.width * 0.1 + index * (ledWidth + ledGap),
-      ledY - height,
-      ledWidth,
-      height,
-      ledWidth / 2,
+      panelX,
+      panelY,
+      panelWidth,
+      panelHeight,
+      radius * 0.55,
     );
     context.fill();
+
+    const reelRadius = Math.min(panelWidth, panelHeight) * 0.24;
+    [0.3, 0.7].forEach((position, index) => {
+      const cx = panelX + panelWidth * position;
+      const cy = panelY + panelHeight * 0.5;
+      withSavedContext(context, () => {
+        context.translate(cx, cy);
+        context.rotate(
+          (localFrame / sceneFps) * Math.PI * (index === 0 ? 1.8 : -1.8),
+        );
+        context.fillStyle = "#020617";
+        context.beginPath();
+        context.arc(0, 0, reelRadius * (1 + bass * 0.05), 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = "rgba(255,255,255,0.72)";
+        context.lineWidth = reelRadius * 0.08;
+        for (let spoke = 0; spoke < 6; spoke += 1) {
+          context.rotate(Math.PI / 3);
+          context.beginPath();
+          context.moveTo(reelRadius * 0.22, 0);
+          context.lineTo(reelRadius * 0.78, 0);
+          context.stroke();
+        }
+      });
+    });
+
+    const meterY = box.y + box.height * 0.66;
+    const meterHeight = box.height * 0.18;
+    [0.1, 0.54].forEach((left, index) => {
+      const x = box.x + box.width * left;
+      const width = box.width * 0.36;
+      context.fillStyle = "#020617";
+      roundedRect(context, x, meterY, width, meterHeight, radius * 0.35);
+      context.fill();
+      const needle =
+        -0.72 + clamp01(energy * (index === 0 ? 1.05 : 0.92)) * 1.44;
+      withSavedContext(context, () => {
+        context.translate(x + width / 2, meterY + meterHeight * 0.82);
+        context.rotate(needle);
+        context.strokeStyle = colors[index] ?? colors[0] ?? "#fb7185";
+        context.shadowColor = context.strokeStyle as string;
+        context.shadowBlur = 12;
+        context.lineWidth = Math.max(2, width * 0.012);
+        context.beginPath();
+        context.moveTo(0, 0);
+        context.lineTo(0, -meterHeight * 0.62);
+        context.stroke();
+      });
+    });
+
+    const ledY = box.y + box.height * 0.9;
+    const ledGap = box.width * 0.008;
+    const ledWidth =
+      (box.width * 0.8 - ledGap * (values.length - 1)) / values.length;
+    values.forEach((value, index) => {
+      const height = box.height * 0.1 * clamp01(value + 0.08);
+      context.fillStyle =
+        index > 18 ? (colors[1] ?? "#facc15") : (colors[0] ?? "#fb7185");
+      context.shadowColor = context.fillStyle as string;
+      context.shadowBlur = 8;
+      roundedRect(
+        context,
+        box.x + box.width * 0.1 + index * (ledWidth + ledGap),
+        ledY - height,
+        ledWidth,
+        height,
+        ledWidth / 2,
+      );
+      context.fill();
+    });
   });
-  context.restore();
 }
 
 function drawCartoonBurst(
@@ -4704,80 +5327,79 @@ function drawCartoonBurst(
     radiusBase * 0.08 +
     radiusBase * 0.48 * easedOut * intensityScale * scale * spread;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
 
-  if (params.shockwave ?? true) {
-    const ringRadius = radiusBase * (0.14 + easedOut * 0.56 * scale * spread);
-    context.globalAlpha *= 0.7 * fade;
-    context.strokeStyle = colors[0] ?? "#fff3a3";
-    context.lineWidth = Math.max(3, radiusBase * 0.025 * (1 - progress));
-    context.beginPath();
-    context.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
-    context.stroke();
-  }
-
-  for (let index = 0; index < particleCount; index += 1) {
-    const particleSeed = seededRandom(seed + index * 97);
-    const angle = particleSeed * Math.PI * 2;
-    const speed = 0.36 + seededRandom(seed + index * 131) * 0.76;
-    const distance = burstRadius * speed;
-    const wobble =
-      Math.sin(progress * Math.PI * 2 + index) * radiusBase * 0.025;
-    const x =
-      centerX +
-      Math.cos(angle) * distance +
-      Math.cos(angle + Math.PI / 2) * wobble;
-    const y =
-      centerY +
-      Math.sin(angle) * distance +
-      Math.sin(angle + Math.PI / 2) * wobble;
-    const size =
-      radiusBase *
-      (0.012 + seededRandom(seed + index * 193) * 0.025) *
-      intensityScale *
-      (0.55 + fade) *
-      Math.sqrt(scale);
-    const color = colors[index % colors.length] ?? "#ffffff";
-
-    context.globalAlpha = Math.max(
-      0,
-      Math.min(1, fade * (0.7 + particleSeed * 0.3)),
-    );
-    context.fillStyle = color;
-
-    if (index % 4 === 0) {
-      drawSpark(context, x, y, size * 1.8, angle + progress * Math.PI);
-    } else {
+    if (params.shockwave ?? true) {
+      const ringRadius = radiusBase * (0.14 + easedOut * 0.56 * scale * spread);
+      context.globalAlpha *= 0.7 * fade;
+      context.strokeStyle = colors[0] ?? "#fff3a3";
+      context.lineWidth = Math.max(3, radiusBase * 0.025 * (1 - progress));
       context.beginPath();
-      context.arc(x, y, size, 0, Math.PI * 2);
-      context.fill();
+      context.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+      context.stroke();
     }
-  }
 
-  const corePulse = Math.sin(progress * Math.PI);
-  context.globalAlpha = 0.8 * corePulse;
-  context.fillStyle = colors[1] ?? "#ff7a18";
-  context.beginPath();
-  context.arc(
-    centerX,
-    centerY,
-    radiusBase * (0.05 + corePulse * 0.16 * scale),
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
+    for (let index = 0; index < particleCount; index += 1) {
+      const particleSeed = seededRandom(seed + index * 97);
+      const angle = particleSeed * Math.PI * 2;
+      const speed = 0.36 + seededRandom(seed + index * 131) * 0.76;
+      const distance = burstRadius * speed;
+      const wobble =
+        Math.sin(progress * Math.PI * 2 + index) * radiusBase * 0.025;
+      const x =
+        centerX +
+        Math.cos(angle) * distance +
+        Math.cos(angle + Math.PI / 2) * wobble;
+      const y =
+        centerY +
+        Math.sin(angle) * distance +
+        Math.sin(angle + Math.PI / 2) * wobble;
+      const size =
+        radiusBase *
+        (0.012 + seededRandom(seed + index * 193) * 0.025) *
+        intensityScale *
+        (0.55 + fade) *
+        Math.sqrt(scale);
+      const color = colors[index % colors.length] ?? "#ffffff";
 
-  if (params.emoji) {
-    const fontSize = Math.max(18, radiusBase * (0.22 + corePulse * 0.06));
-    context.globalAlpha = clamp01(Math.sin(progress * Math.PI) * 1.2);
-    context.font = `${Math.round(fontSize)}px system-ui, sans-serif`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(params.emoji, centerX, centerY, box.width);
-  }
+      context.globalAlpha = Math.max(
+        0,
+        Math.min(1, fade * (0.7 + particleSeed * 0.3)),
+      );
+      context.fillStyle = color;
 
-  context.restore();
+      if (index % 4 === 0) {
+        drawSpark(context, x, y, size * 1.8, angle + progress * Math.PI);
+      } else {
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+
+    const corePulse = Math.sin(progress * Math.PI);
+    context.globalAlpha = 0.8 * corePulse;
+    context.fillStyle = colors[1] ?? "#ff7a18";
+    context.beginPath();
+    context.arc(
+      centerX,
+      centerY,
+      radiusBase * (0.05 + corePulse * 0.16 * scale),
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+
+    if (params.emoji) {
+      const fontSize = Math.max(18, radiusBase * (0.22 + corePulse * 0.06));
+      context.globalAlpha = clamp01(Math.sin(progress * Math.PI) * 1.2);
+      context.font = `${Math.round(fontSize)}px system-ui, sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(params.emoji, centerX, centerY, box.width);
+    }
+  });
 }
 
 function drawConfettiBurst(
@@ -4810,46 +5432,45 @@ function drawConfettiBurst(
   const startY = box.y + box.height * 0.18;
   const spread = box.width * (0.16 + progress * 0.52) * spreadAmount * scale;
 
-  context.save();
+  withSavedContext(context, () => {
+    for (let index = 0; index < count; index += 1) {
+      const rnd = seededRandom(seed + index * 109);
+      const angle = -Math.PI / 2 + (rnd - 0.5) * Math.PI * 1.45;
+      const speed = 0.35 + seededRandom(seed + index * 173) * 0.95;
+      const drift =
+        Math.sin(progress * Math.PI * 2 + index) * box.width * 0.018;
+      const x = centerX + Math.cos(angle) * spread * speed + drift;
+      const y =
+        startY +
+        Math.sin(angle) * box.height * 0.28 * progress * speed +
+        gravity * (0.86 + scale * 0.14) +
+        seededRandom(seed + index * 211) * box.height * 0.08;
+      const w = box.width * (0.01 + seededRandom(seed + index * 251) * 0.018);
+      const h = w * (0.45 + seededRandom(seed + index * 283) * 0.75);
 
-  for (let index = 0; index < count; index += 1) {
-    const rnd = seededRandom(seed + index * 109);
-    const angle = -Math.PI / 2 + (rnd - 0.5) * Math.PI * 1.45;
-    const speed = 0.35 + seededRandom(seed + index * 173) * 0.95;
-    const drift = Math.sin(progress * Math.PI * 2 + index) * box.width * 0.018;
-    const x = centerX + Math.cos(angle) * spread * speed + drift;
-    const y =
-      startY +
-      Math.sin(angle) * box.height * 0.28 * progress * speed +
-      gravity * (0.86 + scale * 0.14) +
-      seededRandom(seed + index * 211) * box.height * 0.08;
-    const w = box.width * (0.01 + seededRandom(seed + index * 251) * 0.018);
-    const h = w * (0.45 + seededRandom(seed + index * 283) * 0.75);
+      withSavedContext(context, () => {
+        context.globalAlpha *= fadeIn * fadeOut * (0.72 + rnd * 0.28);
+        context.fillStyle = colors[index % colors.length] ?? "#ffffff";
+        context.translate(x, y);
+        context.rotate(progress * Math.PI * 5 + rnd * Math.PI);
+        context.fillRect(-w / 2, -h / 2, w, h);
+      });
+    }
 
-    context.save();
-    context.globalAlpha *= fadeIn * fadeOut * (0.72 + rnd * 0.28);
-    context.fillStyle = colors[index % colors.length] ?? "#ffffff";
-    context.translate(x, y);
-    context.rotate(progress * Math.PI * 5 + rnd * Math.PI);
-    context.fillRect(-w / 2, -h / 2, w, h);
-    context.restore();
-  }
-
-  if (params.emoji) {
-    const pop = Math.sin(Math.min(1, progress * 1.25) * Math.PI);
-    context.globalAlpha *= fadeIn * fadeOut;
-    context.font = `${Math.round(Math.max(18, Math.min(box.width, box.height) * (0.14 + pop * 0.04)))}px system-ui, sans-serif`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(
-      params.emoji,
-      centerX,
-      box.y + box.height * 0.46,
-      box.width,
-    );
-  }
-
-  context.restore();
+    if (params.emoji) {
+      const pop = Math.sin(Math.min(1, progress * 1.25) * Math.PI);
+      context.globalAlpha *= fadeIn * fadeOut;
+      context.font = `${Math.round(Math.max(18, Math.min(box.width, box.height) * (0.14 + pop * 0.04)))}px system-ui, sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(
+        params.emoji,
+        centerX,
+        box.y + box.height * 0.46,
+        box.width,
+      );
+    }
+  });
 }
 
 function drawCloudPop(
@@ -4874,59 +5495,59 @@ function drawCloudPop(
   const centerY = box.y + box.height / 2;
   const base = Math.min(box.width, box.height);
 
-  context.save();
+  withSavedContext(context, () => {
+    for (let index = 0; index < puffCount + (textScope ? 4 : 0); index += 1) {
+      const rnd = seededRandom(seed + index * 137);
+      const totalPuffs = puffCount + (textScope ? 4 : 0);
+      const angle = (Math.PI * 2 * index) / totalPuffs + rnd * 0.55;
+      const orbit =
+        base *
+        ((textScope ? 0.18 : 0.22) + seededRandom(seed + index * 191) * 0.18) *
+        (0.62 + progress * 0.42) *
+        spread *
+        scale;
+      const x =
+        centerX +
+        Math.cos(angle) *
+          orbit *
+          (box.width / Math.max(1, base)) *
+          (textScope ? 1.08 : 1);
+      const y =
+        centerY +
+        Math.sin(angle) *
+          orbit *
+          (box.height / Math.max(1, base)) *
+          (textScope ? 0.58 : 1);
+      const radius =
+        base *
+        ((textScope ? 0.072 : 0.095) +
+          seededRandom(seed + index * 223) * 0.075) *
+        (0.7 + appear * 0.45) *
+        (0.9 + scale * 0.18 + softness * 0.28);
 
-  for (let index = 0; index < puffCount + (textScope ? 4 : 0); index += 1) {
-    const rnd = seededRandom(seed + index * 137);
-    const totalPuffs = puffCount + (textScope ? 4 : 0);
-    const angle = (Math.PI * 2 * index) / totalPuffs + rnd * 0.55;
-    const orbit =
-      base *
-      ((textScope ? 0.18 : 0.22) + seededRandom(seed + index * 191) * 0.18) *
-      (0.62 + progress * 0.42) *
-      spread *
-      scale;
-    const x =
-      centerX +
-      Math.cos(angle) *
-        orbit *
-        (box.width / Math.max(1, base)) *
-        (textScope ? 1.08 : 1);
-    const y =
-      centerY +
-      Math.sin(angle) *
-        orbit *
-        (box.height / Math.max(1, base)) *
-        (textScope ? 0.58 : 1);
-    const radius =
-      base *
-      ((textScope ? 0.072 : 0.095) + seededRandom(seed + index * 223) * 0.075) *
-      (0.7 + appear * 0.45) *
-      (0.9 + scale * 0.18 + softness * 0.28);
+      context.globalAlpha =
+        (0.42 + softness * 0.2) * fade * appear * (0.72 + rnd * 0.28);
+      context.fillStyle = colors[index % colors.length] ?? "#ffffff";
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
 
-    context.globalAlpha =
-      (0.42 + softness * 0.2) * fade * appear * (0.72 + rnd * 0.28);
-    context.fillStyle = colors[index % colors.length] ?? "#ffffff";
+    context.globalAlpha = (0.2 + softness * 0.22) * fade * appear;
+    context.strokeStyle = colors[1] ?? "#e0f2fe";
+    context.lineWidth = Math.max(2, base * (0.014 + softness * 0.018));
     context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fill();
-  }
-
-  context.globalAlpha = (0.2 + softness * 0.22) * fade * appear;
-  context.strokeStyle = colors[1] ?? "#e0f2fe";
-  context.lineWidth = Math.max(2, base * (0.014 + softness * 0.018));
-  context.beginPath();
-  context.ellipse(
-    centerX,
-    centerY,
-    box.width * (textScope ? 0.42 : 0.38) * scale,
-    box.height * (textScope ? 0.16 : 0.25) * scale,
-    0,
-    0,
-    Math.PI * 2,
-  );
-  context.stroke();
-  context.restore();
+    context.ellipse(
+      centerX,
+      centerY,
+      box.width * (textScope ? 0.42 : 0.38) * scale,
+      box.height * (textScope ? 0.16 : 0.25) * scale,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    context.stroke();
+  });
 }
 
 function drawSpeedLines(
@@ -4953,51 +5574,50 @@ function drawSpeedLines(
     (textScope ? 0.2 : 0.14) *
     (0.9 + spread * 0.1);
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  context.lineCap = "round";
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
+    context.lineCap = "round";
 
-  for (let index = 0; index < lineCount; index += 1) {
-    const rnd = seededRandom(seed + index * 157);
-    let angle = rnd * Math.PI * 2;
+    for (let index = 0; index < lineCount; index += 1) {
+      const rnd = seededRandom(seed + index * 157);
+      let angle = rnd * Math.PI * 2;
 
-    if (direction === "left") angle = Math.PI + (rnd - 0.5) * 0.75;
-    if (direction === "right") angle = (rnd - 0.5) * 0.75;
-    if (direction === "up") angle = -Math.PI / 2 + (rnd - 0.5) * 0.75;
-    if (direction === "down") angle = Math.PI / 2 + (rnd - 0.5) * 0.75;
-    if (direction === "diagonal") {
-      angle =
-        (index % 2 === 0 ? Math.PI / 4 : (Math.PI * 3) / 4) +
-        (rnd - 0.5) * 0.55;
+      if (direction === "left") angle = Math.PI + (rnd - 0.5) * 0.75;
+      if (direction === "right") angle = (rnd - 0.5) * 0.75;
+      if (direction === "up") angle = -Math.PI / 2 + (rnd - 0.5) * 0.75;
+      if (direction === "down") angle = Math.PI / 2 + (rnd - 0.5) * 0.75;
+      if (direction === "diagonal") {
+        angle =
+          (index % 2 === 0 ? Math.PI / 4 : (Math.PI * 3) / 4) +
+          (rnd - 0.5) * 0.55;
+      }
+
+      const phase = (progress + rnd) % 1;
+      const outer = maxRadius * (0.74 + phase * 0.36);
+      const inner =
+        direction === "out"
+          ? minRadius + outer * (0.42 + phase * 0.22)
+          : minRadius + outer * (0.12 + (1 - phase) * 0.18);
+      const alpha = Math.sin(phase * Math.PI) * 0.7;
+
+      context.globalAlpha = alpha;
+      context.strokeStyle = colors[index % colors.length] ?? "#ffffff";
+      context.lineWidth = Math.max(
+        2,
+        Math.min(box.width, box.height) * (0.006 + rnd * 0.006),
+      );
+      context.beginPath();
+      context.moveTo(
+        centerX + Math.cos(angle) * inner,
+        centerY + Math.sin(angle) * inner,
+      );
+      context.lineTo(
+        centerX + Math.cos(angle) * outer,
+        centerY + Math.sin(angle) * outer,
+      );
+      context.stroke();
     }
-
-    const phase = (progress + rnd) % 1;
-    const outer = maxRadius * (0.74 + phase * 0.36);
-    const inner =
-      direction === "out"
-        ? minRadius + outer * (0.42 + phase * 0.22)
-        : minRadius + outer * (0.12 + (1 - phase) * 0.18);
-    const alpha = Math.sin(phase * Math.PI) * 0.7;
-
-    context.globalAlpha = alpha;
-    context.strokeStyle = colors[index % colors.length] ?? "#ffffff";
-    context.lineWidth = Math.max(
-      2,
-      Math.min(box.width, box.height) * (0.006 + rnd * 0.006),
-    );
-    context.beginPath();
-    context.moveTo(
-      centerX + Math.cos(angle) * inner,
-      centerY + Math.sin(angle) * inner,
-    );
-    context.lineTo(
-      centerX + Math.cos(angle) * outer,
-      centerY + Math.sin(angle) * outer,
-    );
-    context.stroke();
-  }
-
-  context.restore();
+  });
 }
 
 function drawNeonAura(
@@ -5028,21 +5648,48 @@ function drawNeonAura(
   const insetX = textScope ? box.width * 0.08 : lineWidth * 0.4;
   const insetY = textScope ? box.height * 0.18 : lineWidth * 0.4;
 
-  context.save();
-  context.globalCompositeOperation = "lighter";
+  withSavedContext(context, () => {
+    context.globalCompositeOperation = "lighter";
 
-  for (let index = colors.length - 1; index >= 0; index -= 1) {
-    context.globalAlpha =
-      (0.1 + glow * 0.1 + pulse * 0.18) * (1 - index * 0.12);
-    context.strokeStyle = colors[index] ?? "#22d3ee";
-    context.lineWidth = lineWidth * (1 + index * (1.2 + glow * 0.8));
+    for (let index = colors.length - 1; index >= 0; index -= 1) {
+      context.globalAlpha =
+        (0.1 + glow * 0.1 + pulse * 0.18) * (1 - index * 0.12);
+      context.strokeStyle = colors[index] ?? "#22d3ee";
+      context.lineWidth = lineWidth * (1 + index * (1.2 + glow * 0.8));
+      if (textScope) {
+        context.beginPath();
+        context.ellipse(
+          box.x + box.width / 2,
+          box.y + box.height / 2,
+          Math.max(1, box.width / 2 - insetX + index * lineWidth * 0.36),
+          Math.max(1, box.height / 2 - insetY + index * lineWidth * 0.28),
+          0,
+          0,
+          Math.PI * 2,
+        );
+      } else {
+        roundedRect(
+          context,
+          box.x + insetX,
+          box.y + insetY,
+          Math.max(1, box.width - insetX * 2),
+          Math.max(1, box.height - insetY * 2),
+          radius,
+        );
+      }
+      context.stroke();
+    }
+
+    context.globalAlpha = 0.42 + glow * 0.2 + pulse * 0.35;
+    context.strokeStyle = colors[0] ?? "#22d3ee";
+    context.lineWidth = Math.max(2, lineWidth * 0.45);
     if (textScope) {
       context.beginPath();
       context.ellipse(
         box.x + box.width / 2,
         box.y + box.height / 2,
-        Math.max(1, box.width / 2 - insetX + index * lineWidth * 0.36),
-        Math.max(1, box.height / 2 - insetY + index * lineWidth * 0.28),
+        Math.max(1, box.width / 2 - insetX * 1.15),
+        Math.max(1, box.height / 2 - insetY * 1.15),
         0,
         0,
         Math.PI * 2,
@@ -5050,42 +5697,15 @@ function drawNeonAura(
     } else {
       roundedRect(
         context,
-        box.x + insetX,
-        box.y + insetY,
-        Math.max(1, box.width - insetX * 2),
-        Math.max(1, box.height - insetY * 2),
+        box.x + lineWidth * 0.65,
+        box.y + lineWidth * 0.65,
+        Math.max(1, box.width - lineWidth * 1.3),
+        Math.max(1, box.height - lineWidth * 1.3),
         radius,
       );
     }
     context.stroke();
-  }
-
-  context.globalAlpha = 0.42 + glow * 0.2 + pulse * 0.35;
-  context.strokeStyle = colors[0] ?? "#22d3ee";
-  context.lineWidth = Math.max(2, lineWidth * 0.45);
-  if (textScope) {
-    context.beginPath();
-    context.ellipse(
-      box.x + box.width / 2,
-      box.y + box.height / 2,
-      Math.max(1, box.width / 2 - insetX * 1.15),
-      Math.max(1, box.height / 2 - insetY * 1.15),
-      0,
-      0,
-      Math.PI * 2,
-    );
-  } else {
-    roundedRect(
-      context,
-      box.x + lineWidth * 0.65,
-      box.y + lineWidth * 0.65,
-      Math.max(1, box.width - lineWidth * 1.3),
-      Math.max(1, box.height - lineWidth * 1.3),
-      radius,
-    );
-  }
-  context.stroke();
-  context.restore();
+  });
 }
 
 function drawScribbleCircle(
@@ -5112,36 +5732,35 @@ function drawScribbleCircle(
   const radiusY = box.height * (textScope ? 0.24 : 0.34) * scale;
   const steps = Math.max(18, Math.round(96 * drawProgress));
 
-  context.save();
-  context.lineCap = "round";
-  context.lineJoin = "round";
+  withSavedContext(context, () => {
+    context.lineCap = "round";
+    context.lineJoin = "round";
 
-  for (let loop = 0; loop < loops; loop += 1) {
-    context.globalAlpha = 0.72 - loop * 0.1;
-    context.strokeStyle = colors[loop % colors.length] ?? "#facc15";
-    context.lineWidth = Math.max(1, strokeWidth * (1 - loop * 0.12));
-    context.beginPath();
+    for (let loop = 0; loop < loops; loop += 1) {
+      context.globalAlpha = 0.72 - loop * 0.1;
+      context.strokeStyle = colors[loop % colors.length] ?? "#facc15";
+      context.lineWidth = Math.max(1, strokeWidth * (1 - loop * 0.12));
+      context.beginPath();
 
-    for (let step = 0; step <= steps; step += 1) {
-      const t = (step / Math.max(1, steps)) * Math.PI * 2;
-      const noise = seededRandom(seed + loop * 503 + step * 19) - 0.5;
-      const wobbleOffset =
-        Math.sin(t * 3 + loop + progress * Math.PI * 2) * wobble +
-        noise * wobble;
-      const x = centerX + Math.cos(t) * radiusX * (1 + wobbleOffset * 0.08);
-      const y = centerY + Math.sin(t) * radiusY * (1 + wobbleOffset * 0.1);
+      for (let step = 0; step <= steps; step += 1) {
+        const t = (step / Math.max(1, steps)) * Math.PI * 2;
+        const noise = seededRandom(seed + loop * 503 + step * 19) - 0.5;
+        const wobbleOffset =
+          Math.sin(t * 3 + loop + progress * Math.PI * 2) * wobble +
+          noise * wobble;
+        const x = centerX + Math.cos(t) * radiusX * (1 + wobbleOffset * 0.08);
+        const y = centerY + Math.sin(t) * radiusY * (1 + wobbleOffset * 0.1);
 
-      if (step === 0) {
-        context.moveTo(x, y);
-      } else {
-        context.lineTo(x, y);
+        if (step === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
       }
+
+      context.stroke();
     }
-
-    context.stroke();
-  }
-
-  context.restore();
+  });
 }
 
 function nodeSafeId(value: string): string {
@@ -5155,21 +5774,21 @@ function drawSpark(
   radius: number,
   angle: number,
 ): void {
-  context.save();
-  context.translate(x, y);
-  context.rotate(angle);
-  context.beginPath();
-  context.moveTo(0, -radius);
-  context.lineTo(radius * 0.28, -radius * 0.28);
-  context.lineTo(radius, 0);
-  context.lineTo(radius * 0.28, radius * 0.28);
-  context.lineTo(0, radius);
-  context.lineTo(-radius * 0.28, radius * 0.28);
-  context.lineTo(-radius, 0);
-  context.lineTo(-radius * 0.28, -radius * 0.28);
-  context.closePath();
-  context.fill();
-  context.restore();
+  withSavedContext(context, () => {
+    context.translate(x, y);
+    context.rotate(angle);
+    context.beginPath();
+    context.moveTo(0, -radius);
+    context.lineTo(radius * 0.28, -radius * 0.28);
+    context.lineTo(radius, 0);
+    context.lineTo(radius * 0.28, radius * 0.28);
+    context.lineTo(0, radius);
+    context.lineTo(-radius * 0.28, radius * 0.28);
+    context.lineTo(-radius, 0);
+    context.lineTo(-radius * 0.28, -radius * 0.28);
+    context.closePath();
+    context.fill();
+  });
 }
 
 function hashString(value: string): number {
@@ -5230,43 +5849,43 @@ function drawMedia(
     natural,
   );
 
-  context.save();
-  // Explicit smoothing settings so scaled pixels are deliberate, not
-  // browser-default-dependent.
-  const pixelated = style.imageRendering === "pixelated";
-  context.imageSmoothingEnabled = !pixelated;
-  if (!pixelated) {
-    context.imageSmoothingQuality = "high";
-  }
+  withSavedContext(context, () => {
+    // Explicit smoothing settings so scaled pixels are deliberate, not
+    // browser-default-dependent.
+    const pixelated = style.imageRendering === "pixelated";
+    context.imageSmoothingEnabled = !pixelated;
+    if (!pixelated) {
+      context.imageSmoothingQuality = "high";
+    }
 
-  const radius = resolveCornerRadii(style, box);
+    const radius = resolveCornerRadii(style, box);
 
-  if (hasCornerRadius(radius)) {
-    roundedRect(context, box.x, box.y, box.width, box.height, radius);
-  } else {
-    context.beginPath();
-    context.rect(box.x, box.y, box.width, box.height);
-  }
+    if (hasCornerRadius(radius)) {
+      roundedRect(context, box.x, box.y, box.width, box.height, radius);
+    } else {
+      context.beginPath();
+      context.rect(box.x, box.y, box.width, box.height);
+    }
 
-  context.clip();
-  if (pixelated) {
-    drawPixelatedMedia(context, source, natural, {
-      x: box.x + fitted.x,
-      y: box.y + fitted.y,
-      width: fitted.width,
-      height: fitted.height,
-      pixelSize: Math.max(1, Math.round(style.pixelSize ?? 12)),
-    });
-  } else {
-    context.drawImage(
-      source,
-      box.x + fitted.x,
-      box.y + fitted.y,
-      fitted.width,
-      fitted.height,
-    );
-  }
-  context.restore();
+    context.clip();
+    if (pixelated) {
+      drawPixelatedMedia(context, source, natural, {
+        x: box.x + fitted.x,
+        y: box.y + fitted.y,
+        width: fitted.width,
+        height: fitted.height,
+        pixelSize: Math.max(1, Math.round(style.pixelSize ?? 12)),
+      });
+    } else {
+      context.drawImage(
+        source,
+        box.x + fitted.x,
+        box.y + fitted.y,
+        fitted.width,
+        fitted.height,
+      );
+    }
+  });
 }
 
 function drawPixelatedMedia(
@@ -5331,30 +5950,33 @@ function drawBackground(
   }
   const shadow = shadows.length === 1 ? shadows[0] : null;
 
-  if (shadow) {
+  const drawFill = () => {
+    context.fillStyle = parseFill(context, box, background);
+    const radius = resolveCornerRadii(style, box);
+
+    if (hasCornerRadius(radius)) {
+      roundedRect(context, box.x, box.y, box.width, box.height, radius);
+      context.fill();
+    } else {
+      context.fillRect(box.x, box.y, box.width, box.height);
+    }
+  };
+
+  if (!shadow) {
+    drawFill();
+    return;
+  }
+
+  withSavedContext(context, () => {
     // Canvas shadows emit from painted pixels, so the shadow rides the
     // background fill. A node with boxShadow but no background paints no
     // shadow — documented in scene-format.
-    context.save();
     context.shadowColor = shadow.color;
     context.shadowOffsetX = shadow.offsetX;
     context.shadowOffsetY = shadow.offsetY;
     context.shadowBlur = shadow.blur;
-  }
-
-  context.fillStyle = parseFill(context, box, background);
-  const radius = resolveCornerRadii(style, box);
-
-  if (hasCornerRadius(radius)) {
-    roundedRect(context, box.x, box.y, box.width, box.height, radius);
-    context.fill();
-  } else {
-    context.fillRect(box.x, box.y, box.width, box.height);
-  }
-
-  if (shadow) {
-    context.restore();
-  }
+    drawFill();
+  });
 }
 
 export type ParsedBoxShadow = {
@@ -5469,30 +6091,29 @@ function drawBorder(
   const radius = resolveCornerRadii(style, box);
   const inset = border.width / 2;
 
-  context.save();
-  context.strokeStyle = border.color;
-  context.lineWidth = border.width;
+  withSavedContext(context, () => {
+    context.strokeStyle = border.color;
+    context.lineWidth = border.width;
 
-  if (hasCornerRadius(radius)) {
-    roundedRect(
-      context,
-      box.x + inset,
-      box.y + inset,
-      box.width - border.width,
-      box.height - border.width,
-      insetCornerRadii(radius, inset),
-    );
-    context.stroke();
-  } else {
-    context.strokeRect(
-      box.x + inset,
-      box.y + inset,
-      box.width - border.width,
-      box.height - border.width,
-    );
-  }
-
-  context.restore();
+    if (hasCornerRadius(radius)) {
+      roundedRect(
+        context,
+        box.x + inset,
+        box.y + inset,
+        box.width - border.width,
+        box.height - border.width,
+        insetCornerRadii(radius, inset),
+      );
+      context.stroke();
+    } else {
+      context.strokeRect(
+        box.x + inset,
+        box.y + inset,
+        box.width - border.width,
+        box.height - border.width,
+      );
+    }
+  });
 }
 
 function resolveLineHeight(
@@ -5696,22 +6317,22 @@ function drawRichTextLines(
         });
       }
 
-      context.save();
-      context.globalAlpha *= runStyle.opacity ?? 1;
-      context.textAlign = "left";
-      context.fillStyle = runStyle.color ?? style.color ?? "#ffffff";
-      const runStroke = runStyle.textStroke
-        ? parseTextStroke(runStyle.textStroke, textLayout.fontSize)
-        : nodeStroke;
-      if (runStroke) {
-        context.lineWidth = runStroke.width;
-        context.strokeStyle = runStroke.color;
-        context.lineJoin = "round";
-        context.miterLimit = 2;
-        context.strokeText(segment.text, cursorX, y);
-      }
-      context.fillText(segment.text, cursorX, y);
-      context.restore();
+      withSavedContext(context, () => {
+        context.globalAlpha *= runStyle.opacity ?? 1;
+        context.textAlign = "left";
+        context.fillStyle = runStyle.color ?? style.color ?? "#ffffff";
+        const runStroke = runStyle.textStroke
+          ? parseTextStroke(runStyle.textStroke, textLayout.fontSize)
+          : nodeStroke;
+        if (runStroke) {
+          context.lineWidth = runStroke.width;
+          context.strokeStyle = runStroke.color;
+          context.lineJoin = "round";
+          context.miterLimit = 2;
+          context.strokeText(segment.text, cursorX, y);
+        }
+        context.fillText(segment.text, cursorX, y);
+      });
       cursorX += segmentWidth;
     }
   });
@@ -6057,33 +6678,32 @@ function drawTextBackground(
     color: string;
   },
 ): void {
-  context.save();
-  context.shadowColor = "transparent";
-  context.shadowBlur = 0;
-  context.shadowOffsetX = 0;
-  context.shadowOffsetY = 0;
-  context.fillStyle = background.color;
+  withSavedContext(context, () => {
+    context.shadowColor = "transparent";
+    context.shadowBlur = 0;
+    context.shadowOffsetX = 0;
+    context.shadowOffsetY = 0;
+    context.fillStyle = background.color;
 
-  if (background.radius > 0) {
-    roundedRect(
-      context,
-      background.x,
-      background.y,
-      background.width,
-      background.height,
-      background.radius,
-    );
-    context.fill();
-  } else {
-    context.fillRect(
-      background.x,
-      background.y,
-      background.width,
-      background.height,
-    );
-  }
-
-  context.restore();
+    if (background.radius > 0) {
+      roundedRect(
+        context,
+        background.x,
+        background.y,
+        background.width,
+        background.height,
+        background.radius,
+      );
+      context.fill();
+    } else {
+      context.fillRect(
+        background.x,
+        background.y,
+        background.width,
+        background.height,
+      );
+    }
+  });
 }
 
 function resolveCornerRadii(

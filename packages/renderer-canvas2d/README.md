@@ -87,6 +87,26 @@ environments. It combines reachable scene features with Canvas,
 image/video/audio decoder, font, current DOM-Lottie, and extension-registry
 requirements and returns typed issues without fetching media.
 
+### Reusable prepared runtime
+
+For iterative editors, import the MF5 adapter from the public runtime subpath:
+
+```ts
+import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
+
+const runtime = await createCanvas2DSceneRuntime({ scene });
+await runtime.renderFrame(0, canvas.getContext("2d"));
+await runtime.updateScene(nextScene, { expectedRevision: runtime.revision });
+await runtime.disposeAsync();
+```
+
+Unchanged decoded media is retained across `updateScene()`, while stale
+preparation cannot publish over a newer revision. Use
+`withCanvas2DResolvedAssets(runtime, callback)` only as a serialized bridge for
+existing player/export code; its assets are borrowed and must not escape the
+callback. The player and export packages provide lifetime-safe wrappers over
+that scope.
+
 ### Bounded media resolution
 
 `resolveAssets()` loads reachable assets only. HTTP audio/video uses bounded
@@ -116,6 +136,9 @@ Stable for 1.x integrations:
 - Deterministic `effect` node rendering and cached audio-spectrum analysis.
 - `preflightCanvas2D()` plus `Canvas2DPreflightResult` for runtime, Path2D, DOMMatrix, and extension capability checks.
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
+- The `@motionforge/renderer-canvas2d/runtime` entry point, including
+  `createCanvas2DSceneRuntime()`, `createCanvas2DRuntimeBackend()`, metrics
+  providers, and the serialized compatibility scope.
 - `AssetPolicy`, `MediaResourceBudget`, bounded font/audio-analysis caches,
   `assertResolvedAssetsCompatible()`, `estimateMediaResources()`,
   `collectReachableAssetIds()`, waveform/cache types, and resource usage

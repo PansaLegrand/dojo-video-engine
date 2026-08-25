@@ -4,9 +4,12 @@ import {
   type SceneAsset,
   type SceneNode,
 } from "@motionforge/schema";
+import {
+  resolveMediaMetrics,
+  type ResolvedMediaMetrics,
+} from "@motionforge/core";
 import type {
   InspectionBaseOptions,
-  MeasurementQuality,
   MediaMetricsProvider,
   TimelineInspection,
   TimelineInspectionNode,
@@ -157,6 +160,10 @@ function timelineSource(
         : 0;
   const rate = node.type === "audio" ? 1 : (node.playbackRate ?? 1);
   const sourceSpan = (row.activeWindow.duration / scene.fps) * rate;
+  const durationProvenance = measured.fieldMeasurements.durationSeconds ?? {
+    measurement: "estimated" as const,
+    reason: `${measured.reason}; intrinsic duration unavailable`,
+  };
   return {
     assetId: node.assetId,
     kind: node.type,
@@ -178,73 +185,17 @@ function timelineSource(
     ...(measured.durationSeconds !== undefined
       ? { intrinsicDuration: measured.durationSeconds }
       : {}),
-    measurement: measured.measurement,
-    reason: measured.reason,
+    ...(measured.frameRate !== undefined
+      ? { frameRate: structuredClone(measured.frameRate) }
+      : {}),
+    measurement: durationProvenance.measurement,
+    reason: durationProvenance.reason,
   };
 }
 
 export function mediaMetrics(
   asset: SceneAsset,
   provider?: MediaMetricsProvider,
-): {
-  width?: number;
-  height?: number;
-  durationSeconds?: number;
-  measurement: MeasurementQuality;
-  reason: string;
-} {
-  const supplied = provider?.measure(asset);
-  if (supplied) {
-    for (const [name, value] of [
-      ["width", supplied.width],
-      ["height", supplied.height],
-      ["durationSeconds", supplied.durationSeconds],
-    ] as const) {
-      if (value !== undefined && (!Number.isFinite(value) || value <= 0)) {
-        throw new TypeError(
-          `MediaMetricsProvider returned invalid ${name} for asset "${asset.id}".`,
-        );
-      }
-    }
-    const quality = supplied.measurement ?? "exact";
-    if (!["exact", "declared", "estimated"].includes(quality)) {
-      throw new TypeError(
-        `MediaMetricsProvider returned an invalid measurement label for asset "${asset.id}".`,
-      );
-    }
-    if (quality !== "exact" && !supplied.reason) {
-      throw new TypeError(
-        `MediaMetricsProvider must explain ${quality} metrics for asset "${asset.id}".`,
-      );
-    }
-    return {
-      ...(supplied.width !== undefined ? { width: supplied.width } : {}),
-      ...(supplied.height !== undefined ? { height: supplied.height } : {}),
-      ...(supplied.durationSeconds !== undefined
-        ? { durationSeconds: supplied.durationSeconds }
-        : {}),
-      measurement: quality,
-      reason: supplied.reason ?? "host media metrics provider",
-    };
-  }
-  const metadata = asset.metadata;
-  if (
-    metadata?.width !== undefined ||
-    metadata?.height !== undefined ||
-    metadata?.duration !== undefined
-  ) {
-    return {
-      ...(metadata.width !== undefined ? { width: metadata.width } : {}),
-      ...(metadata.height !== undefined ? { height: metadata.height } : {}),
-      ...(metadata.duration !== undefined
-        ? { durationSeconds: metadata.duration }
-        : {}),
-      measurement: "declared",
-      reason: "Scene asset metadata",
-    };
-  }
-  return {
-    measurement: "estimated",
-    reason: "intrinsic media metrics unavailable",
-  };
+): ResolvedMediaMetrics {
+  return resolveMediaMetrics(asset, provider);
 }

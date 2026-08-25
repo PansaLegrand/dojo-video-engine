@@ -1211,6 +1211,638 @@ export type LayoutScene = Omit<ResolvedScene, "nodes"> & {
   boxes: LayoutBox[];
 };
 
+/** Provenance attached to renderer-neutral intrinsic measurements. */
+export type MeasurementQuality = "exact" | "declared" | "estimated";
+
+export type MeasurementProvenance = {
+  measurement: MeasurementQuality;
+  /** Required for declared/estimated values; optional exact reasons are normalized. */
+  reason?: string;
+};
+
+export type ResolvedMeasurementProvenance = {
+  measurement: MeasurementQuality;
+  reason: string;
+};
+
+export type TextLineMetricsInput = {
+  nodeId: string;
+  text: string;
+  style: SceneStyle;
+  fontSize: number;
+};
+
+export type TextMetricField = "width" | "ascent" | "descent";
+
+/**
+ * Synchronous text metrics supplied after fonts are prepared. The legacy
+ * aggregate measurement/reason fields remain supported; fieldMeasurements
+ * lets a provider qualify width and vertical metrics independently.
+ */
+export type TextLineMetrics = {
+  width: number;
+  ascent?: number;
+  descent?: number;
+  measurement?: MeasurementQuality;
+  reason?: string;
+  fieldMeasurements?: Partial<Record<TextMetricField, MeasurementProvenance>>;
+};
+
+export interface TextMetricsProvider {
+  measureLine(input: TextLineMetricsInput): TextLineMetrics;
+}
+
+export type ResolvedTextLineMetrics = Omit<
+  TextLineMetrics,
+  "measurement" | "reason" | "fieldMeasurements"
+> & {
+  measurement: MeasurementQuality;
+  reason: string;
+  fieldMeasurements: {
+    width: ResolvedMeasurementProvenance;
+    ascent?: ResolvedMeasurementProvenance;
+    descent?: ResolvedMeasurementProvenance;
+  };
+};
+
+export type MediaMetricField =
+  | "width"
+  | "height"
+  | "durationSeconds"
+  | "frameRate";
+
+/**
+ * Intrinsic technical media metrics. Providers are synchronous views over
+ * already-prepared resources; they must never fetch or decode on demand.
+ */
+export type MediaMetrics = {
+  width?: number;
+  height?: number;
+  durationSeconds?: number;
+  frameRate?: { numerator: number; denominator: number };
+  measurement?: MeasurementQuality;
+  reason?: string;
+  fieldMeasurements?: Partial<Record<MediaMetricField, MeasurementProvenance>>;
+};
+
+export interface MediaMetricsProvider {
+  measure(asset: SceneAsset): MediaMetrics | undefined;
+}
+
+export type ResolvedMediaMetrics = Omit<
+  MediaMetrics,
+  "measurement" | "reason" | "fieldMeasurements"
+> & {
+  measurement: MeasurementQuality;
+  reason: string;
+  fieldMeasurements: Partial<
+    Record<MediaMetricField, ResolvedMeasurementProvenance>
+  >;
+};
+
+const measurementRank: Record<MeasurementQuality, number> = {
+  exact: 0,
+  declared: 1,
+  estimated: 2,
+};
+
+export function worstMeasurementQuality(
+  ...qualities: MeasurementQuality[]
+): MeasurementQuality {
+  qualities.forEach(validateMeasurementQuality);
+  return qualities.reduce<MeasurementQuality>(
+    (worst, quality) =>
+      measurementRank[quality] > measurementRank[worst] ? quality : worst,
+    "exact",
+  );
+}
+
+/** Validates and normalizes one provider result or the portable heuristic. */
+export function resolveTextLineMetrics(
+  input: TextLineMetricsInput,
+  provider?: TextMetricsProvider,
+): ResolvedTextLineMetrics {
+  validateTextMetricsInput(input);
+  const supplied = provider?.measureLine(frozenMetricClone(input));
+  if (supplied === undefined) {
+    const reason = "portable average-glyph heuristic";
+    const provenance: ResolvedMeasurementProvenance = {
+      measurement: "estimated",
+      reason,
+    };
+    return {
+      width: input.text.length * input.fontSize * 0.58,
+      ascent: input.fontSize * 0.8,
+      descent: input.fontSize * 0.2,
+      measurement: "estimated",
+      reason,
+      fieldMeasurements: {
+        width: { ...provenance },
+        ascent: { ...provenance },
+        descent: { ...provenance },
+      },
+    };
+  }
+  return normalizeProviderTextMetrics(input, supplied);
+}
+
+function validateTextMetricsInput(input: TextLineMetricsInput): void {
+  if (!Number.isFinite(input.fontSize) || input.fontSize < 0) {
+    throw new TypeError(
+      `Text metrics fontSize must be finite and non-negative for node ${JSON.stringify(input.nodeId)}.`,
+    );
+  }
+}
+
+/**
+ * Merges exact prepared metrics with declared Scene metadata field-by-field.
+ * A partial provider therefore cannot hide a declared duration or frame rate.
+ */
+export function resolveMediaMetrics(
+  asset: SceneAsset,
+  provider?: MediaMetricsProvider,
+): ResolvedMediaMetrics {
+  const supplied = provider?.measure(frozenMetricClone(asset));
+  const normalized = supplied
+    ? normalizeProviderMediaMetrics(asset, supplied)
+    : undefined;
+  const fields: ResolvedMediaMetrics["fieldMeasurements"] = {
+    ...(normalized?.fieldMeasurements ?? {}),
+  };
+  const result: ResolvedMediaMetrics = {
+    ...(normalized?.width !== undefined ? { width: normalized.width } : {}),
+    ...(normalized?.height !== undefined ? { height: normalized.height } : {}),
+    ...(normalized?.durationSeconds !== undefined
+      ? { durationSeconds: normalized.durationSeconds }
+      : {}),
+    ...(normalized?.frameRate !== undefined
+      ? { frameRate: cloneMetricValue(normalized.frameRate) }
+      : {}),
+    measurement: "estimated",
+    reason: "intrinsic media metrics unavailable",
+    fieldMeasurements: fields,
+  };
+  const declared = asset.metadata;
+  const addDeclared = <K extends MediaMetricField>(
+    key: K,
+    value: ResolvedMediaMetrics[K] | undefined,
+  ): void => {
+    if (value === undefined) return;
+    const current = fields[key];
+    if (
+      result[key] !== undefined &&
+      current !== undefined &&
+      current.measurement !== "estimated"
+    ) {
+      return;
+    }
+    (result as Record<string, unknown>)[key] = cloneMetricValue(value);
+    fields[key] = {
+      measurement: "declared",
+      reason: "Scene asset metadata",
+    };
+  };
+  addDeclared("width", declared?.width);
+  addDeclared("height", declared?.height);
+  addDeclared("durationSeconds", declared?.duration);
+  addDeclared("frameRate", declared?.frameRate);
+  const provenance = Object.values(fields);
+  if (provenance.length > 0) {
+    result.measurement = worstMeasurementQuality(
+      ...provenance.map((entry) => entry.measurement),
+    );
+    result.reason = joinedMeasurementReasons(provenance, result.measurement);
+  }
+  return result;
+}
+
+function normalizeProviderTextMetrics(
+  input: TextLineMetricsInput,
+  supplied: TextLineMetrics,
+): ResolvedTextLineMetrics {
+  if (typeof supplied.width !== "number") {
+    throw new TypeError(
+      `TextMetricsProvider returned invalid width for node ${JSON.stringify(input.nodeId)}.`,
+    );
+  }
+  const aggregate = normalizeProviderProvenance(
+    supplied.measurement,
+    supplied.reason,
+    "host text metrics provider",
+  );
+  const fields = validateFieldMeasurementKeys(
+    supplied.fieldMeasurements,
+    ["width", "ascent", "descent"],
+    "TextMetricsProvider",
+  );
+  for (const [name, value] of [
+    ["width", supplied.width],
+    ["ascent", supplied.ascent],
+    ["descent", supplied.descent],
+  ] as const) {
+    if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+      throw new TypeError(
+        `TextMetricsProvider returned invalid ${name} for node ${JSON.stringify(input.nodeId)}.`,
+      );
+    }
+  }
+  const fieldMeasurements: ResolvedTextLineMetrics["fieldMeasurements"] = {
+    width: normalizeFieldProvenance(
+      fields.width,
+      aggregate,
+      `TextMetricsProvider width for node ${JSON.stringify(input.nodeId)}`,
+    ),
+  };
+  if (supplied.ascent !== undefined) {
+    fieldMeasurements.ascent = normalizeFieldProvenance(
+      fields.ascent,
+      aggregate,
+      `TextMetricsProvider ascent for node ${JSON.stringify(input.nodeId)}`,
+    );
+  } else if (fields.ascent) {
+    throw new TypeError(
+      `TextMetricsProvider supplied ascent provenance without an ascent value for node ${JSON.stringify(input.nodeId)}.`,
+    );
+  }
+  if (supplied.descent !== undefined) {
+    fieldMeasurements.descent = normalizeFieldProvenance(
+      fields.descent,
+      aggregate,
+      `TextMetricsProvider descent for node ${JSON.stringify(input.nodeId)}`,
+    );
+  } else if (fields.descent) {
+    throw new TypeError(
+      `TextMetricsProvider supplied descent provenance without a descent value for node ${JSON.stringify(input.nodeId)}.`,
+    );
+  }
+  const provenance = Object.values(fieldMeasurements);
+  const measurement = worstMeasurementQuality(
+    ...provenance.map((entry) => entry.measurement),
+  );
+  return {
+    width: supplied.width,
+    ...(supplied.ascent !== undefined ? { ascent: supplied.ascent } : {}),
+    ...(supplied.descent !== undefined ? { descent: supplied.descent } : {}),
+    measurement,
+    reason: joinedMeasurementReasons(provenance, measurement),
+    fieldMeasurements,
+  };
+}
+
+function normalizeProviderMediaMetrics(
+  asset: SceneAsset,
+  supplied: MediaMetrics,
+): ResolvedMediaMetrics {
+  const aggregate = normalizeProviderProvenance(
+    supplied.measurement,
+    supplied.reason,
+    "host media metrics provider",
+  );
+  const providedFields = validateFieldMeasurementKeys(
+    supplied.fieldMeasurements,
+    ["width", "height", "durationSeconds", "frameRate"],
+    "MediaMetricsProvider",
+  );
+  for (const [name, value] of [
+    ["width", supplied.width],
+    ["height", supplied.height],
+    ["durationSeconds", supplied.durationSeconds],
+  ] as const) {
+    if (value !== undefined && (!Number.isFinite(value) || value <= 0)) {
+      throw new TypeError(
+        `MediaMetricsProvider returned invalid ${name} for asset ${JSON.stringify(asset.id)}.`,
+      );
+    }
+  }
+  if (supplied.frameRate !== undefined) {
+    validateFrameRate(supplied.frameRate, asset.id, "MediaMetricsProvider");
+  }
+  const result: ResolvedMediaMetrics = {
+    ...(supplied.width !== undefined ? { width: supplied.width } : {}),
+    ...(supplied.height !== undefined ? { height: supplied.height } : {}),
+    ...(supplied.durationSeconds !== undefined
+      ? { durationSeconds: supplied.durationSeconds }
+      : {}),
+    ...(supplied.frameRate !== undefined
+      ? { frameRate: cloneMetricValue(supplied.frameRate) }
+      : {}),
+    measurement: "estimated",
+    reason: "intrinsic media metrics unavailable",
+    fieldMeasurements: {},
+  };
+  for (const key of [
+    "width",
+    "height",
+    "durationSeconds",
+    "frameRate",
+  ] as const) {
+    if (result[key] !== undefined) {
+      result.fieldMeasurements[key] = normalizeFieldProvenance(
+        providedFields[key],
+        aggregate,
+        `MediaMetricsProvider ${key} for asset ${JSON.stringify(asset.id)}`,
+      );
+    } else if (providedFields[key]) {
+      throw new TypeError(
+        `MediaMetricsProvider supplied ${key} provenance without a ${key} value for asset ${JSON.stringify(asset.id)}.`,
+      );
+    }
+  }
+  const provenance = Object.values(result.fieldMeasurements);
+  if (provenance.length > 0) {
+    result.measurement = worstMeasurementQuality(
+      ...provenance.map((entry) => entry.measurement),
+    );
+    result.reason = joinedMeasurementReasons(provenance, result.measurement);
+  }
+  return result;
+}
+
+function normalizeProviderProvenance(
+  measurement: MeasurementQuality | undefined,
+  reason: string | undefined,
+  fallbackReason: string,
+): ResolvedMeasurementProvenance {
+  const quality = measurement ?? "exact";
+  validateMeasurementQuality(quality);
+  const normalizedReason =
+    typeof reason === "string" && reason.trim() !== "" ? reason : undefined;
+  if (quality !== "exact" && !normalizedReason) {
+    throw new TypeError(
+      `Metrics provider must explain ${quality} measurements.`,
+    );
+  }
+  return { measurement: quality, reason: normalizedReason ?? fallbackReason };
+}
+
+function normalizeFieldProvenance(
+  field: MeasurementProvenance | undefined,
+  aggregate: ResolvedMeasurementProvenance,
+  fallbackReason: string,
+): ResolvedMeasurementProvenance {
+  if (!field) return { ...aggregate };
+  validateMeasurementQuality(field.measurement);
+  const fieldReason =
+    typeof field.reason === "string" && field.reason.trim() !== ""
+      ? field.reason
+      : undefined;
+  const reason =
+    fieldReason ??
+    (field.measurement === aggregate.measurement
+      ? aggregate.reason
+      : undefined);
+  if (field.measurement !== "exact" && !reason) {
+    throw new TypeError(
+      `Metrics provider must explain ${field.measurement} field measurements.`,
+    );
+  }
+  return {
+    measurement: field.measurement,
+    reason: reason ?? fallbackReason,
+  };
+}
+
+function validateMeasurementQuality(
+  value: unknown,
+): asserts value is MeasurementQuality {
+  if (value !== "exact" && value !== "declared" && value !== "estimated") {
+    throw new TypeError(
+      `Metrics provider returned invalid measurement label ${JSON.stringify(value)}.`,
+    );
+  }
+}
+
+function validateFieldMeasurementKeys<K extends string>(
+  value: Partial<Record<K, MeasurementProvenance>> | undefined,
+  allowed: readonly K[],
+  provider: string,
+): Partial<Record<K, MeasurementProvenance>> {
+  if (!value) return {};
+  const allowedSet = new Set<string>(allowed);
+  for (const key of Object.keys(value)) {
+    if (!allowedSet.has(key)) {
+      throw new TypeError(
+        `${provider} returned unknown field provenance ${JSON.stringify(key)}.`,
+      );
+    }
+  }
+  return value;
+}
+
+function joinedMeasurementReasons(
+  provenance: ResolvedMeasurementProvenance[],
+  quality: MeasurementQuality,
+): string {
+  return Array.from(
+    new Set(
+      provenance
+        .filter((entry) => entry.measurement === quality)
+        .map((entry) => entry.reason),
+    ),
+  ).join("; ");
+}
+
+function validateFrameRate(
+  value: { numerator: number; denominator: number },
+  assetId: string,
+  provider: string,
+): void {
+  if (
+    !Number.isInteger(value.numerator) ||
+    value.numerator <= 0 ||
+    !Number.isInteger(value.denominator) ||
+    value.denominator <= 0
+  ) {
+    throw new TypeError(
+      `${provider} returned invalid frameRate for asset ${JSON.stringify(assetId)}.`,
+    );
+  }
+}
+
+export type MetricsProviderCacheOptions = { maxEntries?: number };
+export type MetricsProviderCacheStats = {
+  entries: number;
+  maxEntries: number;
+  hits: number;
+  misses: number;
+};
+
+export type BoundedTextMetricsProvider = TextMetricsProvider & {
+  clearCache(): void;
+  cacheStats(): MetricsProviderCacheStats;
+};
+
+export type BoundedMediaMetricsProvider = MediaMetricsProvider & {
+  clearCache(): void;
+  cacheStats(): MetricsProviderCacheStats;
+};
+
+/** Bounded LRU wrapper. One wrapper owns one provider, preventing cache bleed. */
+export function createBoundedTextMetricsProvider(
+  provider: TextMetricsProvider,
+  options: MetricsProviderCacheOptions = {},
+): BoundedTextMetricsProvider {
+  const cache = new MetricsLru<TextLineMetrics>(
+    checkedMetricsCacheSize(options.maxEntries, 2048),
+  );
+  return {
+    measureLine(input) {
+      validateTextMetricsInput(input);
+      const key = stableMetricKey(input);
+      if (key.length > 65_536) {
+        const supplied = provider.measureLine(frozenMetricClone(input));
+        return cloneMetricValue(
+          supplied === undefined
+            ? resolveTextLineMetrics(input)
+            : normalizeProviderTextMetrics(input, supplied),
+        );
+      }
+      const cached = cache.get(key);
+      if (cached.hit) return cloneMetricValue(cached.value);
+      const supplied = provider.measureLine(frozenMetricClone(input));
+      const value =
+        supplied === undefined
+          ? resolveTextLineMetrics(input)
+          : normalizeProviderTextMetrics(input, supplied);
+      cache.set(key, value);
+      return cloneMetricValue(value);
+    },
+    clearCache: () => cache.clear(),
+    cacheStats: () => cache.stats(),
+  };
+}
+
+/** Bounded LRU wrapper keyed by the complete asset declaration. */
+export function createBoundedMediaMetricsProvider(
+  provider: MediaMetricsProvider,
+  options: MetricsProviderCacheOptions = {},
+): BoundedMediaMetricsProvider {
+  const cache = new MetricsLru<MediaMetrics | undefined>(
+    checkedMetricsCacheSize(options.maxEntries, 512),
+  );
+  return {
+    measure(asset) {
+      const key = stableMetricKey(asset);
+      if (key.length > 65_536) {
+        const supplied = provider.measure(frozenMetricClone(asset));
+        return cloneMetricValue(
+          supplied ? normalizeProviderMediaMetrics(asset, supplied) : undefined,
+        );
+      }
+      const cached = cache.get(key);
+      if (cached.hit) return cloneMetricValue(cached.value);
+      const supplied = provider.measure(frozenMetricClone(asset));
+      const value = supplied
+        ? normalizeProviderMediaMetrics(asset, supplied)
+        : undefined;
+      cache.set(key, value);
+      return cloneMetricValue(value);
+    },
+    clearCache: () => cache.clear(),
+    cacheStats: () => cache.stats(),
+  };
+}
+
+class MetricsLru<T> {
+  private readonly values = new Map<string, T>();
+  private hits = 0;
+  private misses = 0;
+
+  constructor(private readonly maxEntries: number) {}
+
+  get(key: string): { hit: true; value: T } | { hit: false } {
+    if (!this.values.has(key)) {
+      this.misses += 1;
+      return { hit: false };
+    }
+    const value = this.values.get(key) as T;
+    this.values.delete(key);
+    this.values.set(key, value);
+    this.hits += 1;
+    return { hit: true, value };
+  }
+
+  set(key: string, value: T): void {
+    this.values.delete(key);
+    this.values.set(key, cloneMetricValue(value));
+    while (this.values.size > this.maxEntries) {
+      const oldest = this.values.keys().next().value as string | undefined;
+      if (oldest === undefined) break;
+      this.values.delete(oldest);
+    }
+  }
+
+  clear(): void {
+    this.values.clear();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  stats(): MetricsProviderCacheStats {
+    return {
+      entries: this.values.size,
+      maxEntries: this.maxEntries,
+      hits: this.hits,
+      misses: this.misses,
+    };
+  }
+}
+
+function checkedMetricsCacheSize(
+  value: number | undefined,
+  fallback: number,
+): number {
+  const size = value ?? fallback;
+  if (!Number.isInteger(size) || size < 1 || size > 100_000) {
+    throw new RangeError(
+      "Metrics cache maxEntries must be an integer from 1 through 100000.",
+    );
+  }
+  return size;
+}
+
+function stableMetricKey(value: unknown): string {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (typeof value === "string") return `string:${JSON.stringify(value)}`;
+  if (typeof value === "number") return `number:${JSON.stringify(value)}`;
+  if (typeof value === "boolean") return `boolean:${String(value)}`;
+  if (typeof value !== "object") {
+    throw new TypeError(
+      "Metrics cache keys must contain JSON-compatible values.",
+    );
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableMetricKey).join(",")}]`;
+  }
+  return `{${Object.keys(value as Record<string, unknown>)
+    .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(
+      (key) =>
+        `${JSON.stringify(key)}:${stableMetricKey((value as Record<string, unknown>)[key])}`,
+    )
+    .join(",")}}`;
+}
+
+function cloneMetricValue<T>(value: T): T {
+  return value === undefined ? value : structuredClone(value);
+}
+
+function frozenMetricClone<T>(value: T): T {
+  return deepFreezeMetricValue(structuredClone(value));
+}
+
+function deepFreezeMetricValue<T>(value: T): T {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value)) {
+    return value;
+  }
+  Object.freeze(value);
+  for (const child of Object.values(value as Record<string, unknown>)) {
+    deepFreezeMetricValue(child);
+  }
+  return value;
+}
+
 /**
  * Measures the width of a single already-broken line of text. `fontSize` is
  * pre-resolved by layout; implementations must honor it plus the style's
@@ -1230,6 +1862,8 @@ export type LayoutOptions = {
    * back to a character-count heuristic that over/under-estimates by font.
    */
   measureTextLine?: MeasureTextLine;
+  /** Shared provider; legacy measureTextLine takes precedence when both exist. */
+  textMetrics?: TextMetricsProvider;
 };
 
 /**
@@ -1487,7 +2121,15 @@ export function layoutScene(
   options: LayoutOptions = {},
 ): LayoutScene {
   const root = { x: 0, y: 0, width: scene.width, height: scene.height };
-  const measure = options.measureTextLine ?? heuristicMeasureTextLine;
+  const measure =
+    options.measureTextLine ??
+    (options.textMetrics
+      ? (line: string, style: SceneStyle, fontSize: number, nodeId?: string) =>
+          resolveTextLineMetrics(
+            { nodeId: nodeId ?? "__unknown__", text: line, style, fontSize },
+            options.textMetrics,
+          ).width
+      : heuristicMeasureTextLine);
 
   return {
     ...scene,

@@ -24,6 +24,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
     }
   },
   "files": [
@@ -47,6 +51,7 @@
   "dependencies": {
     "@motionforge/core": "workspace:*",
     "@motionforge/extensions": "workspace:*",
+    "@motionforge/runtime": "workspace:*",
     "@motionforge/schema": "workspace:*",
     "mediabunny": "^1.46.0"
   },

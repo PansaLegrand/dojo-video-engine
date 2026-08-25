@@ -10,6 +10,7 @@
   "references": [
     { "path": "../schema" },
     { "path": "../core" },
-    { "path": "../extensions" }
+    { "path": "../extensions" },
+    { "path": "../runtime" }
   ]
 }

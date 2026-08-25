@@ -1,8 +1,8 @@
 # MotionForge Post-1.0 Engine Platform Roadmap
 
 Date: 2026-08-25  
-Last reviewed: 2026-08-25  
-Status: active implementation contract; MF0 through MF4 complete
+Last reviewed: 2026-08-26
+Status: active implementation contract; MF0 through MF5 complete
 
 ## Purpose
 
@@ -742,3 +742,23 @@ than the engine priority.
   browsers, 10 E2E checks, and performance at or below 6.41 ms/frame and 28 MiB
   heap. All 13 policy-derived public packages passed dry-run packing, and the
   packed clean-install starter passed validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF5 complete: added the renderer-neutral
+  `@motionforge/runtime` prepared-session package and the public
+  `@motionforge/renderer-canvas2d/runtime` backend. Revisioned latest-intent
+  updates are transactional; stale preparation cannot publish; native and
+  explicitly keyed extension resources retain final-owner leases across
+  unrelated edits; replacement, rollback, cancellation, artifact-sink, and
+  asynchronous cleanup races have stable portable errors/events. Core,
+  inspection, and Canvas now share defensive intrinsic text/media metrics with
+  field-level exact/declared/estimated provenance. Player and export facades
+  borrow one exact prepared revision for their full lifetime/operation without
+  taking resource ownership. The pinned Chromium gate proved 20,480 RGBA bytes
+  exact across legacy/runtime/player/export paths, including opaque-to-
+  transparent replacement under poisoned caller state, and 19,200 mixed
+  Float32 samples bit-exact. The final full gate passed 864 unit tests,
+  750-scene/2,250-frame fuzzing, the 28-scene corpus, seven long-resource
+  checks, all existing and new pixel/media/audio/tool goldens, Chromium/
+  Firefox/WebKit, all 10 E2E checks, and performance at or below 6.22 ms/frame
+  and 30 MiB heap. All 14 policy-derived public packages passed dry-run
+  packing. The packed clean-install starter imported and executed both runtime
+  entry points, then passed validate/migrate/inspect/lint/build.

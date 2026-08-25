@@ -17,7 +17,7 @@ Testing is part of the design, not a cleanup phase. Each engine slice should lan
 
 - `pnpm release:fast`: run before merging core changes. It runs typecheck, unit tests, determinism lint, builds, and built CLI/create-project smokes.
 - `pnpm release:full`: run before tagging or publishing. It runs the fast gate plus long-scene resource smoke, browser goldens, playground E2E, and `npm pack --dry-run` for every publishable package.
-- `pnpm verify:clean`: pack publishable packages, install a generated starter in a temp directory, and run the starter's `validate`, `inspect`, and `build` scripts outside the monorepo.
+- `pnpm verify:clean`: pack publishable packages, install a generated starter in a temp directory, import and execute the packed runtime/Canvas runtime entry points, and run the starter's `validate`, `inspect`, and `build` scripts outside the monorepo.
 - `pnpm fuzz:scene`, `pnpm corpus:check`, `pnpm cross-browser`, `pnpm performance:gate`, and `pnpm agent:gate` are mandatory parts of the 1.0 full gate.
 
 The gate script lives at `scripts/release-gate.mjs`; clean-machine verification lives at `scripts/verify-clean-machine.mjs`. When a command fails, the scripts print the exact command and let the underlying tool output stay visible.
@@ -46,6 +46,7 @@ The gate script lives at `scripts/release-gate.mjs`; clean-machine verification 
 | Video soundtrack      | Video node's embedded audio reaches export with correct timing and volume                                                                         | Browser encode/decode RMS assertion | `pnpm golden:test`    |
 | Audio automation      | `volumeEnvelope` starts quiet and reaches full level in exported MP4                                                                              | Browser encode/decode RMS assertion | `pnpm golden:test`    |
 | Audio looping         | `loop: true` continues a 1s WAV beyond its source end in exported MP4                                                                             | Browser encode/decode RMS assertion | `pnpm golden:test`    |
+| Prepared runtime      | Legacy/runtime exact RGBA, transparent-frame replacement, borrowed player/export assets, and exact audio mix parity                               | Browser pixel/PCM assertion         | `pnpm golden:test`    |
 | Resource smoke        | 10-minute chunk/preview ranges, reachable assets, budgets, loop splitting, envelope offsets, 1,000-node layout                                    | Node smoke assertion                | `pnpm resource:smoke` |
 | Playground workflow   | Real UI paints, plays, seeks, patches, loads audio and Lottie scenes, and stays console-clean                                                     | Playwright UI smoke                 | `pnpm e2e`            |
 
@@ -65,6 +66,7 @@ Exact hash fixtures store both JSON snapshots and PNG baselines under `fixtures/
 - Layout changes need at least one geometric assertion.
 - Animation changes need deterministic numeric assertions.
 - Renderer changes need either a unit-level contract test or a golden/probe fixture.
+- Runtime changes need transactional race/disposal tests; renderer adapters additionally need prepared-vs-legacy frame/audio parity and packed-entry-point coverage.
 - Extension changes need registry/preflight unit coverage and a renderer golden for pixel-visible adapters.
 - Export changes need capability/failure-path tests plus a browser encode/decode assertion when the behavior depends on WebCodecs, media decoding, muxing, or AAC output.
 - Preset and authoring helpers should test emitted scene data, then rely on golden/showcase coverage for renderer-visible behavior.

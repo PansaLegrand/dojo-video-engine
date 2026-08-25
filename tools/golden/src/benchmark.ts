@@ -33,6 +33,11 @@ const server = await createServer({
         rootDir,
         "packages/schema/src/values.ts",
       ),
+      "@motionforge/renderer-canvas2d/runtime": resolve(
+        rootDir,
+        "packages/renderer-canvas2d/src/runtime.ts",
+      ),
+      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
       ...Object.fromEntries(
         [
           "agent-tools",
@@ -42,6 +47,7 @@ const server = await createServer({
           "showcase",
           "renderer-canvas2d",
           "export",
+          "player",
         ].map((name) => [
           `@motionforge/${name}`,
           resolve(rootDir, `packages/${name}/src/index.ts`),

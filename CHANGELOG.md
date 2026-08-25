@@ -108,6 +108,22 @@ starter packages.
 - Release packing now derives from the public package ownership policy, so a
   newly classified package cannot be omitted from full or clean-install gates.
 
+### Reusable prepared Scene runtime
+
+- Added `@motionforge/runtime` with revisioned prepared sessions, backend
+  preflight/capabilities, transactional incremental updates, latest-intent
+  cancellation, opaque frame tokens, portable phase events/errors, artifact
+  sinks, and asynchronous idempotent disposal.
+- Canvas2D now retains unchanged native and explicitly reusable extension
+  resources across Scene edits, rolls provisional leases back on failure, and
+  disposes replaced resources after their final owner releases them.
+- Added shared text/media intrinsic-metrics providers with per-field
+  exact/declared/estimated provenance, defensive provider inputs, and bounded
+  caches consumed by layout, inspection, and the prepared Canvas backend.
+- Added `@motionforge/renderer-canvas2d/runtime`, safe player/export borrowing
+  facades, headless Canvas factories, neutral target compositing, strict
+  portable progress metadata, and packed external entry-point verification.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

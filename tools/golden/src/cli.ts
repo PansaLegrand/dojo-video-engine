@@ -64,11 +64,20 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/showcase/src/index.ts",
         ),
+        "@motionforge/renderer-canvas2d/runtime": resolve(
+          rootDir,
+          "packages/renderer-canvas2d/src/runtime.ts",
+        ),
         "@motionforge/renderer-canvas2d": resolve(
           rootDir,
           "packages/renderer-canvas2d/src/index.ts",
         ),
+        "@motionforge/runtime": resolve(
+          rootDir,
+          "packages/runtime/src/index.ts",
+        ),
         "@motionforge/export": resolve(rootDir, "packages/export/src/index.ts"),
+        "@motionforge/player": resolve(rootDir, "packages/player/src/index.ts"),
       },
     },
     server: {
@@ -144,6 +153,7 @@ async function run(currentMode: GoldenMode): Promise<void> {
     failures.push(...(await runExportSmokeTest(page)));
     failures.push(...(await runVideoChecks(page)));
     failures.push(...(await runAudioChecks(page)));
+    failures.push(...(await runRuntimeParityChecks(page)));
     failures.push(...(await runAgentToolChecks(page)));
 
     if (failures.length > 0) {
@@ -266,6 +276,27 @@ async function runAudioChecks(page: Page): Promise<string[]> {
       console.log(`ok audio: ${check.label} (${check.detail})`);
     } else {
       failures.push(`audio: ${check.label} failed — ${check.detail}`);
+    }
+  }
+
+  return failures;
+}
+
+/**
+ * MF5 compatibility evidence: every prepared-runtime facade must preserve the
+ * exact legacy Canvas2D pixels and Float32 PCM in the pinned Chromium build.
+ */
+async function runRuntimeParityChecks(page: Page): Promise<string[]> {
+  const checks = await page.evaluate(() =>
+    window.runGoldenRuntimeParityChecks(),
+  );
+  const failures: string[] = [];
+
+  for (const check of checks) {
+    if (check.pass) {
+      console.log(`ok runtime: ${check.label} (${check.detail})`);
+    } else {
+      failures.push(`runtime: ${check.label} failed — ${check.detail}`);
     }
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Scene } from "@motionforge/schema";
 import type { ResolvedAssets } from "@motionforge/renderer-canvas2d";
+import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
 import {
   audioChunkRanges,
   collectAudioPlacements,
@@ -8,15 +9,19 @@ import {
   evaluateVolumeEnvelope,
   estimateExport,
   exportVideo,
+  exportVideoFromRuntime,
+  exportVideoToStreamFromRuntime,
   exportVideoWithFallback,
   frameToTimestampUs,
   loopedSourceRanges,
   limitAudioPeak,
   measureAudioLoudness,
   mixSceneAudioData,
+  mixSceneAudioDataFromRuntime,
   mixAudioSegments,
   preflightExport,
   renderFrameSequence,
+  renderFrameSequenceFromRuntime,
   withResolvedAssetOwnership,
 } from "./index.js";
 
@@ -31,6 +36,87 @@ const scene: Scene = {
 };
 
 const context = {} as CanvasRenderingContext2D;
+
+function emptyAssets(): ResolvedAssets {
+  return {
+    images: new Map(),
+    fonts: new Map(),
+    videos: new Map(),
+    videoFrames: new Map(),
+    audio: new Map(),
+    lotties: new Map(),
+    lottieFrames: new Map(),
+  };
+}
+
+function borrowedRuntime(
+  runtimeScene: Scene,
+  assets: ResolvedAssets,
+): {
+  runtime: Canvas2DSceneRuntime;
+  abortActive(reason?: unknown): Promise<void>;
+  readonly activeScopes: number;
+  readonly preparedGeneration: number;
+} {
+  const state = {
+    assets,
+    textMeasureCaches: new WeakMap(),
+    disposed: false,
+    preparedGeneration: 0,
+  };
+  let activeScopes = 0;
+  let active:
+    | { controller: AbortController; settled: Promise<unknown> }
+    | undefined;
+  const runtime = {
+    useBackendState: <Result>(
+      backendId: string,
+      callback: (context: {
+        state: typeof state;
+        scene: Scene;
+        revision: number;
+        signal: AbortSignal;
+      }) => Result | Promise<Result>,
+      options: { signal?: AbortSignal } = {},
+    ): Promise<Result> => {
+      if (backendId !== "canvas2d") {
+        return Promise.reject(new Error(`Unexpected backend ${backendId}.`));
+      }
+      const controller = new AbortController();
+      const abort = () => controller.abort(options.signal?.reason);
+      if (options.signal?.aborted) abort();
+      else options.signal?.addEventListener("abort", abort, { once: true });
+      activeScopes += 1;
+      const settled = Promise.resolve(
+        callback({
+          state,
+          scene: runtimeScene,
+          revision: 0,
+          signal: controller.signal,
+        }),
+      ).finally(() => {
+        options.signal?.removeEventListener("abort", abort);
+        activeScopes -= 1;
+      });
+      active = { controller, settled };
+      return settled;
+    },
+  } as unknown as Canvas2DSceneRuntime;
+
+  return {
+    runtime,
+    async abortActive(reason = new Error("runtime revision changed")) {
+      active?.controller.abort(reason);
+      await active?.settled.catch(() => undefined);
+    },
+    get activeScopes() {
+      return activeScopes;
+    },
+    get preparedGeneration() {
+      return state.preparedGeneration;
+    },
+  };
+}
 
 describe("detectExportCapability", () => {
   it("reports missing APIs in plain Node", () => {
@@ -311,6 +397,122 @@ describe("renderFrameSequence", () => {
     ).rejects.toThrow("stop after frame 1");
 
     expect(rendered).toEqual([0, 1]);
+  });
+});
+
+describe("Canvas2D prepared runtime export compatibility", () => {
+  it("keeps the borrow active through asynchronous frame delegation", async () => {
+    const scope = borrowedRuntime(scene, emptyAssets());
+    const rendered: number[] = [];
+    let releaseFrame = (): void => undefined;
+    const framePending = new Promise<void>((resolve) => {
+      releaseFrame = resolve;
+    });
+
+    const rendering = renderFrameSequenceFromRuntime(scope.runtime, {
+      context,
+      startFrame: 0,
+      endFrame: 0,
+      renderFrame: (_context, delegatedScene, frame) => {
+        expect(delegatedScene).toBe(scene);
+        rendered.push(frame);
+      },
+      onFrame: () => framePending,
+    });
+    await vi.waitFor(() => expect(rendered).toEqual([0]));
+
+    expect(scope.activeScopes).toBe(1);
+    expect(scope.preparedGeneration).toBe(1);
+    releaseFrame();
+    await expect(rendering).resolves.toMatchObject({ renderedFrames: 1 });
+    expect(scope.activeScopes).toBe(0);
+    expect(scope.preparedGeneration).toBe(2);
+  });
+
+  it("releases the frame-loop borrow after cancellation", async () => {
+    const controller = new AbortController();
+    const scope = borrowedRuntime(scene, emptyAssets());
+    const rendered: number[] = [];
+
+    await expect(
+      renderFrameSequenceFromRuntime(scope.runtime, {
+        context,
+        signal: controller.signal,
+        renderFrame: (_context, _scene, frame) => rendered.push(frame),
+        onProgress: ({ frame }) => {
+          if (frame === 1) controller.abort(new Error("cancel runtime export"));
+        },
+      }),
+    ).rejects.toThrow("cancel runtime export");
+
+    expect(rendered).toEqual([0, 1]);
+    expect(scope.activeScopes).toBe(0);
+    expect(scope.preparedGeneration).toBe(2);
+  });
+
+  it("mixes audio from the exact runtime-owned asset map", async () => {
+    const close = vi.fn();
+    const audio = new Map([
+      [
+        "tone",
+        {
+          duration: 1,
+          sampleRate: 48_000,
+          numberOfChannels: 1,
+          sink: {
+            async *samples() {
+              yield {
+                sampleRate: 48_000,
+                numberOfChannels: 1,
+                numberOfFrames: 2,
+                timestamp: 0,
+                duration: 2 / 48_000,
+                copyTo(target: Float32Array) {
+                  target.set([0.5, -0.5]);
+                },
+                close,
+              };
+            },
+          },
+        },
+      ],
+    ]);
+    const get = vi.spyOn(audio, "get");
+    const assets = { ...emptyAssets(), audio } as ResolvedAssets;
+    const audioScene: Scene = {
+      ...scene,
+      fps: 2,
+      duration: 2,
+      assets: { tone: { id: "tone", type: "audio", src: "tone.wav" } },
+      nodes: [{ id: "tone", type: "audio", assetId: "tone" }],
+    };
+    const scope = borrowedRuntime(audioScene, assets);
+
+    const mixed = await mixSceneAudioDataFromRuntime(scope.runtime, 0, 1);
+
+    expect(get).toHaveBeenCalledWith("tone");
+    expect(mixed?.channels[0]?.[0]).toBeCloseTo(0.5, 6);
+    expect(mixed?.channels[0]?.[1]).toBeCloseTo(-0.5, 6);
+    expect(close).toHaveBeenCalledOnce();
+    expect(scope.activeScopes).toBe(0);
+  });
+
+  it("releases failed Blob and stream export borrows", async () => {
+    const blobScope = borrowedRuntime(scene, emptyAssets());
+    await expect(exportVideoFromRuntime(blobScope.runtime)).rejects.toThrow(
+      /video_encoder_unavailable/,
+    );
+    expect(blobScope.activeScopes).toBe(0);
+
+    const streamScope = borrowedRuntime(scene, emptyAssets());
+    await expect(
+      exportVideoToStreamFromRuntime(
+        streamScope.runtime,
+        {},
+        new WritableStream(),
+      ),
+    ).rejects.toThrow(/video_encoder_unavailable/);
+    expect(streamScope.activeScopes).toBe(0);
   });
 });
 

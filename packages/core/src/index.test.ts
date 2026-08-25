@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { SceneAnimation } from "@motionforge/schema";
+import type { SceneAnimation, SceneAsset } from "@motionforge/schema";
 import {
   audio,
   composition,
+  createBoundedMediaMetricsProvider,
+  createBoundedTextMetricsProvider,
   cubicBezierEasing,
   div,
   effect,
@@ -22,8 +24,10 @@ import {
   prepareTextLines,
   richText,
   resolveObjectFitRect,
+  resolveMediaMetrics,
   resolveLayoutCornerRadii,
   resolveStyleTransformMatrix,
+  resolveTextLineMetrics,
   resolveAnimationFrame,
   sampleScene,
   shape,
@@ -32,6 +36,8 @@ import {
   transformLayoutPoint,
   transformLayoutRect,
   video,
+  type MediaMetricsProvider,
+  type TextMetricsProvider,
 } from "./index.js";
 
 function layoutOf(builder: ReturnType<typeof composition>) {
@@ -1205,5 +1211,284 @@ describe("easing expressions", () => {
         5,
       ),
     ).toBeCloseTo(50, 4);
+  });
+});
+
+describe("shared intrinsic metrics", () => {
+  const textInput = {
+    nodeId: "title",
+    text: "Hello",
+    style: { fontFamily: "Metrics Sans", fontWeight: 700 } as const,
+    fontSize: 20,
+  };
+
+  it("normalizes per-field text provenance without changing legacy layout", () => {
+    const provider: TextMetricsProvider = {
+      measureLine: ({ text, fontSize }) => ({
+        width: text.length * fontSize,
+        ascent: fontSize * 0.7,
+        descent: fontSize * 0.2,
+        measurement: "exact",
+        reason: "prepared font metrics",
+        fieldMeasurements: {
+          ascent: {
+            measurement: "declared",
+            reason: "font table ascent",
+          },
+        },
+      }),
+    };
+    const metrics = resolveTextLineMetrics(textInput, provider);
+    expect(metrics).toMatchObject({
+      width: 100,
+      ascent: 14,
+      descent: 4,
+      measurement: "declared",
+      fieldMeasurements: {
+        width: { measurement: "exact", reason: "prepared font metrics" },
+        ascent: { measurement: "declared", reason: "font table ascent" },
+        descent: { measurement: "exact", reason: "prepared font metrics" },
+      },
+    });
+
+    const scene = composition({ width: 120, height: 100, fps: 30, duration: 1 })
+      .children(
+        text("ONE TWO", {
+          id: "title",
+          style: { width: 50, fontSize: 10, lineHeight: 1 },
+        }),
+      )
+      .toJSON();
+    const resolved = evaluateScene(scene, 0);
+    const legacy = layoutScene(resolved, {
+      measureTextLine: (line, _style, size) => line.length * size,
+    });
+    const shared = layoutScene(resolved, {
+      textMetrics: {
+        measureLine: ({ text: line, fontSize: size }) => ({
+          width: line.length * size,
+        }),
+      },
+    });
+    expect(shared).toEqual(legacy);
+  });
+
+  it("merges exact prepared dimensions with declared duration and frame rate", () => {
+    const asset: SceneAsset = {
+      id: "clip",
+      type: "video",
+      src: "clip.mp4",
+      metadata: {
+        width: 640,
+        height: 360,
+        duration: 12,
+        frameRate: { numerator: 30_000, denominator: 1001 },
+      },
+    };
+    const provider: MediaMetricsProvider = {
+      measure: () => ({
+        width: 1920,
+        height: 1080,
+        measurement: "exact",
+        reason: "decoded source track",
+      }),
+    };
+    const metrics = resolveMediaMetrics(asset, provider);
+    expect(metrics).toMatchObject({
+      width: 1920,
+      height: 1080,
+      durationSeconds: 12,
+      frameRate: { numerator: 30_000, denominator: 1001 },
+      measurement: "declared",
+      fieldMeasurements: {
+        width: { measurement: "exact", reason: "decoded source track" },
+        height: { measurement: "exact", reason: "decoded source track" },
+        durationSeconds: {
+          measurement: "declared",
+          reason: "Scene asset metadata",
+        },
+        frameRate: {
+          measurement: "declared",
+          reason: "Scene asset metadata",
+        },
+      },
+    });
+    expect(asset.metadata?.width).toBe(640);
+
+    const prefersDeclared = resolveMediaMetrics(asset, {
+      measure: () => ({
+        width: 100,
+        measurement: "estimated",
+        reason: "filename heuristic",
+      }),
+    });
+    expect(prefersDeclared.width).toBe(640);
+    expect(prefersDeclared.fieldMeasurements.width).toEqual({
+      measurement: "declared",
+      reason: "Scene asset metadata",
+    });
+  });
+
+  it("rejects invalid values, labels, unexplained estimates, and orphan provenance", () => {
+    expect(() =>
+      resolveTextLineMetrics(textInput, {
+        measureLine: () => ({ width: Number.NaN }),
+      }),
+    ).toThrow(/invalid width/);
+    expect(() =>
+      resolveTextLineMetrics(textInput, {
+        measureLine: () => ({
+          width: 10,
+          measurement: "estimated",
+        }),
+      }),
+    ).toThrow(/explain estimated/);
+    expect(() =>
+      resolveTextLineMetrics(textInput, {
+        measureLine: () =>
+          ({ width: 10, measurement: "pixel-perfect" }) as never,
+      }),
+    ).toThrow(/invalid measurement label/);
+    expect(() =>
+      resolveTextLineMetrics(textInput, {
+        measureLine: () => ({
+          width: 10,
+          fieldMeasurements: {
+            ascent: { measurement: "exact" },
+          },
+        }),
+      }),
+    ).toThrow(/without an ascent value/);
+
+    const asset: SceneAsset = {
+      id: "clip",
+      type: "video",
+      src: "clip.mp4",
+    };
+    expect(() =>
+      resolveMediaMetrics(asset, {
+        measure: () => ({
+          width: 100,
+          frameRate: { numerator: 0, denominator: 1 },
+        }),
+      }),
+    ).toThrow(/invalid frameRate/);
+    expect(() =>
+      resolveMediaMetrics(asset, {
+        measure: () => ({
+          width: 100,
+          fieldMeasurements: {
+            height: { measurement: "exact" },
+          },
+        }),
+      }),
+    ).toThrow(/without a height value/);
+  });
+
+  it("passes frozen defensive inputs to host metrics providers", () => {
+    const styleBefore = structuredClone(textInput.style);
+    resolveTextLineMetrics(textInput, {
+      measureLine: (input) => {
+        expect(Object.isFrozen(input)).toBe(true);
+        expect(Object.isFrozen(input.style)).toBe(true);
+        expect(() => {
+          (input.style as { fontFamily?: string }).fontFamily = "Mutated";
+        }).toThrow();
+        return { width: 10 };
+      },
+    });
+    expect(textInput.style).toEqual(styleBefore);
+
+    const asset: SceneAsset = {
+      id: "image",
+      type: "image",
+      src: "image.png",
+      metadata: { width: 100, height: 50 },
+    };
+    const before = structuredClone(asset);
+    resolveMediaMetrics(asset, {
+      measure: (input) => {
+        expect(Object.isFrozen(input)).toBe(true);
+        expect(Object.isFrozen(input.metadata)).toBe(true);
+        expect(() => {
+          (input.metadata as { width?: number }).width = 999;
+        }).toThrow();
+        return { width: 100, height: 50 };
+      },
+    });
+    expect(asset).toEqual(before);
+  });
+
+  it("bounds and isolates provider caches and returns defensive values", () => {
+    let firstCalls = 0;
+    let secondCalls = 0;
+    const first = createBoundedTextMetricsProvider(
+      {
+        measureLine: ({ text }) => {
+          firstCalls += 1;
+          return { width: text.length, reason: "first" };
+        },
+      },
+      { maxEntries: 1 },
+    );
+    const second = createBoundedTextMetricsProvider(
+      {
+        measureLine: ({ text }) => {
+          secondCalls += 1;
+          return { width: text.length * 2, reason: "second" };
+        },
+      },
+      { maxEntries: 1 },
+    );
+    const firstValue = first.measureLine(textInput);
+    firstValue.width = 999;
+    expect(first.measureLine(textInput).width).toBe(5);
+    expect(second.measureLine(textInput).width).toBe(10);
+    expect(firstCalls).toBe(1);
+    expect(secondCalls).toBe(1);
+    first.measureLine({ ...textInput, text: "Other" });
+    first.measureLine(textInput);
+    expect(firstCalls).toBe(3);
+    expect(first.cacheStats()).toMatchObject({
+      entries: 1,
+      maxEntries: 1,
+      hits: 1,
+      misses: 3,
+    });
+    second.clearCache();
+    expect(second.cacheStats()).toEqual({
+      entries: 0,
+      maxEntries: 1,
+      hits: 0,
+      misses: 0,
+    });
+
+    let mediaCalls = 0;
+    const media = createBoundedMediaMetricsProvider(
+      {
+        measure: () => {
+          mediaCalls += 1;
+          return { width: 100, height: 50 };
+        },
+      },
+      { maxEntries: 2 },
+    );
+    const asset: SceneAsset = {
+      id: "image",
+      type: "image",
+      src: "one.png",
+    };
+    const measured = media.measure(asset);
+    if (measured) measured.width = 999;
+    expect(media.measure(asset)?.width).toBe(100);
+    expect(media.measure({ ...asset, src: "two.png" })?.width).toBe(100);
+    expect(mediaCalls).toBe(2);
+
+    expect(() =>
+      createBoundedTextMetricsProvider(
+        { measureLine: () => ({ width: 1 }) },
+        { maxEntries: 0 },
+      ),
+    ).toThrow(/maxEntries/);
   });
 });

@@ -15,6 +15,21 @@ await player.seek(45);
 await player.disposeAsync();
 ```
 
+When the Scene is already prepared by the Canvas2D runtime, borrow that exact
+revision instead of resolving a second media graph:
+
+```ts
+import { createPlayerFromRuntime } from "@motionforge/player";
+
+const player = await createPlayerFromRuntime(runtime, { context, loop: true });
+// The runtime keeps this revision's media alive until player disposal.
+await player.disposeAsync();
+```
+
+Runtime updates, runtime disposal, and the optional caller `signal` dispose the
+borrowed player before releasing its scope. A runtime-backed player therefore
+cannot outlive or retain stale decoded assets from the prepared revision.
+
 For extension scenes, pass the host registry as `extensions`; pass
 `worker: true` when the player runs in a worker and definitions must declare
 worker compatibility.
@@ -60,6 +75,8 @@ buffer for short projects.
 Stable for 1.x integrations:
 
 - `createPlayer()`, `Player`, `PlayerOptions`, `PlayerEvent`, `FrameClock`, and event names `frame`, `play`, `pause`, and `ended`.
+- Prepared-runtime compatibility: `createPlayerFromRuntime()` and
+  `RuntimePlayerOptions`.
 - `play()`, `pause()`, `seek(frame)`, `dispose()`, `disposeAsync()`,
   `currentFrame`, `on(event, callback)`, and `onError(callback)`.
 - Audio extension point: `AudioPreview`, `ChunkedWebAudioPreview`, and `WebAudioPreview`.

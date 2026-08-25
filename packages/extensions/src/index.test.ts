@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  MAX_EXTENSION_REUSE_KEY_LENGTH,
   createExtensionRegistry,
   defineExtension,
   extensionManifest,
+  extensionResourceReuseKey,
   preflightExtensions,
 } from "./index.js";
 
@@ -81,6 +83,61 @@ describe("extension registry", () => {
         properties: { columns: { type: "integer", minimum: 1, maximum: 24 } },
       },
     });
+  });
+
+  it("validates bounded deterministic resource reuse keys", () => {
+    expect(() =>
+      testExtension({ reuseKey: "not-a-function" as never }),
+    ).toThrow(/reuseKey must be a function/);
+
+    const context = {
+      scene: scene({
+        name: "com.example.grid",
+        version: "2.0.0",
+        params: { columns: 4 },
+      }) as never,
+      node: {
+        id: "grid",
+        type: "extension",
+        extension: {
+          name: "com.example.grid",
+          version: "2.0.0",
+          params: { columns: 4 },
+        },
+      } as never,
+      params: { columns: 4 },
+      requirements: [],
+      assets: new Map(),
+    };
+    expect(
+      extensionResourceReuseKey(
+        testExtension({
+          reuseKey: ({ params }) =>
+            `grid:${(params as { columns: number }).columns}`,
+        }),
+        context,
+      ),
+    ).toBe("grid:4");
+    expect(
+      extensionResourceReuseKey(
+        testExtension({ reuseKey: () => null }),
+        context,
+      ),
+    ).toBeNull();
+    expect(() =>
+      extensionResourceReuseKey(
+        testExtension({ reuseKey: () => "   " }),
+        context,
+      ),
+    ).toThrow(/non-empty string/);
+    expect(() =>
+      extensionResourceReuseKey(
+        testExtension({
+          reuseKey: () => "x".repeat(MAX_EXTENSION_REUSE_KEY_LENGTH + 1),
+        }),
+        context,
+      ),
+    ).toThrow(/at most 512/);
   });
 });
 

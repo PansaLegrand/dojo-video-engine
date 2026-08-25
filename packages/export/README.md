@@ -86,6 +86,36 @@ await renderFrameSequence({
 });
 ```
 
+## Prepared runtime compatibility
+
+Reuse one prepared Canvas2D runtime without resolving or transferring decoded
+media again:
+
+```ts
+import {
+  exportVideoFromRuntime,
+  mixSceneAudioDataFromRuntime,
+  renderFrameSequenceFromRuntime,
+} from "@motionforge/export";
+
+await renderFrameSequenceFromRuntime(runtime, { context });
+const pcm = await mixSceneAudioDataFromRuntime(runtime, 0, 89);
+const { blob } = await exportVideoFromRuntime(runtime, {
+  signal: abortController.signal,
+});
+```
+
+`exportVideoToStreamFromRuntime()` provides the corresponding streaming path.
+Each helper borrows one exact runtime Scene/assets revision for the complete
+operation, including asynchronous frame callbacks, audio decoding, encoding,
+verification, and cancellation cleanup. Updates and runtime disposal wait for
+that operation; callers must not retain decoded assets beyond the helper.
+
+There is intentionally no prepared-runtime host-fallback facade: decoded
+browser resources are nonserializable and a remote/noncooperative job must not
+block runtime updates. Snapshot `runtime.scene` and call the existing
+`exportVideoWithFallback()` when a product needs that separate path.
+
 ## API Stability
 
 Stable for 1.x integrations:
@@ -94,6 +124,9 @@ Stable for 1.x integrations:
 - Planning/targets: `estimateExport()`, `preflightExport()`,
   `exportVideoToStream()`, and explicit `exportVideoWithFallback()`.
 - Frame-loop surface: `renderFrameSequence()` plus `RenderFrameSequenceOptions`, `RenderFrameSequenceProgress`, `RenderedSequenceFrame`, and `RenderFrameSequenceResult`.
+- Prepared-runtime facades: `renderFrameSequenceFromRuntime()`,
+  `mixSceneAudioDataFromRuntime()`, `exportVideoFromRuntime()`,
+  `exportVideoToStreamFromRuntime()`, and their runtime option types.
 - User-facing result/option types: `ExportVideoOptions`, `ExportVideoResult`,
   `ExportCapability`, verification modes/results/sinks, and the host fallback
   contract.

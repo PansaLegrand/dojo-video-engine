@@ -11,6 +11,7 @@ import {
   assertResolvedAssetsCompatible,
   disposeAssetsAsync,
   estimateMediaResources,
+  FontAssetCache,
   lottieSourceFrame,
   parseBorder,
   parseBoxShadow,
@@ -38,6 +39,12 @@ import {
 const measure = (line: string): number => line.length * 10;
 
 describe("Canvas2D preflight", () => {
+  class PreflightCanvas {
+    getContext() {
+      return {};
+    }
+  }
+
   const mediaScene = {
     schemaVersion: 1,
     width: 320,
@@ -74,7 +81,7 @@ describe("Canvas2D preflight", () => {
 
   it("accepts an environment satisfying the scene's declared requirements", () => {
     const environment = {
-      OffscreenCanvas: class {},
+      OffscreenCanvas: PreflightCanvas,
       createImageBitmap: () => undefined,
       VideoDecoder: class {},
       AudioDecoder: class {},
@@ -121,7 +128,7 @@ describe("Canvas2D preflight", () => {
       nodes: [{ id: "clip", type: "video", assetId: "clip" }],
     };
     const environment = {
-      OffscreenCanvas: class {},
+      OffscreenCanvas: PreflightCanvas,
       VideoDecoder: class {},
     } as unknown as Partial<typeof globalThis>;
     const result = preflightCanvas2D(scene, environment, {
@@ -160,7 +167,7 @@ describe("Canvas2D preflight", () => {
       ],
     };
     const environment = {
-      OffscreenCanvas: class {},
+      OffscreenCanvas: PreflightCanvas,
     } as unknown as Partial<typeof globalThis>;
     const missing = preflightCanvas2D(extensionScene, environment);
     expect(missing.issues.map((issue) => issue.code)).toContain(
@@ -230,7 +237,7 @@ describe("Canvas2D preflight", () => {
     ]);
 
     const supported = preflightCanvas2D(vectorScene, {
-      OffscreenCanvas: class {},
+      OffscreenCanvas: PreflightCanvas,
       Path2D: class {},
       DOMMatrix: class {},
     } as unknown as Partial<typeof globalThis>);
@@ -321,7 +328,7 @@ describe("Canvas2D preflight", () => {
     const result = preflightCanvas2D(
       budgetScene,
       {
-        OffscreenCanvas: class {},
+        OffscreenCanvas: PreflightCanvas,
         createImageBitmap: () => undefined,
         VideoDecoder: class {},
       } as unknown as Partial<typeof globalThis>,
@@ -388,6 +395,599 @@ describe("resolved asset source identity", () => {
         assets: assets as never,
       }),
     ).toThrow(/changed source/);
+  });
+});
+
+describe("resolved asset lease reuse", () => {
+  const imageScene = (
+    sources: Record<string, string>,
+    visible = Object.keys(sources),
+    options: {
+      contentHash?: string;
+      sourceMode?: "auto" | "stream" | "buffer";
+      proxy?: Record<string, string>;
+      extraNodes?: unknown[];
+    } = {},
+  ) => ({
+    schemaVersion: 1,
+    width: 32,
+    height: 32,
+    fps: 30,
+    duration: 2,
+    assets: Object.fromEntries(
+      Object.entries(sources).map(([id, src]) => [
+        id,
+        {
+          id,
+          type: "image",
+          src,
+          ...(options.sourceMode ? { sourceMode: options.sourceMode } : {}),
+          ...(options.proxy?.[id] ? { proxy: { src: options.proxy[id] } } : {}),
+          ...(options.contentHash
+            ? { metadata: { contentHash: options.contentHash } }
+            : {}),
+        },
+      ]),
+    ),
+    nodes: [
+      ...visible.map((id) => ({ id: `node-${id}`, type: "img", assetId: id })),
+      ...(options.extraNodes ?? []),
+    ],
+  });
+
+  function stubImageDecode() {
+    const decoded: Array<{
+      width: number;
+      height: number;
+      close: ReturnType<typeof vi.fn>;
+    }> = [];
+    const decode = vi.fn(async () => {
+      const image = { width: 8, height: 6, close: vi.fn() };
+      decoded.push(image);
+      return image;
+    });
+    vi.stubGlobal("createImageBitmap", decode);
+    return { decode, decoded };
+  }
+
+  function silentWavDataUrl(): string {
+    const sampleBytes = 2;
+    const bytes = new Uint8Array(44 + sampleBytes);
+    const view = new DataView(bytes.buffer);
+    const write = (offset: number, value: string) =>
+      Array.from(value).forEach((character, index) => {
+        bytes[offset + index] = character.charCodeAt(0);
+      });
+    write(0, "RIFF");
+    view.setUint32(4, 36 + sampleBytes, true);
+    write(8, "WAVE");
+    write(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, 8_000, true);
+    view.setUint32(28, 16_000, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    write(36, "data");
+    view.setUint32(40, sampleBytes, true);
+    return `data:audio/wav;base64,${Buffer.from(bytes).toString("base64")}`;
+  }
+
+  it("reuses unchanged resources and closes them only after the final lease", async () => {
+    const { decode, decoded } = stubImageDecode();
+    try {
+      const before = imageScene({ image: "data:image/png;base64,AA==" });
+      const after = { ...before, duration: 3 };
+      const first = await resolveAssets(before as never);
+      const second = await resolveAssets(after as never, {
+        reuseFrom: { scene: before, assets: first },
+      });
+
+      expect(decode).toHaveBeenCalledTimes(1);
+      expect(second.images.get("image")).toBe(first.images.get("image"));
+      expect(second.videoFrames).not.toBe(first.videoFrames);
+      expect(second.lottieFrames).not.toBe(first.lottieFrames);
+
+      await disposeAssetsAsync(first);
+      expect(decoded[0]?.close).not.toHaveBeenCalled();
+      expect(second.images.get("image")).toBe(decoded[0]);
+
+      const firstDisposal = disposeAssetsAsync(second);
+      const secondDisposal = disposeAssetsAsync(second);
+      expect(secondDisposal).toBe(firstDisposal);
+      await firstDisposal;
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("keeps shared audio inputs alive until the final lease", async () => {
+    const scene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 30,
+      duration: 1,
+      assets: {
+        sound: {
+          id: "sound",
+          type: "audio",
+          src: silentWavDataUrl(),
+          sourceMode: "buffer",
+        },
+      },
+      nodes: [{ id: "sound", type: "audio", assetId: "sound" }],
+    };
+    const first = await resolveAssets(scene as never);
+    const second = await resolveAssets(scene as never, {
+      reuseFrom: { scene, assets: first },
+    });
+    const clip = first.audio.get("sound");
+    expect(clip).toBeDefined();
+    expect(second.audio.get("sound")).toBe(clip);
+    await disposeAssetsAsync(first);
+    expect(clip?.input.disposed).toBe(false);
+    await disposeAssetsAsync(second);
+    expect(clip?.input.disposed).toBe(true);
+  });
+
+  it("keeps font cache ownership and refuses cross-cache reuse", async () => {
+    class FakeFontFace {
+      constructor(
+        readonly family: string,
+        readonly source: ArrayBuffer,
+      ) {}
+      async load() {
+        return this;
+      }
+    }
+    const fontSet = {
+      add: vi.fn(),
+      delete: vi.fn(() => true),
+    };
+    const firstCache = new FontAssetCache<FakeFontFace>({
+      maxEntries: 4,
+      fontSet,
+    });
+    const secondCache = new FontAssetCache<FakeFontFace>({
+      maxEntries: 4,
+      fontSet,
+    });
+    vi.stubGlobal("FontFace", FakeFontFace);
+    vi.stubGlobal("fonts", fontSet);
+    try {
+      const scene = {
+        schemaVersion: 1,
+        width: 16,
+        height: 16,
+        fps: 30,
+        duration: 1,
+        assets: {
+          Inter: {
+            id: "Inter",
+            type: "font",
+            src: "data:font/woff2;base64,AA==",
+          },
+        },
+        nodes: [
+          {
+            id: "text",
+            type: "text",
+            text: "Hello",
+            style: { fontFamily: "Inter" },
+          },
+        ],
+      };
+      const first = await resolveAssets(scene as never, {
+        fontCache: firstCache as never,
+      });
+      const shared = await resolveAssets(scene as never, {
+        fontCache: firstCache as never,
+        reuseFrom: { scene, assets: first },
+      });
+      expect(shared.fonts.get("Inter")).toBe(first.fonts.get("Inter"));
+      expect(firstCache.stats.activeLeases).toBe(1);
+
+      const otherCache = await resolveAssets(scene as never, {
+        fontCache: secondCache as never,
+        reuseFrom: { scene, assets: shared },
+      });
+      expect(otherCache.fonts.get("Inter")).not.toBe(shared.fonts.get("Inter"));
+      expect(secondCache.stats.activeLeases).toBe(1);
+
+      await disposeAssetsAsync(first);
+      expect(firstCache.stats.activeLeases).toBe(1);
+      await disposeAssetsAsync(shared);
+      expect(firstCache.stats.activeLeases).toBe(0);
+      await disposeAssetsAsync(otherCache);
+      expect(secondCache.stats.activeLeases).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("loads only added/replaced resources and drops unreachable bindings", async () => {
+    const { decode, decoded } = stubImageDecode();
+    try {
+      const before = imageScene(
+        {
+          a: "data:image/png;base64,AA==",
+          b: "data:image/png;base64,AQ==",
+        },
+        ["b"],
+      );
+      const first = await resolveAssets(before as never);
+      expect(decode).toHaveBeenCalledTimes(1);
+
+      const added = imageScene(
+        {
+          a: "data:image/png;base64,AA==",
+          b: "data:image/png;base64,AQ==",
+        },
+        ["a", "b"],
+      );
+      const second = await resolveAssets(added as never, {
+        reuseFrom: { scene: before, assets: first },
+      });
+      expect(decode).toHaveBeenCalledTimes(2);
+      expect(second.images.get("b")).toBe(first.images.get("b"));
+      expect(second.images.get("a")).not.toBe(first.images.get("b"));
+
+      const replaced = imageScene(
+        {
+          a: "data:image/png;base64,Ag==",
+          b: "data:image/png;base64,AQ==",
+        },
+        ["a"],
+      );
+      const third = await resolveAssets(replaced as never, {
+        reuseFrom: { scene: added, assets: second },
+      });
+      expect(decode).toHaveBeenCalledTimes(3);
+      expect(third.images.has("b")).toBe(false);
+      expect(third.images.get("a")).not.toBe(second.images.get("a"));
+
+      await disposeAssetsAsync(first);
+      expect(decoded[0]?.close).not.toHaveBeenCalled();
+      await disposeAssetsAsync(second);
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+      expect(decoded[1]?.close).toHaveBeenCalledTimes(1);
+      expect(decoded[2]?.close).not.toHaveBeenCalled();
+      await disposeAssetsAsync(third);
+      expect(decoded[2]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("reuses stable content across URL rotation but not source variants or modes", async () => {
+    const { decode } = stubImageDecode();
+    try {
+      const firstScene = imageScene(
+        { image: "data:image/png;base64,AA==" },
+        ["image"],
+        {
+          contentHash: "sha256:same",
+          proxy: { image: "data:image/png;base64,AQ==" },
+        },
+      );
+      const first = await resolveAssets(firstScene as never);
+      const rotated = imageScene(
+        { image: "data:image/png;base64,Ag==" },
+        ["image"],
+        {
+          contentHash: "sha256:same",
+          proxy: { image: "data:image/png;base64,Aw==" },
+        },
+      );
+      const stable = await resolveAssets(rotated as never, {
+        reuseFrom: { scene: firstScene, assets: first },
+      });
+      expect(stable.images.get("image")).toBe(first.images.get("image"));
+      expect(decode).toHaveBeenCalledTimes(1);
+
+      const bufferedScene = imageScene(
+        { image: "data:image/png;base64,Ag==" },
+        ["image"],
+        { contentHash: "sha256:same", sourceMode: "buffer" },
+      );
+      const buffered = await resolveAssets(bufferedScene as never, {
+        reuseFrom: { scene: rotated, assets: stable },
+      });
+      expect(buffered.images.get("image")).not.toBe(stable.images.get("image"));
+
+      const proxy = await resolveAssets(firstScene as never, {
+        preferProxy: true,
+        reuseFrom: { scene: firstScene, assets: first },
+      });
+      expect(proxy.images.get("image")).not.toBe(first.images.get("image"));
+      expect(decode).toHaveBeenCalledTimes(3);
+
+      await Promise.all([
+        disposeAssetsAsync(first),
+        disposeAssetsAsync(stable),
+        disposeAssetsAsync(buffered),
+        disposeAssetsAsync(proxy),
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("rolls retained references back on successor failure and cancellation", async () => {
+    const { decoded } = stubImageDecode();
+    try {
+      const before = imageScene({ image: "data:image/png;base64,AA==" });
+      const first = await resolveAssets(before as never);
+      const failureRegistry = createExtensionRegistry([
+        defineExtension({
+          name: "com.example.reuse-failure",
+          version: "1.0.0",
+          paramsSchema: z.object({}),
+          deterministic: true,
+          workerCompatible: true,
+          renderers: { canvas2d: { draw: () => undefined } },
+          resolveAssets: () => {
+            throw new Error("successor failed");
+          },
+        }),
+      ]);
+      const failedScene = imageScene(
+        { image: "data:image/png;base64,AA==" },
+        ["image"],
+        {
+          extraNodes: [
+            {
+              id: "failure",
+              type: "extension",
+              extension: {
+                name: "com.example.reuse-failure",
+                version: "1.0.0",
+                params: {},
+              },
+            },
+          ],
+        },
+      );
+      await expect(
+        resolveAssets(failedScene as never, {
+          extensions: failureRegistry,
+          reuseFrom: { scene: before, assets: first },
+        }),
+      ).rejects.toThrow("successor failed");
+      expect(decoded[0]?.close).not.toHaveBeenCalled();
+
+      let started!: () => void;
+      const waiting = new Promise<void>((resolve) => {
+        started = resolve;
+      });
+      const cancelRegistry = createExtensionRegistry([
+        defineExtension({
+          name: "com.example.reuse-cancel",
+          version: "1.0.0",
+          paramsSchema: z.object({}),
+          deterministic: true,
+          workerCompatible: true,
+          renderers: { canvas2d: { draw: () => undefined } },
+          resolveAssets: ({ signal }) =>
+            new Promise((_resolve, reject) => {
+              started();
+              signal?.addEventListener("abort", () => reject(signal.reason), {
+                once: true,
+              });
+            }),
+        }),
+      ]);
+      const cancelScene = imageScene(
+        { image: "data:image/png;base64,AA==" },
+        ["image"],
+        {
+          extraNodes: [
+            {
+              id: "cancel",
+              type: "extension",
+              extension: {
+                name: "com.example.reuse-cancel",
+                version: "1.0.0",
+                params: {},
+              },
+            },
+          ],
+        },
+      );
+      const controller = new AbortController();
+      const cancelled = resolveAssets(cancelScene as never, {
+        extensions: cancelRegistry,
+        signal: controller.signal,
+        reuseFrom: { scene: before, assets: first },
+      });
+      await waiting;
+      controller.abort(new Error("cancel successor"));
+      await expect(cancelled).rejects.toThrow("cancel successor");
+      expect(decoded[0]?.close).not.toHaveBeenCalled();
+
+      await disposeAssetsAsync(first);
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("honors policy generations and tighter resource budgets before reuse", async () => {
+    const { decode, decoded } = stubImageDecode();
+    try {
+      const before = imageScene({ image: "data:image/png;base64,AA==" });
+      const authorizeFirst = vi.fn(() => true);
+      const firstPolicy = {
+        reuseKey: "policy-v1",
+        authorizeSource: authorizeFirst,
+        contentKey: () => "stable-image-content",
+      };
+      const first = await resolveAssets(before as never, {
+        assetPolicy: firstPolicy,
+      });
+
+      const authorizeEquivalent = vi.fn(() => true);
+      const equivalentPolicy = {
+        reuseKey: "policy-v1",
+        authorizeSource: authorizeEquivalent,
+        contentKey: () => "stable-image-content",
+      };
+      const equivalent = await resolveAssets(before as never, {
+        assetPolicy: equivalentPolicy,
+        reuseFrom: { scene: before, assets: first },
+      });
+      expect(authorizeEquivalent).toHaveBeenCalledTimes(1);
+      expect(equivalent.images.get("image")).toBe(first.images.get("image"));
+      expect(decode).toHaveBeenCalledTimes(1);
+
+      const changedPolicy = {
+        ...equivalentPolicy,
+        reuseKey: "policy-v2",
+      };
+      const policyReplacement = await resolveAssets(before as never, {
+        assetPolicy: changedPolicy,
+        reuseFrom: { scene: before, assets: equivalent },
+      });
+      expect(policyReplacement.images.get("image")).not.toBe(
+        equivalent.images.get("image"),
+      );
+
+      const tighter = await resolveAssets(before as never, {
+        assetPolicy: changedPolicy,
+        budget: { maxAssetBytes: 1024, maxSourceCacheBytes: 1024 },
+        reuseFrom: { scene: before, assets: policyReplacement },
+      });
+      expect(tighter.images.get("image")).not.toBe(
+        policyReplacement.images.get("image"),
+      );
+      expect(decode).toHaveBeenCalledTimes(3);
+
+      await Promise.all([
+        disposeAssetsAsync(first),
+        disposeAssetsAsync(equivalent),
+        disposeAssetsAsync(policyReplacement),
+        disposeAssetsAsync(tighter),
+      ]);
+      expect(
+        decoded.every((image) => image.close.mock.calls.length === 1),
+      ).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("applies a tighter decoded-image budget to retained images", async () => {
+    const { decode, decoded } = stubImageDecode();
+    try {
+      const scene = imageScene({ image: "data:image/png;base64,AA==" });
+      const first = await resolveAssets(scene as never);
+      await expect(
+        resolveAssets(scene as never, {
+          budget: { maxDecodedImageBytes: 100 },
+          reuseFrom: { scene, assets: first },
+        }),
+      ).rejects.toThrow(/Decoded image budget exceeded/);
+      expect(decode).toHaveBeenCalledTimes(1);
+      expect(decoded[0]?.close).not.toHaveBeenCalled();
+      await disposeAssetsAsync(first);
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("falls back to a fresh load if the old lease disposes before retain", async () => {
+    const { decode, decoded } = stubImageDecode();
+    try {
+      let pauseIdentity = false;
+      let identityStarted!: () => void;
+      const started = new Promise<void>((resolve) => {
+        identityStarted = resolve;
+      });
+      let releaseIdentity!: () => void;
+      const identityGate = new Promise<void>((resolve) => {
+        releaseIdentity = resolve;
+      });
+      const policy = {
+        reuseKey: "race-policy",
+        contentKey: async () => {
+          if (pauseIdentity) {
+            identityStarted();
+            await identityGate;
+          }
+          return "stable-image-content";
+        },
+      };
+      const scene = imageScene({ image: "data:image/png;base64,AA==" });
+      const first = await resolveAssets(scene as never, {
+        assetPolicy: policy,
+      });
+      pauseIdentity = true;
+      const successorPromise = resolveAssets(scene as never, {
+        assetPolicy: policy,
+        reuseFrom: { scene, assets: first },
+      });
+      await started;
+      await disposeAssetsAsync(first);
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+      releaseIdentity();
+      const successor = await successorPromise;
+      expect(decode).toHaveBeenCalledTimes(2);
+      expect(successor.images.get("image")).toBe(decoded[1]);
+      await disposeAssetsAsync(successor);
+      expect(decoded[1]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("does not let content identity mask decoder type or sourceMode changes", async () => {
+    const { decoded } = stubImageDecode();
+    try {
+      const before = imageScene(
+        { image: "data:image/png;base64,AA==" },
+        ["image"],
+        { contentHash: "sha256:same" },
+      );
+      const assets = await resolveAssets(before as never);
+      const changedType = {
+        ...before,
+        assets: {
+          image: {
+            id: "image",
+            type: "video",
+            src: "data:video/mp4;base64,AA==",
+            metadata: { contentHash: "sha256:same" },
+          },
+        },
+        nodes: [
+          {
+            id: "node-image",
+            type: "video",
+            assetId: "image",
+            volume: 0,
+          },
+        ],
+      };
+      expect(() => assertResolvedAssetsCompatible(changedType, assets)).toThrow(
+        /changed type/,
+      );
+      const changedMode = imageScene(
+        { image: "data:image/png;base64,AA==" },
+        ["image"],
+        { contentHash: "sha256:same", sourceMode: "buffer" },
+      );
+      expect(() => assertResolvedAssetsCompatible(changedMode, assets)).toThrow(
+        /changed sourceMode/,
+      );
+      await disposeAssetsAsync(assets);
+      expect(decoded[0]?.close).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
@@ -654,6 +1254,299 @@ describe("renderStill", () => {
 
     expect(events).toEqual(["resolve", "prepare:3", "draw", "dispose"]);
     expect(draws).toEqual([{ color: "#22d3ee", phase: 3, width: 45 }]);
+  });
+
+  it("reuses opted-in extension resources across unrelated edits and disposes the final owner once", async () => {
+    let resolutions = 0;
+    const disposed: number[] = [];
+    const adapter = { draw: () => undefined };
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.reusable",
+        version: "1.0.0",
+        paramsSchema: z.object({ variant: z.string() }),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: adapter },
+        reuseKey: ({ params }) => `variant:${params.variant}`,
+        resolveAssets: () => ({ lease: ++resolutions }),
+        disposeAssets: (value) => {
+          disposed.push(value.lease);
+        },
+      }),
+    ]);
+    const before = {
+      schemaVersion: 1,
+      width: 64,
+      height: 64,
+      fps: 30,
+      duration: 2,
+      assets: {},
+      nodes: [
+        {
+          id: "reusable",
+          type: "extension",
+          extension: {
+            name: "com.example.reusable",
+            version: "1.0.0",
+            params: { variant: "blue" },
+          },
+          style: { width: 20, height: 20 },
+        },
+      ],
+    };
+    const after = {
+      ...before,
+      duration: 3,
+      nodes: before.nodes.map((node) => ({
+        ...node,
+        style: { ...node.style, left: 10 },
+      })),
+    };
+    const first = await resolveAssets(before as never, {
+      extensions: registry,
+    });
+    const second = await resolveAssets(after as never, {
+      extensions: registry,
+      reuseFrom: { scene: before, assets: first },
+    });
+    expect(resolutions).toBe(1);
+    expect(second.extensionNodes?.get("reusable")?.resolvedAssets).toBe(
+      first.extensionNodes?.get("reusable")?.resolvedAssets,
+    );
+
+    await disposeAssetsAsync(first);
+    expect(disposed).toEqual([]);
+    const once = disposeAssetsAsync(second);
+    const twice = disposeAssetsAsync(second);
+    expect(twice).toBe(once);
+    await once;
+    expect(disposed).toEqual([1]);
+  });
+
+  it("reacquires extension resources when its key or required asset identity changes", async () => {
+    let resolutions = 0;
+    const disposed: number[] = [];
+    const decoded: Array<{ close: ReturnType<typeof vi.fn> }> = [];
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn(async () => {
+        const image = { width: 1, height: 1, close: vi.fn() };
+        decoded.push(image);
+        return image;
+      }),
+    );
+    try {
+      const registry = createExtensionRegistry([
+        defineExtension({
+          name: "com.example.asset-reuse",
+          version: "1.0.0",
+          paramsSchema: z.object({
+            assetId: z.string(),
+            resourceVersion: z.string(),
+          }),
+          deterministic: true,
+          workerCompatible: true,
+          renderers: { canvas2d: { draw: () => undefined } },
+          assets: ({ params }) => [
+            { assetId: params.assetId, type: "image" as const },
+          ],
+          reuseKey: ({ params }) => params.resourceVersion,
+          resolveAssets: () => ({ lease: ++resolutions }),
+          disposeAssets: (value) => {
+            disposed.push(value.lease);
+          },
+        }),
+      ]);
+      const makeScene = (src: string, resourceVersion: string) => ({
+        schemaVersion: 1,
+        width: 16,
+        height: 16,
+        fps: 30,
+        duration: 1,
+        assets: {
+          texture: { id: "texture", type: "image", src },
+        },
+        nodes: [
+          {
+            id: "asset-reuse",
+            type: "extension",
+            extension: {
+              name: "com.example.asset-reuse",
+              version: "1.0.0",
+              params: { assetId: "texture", resourceVersion },
+            },
+          },
+        ],
+      });
+      const firstScene = makeScene("data:image/png;base64,AA==", "v1");
+      const first = await resolveAssets(firstScene as never, {
+        extensions: registry,
+      });
+      const keyChangedScene = makeScene("data:image/png;base64,AA==", "v2");
+      const keyChanged = await resolveAssets(keyChangedScene as never, {
+        extensions: registry,
+        reuseFrom: { scene: firstScene, assets: first },
+      });
+      const assetChangedScene = makeScene("data:image/png;base64,AQ==", "v2");
+      const assetChanged = await resolveAssets(assetChangedScene as never, {
+        extensions: registry,
+        reuseFrom: { scene: keyChangedScene, assets: keyChanged },
+      });
+
+      expect(resolutions).toBe(3);
+      expect(
+        keyChanged.extensionNodes?.get("asset-reuse")?.resolvedAssets,
+      ).not.toBe(first.extensionNodes?.get("asset-reuse")?.resolvedAssets);
+      expect(
+        assetChanged.extensionNodes?.get("asset-reuse")?.resolvedAssets,
+      ).not.toBe(keyChanged.extensionNodes?.get("asset-reuse")?.resolvedAssets);
+      expect(decoded).toHaveLength(2);
+      await Promise.all([
+        disposeAssetsAsync(first),
+        disposeAssetsAsync(keyChanged),
+        disposeAssetsAsync(assetChanged),
+      ]);
+      expect(disposed.sort()).toEqual([1, 2, 3]);
+      expect(
+        decoded.every((image) => image.close.mock.calls.length === 1),
+      ).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("rolls a retained extension reference back after sibling failure without poisoning the old owner", async () => {
+    let resolutions = 0;
+    const disposed: number[] = [];
+    const reusable = defineExtension({
+      name: "com.example.rollback-reuse",
+      version: "1.0.0",
+      paramsSchema: z.object({}),
+      deterministic: true,
+      workerCompatible: true,
+      renderers: { canvas2d: { draw: () => undefined } },
+      reuseKey: () => "stable",
+      resolveAssets: () => ({ lease: ++resolutions }),
+      disposeAssets: (value) => {
+        disposed.push(value.lease);
+      },
+    });
+    const failing = defineExtension({
+      name: "com.example.rollback-failure",
+      version: "1.0.0",
+      paramsSchema: z.object({}),
+      deterministic: true,
+      workerCompatible: true,
+      renderers: { canvas2d: { draw: () => undefined } },
+      resolveAssets: async () => {
+        await Promise.resolve();
+        throw new Error("reuse successor failed");
+      },
+    });
+    const registry = createExtensionRegistry([reusable, failing]);
+    const baseNode = {
+      id: "rollback-reuse",
+      type: "extension",
+      extension: {
+        name: "com.example.rollback-reuse",
+        version: "1.0.0",
+        params: {},
+      },
+    };
+    const baseScene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [baseNode],
+    };
+    const first = await resolveAssets(baseScene as never, {
+      extensions: registry,
+    });
+    const failedScene = {
+      ...baseScene,
+      nodes: [
+        baseNode,
+        {
+          id: "rollback-failure",
+          type: "extension",
+          extension: {
+            name: "com.example.rollback-failure",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+    await expect(
+      resolveAssets(failedScene as never, {
+        extensions: registry,
+        reuseFrom: { scene: baseScene, assets: first },
+      }),
+    ).rejects.toThrow("reuse successor failed");
+    expect(disposed).toEqual([]);
+
+    const successor = await resolveAssets(baseScene as never, {
+      extensions: registry,
+      reuseFrom: { scene: baseScene, assets: first },
+    });
+    expect(resolutions).toBe(1);
+    await disposeAssetsAsync(first);
+    expect(disposed).toEqual([]);
+    await disposeAssetsAsync(successor);
+    expect(disposed).toEqual([1]);
+  });
+
+  it("keeps legacy extensions without reuseKey independently owned", async () => {
+    let resolutions = 0;
+    const disposed: number[] = [];
+    const registry = createExtensionRegistry([
+      defineExtension({
+        name: "com.example.legacy-resource",
+        version: "1.0.0",
+        paramsSchema: z.object({}),
+        deterministic: true,
+        workerCompatible: true,
+        renderers: { canvas2d: { draw: () => undefined } },
+        resolveAssets: () => ({ lease: ++resolutions }),
+        disposeAssets: (value) => {
+          disposed.push(value.lease);
+        },
+      }),
+    ]);
+    const scene = {
+      schemaVersion: 1,
+      width: 16,
+      height: 16,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        {
+          id: "legacy-resource",
+          type: "extension",
+          extension: {
+            name: "com.example.legacy-resource",
+            version: "1.0.0",
+            params: {},
+          },
+        },
+      ],
+    };
+    const first = await resolveAssets(scene as never, { extensions: registry });
+    const second = await resolveAssets(scene as never, {
+      extensions: registry,
+      reuseFrom: { scene, assets: first },
+    });
+    expect(resolutions).toBe(2);
+    expect(
+      second.extensionNodes?.get("legacy-resource")?.resolvedAssets,
+    ).not.toBe(first.extensionNodes?.get("legacy-resource")?.resolvedAssets);
+    await Promise.all([disposeAssetsAsync(first), disposeAssetsAsync(second)]);
+    expect(disposed.sort()).toEqual([1, 2]);
   });
 
   it("fails before rendering when an extension is not installed", async () => {
@@ -1321,6 +2214,89 @@ describe("renderStill with effect nodes", () => {
     expect(calls).toContain("arc");
     expect(calls).toContain("fill");
     expect(calls).toContain("fillText");
+  });
+
+  it("restores nested effect state after a draw failure and permits a clean retry", () => {
+    type Snapshot = {
+      globalAlpha: number;
+      globalCompositeOperation: GlobalCompositeOperation;
+      fillStyle: string | CanvasGradient | CanvasPattern;
+      lineWidth: number;
+    };
+    const stack: Snapshot[] = [];
+    let maxDepth = 0;
+    let failMove = true;
+    const state = {
+      globalAlpha: 0.37,
+      globalCompositeOperation: "xor" as GlobalCompositeOperation,
+      fillStyle: "#caller",
+      lineWidth: 17,
+      save() {
+        stack.push({
+          globalAlpha: state.globalAlpha,
+          globalCompositeOperation: state.globalCompositeOperation,
+          fillStyle: state.fillStyle,
+          lineWidth: state.lineWidth,
+        });
+        maxDepth = Math.max(maxDepth, stack.length);
+      },
+      restore() {
+        const snapshot = stack.pop();
+        if (!snapshot) throw new Error("unmatched restore");
+        Object.assign(state, snapshot);
+      },
+      clearRect: () => undefined,
+      beginPath: () => undefined,
+      arc: () => undefined,
+      fill: () => undefined,
+      stroke: () => undefined,
+      translate: () => undefined,
+      rotate: () => undefined,
+      lineTo: () => undefined,
+      closePath: () => undefined,
+      fillText: () => undefined,
+      moveTo() {
+        if (failMove) {
+          failMove = false;
+          throw new Error("primitive failed");
+        }
+      },
+    };
+    const context = state as unknown as CanvasRenderingContext2D;
+    const scene = {
+      schemaVersion: 1,
+      width: 200,
+      height: 200,
+      fps: 30,
+      duration: 30,
+      nodes: [
+        {
+          id: "boom",
+          type: "effect",
+          effect: "cartoonBurst",
+          duration: 30,
+          style: { width: 200, height: 200 },
+          params: { shockwave: false, seed: 7, particleCount: 1 },
+        },
+      ],
+    };
+
+    expect(() => renderStill(context, scene as never, 10)).toThrow(
+      "primitive failed",
+    );
+    expect(stack).toHaveLength(0);
+    expect(state.globalAlpha).toBe(0.37);
+    expect(state.globalCompositeOperation).toBe("xor");
+    expect(state.fillStyle).toBe("#caller");
+    expect(state.lineWidth).toBe(17);
+    expect(maxDepth).toBeGreaterThanOrEqual(3);
+
+    expect(() => renderStill(context, scene as never, 10)).not.toThrow();
+    expect(stack).toHaveLength(0);
+    expect(state.globalAlpha).toBe(0.37);
+    expect(state.globalCompositeOperation).toBe("xor");
+    expect(state.fillStyle).toBe("#caller");
+    expect(state.lineWidth).toBe(17);
   });
 
   it("draws the Phase 1B effect catalog without resolved assets", () => {

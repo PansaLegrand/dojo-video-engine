@@ -27,10 +27,15 @@ const server = await createServer({
         rootDir,
         "packages/showcase/src/index.ts",
       ),
+      "@motionforge/renderer-canvas2d/runtime": resolve(
+        rootDir,
+        "packages/renderer-canvas2d/src/runtime.ts",
+      ),
       "@motionforge/renderer-canvas2d": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/index.ts",
       ),
+      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
       "@motionforge/export": resolve(rootDir, "packages/export/src/index.ts"),
       "@motionforge/player": resolve(rootDir, "packages/player/src/index.ts"),
     },

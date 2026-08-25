@@ -1,14 +1,33 @@
 import type {
-  SceneAsset,
   SceneInspection,
   SceneLintIssue,
   SceneNode,
   SceneStyle,
 } from "@motionforge/schema";
+import type {
+  MeasurementQuality,
+  MediaMetricsProvider,
+  TextMetricsProvider,
+} from "@motionforge/core";
+
+// Compatibility re-exports: MF5 moves ownership to core so layout,
+// inspection, runtime, and renderer adapters share one metrics contract.
+export type {
+  MeasurementProvenance,
+  MeasurementQuality,
+  MediaMetricField,
+  MediaMetrics,
+  MediaMetricsProvider,
+  ResolvedMeasurementProvenance,
+  ResolvedMediaMetrics,
+  ResolvedTextLineMetrics,
+  TextLineMetrics,
+  TextLineMetricsInput,
+  TextMetricField,
+  TextMetricsProvider,
+} from "@motionforge/core";
 
 export type SourcePath = Array<string | number>;
-export type MeasurementQuality = "exact" | "declared" | "estimated";
-
 export type Rect = { x: number; y: number; width: number; height: number };
 export type Point = { x: number; y: number };
 export type Matrix2D = {
@@ -70,6 +89,7 @@ export type TimelineSource = {
   sourceStart: number;
   sourceEndUnclamped: number;
   intrinsicDuration?: number;
+  frameRate?: { numerator: number; denominator: number };
   measurement: MeasurementQuality;
   reason: string;
 };
@@ -87,38 +107,6 @@ export type TimelineInspection = {
   durationFrames: number;
   nodes: TimelineInspectionNode[];
 };
-
-export type TextLineMetricsInput = {
-  nodeId: string;
-  text: string;
-  style: SceneStyle;
-  fontSize: number;
-};
-
-export type TextLineMetrics = {
-  width: number;
-  ascent?: number;
-  descent?: number;
-  measurement?: MeasurementQuality;
-  reason?: string;
-};
-
-export interface TextMetricsProvider {
-  measureLine(input: TextLineMetricsInput): TextLineMetrics;
-}
-
-export type MediaMetrics = {
-  width?: number;
-  height?: number;
-  durationSeconds?: number;
-  frameRate?: { numerator: number; denominator: number };
-  measurement?: MeasurementQuality;
-  reason?: string;
-};
-
-export interface MediaMetricsProvider {
-  measure(asset: SceneAsset): MediaMetrics | undefined;
-}
 
 export type TextLineInspection = {
   text: string;
@@ -149,7 +137,12 @@ export type TextInspection = {
 
 export type MediaInspection = {
   assetId: string;
-  intrinsic: { width: number; height: number; durationSeconds?: number };
+  intrinsic: {
+    width: number;
+    height: number;
+    durationSeconds?: number;
+    frameRate?: { numerator: number; denominator: number };
+  };
   fittedBounds: MeasuredRect;
   objectFit: "contain" | "cover" | "fill" | "none" | "scale-down";
   objectPosition: string;

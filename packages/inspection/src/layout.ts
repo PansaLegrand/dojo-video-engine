@@ -1,4 +1,5 @@
 import {
+  createBoundedTextMetricsProvider,
   evaluateScene,
   getLayoutContentRect,
   identityAffineMatrix,
@@ -10,10 +11,14 @@ import {
   resolveLayoutCornerRadii,
   resolveObjectFitRect,
   resolveStyleTransformMatrix,
+  resolveTextLineMetrics,
   transformLayoutPoint,
   transformLayoutRect,
   type LayoutBox,
   type ResolvedNode,
+  type ResolvedMeasurementProvenance,
+  type ResolvedTextLineMetrics,
+  type TextMetricsProvider,
 } from "@motionforge/core";
 import {
   parseScene,
@@ -46,7 +51,6 @@ import type {
   Rect,
   RemediationClass,
   TextInspection,
-  TextLineMetrics,
 } from "./types.js";
 
 type WorkingNode = LayoutInspectionNode & {
@@ -82,6 +86,19 @@ function worstMeasurement(
   );
 }
 
+function measurementReasons(
+  provenance: ResolvedMeasurementProvenance[],
+  quality: MeasurementQuality,
+): string {
+  return Array.from(
+    new Set(
+      provenance
+        .filter((entry) => entry.measurement === quality)
+        .map((entry) => entry.reason),
+    ),
+  ).join("; ");
+}
+
 export function inspectLayout(
   sceneInput: unknown,
   requestedFrame: number,
@@ -95,7 +112,11 @@ export function inspectLayout(
   const frame = Math.max(0, Math.min(requestedFrame, scene.duration - 1));
   const tree = inspectTree(scene, options);
   const treeById = new Map(tree.nodes.map((node) => [node.id, node]));
-  const metricCache = new Map<string, TextLineMetrics>();
+  const textMetrics = options.textMetrics
+    ? createBoundedTextMetricsProvider(options.textMetrics, {
+        maxEntries: 4096,
+      })
+    : undefined;
   let observedTextQuality: MeasurementQuality = "exact";
   let observedTextReason = "no text measurement affected layout";
   const measureLine = (
@@ -109,20 +130,19 @@ export function inspectLayout(
       line,
       style,
       fontSize,
-      options,
-      metricCache,
+      textMetrics,
     );
-    const quality =
-      metric.measurement ?? (options.textMetrics ? "exact" : "estimated");
+    const widthProvenance = metric.fieldMeasurements.width;
+    const quality = widthProvenance.measurement;
     if (observedTextReason === "no text measurement affected layout") {
-      observedTextReason = metric.reason ?? "host text metrics provider";
+      observedTextReason = widthProvenance.reason;
     }
     if (
       quality === "estimated" ||
       (quality === "declared" && observedTextQuality === "exact")
     ) {
       observedTextQuality = quality;
-      observedTextReason = metric.reason ?? "text metrics provider";
+      observedTextReason = widthProvenance.reason;
     }
     return metric.width;
   };
@@ -294,7 +314,7 @@ export function inspectLayout(
         effectiveVisibility,
       };
       if (box.node.type === "text") {
-        row.text = inspectText(box, globalMatrix, options, metricCache);
+        row.text = inspectText(box, globalMatrix, options, textMetrics);
       }
       if (
         box.node.assetId &&
@@ -474,69 +494,23 @@ function textLineMetric(
   text: string,
   style: SceneStyle,
   fontSize: number,
-  options: LayoutInspectionOptions,
-  cache: Map<string, TextLineMetrics>,
-): TextLineMetrics {
-  const key = `${nodeId}\u0000${fontSize}\u0000${JSON.stringify(style)}\u0000${text}`;
-  const cached = cache.get(key);
-  if (cached) return cached;
-  const supplied = options.textMetrics?.measureLine({
-    nodeId,
-    text,
-    style,
-    fontSize,
-  });
-  const metric = supplied ?? {
-    width: text.length * fontSize * 0.58,
-    ascent: fontSize * 0.8,
-    descent: fontSize * 0.2,
-    measurement: "estimated" as const,
-    reason: "portable average-glyph heuristic",
-  };
-  if (
-    metric.measurement !== undefined &&
-    !["exact", "declared", "estimated"].includes(metric.measurement)
-  ) {
-    throw new TypeError(
-      `TextMetricsProvider returned an invalid measurement label for node "${nodeId}".`,
-    );
-  }
-  if (
-    metric.measurement !== undefined &&
-    metric.measurement !== "exact" &&
-    !metric.reason
-  ) {
-    throw new TypeError(
-      `TextMetricsProvider must explain ${metric.measurement} metrics for node "${nodeId}".`,
-    );
-  }
-  for (const [name, value] of [
-    ["width", metric.width],
-    ["ascent", metric.ascent],
-    ["descent", metric.descent],
-  ] as const) {
-    if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
-      throw new TypeError(
-        `TextMetricsProvider returned invalid ${name} for node "${nodeId}".`,
-      );
-    }
-  }
-  cache.set(key, metric);
-  return metric;
+  provider?: TextMetricsProvider,
+): ResolvedTextLineMetrics {
+  return resolveTextLineMetrics({ nodeId, text, style, fontSize }, provider);
 }
 
 function inspectText(
   box: LayoutBox,
   matrix: Matrix2D,
   options: LayoutInspectionOptions,
-  cache: Map<string, TextLineMetrics>,
+  provider?: TextMetricsProvider,
 ): TextInspection {
   const node = box.node;
   const style = node.style;
   const value = node.text ?? node.runs?.map((run) => run.text).join("") ?? "";
   const initialSize = readLength(style.fontSize, box.height, 24);
   const measureWidth = (line: string, size: number) =>
-    textLineMetric(node.id, line, style, size, options, cache).width;
+    textLineMetric(node.id, line, style, size, provider).width;
   const common = {
     minFontSize: readLength(style.minFontSize, box.height, 12),
     textFit: style.textFit,
@@ -562,20 +536,15 @@ function inspectText(
     box.y +
     box.height / 2 -
     ((prepared.lines.length - 1) * prepared.lineHeight) / 2;
-  let measurement: MeasurementQuality = options.textMetrics
-    ? "exact"
-    : "estimated";
-  let reason = options.textMetrics
-    ? "host text metrics provider"
-    : "portable average-glyph heuristic";
+  let measurement: MeasurementQuality = "exact";
+  let reason = "no text lines measured";
   const lines = prepared.lines.map((line, index) => {
     const metric = textLineMetric(
       node.id,
       line,
       style,
       prepared.fontSize,
-      options,
-      cache,
+      provider,
     );
     const width = metric.width;
     const drawnWidth = Math.min(width, box.width);
@@ -585,32 +554,44 @@ function inspectText(
         : style.textAlign === "right"
           ? box.x + box.width - drawnWidth
           : box.x;
-    const synthesizedVerticalMetrics =
-      metric.ascent === undefined || metric.descent === undefined;
     const ascent = metric.ascent ?? prepared.fontSize * 0.8;
     const descent = metric.descent ?? prepared.fontSize * 0.2;
-    const providerMeasurement =
-      metric.measurement ?? (options.textMetrics ? "exact" : "estimated");
-    const metricMeasurement = synthesizedVerticalMetrics
-      ? worstMeasurement(providerMeasurement, "estimated")
-      : providerMeasurement;
+    const widthProvenance = metric.fieldMeasurements.width;
+    const missingVerticalReason =
+      metric.fieldMeasurements.ascent === undefined &&
+      metric.fieldMeasurements.descent === undefined
+        ? "ascent/descent use portable font-size ratios"
+        : undefined;
+    const ascentProvenance = metric.fieldMeasurements.ascent ?? {
+      measurement: "estimated" as const,
+      reason: missingVerticalReason ?? "ascent uses portable font-size ratio",
+    };
+    const descentProvenance = metric.fieldMeasurements.descent ?? {
+      measurement: "estimated" as const,
+      reason: missingVerticalReason ?? "descent uses portable font-size ratio",
+    };
+    const metricMeasurement = worstMeasurement(
+      widthProvenance.measurement,
+      ascentProvenance.measurement,
+      descentProvenance.measurement,
+    );
     const transformedLineEstimated = !matrixPreservesAxisAlignment(matrix);
     const lineMeasurement = transformedLineEstimated
       ? worstMeasurement(metricMeasurement, "estimated")
       : metricMeasurement;
-    const metricReason = synthesizedVerticalMetrics
-      ? `${metric.reason ?? reason}; ascent/descent use portable font-size ratios`
-      : (metric.reason ?? reason);
+    const metricReason = measurementReasons(
+      [widthProvenance, ascentProvenance, descentProvenance],
+      metricMeasurement,
+    );
     const lineReason = transformedLineEstimated
       ? `${metricReason}; world bounds conservatively enclose rotated text geometry`
       : metricReason;
-    if (
-      lineMeasurement === "estimated" ||
-      (lineMeasurement === "declared" && measurement === "exact")
-    ) {
+    if (measurementRank[lineMeasurement] > measurementRank[measurement]) {
       measurement = lineMeasurement;
+      reason = lineReason;
+    } else if (reason === "no text lines measured") {
+      reason = lineReason;
     }
-    reason = lineReason;
     const lineBounds = {
       x,
       y: firstY + index * prepared.lineHeight - prepared.lineHeight / 2,
@@ -670,14 +651,22 @@ function inspectMedia(
   const metrics = mediaMetrics(asset, options.mediaMetrics);
   const width = metrics.width ?? box.width;
   const height = metrics.height ?? box.height;
-  const metricsComplete =
-    metrics.width !== undefined && metrics.height !== undefined;
-  const intrinsicMeasurement: MeasurementQuality = metricsComplete
-    ? metrics.measurement
-    : "estimated";
-  const intrinsicReason = metricsComplete
-    ? metrics.reason
-    : `${metrics.reason}; missing intrinsic dimensions use the layout box`;
+  const widthProvenance = metrics.fieldMeasurements.width ?? {
+    measurement: "estimated" as const,
+    reason: `${metrics.reason}; missing intrinsic width uses the layout box`,
+  };
+  const heightProvenance = metrics.fieldMeasurements.height ?? {
+    measurement: "estimated" as const,
+    reason: `${metrics.reason}; missing intrinsic height uses the layout box`,
+  };
+  const intrinsicMeasurement = worstMeasurement(
+    widthProvenance.measurement,
+    heightProvenance.measurement,
+  );
+  const intrinsicReason = measurementReasons(
+    [widthProvenance, heightProvenance],
+    intrinsicMeasurement,
+  );
   const transformedMediaEstimated = !matrixPreservesAxisAlignment(matrix);
   const mediaMeasurement = transformedMediaEstimated
     ? worstMeasurement(intrinsicMeasurement, "estimated")
@@ -707,6 +696,9 @@ function inspectMedia(
       height,
       ...(metrics.durationSeconds !== undefined
         ? { durationSeconds: metrics.durationSeconds }
+        : {}),
+      ...(metrics.frameRate !== undefined
+        ? { frameRate: structuredClone(metrics.frameRate) }
         : {}),
     },
     fittedBounds: measured(

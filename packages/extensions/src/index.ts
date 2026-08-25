@@ -39,6 +39,19 @@ export type ExtensionResolveContext<P> = {
   signal?: AbortSignal;
 };
 
+/**
+ * Deterministic inputs used to decide whether node-scoped extension resources
+ * may survive a Scene revision. Cancellation is deliberately excluded: a
+ * reuse identity must depend on Scene data, not transient host state.
+ */
+export type ExtensionReuseContext<P> = Omit<
+  ExtensionResolveContext<P>,
+  "signal"
+>;
+
+/** Maximum opaque reuse-key length accepted from a trusted extension hook. */
+export const MAX_EXTENSION_REUSE_KEY_LENGTH = 512;
+
 export type ExtensionPrepareContext<P, ResolvedAssets> = {
   scene: Scene;
   node: ExtensionSceneNode;
@@ -78,6 +91,12 @@ export type MotionForgeExtensionDefinition<
     ExtensionResolveContext<P>,
     ResolvedAssets | Promise<ResolvedAssets>
   >;
+  /**
+   * Opts node-scoped resolved assets into cross-revision reuse. Return null to
+   * reacquire for this context. The renderer additionally checks definition,
+   * adapter, execution mode, and every required asset's resolved identity.
+   */
+  reuseKey?: ExtensionHook<ExtensionReuseContext<P>, string | null>;
   prepareFrame?: ExtensionHook<
     ExtensionPrepareContext<P, ResolvedAssets>,
     PreparedFrame | Promise<PreparedFrame>
@@ -154,6 +173,14 @@ export function defineExtension<
     );
   }
   if (
+    runtimeDefinition.reuseKey !== undefined &&
+    typeof runtimeDefinition.reuseKey !== "function"
+  ) {
+    throw new Error(
+      `Extension "${runtimeDefinition.name}" reuseKey must be a function.`,
+    );
+  }
+  if (
     runtimeDefinition.displayName !== undefined &&
     (typeof runtimeDefinition.displayName !== "string" ||
       runtimeDefinition.displayName.trim().length === 0 ||
@@ -204,6 +231,26 @@ export function defineExtension<
   }
 
   return definition;
+}
+
+/** Calls and validates an extension's opt-in resource-reuse identity. */
+export function extensionResourceReuseKey<P, ResolvedAssets, PreparedFrame>(
+  definition: MotionForgeExtensionDefinition<P, ResolvedAssets, PreparedFrame>,
+  context: ExtensionReuseContext<P>,
+): string | null {
+  if (!definition.reuseKey) return null;
+  const value = definition.reuseKey(context);
+  if (value === null) return null;
+  if (
+    typeof value !== "string" ||
+    value.trim().length === 0 ||
+    value.length > MAX_EXTENSION_REUSE_KEY_LENGTH
+  ) {
+    throw new Error(
+      `Extension ${definition.name}@${definition.version} reuseKey must return null or a non-empty string of at most ${MAX_EXTENSION_REUSE_KEY_LENGTH} characters.`,
+    );
+  }
+  return value;
 }
 
 export class ExtensionRegistry {

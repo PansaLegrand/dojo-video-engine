@@ -90,6 +90,17 @@ export const publicPackagePolicy = {
     allowedMotionforgeDependencies: [
       "@motionforge/core",
       "@motionforge/extensions",
+      "@motionforge/runtime",
+      "@motionforge/schema",
+    ],
+  },
+  "@motionforge/runtime": {
+    owner:
+      "Prepared Scene sessions, backend lifecycle, events, and artifact sinks",
+    allowedMotionforgeDependencies: [
+      "@motionforge/core",
+      "@motionforge/extensions",
+      "@motionforge/inspection",
       "@motionforge/schema",
     ],
   },

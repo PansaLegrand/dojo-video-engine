@@ -18,7 +18,14 @@ export default defineConfig({
         new URL("../../packages/presets/src/catalog.ts", import.meta.url),
       ),
       "@motionforge/presets": workspacePackage("presets"),
+      "@motionforge/renderer-canvas2d/runtime": fileURLToPath(
+        new URL(
+          "../../packages/renderer-canvas2d/src/runtime.ts",
+          import.meta.url,
+        ),
+      ),
       "@motionforge/renderer-canvas2d": workspacePackage("renderer-canvas2d"),
+      "@motionforge/runtime": workspacePackage("runtime"),
       "@motionforge/schema/values": fileURLToPath(
         new URL("../../packages/schema/src/values.ts", import.meta.url),
       ),
