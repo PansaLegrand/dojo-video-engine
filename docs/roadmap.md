@@ -1,5 +1,11 @@
 # Roadmap
 
+The proposed next implementation program after MotionForge 1.0 is tracked in
+[`post-1.0-engine-roadmap.md`](post-1.0-engine-roadmap.md). It is the current
+planning contract for strict canonical semantics, resource lifecycle, spatial
+inspection, typed commands, layout v2, reusable runtime sessions, and
+framework-neutral tooling. No milestone in that document is complete yet.
+
 The current base-engine path to a stable v1 contract is tracked in
 [`v1-roadmap.md`](v1-roadmap.md). This document retains the completed M0 and
 chat/editor development history.
