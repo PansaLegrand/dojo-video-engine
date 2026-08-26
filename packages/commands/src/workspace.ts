@@ -83,6 +83,21 @@ export type SceneWorkspaceSnapshot = {
   history: WorkspaceHistoryEntry[];
 };
 
+export type WorkspaceTransitionPreview =
+  | {
+      kind: "undo" | "redo";
+      changed: false;
+      revision: number;
+      scene: Scene;
+    }
+  | {
+      kind: "undo" | "redo";
+      changed: true;
+      revision: number;
+      scene: Scene;
+      history: WorkspaceHistoryEntry;
+    };
+
 export type SceneWorkspaceErrorCode =
   | "invalid_history_limit"
   | "stale_revision"
@@ -375,6 +390,23 @@ export class SceneWorkspace {
     return this.record("commit", before, this.currentScene, commit);
   }
 
+  /** Preview the exact undo candidate without mutating workspace state. */
+  previewUndo(
+    expectedRevision = this.currentRevision,
+  ): WorkspaceTransitionPreview {
+    this.assertRevision(expectedRevision);
+    const commit = this.undoStack.at(-1);
+    return this.previewTransition("undo", commit && reverseCommit(commit));
+  }
+
+  /** Redo candidate without changing stacks, Scene, history, or revision. */
+  previewRedo(
+    expectedRevision = this.currentRevision,
+  ): WorkspaceTransitionPreview {
+    this.assertRevision(expectedRevision);
+    return this.previewTransition("redo", this.redoStack.at(-1));
+  }
+
   /** Undo the latest committed edit. Returns null when there is nothing to undo. */
   undo(expectedRevision = this.currentRevision): WorkspaceHistoryEntry | null {
     this.assertRevision(expectedRevision);
@@ -444,6 +476,46 @@ export class SceneWorkspace {
         { expectedRevision, actualRevision: this.currentRevision },
       );
     }
+  }
+
+  private previewTransition(
+    kind: "undo" | "redo",
+    commit: InternalCommit | undefined,
+  ): WorkspaceTransitionPreview {
+    if (!commit) {
+      return {
+        kind,
+        changed: false,
+        revision: this.currentRevision,
+        scene: this.read(),
+      };
+    }
+    const before = this.currentScene;
+    const applied = applyScenePatch(before, commit.forwardPatch);
+    if (!applied.ok) {
+      throw new SceneWorkspaceError(
+        kind === "undo" ? "inverse_failed" : "patch_failed",
+        formatPatchErrors(applied.errors),
+        clone(applied.errors),
+      );
+    }
+    const history: WorkspaceHistoryEntry = {
+      kind,
+      revisionBefore: this.currentRevision,
+      revisionAfter: this.currentRevision + 1,
+      forwardPatch: clone(commit.forwardPatch),
+      inversePatch: clone(commit.inversePatch),
+      affectedIds: clone(commit.affectedIds),
+      semanticDiff: diffCanonicalScenes(before, applied.scene),
+      diagnostics: clone(commit.diagnostics),
+    };
+    return {
+      kind,
+      changed: true,
+      revision: this.currentRevision,
+      scene: clone(applied.scene),
+      history,
+    };
   }
 
   private record(

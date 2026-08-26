@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.50",
+    "@motionforge/agent-tools": "workspace:*",
     "@motionforge/core": "workspace:*",
     "@motionforge/export": "workspace:*",
     "@motionforge/player": "workspace:*",
@@ -25,7 +26,8 @@
     "next": "15.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/node": "^22.8.6",

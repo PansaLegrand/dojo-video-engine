@@ -44,14 +44,68 @@ MOTIONFORGE_CHAT_MODEL=gpt-4.1-mini
 
 ## How The Chat Loop Works
 
-The chat app is currently a JSON scene plus JSON patch loop. It does not use MCP, AI SDK tool calls, or function calling yet. The model is asked to return strict JSON, and the app validates or applies that JSON with motionforge's schema utilities.
+The app uses a hybrid loop with one canonical Scene contract:
 
-1. The user types a prompt in the chat UI.
-2. The browser sends `POST /api/chat` with the prompt, the current scene JSON, and recent chat history.
-3. The API route chooses the LLM provider from `.env.local`.
-4. If no model is configured, or the model path fails, the route uses the local deterministic fallback.
-5. The model receives a system prompt describing the motionforge scene contract.
-6. On the first turn, the model should return a complete scene:
+- With no Scene yet, first-draft generation remains one bounded structured
+  response. This is the shortest path for creating a new artifact.
+- Once a Scene exists, editing uses the MF8 revisioned workflow:
+  `load → inspect → command → check → proof → optional repair`.
+- Without credentials, or after a model failure, the deterministic local
+  compiler remains the fallback.
+
+For an existing video, the browser sends the latest Scene snapshot—including
+manual Inspector, timeline, undo, or redo changes—on every request. The server
+loads it once into an opaque workspace handle. Model observations contain flat
+node summaries, ids, timing, diagnostics, and revisions; they do not repeat
+the recursive Scene.
+
+The browser attaches a project epoch plus monotonic workspace revision to every request. If the
+Scene or asset shelf changes while a response is in flight, that response is
+never applied: the app retries once from the latest Scene and otherwise
+discards it; a new session/template always invalidates the old instruction
+without retry. Model-proposed `asset.set` commands are authorized against the
+exact uploaded-media manifest tuple; unknown ids, invented sources, and
+type/source mismatches are rejected.
+
+The model returns one small typed decision at a time:
+
+```json
+{
+  "kind": "command",
+  "commands": [
+    { "kind": "text.set", "id": "title", "text": "Launch in 3 days" },
+    { "kind": "style.set", "id": "title", "style": { "fontSize": 112 } }
+  ],
+  "summary": "Updated and enlarged the title."
+}
+```
+
+If the initial flat summary is truncated or omits the named target, the model
+can return an `observe` decision for an exact node read or bounded search. It
+cannot request the complete Scene.
+
+Commands apply transactionally at an exact revision. The host runs bounded
+composition checks and chooses proof frames from changed nodes, cuts,
+keyframes, captions, and markers. Visual edits can produce before/after/visual-diff
+plans; a failed check becomes the next repair observation. Simple edits usually
+finish after one command/check pass.
+
+The default Next.js Node route plans proof frames but does not claim pixel
+judgment: its final visual confirmation is the browser preview. The public
+browser evidence port and golden harness exercise real prepared-runtime
+before/after/visual-diff/contact pixels; a deployed host can attach that port through
+the same workflow evidence interface.
+
+`scene.set`, `asset.set`, and `asset.remove` allow iterative workflows to
+change composition metadata and manage multiple uploaded assets without
+replacing the Scene. Node edits remain flat and id-addressed.
+
+After completion, trusted host accessors read the final canonical Scene and
+forward/inverse patch history. The browser preview and MP4 export consume that
+same Scene. Workflow handles are request-local, not database or authorization
+identifiers.
+
+First-draft structured output is still validated as a complete Scene:
 
 ```json
 {
@@ -67,32 +121,6 @@ The chat app is currently a JSON scene plus JSON patch loop. It does not use MCP
   "summary": "Created a 5 second launch teaser."
 }
 ```
-
-7. On follow-up turns, the model should return patch ops against the existing scene:
-
-```json
-{
-  "patch": [
-    {
-      "op": "setStyle",
-      "id": "title",
-      "style": {
-        "fontSize": 112
-      }
-    }
-  ],
-  "summary": "Made the title larger."
-}
-```
-
-8. The route parses the model text as JSON.
-9. If the JSON contains `scene`, the app validates it with the motionforge scene schema.
-10. If the JSON contains `patch`, the app applies it with `applyScenePatch`.
-11. The resulting scene JSON becomes the new source of truth.
-12. The preview player reloads that scene into the Canvas2D player.
-13. MP4 export uses the same scene JSON and renderer path.
-
-The important current limitation: follow-up memory is mostly the current scene JSON. The UI sends recent chat history, but the API prompt currently relies on the current scene and the latest instruction. That is enough for direct scene edits, but conversation-aware references should become a future improvement.
 
 ## Chat Command Cookbook
 
@@ -224,23 +252,30 @@ Most agentic design and app-building products use the same broad loop:
 
 The main difference is the artifact format. motionforge uses a JSON scene document and JSON patch ops. Tools like [v0](https://vercel.com/blog/announcing-v0-generative-ui), Bolt, Lovable, or coding agents tend to use source files, code diffs, and build/test loops. Tools in the Open Design or tldraw "make real" family often use HTML, CSS, canvas state, or another design document as the artifact.
 
-So the motionforge loop today is intentionally simple:
+The first-draft path remains intentionally short:
 
 ```txt
 Prompt -> JSON scene or JSON patch -> schema validation -> deterministic preview/export
 ```
 
-A more code-like agentic loop usually looks like this:
+Editing now uses the code-like loop:
 
 ```txt
 Prompt -> plan -> edit files/artifacts -> run validation/render checks -> repair -> preview/export
 ```
 
-Structured JSON is the right starting point for this app because it is deterministic, easy to validate, easy to patch, and safer for an open-source local app. If structured responses stop being enough, the next step is not to abandon the scene schema, but to add a stronger agentic layer around it: planning, tool calls, MCP integrations, asset lookup, screenshot comparison, render scoring, and repair loops. In that future version, the JSON scene can remain the canonical video document while the agent becomes more capable at producing and improving it.
+Structured JSON remains the canonical video document because it is
+deterministic, validateable, reversible, and portable. The agentic runtime now
+sits around that document: it observes flat tool results, applies typed
+commands, checks, renders evidence, and repairs. Provider SDK code stays in the
+reference host; `@motionforge/agent-tools` itself is provider-neutral.
 
 ## Relevant Files
 
 - `app/api/chat/route.ts` - provider selection, model call, JSON parsing, fallback handling.
+- `lib/ai/iterative-decision.ts` - strict command/observe/finish/fail decision schema and observation prompt.
+- `lib/motionforge/iterative-agent.ts` - bounded inspect/edit/check/proof/repair state machine.
+- `lib/motionforge/iterative-workflow-adapter.ts` - bridge to the real handle registry.
 - `lib/ai/prompt.ts` - system prompt and model output contract.
 - `lib/motionforge/local-agent.ts` - local fallback generation, patch creation, model output normalization.
 - `components/motionforge-chat-app.tsx` - chat UI, preview player, JSON view, MP4 export.

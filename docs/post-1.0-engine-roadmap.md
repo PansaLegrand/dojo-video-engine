@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-26
-Status: active implementation contract; MF0 through MF7 complete
+Status: active implementation contract; MF0 through MF8 complete
 
 ## Purpose
 
@@ -516,6 +516,11 @@ Exit gate:
 
 ### MF8 — Framework-neutral tool workflow and evidence
 
+Implementation status: complete. The accepted decision is
+[RFC 0013](rfcs/0013-framework-neutral-agent-workflow.md); the exact contract
+and release evidence are recorded in
+[the MF8 delivery note](mf8-agent-workflow.md).
+
 Commit:
 
 ```text
@@ -808,3 +813,21 @@ than the engine priority.
   exact cache-disabled pixels. All 15 public packages packed, and the external
   packed starter imported runtime entry points and passed
   validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF8 complete: added the provider-neutral handle workflow with
+  one recursive Scene load,
+  flat read/search/check, 19 typed commands, monotonic revisions, undo/redo,
+  bounded schema-described results, ordered events, and deterministic cleanup.
+  Proof selection now derives frames from changes, cuts, keyframes, captions,
+  and markers; comparison plans materialize through transactional renderer/sink
+  ports. The prepared Canvas browser port and scoped memory sink passed real
+  before/after/diff/contact-sheet pixel and lifecycle evidence. The reference
+  chat edits existing Scenes through an inspect-command-check-proof-repair loop
+  starting from the latest UI state; provider code remains app-only. Focused
+  suites passed 68 commands, 49 agent-tools, 129 chat, and 15 offline eval
+  tests. The full gate passed 1,110 unit tests, 750 generated Scenes / 2,250
+  frames, 28 corpus Scenes, seven resource checks, existing goldens plus real
+  handle-workflow proof pixels, all three browsers, and 10 E2E checks. The 720p
+  gate peaked at 6.52 ms/frame and 33 MiB heap; compositing measured 1.90
+  ms/frame at 1080p and 1.92 ms/frame at 4K with exact cache-disabled pixels.
+  All 15 public packages packed, and the clean external starter passed packed
+  runtime imports plus validate/migrate/inspect/lint/build.

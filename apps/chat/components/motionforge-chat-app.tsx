@@ -49,6 +49,7 @@ import type {
   PlayerUiState,
 } from "@/components/editor/types";
 import { describeExportReadiness } from "@/lib/editor/capability-messages";
+import { assistantResponseRevisionAction } from "@/lib/editor/agent-revision";
 import type {
   PreviewLayerBounds,
   PreviewLayerMove,
@@ -72,7 +73,12 @@ import {
 } from "@/lib/motionforge/readme-showcases";
 
 type ChatApiResponse =
-  | { ok: true; result: MotionforgeAgentResult }
+  | {
+      ok: true;
+      result: MotionforgeAgentResult;
+      baseRevision: number;
+      baseEpoch: number;
+    }
   | { ok: false; error: string };
 
 const initialMessages: ChatMessage[] = [
@@ -127,6 +133,9 @@ export function MotionforgeChatApp() {
   const playerRef = useRef<Player | null>(null);
   const assetsRef = useRef<ResolvedAssets | undefined>(undefined);
   const mediaAssetsRef = useRef<LocalMediaAsset[]>([]);
+  const sceneRef = useRef<Scene | null>(null);
+  const sceneRevisionRef = useRef(0);
+  const sessionEpochRef = useRef(0);
   const loadIdRef = useRef(0);
   const messagesScrollerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -348,17 +357,36 @@ export function MotionforgeChatApp() {
     return () => window.clearTimeout(timer);
   }, [isSending, messages.length]);
 
+  const publishScene = useCallback((nextScene: Scene | null) => {
+    sceneRef.current = nextScene;
+    sceneRevisionRef.current += 1;
+    setScene(nextScene);
+  }, []);
+
+  const publishMediaAssets = useCallback((next: LocalMediaAsset[]) => {
+    mediaAssetsRef.current = next;
+    // Asset readiness/removal changes the set of sources an agent may safely
+    // authorize, so it invalidates an in-flight response like a Scene edit.
+    sceneRevisionRef.current += 1;
+    setMediaAssets(next);
+  }, []);
+
   const commitSceneChange = useCallback(
     (nextScene: Scene, source: SceneChangeSource) => {
-      setSceneHistory((history) => recordSceneHistory(history, scene));
-      setScene(nextScene);
+      if (source === "template" || source === "showcase") {
+        sessionEpochRef.current += 1;
+      }
+      setSceneHistory((history) =>
+        recordSceneHistory(history, sceneRef.current),
+      );
+      publishScene(nextScene);
       setExportStatus("");
 
       if (source !== "inspector") {
         setEditorError(null);
       }
     },
-    [scene],
+    [publishScene],
   );
 
   const clearMediaAssets = useCallback(() => {
@@ -366,66 +394,66 @@ export function MotionforgeChatApp() {
       revokeLocalMediaAssetUrls(asset);
     }
 
-    mediaAssetsRef.current = [];
-    setMediaAssets([]);
-  }, []);
+    publishMediaAssets([]);
+  }, [publishMediaAssets]);
 
-  const addMediaFiles = useCallback((files: File[]) => {
-    const currentAssets = mediaAssetsRef.current;
-    const nextAssets = [...currentAssets];
-    const createdAssets: LocalMediaAsset[] = [];
-    const unsupportedFiles: string[] = [];
+  const addMediaFiles = useCallback(
+    (files: File[]) => {
+      const currentAssets = mediaAssetsRef.current;
+      const nextAssets = [...currentAssets];
+      const createdAssets: LocalMediaAsset[] = [];
+      const unsupportedFiles: string[] = [];
 
-    for (const file of files) {
-      const objectUrl = URL.createObjectURL(file);
-      const asset = createLocalMediaAssetShell({
-        file,
-        objectUrl,
-        existingAssets: nextAssets,
-      });
+      for (const file of files) {
+        const objectUrl = URL.createObjectURL(file);
+        const asset = createLocalMediaAssetShell({
+          file,
+          objectUrl,
+          existingAssets: nextAssets,
+        });
 
-      if (!asset) {
-        URL.revokeObjectURL(objectUrl);
-        unsupportedFiles.push(file.name);
-        continue;
+        if (!asset) {
+          URL.revokeObjectURL(objectUrl);
+          unsupportedFiles.push(file.name);
+          continue;
+        }
+
+        nextAssets.push(asset);
+        createdAssets.push(asset);
       }
 
-      nextAssets.push(asset);
-      createdAssets.push(asset);
-    }
+      if (!createdAssets.length && unsupportedFiles.length) {
+        setEditorError(
+          `Unsupported media file: ${unsupportedFiles.join(", ")}`,
+        );
+        return;
+      }
 
-    if (!createdAssets.length && unsupportedFiles.length) {
-      setEditorError(`Unsupported media file: ${unsupportedFiles.join(", ")}`);
-      return;
-    }
+      if (createdAssets.length) {
+        publishMediaAssets(nextAssets);
+        setActivePanel("assets");
+        setEditorError(
+          unsupportedFiles.length
+            ? `Skipped unsupported file: ${unsupportedFiles.join(", ")}`
+            : null,
+        );
+        setExportStatus("");
+      }
 
-    if (createdAssets.length) {
-      mediaAssetsRef.current = nextAssets;
-      setMediaAssets(nextAssets);
-      setActivePanel("assets");
-      setEditorError(
-        unsupportedFiles.length
-          ? `Skipped unsupported file: ${unsupportedFiles.join(", ")}`
-          : null,
-      );
-      setExportStatus("");
-    }
-
-    for (const asset of createdAssets) {
-      void probeLocalMediaAsset(asset).then((probedAsset) => {
-        setMediaAssets((current) => {
-          const next = current.map((item) =>
+      for (const asset of createdAssets) {
+        void probeLocalMediaAsset(asset).then((probedAsset) => {
+          const next = mediaAssetsRef.current.map((item) =>
             item.id === probedAsset.id &&
             item.objectUrl === probedAsset.objectUrl
               ? probedAsset
               : item,
           );
-          mediaAssetsRef.current = next;
-          return next;
+          publishMediaAssets(next);
         });
-      });
-    }
-  }, []);
+      }
+    },
+    [publishMediaAssets],
+  );
 
   const removeMediaAsset = useCallback(
     (id: string) => {
@@ -444,11 +472,10 @@ export function MotionforgeChatApp() {
       }
 
       const nextAssets = currentAssets.filter((item) => item.id !== id);
-      mediaAssetsRef.current = nextAssets;
-      setMediaAssets(nextAssets);
+      publishMediaAssets(nextAssets);
       setEditorError(null);
     },
-    [scene],
+    [publishMediaAssets, scene],
   );
 
   const insertMediaAsset = useCallback(
@@ -493,7 +520,7 @@ export function MotionforgeChatApp() {
       setSceneHistory((history) =>
         recordSceneHistory(history, scene ?? insertResult.baseScene),
       );
-      setScene(patchResult.scene);
+      publishScene(patchResult.scene);
       setSelectedLayerId(insertResult.nodeId);
       setEditorError(null);
       setExportStatus("");
@@ -509,7 +536,7 @@ export function MotionforgeChatApp() {
         },
       ]);
     },
-    [playerState.frame, scene],
+    [playerState.frame, publishScene, scene],
   );
 
   const undoSceneChange = useCallback(() => {
@@ -519,11 +546,11 @@ export function MotionforgeChatApp() {
       return;
     }
 
-    setScene(result.scene);
+    publishScene(result.scene);
     setSceneHistory(result.history);
     setEditorError(null);
     setExportStatus("");
-  }, [scene, sceneHistory]);
+  }, [publishScene, scene, sceneHistory]);
 
   const redoSceneChange = useCallback(() => {
     const result = redoSceneHistory(scene, sceneHistory);
@@ -532,11 +559,11 @@ export function MotionforgeChatApp() {
       return;
     }
 
-    setScene(result.scene);
+    publishScene(result.scene);
     setSceneHistory(result.history);
     setEditorError(null);
     setExportStatus("");
-  }, [scene, sceneHistory]);
+  }, [publishScene, scene, sceneHistory]);
 
   const submitPrompt = useCallback(
     async (value?: string) => {
@@ -558,23 +585,65 @@ export function MotionforgeChatApp() {
       setMessages((items) => [...items, userMessage]);
 
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            instruction,
-            scene,
-            mediaAssets: mediaAssetManifest,
-            history: messages.slice(-8).map(({ role, content }) => ({
-              role,
-              content,
-            })),
-          }),
-        });
-        const payload = (await response.json()) as ChatApiResponse;
+        const history = messages.slice(-8).map(({ role, content }) => ({
+          role,
+          content,
+        }));
+        let requestedScene = sceneRef.current;
+        let requestedRevision = sceneRevisionRef.current;
+        const requestedEpoch = sessionEpochRef.current;
+        let retryCount = 0;
+        let payload: Extract<ChatApiResponse, { ok: true }>;
 
-        if (!payload.ok) {
-          throw new Error(payload.error);
+        for (;;) {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instruction,
+              scene: requestedScene,
+              clientRevision: requestedRevision,
+              clientEpoch: requestedEpoch,
+              mediaAssets: createChatMediaAssetManifest({
+                assets: mediaAssetsRef.current,
+                scene: requestedScene,
+              }),
+              history,
+            }),
+          });
+          const candidate = (await response.json()) as ChatApiResponse;
+
+          if (!candidate.ok) throw new Error(candidate.error);
+          if (candidate.baseRevision !== requestedRevision) {
+            throw new Error(
+              "The assistant response did not match its requested Scene revision.",
+            );
+          }
+          if (candidate.baseEpoch !== requestedEpoch) {
+            throw new Error(
+              "The assistant response did not match its requested project epoch.",
+            );
+          }
+          const action = assistantResponseRevisionAction({
+            requestedRevision,
+            currentRevision: sceneRevisionRef.current,
+            requestedEpoch,
+            currentEpoch: sessionEpochRef.current,
+            retryCount,
+            hasCurrentScene: sceneRef.current !== null,
+          });
+          if (action === "apply") {
+            payload = candidate;
+            break;
+          }
+          if (action === "discard") {
+            throw new Error(
+              "The Scene changed while the assistant was working, so its stale response was discarded. Please try again from the latest edit.",
+            );
+          }
+          retryCount += 1;
+          requestedScene = sceneRef.current;
+          requestedRevision = sceneRevisionRef.current;
         }
 
         commitSceneChange(payload.result.scene, "assistant");
@@ -608,7 +677,7 @@ export function MotionforgeChatApp() {
         setIsSending(false);
       }
     },
-    [commitSceneChange, input, isSending, mediaAssetManifest, messages, scene],
+    [commitSceneChange, input, isSending, messages],
   );
 
   const togglePlayback = useCallback(() => {
@@ -640,7 +709,8 @@ export function MotionforgeChatApp() {
   }, []);
 
   const startNewSession = useCallback(() => {
-    setScene(null);
+    sessionEpochRef.current += 1;
+    publishScene(null);
     setSceneHistory(createSceneHistory());
     clearMediaAssets();
     setSelectedLayerId(null);
@@ -657,7 +727,7 @@ export function MotionforgeChatApp() {
     setExportStatus("");
     setEditorError(null);
     setShowJson(false);
-  }, [clearMediaAssets]);
+  }, [clearMediaAssets, publishScene]);
 
   const editSelectedLayer = useCallback(
     (id: string, field: InspectorEditableField, value: string) => {

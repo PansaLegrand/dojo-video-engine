@@ -167,6 +167,12 @@ describe("Scene command schema", () => {
       { kind: "motion.preset", id: "title", preset: "fadeIn", mode: "replace" },
       { kind: "macro.insert", name: "lowerThird", params: { title: "Ada" } },
       { kind: "layout.apply", id: "footage-node", layout: "fullscreen" },
+      { kind: "scene.set", width: 1920, height: 1080, fps: 60 },
+      {
+        kind: "asset.set",
+        asset: { id: "voice", type: "audio", src: "voice.wav" },
+      },
+      { kind: "asset.remove", id: "voice" },
     ];
 
     expect(sceneCommandsSchema.parse(samples)).toHaveLength(samples.length);
@@ -234,7 +240,7 @@ describe("Scene command schema", () => {
       for (const child of Object.values(record)) walk(child);
     };
     walk(schema);
-    expect(strictBranches.length).toBeGreaterThanOrEqual(16);
+    expect(strictBranches.length).toBeGreaterThanOrEqual(19);
     expect(strictBranches.every(Boolean)).toBe(true);
     expect(requiredDiscriminators.every(Boolean)).toBe(true);
   });
@@ -245,6 +251,100 @@ describe("Scene command schema", () => {
       allErrors: true,
     }).compile(sceneCommandJsonSchema());
     const cases: Array<{ name: string; input: unknown; accepted: boolean }> = [
+      {
+        name: "valid scene metadata",
+        input: [{ kind: "scene.set", width: 1920, height: 1080, fps: 60 }],
+        accepted: true,
+      },
+      {
+        name: "missing scene metadata fields",
+        input: [{ kind: "scene.set" }],
+        accepted: false,
+      },
+      {
+        name: "invalid scene metadata bounds",
+        input: [{ kind: "scene.set", width: 0, fps: 29.97 }],
+        accepted: false,
+      },
+      {
+        name: "valid canonical asset",
+        input: [
+          {
+            kind: "asset.set",
+            asset: {
+              id: "voice",
+              type: "audio",
+              src: "voice.wav",
+              metadata: { duration: 3 },
+            },
+          },
+        ],
+        accepted: true,
+      },
+      {
+        name: "asset unknown field",
+        input: [
+          {
+            kind: "asset.set",
+            asset: {
+              id: "voice",
+              type: "audio",
+              src: "voice.wav",
+              children: [],
+            },
+          },
+        ],
+        accepted: false,
+      },
+      {
+        name: "asset id leading whitespace",
+        input: [
+          {
+            kind: "asset.set",
+            asset: { id: " voice", type: "audio", src: "voice.wav" },
+          },
+        ],
+        accepted: false,
+      },
+      {
+        name: "asset id trailing whitespace removal",
+        input: [{ kind: "asset.remove", id: "voice " }],
+        accepted: false,
+      },
+      {
+        name: "asset id bounded",
+        input: [
+          {
+            kind: "asset.set",
+            asset: {
+              id: "x".repeat(192),
+              type: "image",
+              src: "image.png",
+            },
+          },
+        ],
+        accepted: false,
+      },
+      {
+        name: "asset metadata unknown field",
+        input: [
+          {
+            kind: "asset.set",
+            asset: {
+              id: "voice",
+              type: "audio",
+              src: "voice.wav",
+              metadata: { semanticDescription: "unsafe" },
+            },
+          },
+        ],
+        accepted: false,
+      },
+      {
+        name: "valid asset removal",
+        input: [{ kind: "asset.remove", id: "voice" }],
+        accepted: true,
+      },
       {
         name: "valid style",
         input: [{ kind: "style.set", id: "title", style: { color: "#fff" } }],
@@ -499,6 +599,101 @@ describe("Scene command schema", () => {
 });
 
 describe("compileSceneCommands", () => {
+  it("compiles Scene metadata and canonical asset registration/removal additively", () => {
+    const result = applySceneCommands(fixture(), [
+      { kind: "scene.set", width: 1920, height: 1080, fps: 60, duration: 600 },
+      {
+        kind: "asset.set",
+        asset: {
+          id: "voice",
+          type: "audio",
+          src: "voice.wav",
+          metadata: { duration: 4, audioChannels: 2 },
+        },
+      },
+      {
+        kind: "node.add",
+        node: {
+          id: "voice-node",
+          type: "audio",
+          assetId: "voice",
+          duration: 240,
+        },
+      },
+      {
+        kind: "asset.set",
+        asset: { id: "temporary", type: "image", src: "temporary.png" },
+      },
+      { kind: "asset.remove", id: "temporary" },
+    ]);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.scene).toMatchObject({
+      width: 1920,
+      height: 1080,
+      fps: 60,
+      duration: 600,
+      assets: {
+        voice: {
+          id: "voice",
+          type: "audio",
+          src: "voice.wav",
+          metadata: { duration: 4, audioChannels: 2 },
+        },
+      },
+    });
+    expect(findNode(result.scene, "voice-node")).toMatchObject({
+      type: "audio",
+      assetId: "voice",
+      duration: 240,
+    });
+    expect(result.scene.assets.temporary).toBeUndefined();
+    expect(result.patch.map(({ op }) => op)).toEqual([
+      "setSceneMeta",
+      "setAsset",
+      "insertNode",
+      "setAsset",
+      "removeAsset",
+    ]);
+    expect(result.affectedIds).toEqual(["voice", "voice-node", "temporary"]);
+    expect(result.diagnostics.map(({ code }) => code)).toEqual([
+      "scene_meta_set",
+      "asset_set",
+      "asset_set",
+      "asset_removed",
+    ]);
+  });
+
+  it("rejects referenced/missing asset removal and rolls back earlier commands", () => {
+    const input = fixture();
+    const before = structuredClone(input);
+    const referenced = applySceneCommands(input, [
+      { kind: "scene.set", width: 1920 },
+      { kind: "asset.remove", id: "footage" },
+    ]);
+    expect(referenced.ok).toBe(false);
+    expect(input).toEqual(before);
+    if (!referenced.ok) {
+      expect(referenced.errors[0]).toMatchObject({
+        commandIndex: 1,
+        kind: "asset.remove",
+        code: "command_not_applicable",
+      });
+      expect(referenced.errors[0]?.message).toMatch(/reference/i);
+      expect(referenced.affectedIds).toEqual([]);
+    }
+
+    const missing = compileSceneCommands(fixture(), [
+      { kind: "asset.remove", id: "not-registered" },
+    ]);
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.errors[0]?.message).toMatch(
+        /not-registered|does not exist/i,
+      );
+    }
+  });
+
   it("compiles direct text, style, placement, resize, and timing commands", () => {
     const result = applySceneCommands(fixture(), [
       { kind: "text.set", id: "title", text: "After" },

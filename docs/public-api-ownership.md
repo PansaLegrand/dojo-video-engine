@@ -1,7 +1,7 @@
 # MotionForge public API ownership and deprecation baseline
 
 Status: accepted with RFC 0009  
-Baseline: MotionForge 1.0.0 / post-1.0 milestone MF7
+Baseline: MotionForge 1.0.0 / post-1.0 milestone MF8
 
 This document classifies the public package entry points that existed at the
 start of the post-1.0 engine program. The machine-readable export-map snapshot
@@ -37,7 +37,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/presets/intents`           | Versioned JSON-facing layout-intent manifests and Scene v1 compatibility compilers                     | Stable entry point added in MF7. Existing manifest ids, schemas, result codes, and legacy compiler outputs follow the 1.x policy.            |
 | `@motionforge/presets/macros`            | JSON-facing macro registry, manifests/guides, and expansion                                            | Stable macro names once published; new macros and optional parameters are additive.                                                          |
 | `@motionforge/authoring`                 | Seconds-first TypeScript authoring helpers that compile to Scene data                                  | Stable. Helpers may gain optional parameters; emitted existing defaults remain compatible.                                                   |
-| `@motionforge/agent-tools`               | Framework-neutral data, render, capability, and export adapters                                        | Stable tool/direct-function names and required inputs. Structured results may gain additive fields.                                          |
+| `@motionforge/agent-tools`               | Stateless adapters plus handle workflows, proof planning, browser evidence, sinks, and export tools    | Stable legacy and workflow tool names/required inputs. Contract versions and result fields follow the 1.x additive policy.                   |
 | `@motionforge/cli` and `motionforge`     | CLI loading, validation, inspection, local Studio, and export facade                                   | Stable command names and successful exit semantics. New commands/options are additive.                                                       |
 | `@motionforge/commands`                  | Typed non-recursive Scene commands, compilation, reversibility, manifests, and in-memory workspace     | Stable entry point added in MF4. Command kinds and required fields are versioned; result/history objects may grow additively.                |
 | `create-motionforge` and its bin         | Starter generation                                                                                     | Stable command and generated-project contract; templates may advance with compatible package releases.                                       |

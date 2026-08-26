@@ -88,7 +88,7 @@ flowchart TB
 | [`@motionforge/layout`](packages/layout)                       | Semantic stack/grid/constraint compiler to Scene v1    | ✅ working |
 | [`@motionforge/commands`](packages/commands)                   | Typed reversible edits and revisioned workspaces       | ✅ working |
 | [`@motionforge/runtime`](packages/runtime)                     | Reusable prepared scenes and lifecycle transactions    | ✅ working |
-| [`@motionforge/agent-tools`](packages/agent-tools)             | Agent validation, diff, discovery, render/export tools | ✅ working |
+| [`@motionforge/agent-tools`](packages/agent-tools)             | Handle edits, checks, proof artifacts, legacy adapters | ✅ working |
 | [`@motionforge/extensions`](packages/extensions)               | Versioned deterministic renderer extension kernel      | ✅ working |
 | [`@motionforge/renderer-canvas2d`](packages/renderer-canvas2d) | Canvas2D reference renderer                            | ✅ working |
 | [`@motionforge/export`](packages/export)                       | In-browser MP4 export (WebCodecs + mediabunny)         | ✅ working |

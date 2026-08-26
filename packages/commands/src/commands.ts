@@ -3,6 +3,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   animationTargets,
   applyScenePatch,
+  assetSchema,
   closedShapeGeometrySchema,
   duckingSchema,
   effectParamsSchema,
@@ -43,6 +44,14 @@ import {
  */
 
 const idSchema = z.string().trim().min(1).max(191);
+const commandAssetIdSchema = z
+  .string()
+  .min(1)
+  .max(191)
+  .regex(
+    /^\S(?:[\s\S]*\S)?$/,
+    "Asset ids cannot have leading or trailing whitespace.",
+  );
 const finiteNumber = z.number().finite();
 const MAX_COMMANDS = 256;
 const MAX_SELECTION_IDS = 128;
@@ -395,6 +404,30 @@ const layoutApplyCommandSchema = z
   })
   .strict();
 
+const sceneSetCommandSchema = z
+  .object({
+    kind: z.literal("scene.set"),
+    width: z.number().int().positive().max(MAX_COORDINATE).optional(),
+    height: z.number().int().positive().max(MAX_COORDINATE).optional(),
+    fps: z.number().int().positive().max(MAX_COORDINATE).optional(),
+    duration: z.number().int().positive().max(MAX_TIMELINE_FRAME).optional(),
+  })
+  .strict();
+
+const assetSetCommandSchema = z
+  .object({
+    kind: z.literal("asset.set"),
+    asset: assetSchema.extend({ id: commandAssetIdSchema }),
+  })
+  .strict();
+
+const assetRemoveCommandSchema = z
+  .object({
+    kind: z.literal("asset.remove"),
+    id: commandAssetIdSchema,
+  })
+  .strict();
+
 const commandOptions = [
   textSetCommandSchema,
   styleSetCommandSchema,
@@ -412,6 +445,9 @@ const commandOptions = [
   motionPresetCommandSchema,
   macroInsertCommandSchema,
   layoutApplyCommandSchema,
+  sceneSetCommandSchema,
+  assetSetCommandSchema,
+  assetRemoveCommandSchema,
 ] as const;
 
 export const sceneCommandSchema = z
@@ -495,6 +531,20 @@ export const sceneCommandSchema = z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "layout.apply needs layout, look, or both.",
+          });
+        }
+        break;
+      case "scene.set":
+        if (
+          command.width === undefined &&
+          command.height === undefined &&
+          command.fps === undefined &&
+          command.duration === undefined
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "scene.set needs width, height, fps, duration, or a combination.",
           });
         }
         break;
@@ -642,6 +692,9 @@ function decorateCommandJsonSchema(value: unknown): void {
         break;
       case "layout.apply":
         constraints.push(requireAny(["layout", "look"]));
+        break;
+      case "scene.set":
+        constraints.push(requireAny(["width", "height", "fps", "duration"]));
         break;
       case "macro.insert": {
         const params = properties?.params;
@@ -1782,6 +1835,59 @@ function compileOne(
         ],
       };
     }
+    case "scene.set": {
+      const fields = ["width", "height", "fps", "duration"].filter(
+        (field) => command[field as keyof typeof command] !== undefined,
+      );
+      return {
+        patch: [
+          {
+            op: "setSceneMeta",
+            ...(command.width === undefined ? {} : { width: command.width }),
+            ...(command.height === undefined ? {} : { height: command.height }),
+            ...(command.fps === undefined ? {} : { fps: command.fps }),
+            ...(command.duration === undefined
+              ? {}
+              : { duration: command.duration }),
+          },
+        ],
+        affectedIds: [],
+        diagnostics: [
+          diagnostic(
+            "info",
+            "scene_meta_set",
+            `Compiled Scene metadata fields: ${fields.join(", ")}.`,
+            [],
+          ),
+        ],
+      };
+    }
+    case "asset.set":
+      return {
+        patch: [{ op: "setAsset", asset: command.asset }],
+        affectedIds: [command.asset.id],
+        diagnostics: [
+          diagnostic(
+            "info",
+            "asset_set",
+            `Compiled asset ${JSON.stringify(command.asset.id)} (${command.asset.type}).`,
+            [command.asset.id],
+          ),
+        ],
+      };
+    case "asset.remove":
+      return {
+        patch: [{ op: "removeAsset", id: command.id }],
+        affectedIds: [command.id],
+        diagnostics: [
+          diagnostic(
+            "info",
+            "asset_removed",
+            `Compiled removal of asset ${JSON.stringify(command.id)}.`,
+            [command.id],
+          ),
+        ],
+      };
   }
 }
 

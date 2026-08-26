@@ -11,6 +11,11 @@ import {
 } from "@motionforge/commands";
 
 const edited = applySceneCommands(scene, [
+  { kind: "scene.set", width: 1920, height: 1080, fps: 60 },
+  {
+    kind: "asset.set",
+    asset: { id: "voice", type: "audio", src: "voice.wav" },
+  },
   { kind: "text.set", id: "title", text: "A better opening" },
   { kind: "placement.set", id: "title", left: 72, top: 180 },
   { kind: "motion.preset", id: "title", preset: "fadeIn" },
@@ -26,11 +31,14 @@ workspace.undo(workspace.revision);
 const commandSchema = sceneCommandJsonSchema();
 ```
 
-The 16 command kinds cover text, style, placement, resize, align/distribute,
-timing, media trim/gain, flat node add/remove/move/group, motion presets,
-macros, and layout/look intents. A command never embeds a recursive Scene or
-child tree. Commands validate and compile sequentially against a private Scene,
-then apply as one canonical transactional `ScenePatch`.
+The 19 command kinds cover Scene metadata, canonical asset registration/removal,
+text, style, placement, resize, align/distribute, timing, media trim/gain, flat
+node add/remove/move/group, motion presets, macros, and layout/look intents. A
+command never embeds a recursive Scene or child tree. `scene.set`, `asset.set`,
+and `asset.remove` let iterative workflows initialize blank compositions and
+manage multiple assets without replacing the Scene. Commands validate and
+compile sequentially against a private Scene, then apply as one canonical
+transactional `ScenePatch`.
 
 `invertScenePatch()` generates and verifies an exact canonical inverse.
 `SceneWorkspace` exposes defensive reads, draft/commit, monotonic revisions,

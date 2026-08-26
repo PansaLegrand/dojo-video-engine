@@ -6,7 +6,14 @@ import {
   renderFrameSequenceFromRuntime,
   type MixedAudioData,
 } from "@motionforge/export";
-import { renderContactSheet, renderSceneStill } from "@motionforge/agent-tools";
+import {
+  createAgentWorkflowToolRegistry,
+  createCanvas2DEvidenceRenderer,
+  createMemoryEvidenceArtifactStore,
+  createWorkflowEvidenceAdapter,
+  renderContactSheet,
+  renderSceneStill,
+} from "@motionforge/agent-tools";
 import type { TextMetricsProvider } from "@motionforge/core";
 import {
   column,
@@ -256,8 +263,249 @@ window.runGoldenAgentToolChecks = async (): Promise<VideoCheck[]> => {
       pass: sheet.width === 160 && sheet.height === 90,
       detail: `${sheet.width}x${sheet.height}`,
     },
+    ...(await runGoldenWorkflowEvidenceChecks()),
   ];
 };
+
+async function runGoldenWorkflowEvidenceChecks(): Promise<VideoCheck[]> {
+  const renderer = createCanvas2DEvidenceRenderer({
+    contactSheetCellWidth: 160,
+    contactSheetCellHeight: 90,
+  });
+  const store = createMemoryEvidenceArtifactStore({
+    storeId: "golden-workflow",
+    maxBytes: 16 * 1024 * 1024,
+  });
+  const evidence = createWorkflowEvidenceAdapter({
+    renderer,
+    sinkForRequest: (request) => store.sinkForRequest(request),
+    onDisposeHandle: store.workflowCleanup.onDisposeHandle,
+    onDisposeSession: async (context) => {
+      await store.workflowCleanup.onDisposeSession(context);
+      await renderer.dispose();
+    },
+  });
+  const registry = createAgentWorkflowToolRegistry({
+    sessionOptions: { sessionId: "GoldenWorkflow", evidence },
+  });
+  const checks: VideoCheck[] = [];
+  let artifactCount = 0;
+  let handle = "";
+  try {
+    const loaded = await registry.call("motionforge.workflow.load", {
+      scene: {
+        schemaVersion: 1,
+        width: 160,
+        height: 90,
+        fps: 30,
+        duration: 30,
+        assets: {},
+        nodes: [
+          {
+            id: "background",
+            type: "div",
+            style: {
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#0f172a",
+            },
+          },
+          {
+            id: "title",
+            type: "text",
+            text: "BEFORE",
+            style: {
+              width: "100%",
+              height: "100%",
+              fontSize: 28,
+              fontWeight: 800,
+              color: "#f8fafc",
+              textAlign: "center",
+              direction: "ltr",
+            },
+          },
+        ],
+      },
+    });
+    if (!loaded.ok || !loaded.handle) {
+      throw new Error(
+        loaded.ok ? "workflow load returned no handle" : loaded.error.message,
+      );
+    }
+    handle = loaded.handle;
+    const applied = await registry.call("motionforge.workflow.commands", {
+      handle,
+      expectedRevision: 0,
+      commands: [
+        {
+          kind: "style.set",
+          id: "background",
+          style: { backgroundColor: "#ef4444" },
+        },
+      ],
+    });
+    if (!applied.ok || applied.revision !== 1) {
+      throw new Error(
+        applied.ok
+          ? `workflow command revision ${String(applied.revision)}`
+          : applied.error.message,
+      );
+    }
+    const rendered = await registry.call("motionforge.workflow.evidence", {
+      handle,
+      expectedRevision: 1,
+      operation: "proof.comparison.render",
+      params: {
+        explicitFrames: [0],
+        title: "Golden before / after",
+        includeVisualDiff: true,
+      },
+    });
+    if (!rendered.ok) throw new Error(rendered.error.message);
+    const result = objectValue(rendered.data).result;
+    const proof = objectValue(result);
+    if (proof.ok !== true) {
+      throw new Error(`workflow proof failed: ${JSON.stringify(proof)}`);
+    }
+    const materialized = objectValue(proof.artifacts);
+    const refs = Array.isArray(materialized.artifacts)
+      ? materialized.artifacts.map(objectValue)
+      : [];
+    artifactCount = refs.length;
+    const contact = refs.find((ref) => ref.kind === "contact-sheet");
+    const diff = refs.find((ref) => ref.kind === "visual-diff");
+    const before = refs.find(
+      (ref) => ref.kind === "still" && String(ref.id).includes("before"),
+    );
+    const after = refs.find(
+      (ref) => ref.kind === "still" && String(ref.id).includes("after"),
+    );
+    if (!contact || !diff || !before || !after) {
+      throw new Error(
+        "workflow proof omitted before/after/contact-sheet/diff refs",
+      );
+    }
+    const contactBytes = store.read(String(contact.uri));
+    const diffBytes = store.read(String(diff.uri));
+    const beforeBytes = store.read(String(before.uri));
+    const afterBytes = store.read(String(after.uri));
+    if (!contactBytes || !diffBytes || !beforeBytes || !afterBytes) {
+      throw new Error("workflow proof refs were not committed to the sink");
+    }
+    const contactPixels = await decodedArtifactPixels(
+      contactBytes,
+      String(contact.mimeType),
+    );
+    const diffPixels = await decodedArtifactPixels(
+      diffBytes,
+      String(diff.mimeType),
+    );
+    const beforePixels = await decodedArtifactPixels(
+      beforeBytes,
+      String(before.mimeType),
+    );
+    const afterPixels = await decodedArtifactPixels(
+      afterBytes,
+      String(after.mimeType),
+    );
+    const portable = JSON.stringify(rendered);
+    checks.push(
+      {
+        label:
+          "handle workflow performs command-check-proof without Scene replacement",
+        pass:
+          rendered.revision === 1 &&
+          !portable.includes('"schemaVersion"') &&
+          !portable.includes('"beforeScene"') &&
+          !portable.includes('"afterScene"'),
+        detail: `revision ${String(rendered.revision)}, ${portable.length} JSON chars`,
+      },
+      {
+        label:
+          "prepared runtime evidence commits still/visual-diff/contact artifacts",
+        pass:
+          refs.length >= 4 &&
+          contactBytes[0] === 0x89 &&
+          contactBytes[1] === 0x50 &&
+          diffPixels.nonTransparent > 0 &&
+          diffPixels.nonBlack > 0 &&
+          contactPixels.nonTransparent > 0,
+        detail: `${refs.length} refs, contact ${contactPixels.width}x${contactPixels.height}, visual diff ${diffPixels.nonBlack} changed pixels, before/after rgb ${beforePixels.rgbSum}/${afterPixels.rgbSum}`,
+      },
+    );
+  } finally {
+    await registry.dispose();
+    const rendererStats = renderer.stats();
+    const storeStats = store.stats();
+    checks.push({
+      label: "workflow proof disposal releases runtimes and scoped bytes",
+      pass:
+        handle.length > 0 &&
+        artifactCount > 0 &&
+        rendererStats.disposed &&
+        rendererStats.runtimesCreated === rendererStats.runtimesDisposed &&
+        storeStats.entries === 0 &&
+        storeStats.bytes === 0 &&
+        storeStats.openTransactions === 0,
+      detail: `${rendererStats.runtimesDisposed}/${rendererStats.runtimesCreated} runtimes, ${storeStats.entries} refs, ${storeStats.bytes} bytes`,
+    });
+    await store.dispose();
+  }
+  return checks;
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Expected a portable object from workflow evidence.");
+  }
+  return value as Record<string, unknown>;
+}
+
+async function decodedArtifactPixels(
+  bytes: Uint8Array,
+  mimeType: string,
+): Promise<{
+  width: number;
+  height: number;
+  nonTransparent: number;
+  nonBlack: number;
+  rgbSum: number;
+}> {
+  const copy = new Uint8Array(bytes);
+  const bitmap = await createImageBitmap(new Blob([copy], { type: mimeType }));
+  try {
+    const capture = createCaptureContext(bitmap.width, bitmap.height);
+    capture.context.drawImage(bitmap, 0, 0);
+    const rgba = capture.context.getImageData(
+      0,
+      0,
+      bitmap.width,
+      bitmap.height,
+    ).data;
+    let nonTransparent = 0;
+    let nonBlack = 0;
+    let rgbSum = 0;
+    for (let index = 0; index < rgba.length; index += 4) {
+      if (rgba[index + 3]! > 0) nonTransparent += 1;
+      const rgb = rgba[index]! + rgba[index + 1]! + rgba[index + 2]!;
+      rgbSum += rgb;
+      if (rgb > 0) {
+        nonBlack += 1;
+      }
+    }
+    capture.canvas.width = 1;
+    capture.canvas.height = 1;
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      nonTransparent,
+      nonBlack,
+      rgbSum,
+    };
+  } finally {
+    bitmap.close();
+  }
+}
 
 const goldenLayoutFontFamily = "GoldenLayoutInter";
 const goldenLayoutTextMetrics: TextMetricsProvider = {

@@ -11,9 +11,13 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/schema": "workspace:*"
+    "@motionforge/agent-tools": "workspace:*",
+    "@motionforge/schema": "workspace:*",
+    "zod": "^3.25.67",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "tsx": "^4.20.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"

@@ -166,6 +166,39 @@ starter packages.
   responsive editors retain the source Scene plus LayoutPlan(s), while player,
   export, workers, inspection, and storage continue to consume Scene v1.
 
+### Typed iterative agent workflows and proof evidence
+
+- Added the provider-neutral MF8 workflow registry. One strict load boundary
+  returns an opaque session handle; flat read/search/check, typed command,
+  undo/redo, evidence, event, close, and dispose calls no longer repeat the
+  recursive Scene.
+- Every workflow tool now publishes strict detached draft-07 input and output
+  schemas. Results have hard JSON depth/value/string/collection budgets,
+  monotonic revision checks, stable portable errors, and exactly ordered start
+  and terminal events.
+- Added deterministic proof-frame selection from Scene changes, media cuts,
+  keyframes, text/caption windows, markers, and explicit frames; portable
+  before/after/diff/contact-sheet plans; transactional renderer/sink ports; a
+  prepared Canvas2D browser renderer; and scoped bounded memory artifact
+  storage.
+- Added `scene.set`, `asset.set`, and `asset.remove` to the typed command union,
+  enabling blank-workspace initialization and multiple asset management without
+  whole-Scene replacement. All 19 commands retain transactional inverse,
+  workspace undo/redo, and draft-07 parity.
+- Upgraded the open-source chat reference: first drafts keep the compact
+  one-shot path, while existing-Scene edits run a bounded
+  inspect → command → check → proof → repair loop that starts from the latest UI
+  Scene and returns the trusted final workspace snapshot/history.
+- Added bounded `observe` decisions for exact-node reads/search beyond a
+  truncated summary. Client project epochs/revisions prevent stale in-flight
+  responses from overwriting newer/manual or new-session work, and
+  model-proposed asset sources are canonicalized only through the uploaded
+  manifest.
+- Added strict live-evaluation report metadata and an explicit no-network
+  offline gate. Optional runs record provider/model version, prompt/tool hashes,
+  temperature, budgets, trials, UTC date, success, latency, and available token
+  usage without making paid calls part of release tests.
+
 ### Worker audio export
 
 - Replaced Mediabunny `AudioBufferSink` with worker-safe `AudioSampleSink` for

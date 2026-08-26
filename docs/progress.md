@@ -1,5 +1,34 @@
 # Progress
 
+## 2026-08-26 (MF8 iterative agent workflow)
+
+### Changed
+
+- Added schema-described opaque-handle load/read/search/command/check/evidence/
+  undo/redo/event/cleanup tools with bounded JSON and monotonic revisions.
+- Added `scene.set`, `asset.set`, and `asset.remove`, bringing the reversible
+  flat command vocabulary to 19 kinds and enabling multi-asset workflows.
+- Added automatic proof-frame selection, before/after/visual-diff/contact
+  planning, prepared Canvas browser evidence, and transactional scoped sinks.
+- Upgraded existing-Scene chat edits to inspect-command-check-proof-repair with
+  observe/search, project epoch/revision safety, and manifest-authorized assets.
+- Added strict optional live-eval reports while keeping all release tests
+  offline and provider-neutral.
+
+### Tested
+
+- `pnpm release:full` passed 1,110 unit tests, fuzz/corpus/resource gates,
+  existing and workflow browser goldens, three browsers, performance budgets,
+  10 E2E checks, smoke checks, and all 15 public package dry-runs.
+- `pnpm verify:clean` packed/installed all 15 public packages and passed packed
+  runtime imports plus validate/migrate/inspect/lint/build externally.
+
+### Notes
+
+- Public engine packages contain no model provider. The Next.js reference uses
+  proof planning on Node; full browser pixel evidence is available through the
+  same injected workflow ports.
+
 ## 2026-08-26 (MF7 semantic Layout v2)
 
 ### Changed

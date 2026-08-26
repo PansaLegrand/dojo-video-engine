@@ -488,6 +488,98 @@ describe("SceneWorkspace", () => {
     expect(workspace.canRedo).toBe(false);
   });
 
+  it("previews undo/redo candidates without mutating stacks or revisions", () => {
+    const workspace = createSceneWorkspace(baseScene());
+    workspace.commit([{ kind: "text.set", id: "title", text: "Changed" }]);
+    const committed = workspace.snapshot();
+    const undoPreview = workspace.previewUndo(1);
+    expect(undoPreview).toMatchObject({
+      kind: "undo",
+      changed: true,
+      revision: 1,
+      history: { revisionBefore: 1, revisionAfter: 2 },
+    });
+    expect(workspace.snapshot()).toEqual(committed);
+    const undo = workspace.undo(1);
+    expect(undoPreview.changed && undoPreview.scene).toEqual(workspace.read());
+    expect(undoPreview.changed && undoPreview.history).toEqual(undo);
+
+    const undone = workspace.snapshot();
+    const redoPreview = workspace.previewRedo(2);
+    expect(redoPreview).toMatchObject({
+      kind: "redo",
+      changed: true,
+      revision: 2,
+      history: { revisionBefore: 2, revisionAfter: 3 },
+    });
+    expect(workspace.snapshot()).toEqual(undone);
+    const redo = workspace.redo(2);
+    expect(redoPreview.changed && redoPreview.scene).toEqual(workspace.read());
+    expect(redoPreview.changed && redoPreview.history).toEqual(redo);
+
+    expect(workspace.previewRedo(3)).toMatchObject({
+      kind: "redo",
+      changed: false,
+      revision: 3,
+    });
+  });
+
+  it("undoes and redoes Scene metadata plus asset set/remove exactly", () => {
+    const workspace = createSceneWorkspace(baseScene());
+    const original = workspace.read();
+    const commit = workspace.commit([
+      { kind: "scene.set", width: 1920, height: 1080, fps: 60, duration: 300 },
+      {
+        kind: "asset.set",
+        asset: {
+          id: "voice",
+          type: "audio",
+          src: "voice.wav",
+          metadata: { duration: 5 },
+        },
+      },
+      { kind: "asset.remove", id: "unused" },
+    ]);
+    const changed = workspace.read();
+    expect(changed).toMatchObject({
+      width: 1920,
+      height: 1080,
+      fps: 60,
+      duration: 300,
+      assets: { voice: { id: "voice", type: "audio" } },
+    });
+    expect(changed.assets.unused).toBeUndefined();
+    expect(commit.affectedIds).toEqual(["unused", "voice"]);
+    expect(commit.diagnostics.map(({ code }) => code)).toEqual([
+      "scene_meta_set",
+      "asset_set",
+      "asset_removed",
+    ]);
+    expect(applyScenePatch(changed, commit.inversePatch)).toMatchObject({
+      ok: true,
+      scene: original,
+    });
+
+    const undo = workspace.undo(1);
+    expect(undo?.revisionAfter).toBe(2);
+    expect(workspace.read()).toEqual(original);
+    const redo = workspace.redo(2);
+    expect(redo?.revisionAfter).toBe(3);
+    expect(workspace.read()).toEqual(changed);
+  });
+
+  it("rolls back a referenced asset removal without revision/history changes", () => {
+    const workspace = createSceneWorkspace(baseScene());
+    const before = workspace.snapshot();
+    expect(() =>
+      workspace.commit([
+        { kind: "scene.set", width: 1920 },
+        { kind: "asset.remove", id: "image" },
+      ]),
+    ).toThrowError(expect.objectContaining({ code: "command_failed" }));
+    expect(workspace.snapshot()).toEqual(before);
+  });
+
   it("rejects stale drafts after another commit without leaking either draft", () => {
     const workspace = createSceneWorkspace(baseScene());
     const stale = workspace.draft([
