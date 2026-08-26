@@ -118,12 +118,19 @@ describe("MF8 workflow schemas", () => {
     expect(workflowRequestJsonSchema()).toHaveProperty("definitions");
     expect(workflowResultJsonSchema()).toHaveProperty("definitions");
 
-    const ajv = new Ajv({ strict: false, allErrors: true });
+    const ajv = new Ajv({
+      strict: false,
+      allErrors: true,
+      validateFormats: false,
+    });
     const loadDescriptor = descriptors[0]!;
     const readDescriptor = descriptors[1]!;
     const validateLoad = ajv.compile(loadDescriptor.inputSchema);
     const validateRead = ajv.compile(readDescriptor.inputSchema);
     expect(validateLoad({ scene })).toBe(true);
+    expect(validateLoad({})).toBe(false);
+    expect(validateLoad({ scene: "not a scene" })).toBe(false);
+    expect(validateLoad({ scene: { schemaVersion: 1 } })).toBe(false);
     expect(validateLoad({ action: "workspace.load", scene })).toBe(false);
     expect(validateLoad({ scene, unexpected: true })).toBe(false);
     expect(validateRead({ handle: "SchemaSession:w1", view: "summary" })).toBe(

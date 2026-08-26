@@ -1,5 +1,36 @@
 # Progress
 
+## 2026-08-26 (MF9 open-source release candidate)
+
+### Changed
+
+- Synchronized 16 public packages at 1.1.0 and added pack-once tarballs,
+  SHA-256 manifesting, a combined CycloneDX SBOM, pinned release automation,
+  migration/release policy, governance, security, supply-chain, and extension
+  ABI contracts.
+- Added `@motionforge/interchange` for common timelines, trusted Remotion host
+  descriptors, and sanitized static snapshots with explicit loss reports.
+- Added the MotionForge Agent Skill, a thin provider-neutral MCP adapter, public
+  API/reference reports, and repair/macro/extension starter examples.
+- Corrected the starter identity to `@motionforge/create` while retaining the
+  `create-motionforge` command.
+
+### Tested
+
+- `pnpm release:full` passed 1,126 workspace unit tests plus nine release-
+  publisher adversarial tests, fuzz/corpus/resource checks, complete legacy and
+  workflow goldens, Chromium/Firefox/WebKit, performance budgets, ten E2E
+  checks, smoke checks, and 16 public-package dry-runs.
+- The retained v2 bundle passed strict manifest/SRI/checksum/SBOM/license/audit
+  validation and external Node/ESM, workflow, interchange, browser worker,
+  CLI, lint, and build smokes without repacking. Independent clean-room API and
+  distribution findings are recorded in `docs/1.1-release.md`.
+
+### Notes
+
+- This is a repository source candidate. npm publication, provenance receipt,
+  Git tag, and remote push are external maintainer actions and are not claimed.
+
 ## 2026-08-26 (MF8 iterative agent workflow)
 
 ### Changed

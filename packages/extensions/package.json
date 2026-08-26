@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/extensions",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Versioned deterministic extension registry and lifecycle contracts for MotionForge.",
   "keywords": [
     "motionforge",
@@ -51,6 +51,6 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

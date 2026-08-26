@@ -60,7 +60,7 @@ Avoid:
 ## North-Star Developer Flow
 
 ```sh
-pnpm create motionforge hello-video
+pnpm dlx @motionforge/create hello-video
 cd hello-video
 pnpm dev
 ```
@@ -172,12 +172,12 @@ Done when:
 
 Code targets:
 
-- new `packages/create-motionforge` or `create-motionforge`
+- scoped `@motionforge/create` in `packages/create-motionforge`
 - starter template files
 
 Tasks:
 
-- `pnpm create motionforge my-video` / `npm create motionforge@latest my-video`
+- `pnpm dlx @motionforge/create my-video` / `npx @motionforge/create@latest my-video`
 - Generate a minimal TypeScript project with:
   - `src/video.ts`
   - package scripts: `dev`, `validate`, `print`, `build`
@@ -255,7 +255,7 @@ Done when:
 
 ## Acceptance Criteria For The DX Milestone
 
-- `pnpm create motionforge my-video` produces a working project.
+- `pnpm dlx @motionforge/create my-video` produces a working project.
 - The default project source is under 50 lines and reads clearly.
 - `motionforge validate` catches errors with actionable messages.
 - `motionforge dev` previews the scene.

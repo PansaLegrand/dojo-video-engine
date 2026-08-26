@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/authoring",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Seconds-first TypeScript authoring helpers for MotionForge scenes.",
   "keywords": [
     "motionforge",
@@ -50,6 +50,6 @@
     "@motionforge/schema": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

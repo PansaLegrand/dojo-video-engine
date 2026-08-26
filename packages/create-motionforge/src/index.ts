@@ -20,7 +20,7 @@ async function readOwnPackageVersion(): Promise<string> {
   ) as { version?: unknown };
 
   if (typeof manifest.version !== "string" || !manifest.version) {
-    throw new Error("create-motionforge package.json has no valid version.");
+    throw new Error("@motionforge/create package.json has no valid version.");
   }
 
   return manifest.version;
@@ -52,11 +52,11 @@ export async function createMotionforgeProject(
 }
 
 export function helpText() {
-  return `create-motionforge
+  return `@motionforge/create (bin: create-motionforge)
 
 Usage:
-  pnpm create motionforge <project-name>
-  npm create motionforge@latest <project-name>
+  pnpm dlx @motionforge/create <project-name>
+  npx @motionforge/create@latest <project-name>
 
 Options:
   --force    Write into a non-empty directory.
@@ -142,6 +142,7 @@ function packageJson(projectName: string) {
       version: "0.0.0",
       private: true,
       type: "module",
+      packageManager: "pnpm@10.34.5",
       scripts: {
         dev: "motionforge dev src/video.ts",
         validate: "motionforge validate src/video.ts",

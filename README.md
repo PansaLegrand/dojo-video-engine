@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/motionforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status: 1.0 stable](https://img.shields.io/badge/status-1.0%20stable-brightgreen.svg)](docs/1.0-release.md)
-[![Version: 1.0.0](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Status: 1.1 source candidate](https://img.shields.io/badge/status-1.1%20source%20candidate-yellow.svg)](docs/1.1-release.md)
+[![Version: 1.1.0](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
 
 `motionforge` is an open-source, browser-native video scene engine and **Remotion alternative** for apps and coding agents. Write videos as TypeScript or JSON, then preview, patch, validate, and export the same canonical scene document entirely through the browser rendering stack.
 
@@ -81,10 +81,11 @@ flowchart TB
 | -------------------------------------------------------------- | ------------------------------------------------------ | ---------- |
 | [`@motionforge/authoring`](packages/authoring)                 | Seconds-first TypeScript authoring helpers             | ✅ working |
 | [`@motionforge/cli`](packages/cli)                             | Validate, print, and preview scene modules             | ✅ working |
-| [`create-motionforge`](packages/create-motionforge)            | Starter project generator                              | ✅ working |
+| [`@motionforge/create`](packages/create-motionforge)           | Starter project generator                              | ✅ working |
 | [`@motionforge/schema`](packages/schema)                       | Scene format, validation, JSON Schema export           | ✅ working |
 | [`@motionforge/core`](packages/core)                           | Evaluation, layout, display-list compiler              | ✅ working |
 | [`@motionforge/inspection`](packages/inspection)               | Spatial/temporal inspection and diagnostics            | ✅ working |
+| [`@motionforge/interchange`](packages/interchange)             | Timeline, Remotion-host, static snapshot bridges       | ✅ working |
 | [`@motionforge/layout`](packages/layout)                       | Semantic stack/grid/constraint compiler to Scene v1    | ✅ working |
 | [`@motionforge/commands`](packages/commands)                   | Typed reversible edits and revisioned workspaces       | ✅ working |
 | [`@motionforge/runtime`](packages/runtime)                     | Reusable prepared scenes and lifecycle transactions    | ✅ working |
@@ -96,9 +97,15 @@ flowchart TB
 | [`@motionforge/player`](packages/player)                       | Real-time playback, seeking, audio-synced preview      | ✅ working |
 | [`@motionforge/showcase`](packages/showcase)                   | Private shared scenes for playground/docs/examples     | ✅ working |
 | [`apps/chat`](apps/chat)                                       | Next.js chat + manual editor reference app             | ✅ working |
+| [`apps/mcp`](apps/mcp)                                         | Private thin MCP/JSON-RPC workflow adapter             | ✅ working |
 | [`apps/playground`](apps/playground)                           | Vite showcase playground + agent console               | ✅ working |
 | [`tools/golden`](tools/golden)                                 | Pixel goldens, E2E, benchmarks, render helpers         | ✅ working |
 | [`tools/agent-eval`](tools/agent-eval)                         | Private mechanical eval harness for LLM scene edits    | ✅ working |
+
+Agent hosts can load the repository skill at
+[`skills/motionforge/SKILL.md`](skills/motionforge/SKILL.md) and expose the
+same workflow descriptors through `pnpm --silent mcp`. Neither asset contains a model
+provider or DojoClip dependency.
 
 ## MotionForge vs Remotion: Agent-Native Alternative
 
@@ -133,11 +140,21 @@ This project treats LLM agents as first-class users:
 Create a programmer-authored MotionForge video:
 
 ```sh
-pnpm create motionforge hello-video
-cd hello-video
+# From this source checkout, retain a fully installed local-tarball starter:
 pnpm install
-pnpm dev
+pnpm build
+pnpm verify:clean -- --keep
+# Continue in the printed .../motionforge-clean-machine-.../starter directory.
+
+# After @motionforge/create is visibly verified on npm:
+# pnpm dlx @motionforge/create hello-video
+# cd hello-video && pnpm install && pnpm dev
 ```
+
+The generated starter declares registry package versions. Before publication,
+running the generator by itself is therefore insufficient; `verify:clean
+--keep` packs all 16 workspace packages, installs those exact local tarballs,
+bundles the browser and worker entry points, and preserves the usable starter.
 
 The starter project contains `src/video.ts`. `pnpm dev` runs `motionforge dev src/video.ts`, which opens MotionForge Studio with preview, play/pause, frame scrubbing, scene JSON inspection, validation feedback, and browser MP4 export when WebCodecs is available.
 
@@ -302,6 +319,10 @@ The CLI accepts `.json`, `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, and `.cts` scene 
 - [Preset Catalog](docs/guides/preset-catalog.md)
 - [MotionForge vs Remotion](docs/guides/motionforge-vs-remotion.md)
 - [Agent-Generated Scenes](docs/guides/agent-generated-scenes.md)
+- [Public API Reference](docs/api-reference.md)
+- [Extension ABI](docs/extension-abi.md)
+- [Timeline and Framework Interoperability](docs/framework-comparison-2026-08.md)
+- [Release Process](docs/release-process.md)
 
 ```ts
 import { composition, div, text } from "@motionforge/core";
@@ -379,12 +400,22 @@ full media/export/tool goldens, package dry-runs, and clean tarball installs.
 See the [1.x compatibility contract](docs/compatibility.md) and
 [release evidence](docs/1.0-release.md).
 
+Release 1.1 is the tested post-1.0 source candidate. It adds strict canonical
+repair and preflight, transactional media ownership, renderer-neutral
+inspection and display lists, typed reversible commands, prepared runtimes,
+semantic layout, iterative agent workflows with rendered proof, common
+timeline interchange, and the open-source governance/release surface. Its
+[release report](docs/1.1-release.md) distinguishes verified repository
+evidence from the still-external npm publication and Git-tag steps.
+
 Current known limits: preview audio is best-effort, local `blob:` media remains
 buffer-backed (HTTP media is range-backed), reverse video audio requires a
 separately reversed source, and hosted web-app deployment is intentionally not
 wired from this repo.
 
-See [docs/v1-roadmap.md](docs/v1-roadmap.md) for the base-engine plan,
+See [docs/post-1.0-engine-roadmap.md](docs/post-1.0-engine-roadmap.md) for the
+completed 1.1 platform plan, [docs/v1-roadmap.md](docs/v1-roadmap.md) for the
+base-engine plan,
 [docs/roadmap.md](docs/roadmap.md) for historical product milestones,
 [docs/source-of-truth.md](docs/source-of-truth.md) for downstream integration
 policy, [docs/m0-roadmap.md](docs/m0-roadmap.md) for the completed M0 checklist,

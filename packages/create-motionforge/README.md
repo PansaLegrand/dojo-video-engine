@@ -1,11 +1,24 @@
-# create-motionforge
+# @motionforge/create
 
 Starter project generator for MotionForge.
 
 ## Usage
 
+Until the scoped package is visibly published and verified on npm, run the
+repository's exact-tarball clean installer. The bare generator emits registry
+dependencies, so invoking it alone is not a prepublication install path:
+
 ```sh
-pnpm create motionforge hello-video
+pnpm install
+pnpm build
+pnpm verify:clean -- --keep
+# Continue in the printed preserved starter directory.
+```
+
+After registry publication:
+
+```sh
+pnpm dlx @motionforge/create hello-video
 cd hello-video
 pnpm install
 pnpm validate
@@ -32,7 +45,11 @@ Add images, video, audio, fonts, or Lottie JSON under `public/assets`. Reference
 
 Stable for 1.x integrations:
 
-- CLI usage through package managers: `npm create motionforge@latest <name>` or `pnpm create motionforge <name>`.
+- After verified registry publication, CLI usage through package managers is
+  `npx @motionforge/create@latest <name>` or
+  `pnpm dlx @motionforge/create <name>`; the installed bin remains
+  `create-motionforge`. Before publication, use the retained-tarball command
+  above.
 - Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `dev`, `validate`, `print`, `migrate`, `inspect`, `lint`, and `build`.
 - Programmatic generator entry points: `createMotionforgeProject()`, `helpText()`, `CreateMotionforgeOptions`, and `CreateMotionforgeResult`.
 

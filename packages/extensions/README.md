@@ -139,8 +139,11 @@ never Scene data and must not be persisted. Resource resolution, per-frame
 preparation, cross-revision reuse, cancellation, and final disposal continue
 to use the existing lifecycle hooks.
 
-See [RFC 0003](../../docs/rfcs/0003-extension-kernel.md) for versioning,
-assets, lifecycle, security, and determinism rules.
+See the public [extension ABI and trust contract](../../docs/extension-abi.md)
+for host allowlisting, capabilities, worker execution, migration, failure
+isolation, and distribution policy. [RFC 0003](../../docs/rfcs/0003-extension-kernel.md)
+records the original versioning, asset, lifecycle, security, and determinism
+decision.
 
 ## API stability
 

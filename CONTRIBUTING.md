@@ -1,11 +1,16 @@
 # Contributing to motionforge
 
-Thanks for helping build a deterministic, browser-native video scene engine. This document covers the development workflow and the coding standards the codebase follows.
+Thanks for helping build a deterministic, browser-native video scene engine.
+This document covers development and review. Participation is also governed by
+the [Code of Conduct](CODE_OF_CONDUCT.md), [governance](GOVERNANCE.md), and
+[security policy](SECURITY.md).
 
 ## Prerequisites
 
-- Node.js >= 18 (CI runs 20)
-- pnpm 10 (`corepack enable` respects the pinned `packageManager`)
+- Node.js >= 20.19 for the complete workspace toolchain (public package
+  `engines` may document a narrower runtime boundary)
+- the exact pnpm version pinned by `packageManager` (`corepack enable` respects
+  it); the pin must remain on a security-supported release
 - One-time, for golden tests: `pnpm --filter @motionforge/golden exec playwright install chromium`
 
 ## Development workflow
@@ -19,7 +24,9 @@ pnpm golden:test  # pixel-level rendering tests (Playwright + Chromium)
 pnpm format       # prettier
 ```
 
-CI runs the same steps in the same order. A change is done when all of them pass.
+CI runs `pnpm release:full` and `pnpm verify:clean`, which include and extend
+these local checks. A change is done when the checks proportional to its risk
+pass and their evidence is recorded.
 
 ## Golden rendering tests
 
@@ -50,6 +57,20 @@ Golden tests render fixture scenes in the Playwright-pinned Chromium and hash th
 - Every publishable package ships `dist` only (with tests and buildinfo excluded), plus its own `README.md` and `LICENSE`.
 - The standalone repository is authoritative. Read [`docs/source-of-truth.md`](docs/source-of-truth.md) before integrating changes from a downstream application.
 - `pnpm check:contracts` enforces synchronized public package versions and browser-engine dependency boundaries.
+- Trusted extensions follow [`docs/extension-abi.md`](docs/extension-abi.md);
+  Scene JSON never installs executable code.
+
+### Dependencies and third-party material
+
+- Explain every new production dependency's owner, license, maintenance,
+  transitive/runtime cost, browser/worker/determinism impact, and removal path.
+- Review `pnpm-lock.yaml` changes; do not hide unrelated dependency updates in
+  a feature pull request.
+- Identify third-party source, media, fonts, fixtures, and generated material
+  with its license. Contributors must have the right to submit their work under
+  this repository's MIT license.
+- Follow [`docs/supply-chain.md`](docs/supply-chain.md) for advisory, license,
+  SBOM, provenance, codec, and release requirements.
 
 ### Tests
 
@@ -70,4 +91,25 @@ Golden tests render fixture scenes in the Playwright-pinned Chromium and hash th
 
 ## Releases
 
-Packages are versioned together and published from CI. Before the first release: pick a real version (`0.1.0`), add a changelog entry, and run `npm pack --dry-run` in each package to inspect the tarball.
+Public packages version together. The existing CI workflow verifies source but
+does **not** publish packages, create tags, generate an SBOM, or prove registry
+provenance. A manifest version or changelog heading is therefore a source
+baseline until the external release record is complete.
+
+Release managers follow [`docs/release-process.md`](docs/release-process.md).
+The 1.1 candidate uses the scoped starter package `@motionforge/create`; the
+unscoped npm package `create-motionforge` belongs to another project, although
+the MotionForge executable remains named `create-motionforge`.
+
+Use `pnpm pack`/`pnpm publish` semantics for workspace packages. Direct
+`npm pack` or `npm publish` from a package source directory can leave
+`workspace:*` dependencies unresolved. Do not tag or publish from a contributor
+pull request, fork, dirty checkout, or local developer machine.
+
+## RFCs, conduct, and private reports
+
+Material public-contract, architecture, release, or governance changes use the
+RFC process in [`GOVERNANCE.md`](GOVERNANCE.md). Report suspected
+vulnerabilities privately under [`SECURITY.md`](SECURITY.md); do not put exploit
+details or secrets in an issue. Conduct concerns follow
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).

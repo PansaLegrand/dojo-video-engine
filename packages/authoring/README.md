@@ -6,6 +6,10 @@ This package is intentionally small. It does not replace the scene schema or low
 
 ## Install
 
+The registry command below applies only after this exact version is visible on
+npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
+the repository root to get an installed local-tarball starter.
+
 ```sh
 npm install @motionforge/authoring
 ```

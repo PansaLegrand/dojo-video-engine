@@ -28,6 +28,7 @@ The browser engine consists of:
 - `@motionforge/schema`
 - `@motionforge/core`
 - `@motionforge/inspection`
+- `@motionforge/interchange`
 - `@motionforge/layout`
 - `@motionforge/commands`
 - `@motionforge/runtime`
@@ -40,7 +41,7 @@ The browser engine consists of:
 - `@motionforge/agent-tools`
 
 The public developer tooling is `@motionforge/cli` and
-`create-motionforge`. Package and entry-point ownership is recorded in
+`@motionforge/create`. Package and entry-point ownership is recorded in
 [`public-api-ownership.md`](public-api-ownership.md); the accepted post-1.0
 boundary is [RFC 0009](rfcs/0009-post-1.0-platform-architecture.md).
 

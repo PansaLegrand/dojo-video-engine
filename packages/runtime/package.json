@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/runtime",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Renderer-neutral prepared Scene sessions, lifecycle events, and portable artifact sinks for MotionForge.",
   "keywords": [
     "motionforge",
@@ -49,6 +49,6 @@
     "@motionforge/schema": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

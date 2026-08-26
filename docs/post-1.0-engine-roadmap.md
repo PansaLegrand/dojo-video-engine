@@ -2,7 +2,7 @@
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-26
-Status: active implementation contract; MF0 through MF8 complete
+Status: implementation complete; MF0 through MF9 delivered as a tested source candidate
 
 ## Purpose
 
@@ -831,3 +831,19 @@ than the engine priority.
   ms/frame at 1080p and 1.92 ms/frame at 4K with exact cache-disabled pixels.
   All 15 public packages packed, and the clean external starter passed packed
   runtime imports plus validate/migrate/inspect/lint/build.
+- 2026-08-26 — MF9 complete as a repository source candidate: synchronized 16
+  public packages at 1.1.0; added common timeline, trusted Remotion-host, and
+  sanitized static-snapshot interchange; shipped the provider-neutral Agent
+  Skill, thin MCP adapter, API/reference reports, starter examples, migration,
+  extension ABI, security, governance, and supply-chain contracts. The
+  pack-once release bundle retains SHA-256/SHA-512 tarball integrity, frozen
+  lockfile, 16-root CycloneDX graph, licenses, exact-graph audit, manifest, and
+  checksums; the clean verifier consumes those bytes for Node/ESM/browser/
+  worker/CLI smokes. Publication is version-concurrent, staged, integrity-
+  checked, idempotently resumable, provenance-enabled, and promotes `latest`
+  only after the complete registry set verifies. The final gate passed 1,126
+  workspace unit tests plus nine publisher adversarial tests, all prior browser,
+  export, fuzz, corpus, resource, and performance gates, 16 package dry-runs,
+  independent clean-room API exercises, and an exact retained-tarball external
+  build. No npm publication, Git tag, scope ownership, or provenance receipt is
+  claimed; those remain authorized external maintainer steps.

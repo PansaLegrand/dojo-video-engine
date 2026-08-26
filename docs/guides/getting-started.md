@@ -3,10 +3,15 @@
 Build a MotionForge video in about five minutes: write TypeScript scene data, preview it in Studio, export MP4 in the browser.
 
 ```sh
-pnpm create motionforge hello-video
-cd hello-video
+# From a MotionForge source checkout, retain a locally packed starter:
 pnpm install
-pnpm dev
+pnpm build
+pnpm verify:clean -- --keep
+# Continue in the printed .../motionforge-clean-machine-.../starter directory.
+
+# Use this only after the scoped package is visibly published and verified:
+# pnpm dlx @motionforge/create hello-video
+# cd hello-video && pnpm install && pnpm dev
 ```
 
 `pnpm dev` runs:
@@ -17,7 +22,11 @@ motionforge dev src/video.ts
 
 Studio validates the scene module, renders it on Canvas2D, lets you scrub frames, inspect the generated JSON, reload source changes, and export MP4 when the browser supports WebCodecs.
 
-Until the packages are published, clean installs outside this monorepo need local packing/linking because workspace packages use `workspace:*` internally. The source API below is the intended published `0.3.0` shape.
+Until the packages are published, clean installs outside this monorepo need
+local tarballs because workspace packages use `workspace:*` internally and the
+generated starter names registry versions. `verify:clean --keep` performs that
+pack/install path and preserves the working project. The API below is the
+tested 1.1 source-candidate shape.
 
 ## Write A Scene
 

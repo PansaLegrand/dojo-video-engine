@@ -4,6 +4,10 @@ Command-line validation and inspection tools for MotionForge scene modules.
 
 ## Install
 
+The registry command below applies only after this exact version is visible on
+npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
+the repository root to get an installed local-tarball starter.
+
 ```sh
 npm install -D @motionforge/cli
 ```

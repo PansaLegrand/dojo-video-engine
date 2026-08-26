@@ -29,11 +29,11 @@
     "@motionforge/runtime": "workspace:*",
     "@motionforge/schema": "workspace:*",
     "@motionforge/showcase": "workspace:*",
+    "lottie-web": "^5.13.0",
     "mediabunny": "^1.46.0",
     "playwright": "^1.60.0",
-    "tsx": "^4.22.4",
-    "vite": "^7.3.5",
-    "lottie-web": "^5.13.0",
+    "tsx": "^4.23.12",
+    "vite": "^7.3.6",
     "zod": "^3.25.67"
   },
   "devDependencies": {

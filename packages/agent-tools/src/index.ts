@@ -249,6 +249,9 @@ function motionPresetManifest(definition: MotionPresetDefinition) {
 }
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas;
+type Canvas2DContext =
+  | CanvasRenderingContext2D
+  | OffscreenCanvasRenderingContext2D;
 
 function createCanvas(width: number, height: number): Canvas {
   if (typeof OffscreenCanvas !== "undefined")
@@ -264,6 +267,12 @@ function createCanvas(width: number, height: number): Canvas {
   );
 }
 
+function canvas2DContext(canvas: Canvas): Canvas2DContext {
+  const context = canvas.getContext("2d") as Canvas2DContext | null;
+  if (!context) throw new Error("Canvas2D unavailable.");
+  return context;
+}
+
 export async function renderSceneStill(options: {
   scene: unknown;
   frame: number;
@@ -272,8 +281,7 @@ export async function renderSceneStill(options: {
 }): Promise<Canvas> {
   const scene = parseScene(options.scene);
   const canvas = createCanvas(scene.width, scene.height);
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas2D unavailable.");
+  const context = canvas2DContext(canvas);
   const ownsAssets = options.assets === undefined;
   const assets =
     options.assets ?? (await resolveAssets(scene, options.resolve));
@@ -305,11 +313,9 @@ export async function renderContactSheet(options: {
   );
   const rows = Math.ceil(options.frames.length / columns);
   const canvas = createCanvas(cellWidth * columns, cellHeight * rows);
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas2D unavailable.");
+  const context = canvas2DContext(canvas);
   const frameCanvas = createCanvas(scene.width, scene.height);
-  const frameContext = frameCanvas.getContext("2d");
-  if (!frameContext) throw new Error("Canvas2D unavailable.");
+  const frameContext = canvas2DContext(frameCanvas);
   const ownsAssets = options.assets === undefined;
   const assets =
     options.assets ?? (await resolveAssets(scene, options.resolve));

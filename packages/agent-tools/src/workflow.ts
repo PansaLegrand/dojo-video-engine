@@ -19,6 +19,7 @@ import {
 import {
   defaultSceneComplexityLimits,
   preflightScene,
+  sceneJsonSchema,
   type Scene,
   type SceneComplexityLimits,
   type SceneNode,
@@ -533,6 +534,25 @@ function toolInputJsonSchema(
     | undefined;
   const root = definitions?.[name] ?? output;
   const properties = root.properties as Record<string, unknown> | undefined;
+  if (name === "motionforge_workflow_load" && properties && definitions) {
+    const canonical = sceneJsonSchema() as {
+      definitions?: Record<string, Record<string, unknown>>;
+    };
+    const sceneDefinition = canonical.definitions?.MotionforgeScene;
+    if (!sceneDefinition) {
+      throw new Error(
+        "Canonical Scene JSON Schema has no MotionforgeScene root.",
+      );
+    }
+    definitions.MotionforgeScene = structuredClone(sceneDefinition);
+    properties.scene = { $ref: "#/definitions/MotionforgeScene" };
+    root.required = [
+      ...new Set([
+        ...(Array.isArray(root.required) ? root.required : []),
+        "scene",
+      ]),
+    ];
+  }
   if (properties) delete properties.action;
   if (Array.isArray(root.required)) {
     root.required = root.required.filter((entry) => entry !== "action");

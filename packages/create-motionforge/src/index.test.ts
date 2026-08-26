@@ -27,9 +27,11 @@ describe("create-motionforge", () => {
         name: string;
         scripts: Record<string, string>;
         dependencies: Record<string, string>;
+        packageManager: string;
       };
 
       expect(packageJson.name).toBe("hello-video");
+      expect(packageJson.packageManager).toBe("pnpm@10.34.5");
       expect(packageJson.scripts).toMatchObject({
         dev: "motionforge dev src/video.ts",
         validate: "motionforge validate src/video.ts",

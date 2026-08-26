@@ -3,7 +3,59 @@
 All public packages version together, including the engine, authoring, CLI, and
 starter packages.
 
+Release headings record repository source/API baselines. They do not by
+themselves assert that an npm package or Git tag exists; external publication
+requires the receipts and provenance in
+[`docs/release-process.md`](docs/release-process.md).
+
 ## Unreleased
+
+No changes recorded after the 1.1.0 source candidate.
+
+## 1.1.0 — 2026-08-26
+
+Repository release candidate. This heading records the tested source/API
+baseline; npm publication and the Git tag remain external maintainer steps
+until the receipts required by `docs/release-process.md` exist.
+
+### Governance and release policy
+
+- Added security support/reporting windows, maintainer governance and RFC
+  decisions, a Code of Conduct, and contributor links for private reports.
+- Added supply-chain policy for dependency/license review, vulnerability
+  response, per-package SBOMs, pack-once artifacts, provenance, signing,
+  reproducibility, codec patents, and trusted extension distribution.
+- Defined the extension trust/capability/worker/migration/failure-isolation ABI,
+  the exact 1.1 candidate/tag/package/schema/tool release checklist, rollback
+  and advisory handling, and source-baseline 1.0 → 1.1 migration guidance.
+- Qualified repository version headings and 1.0 gate evidence so they do not
+  claim an npm publication, Git tag, or provenance receipt that does not exist.
+
+### Open-source platform and interoperability
+
+- Added `@motionforge/interchange` with a versioned common flat-timeline
+  contract, deterministic rational/NTSC conversion, explicit import/export
+  losses, a data-only Remotion host descriptor, and a sanitized static
+  HTML-snapshot bridge that never executes scripts or arbitrary React code.
+- Added a provider-neutral MotionForge Agent Skill, a private thin MCP/JSON-RPC
+  adapter over the exact public workflow registry, evidence-manifest discovery,
+  protocol-clean stdio guidance, and repair, macro, and extension starter
+  examples. Provider-facing Scene load descriptors now embed the canonical
+  strict Scene schema rather than an unconstrained placeholder.
+- Added a public API reference, current Remotion/HyperFrames equivalent-task
+  comparison, extension ABI, 1.0-to-1.1 migration notes, and compatibility,
+  browser, performance, and deterministic agent-evaluation reports.
+- Renamed the repository starter package from the registry-conflicting
+  unscoped `create-motionforge` identity to `@motionforge/create`, while
+  retaining the `create-motionforge` command.
+- Synchronized all 16 public packages at `1.1.0`; added exact pack-once release
+  artifacts, SHA-256/SHA-512 integrity, frozen-lock CycloneDX/license/audit
+  evidence, pinned CI actions, staged/idempotent npm provenance publication,
+  durable GitHub release attachments, and external ESM/browser/worker
+  clean-install coverage against those retained bytes.
+- Updated the production dependency set and pnpm toolchain so the source
+  candidate has no reported high-or-higher production advisories. Registry
+  publication remains a separately authorized maintainer operation.
 
 ### Canonical Scene integrity
 
@@ -210,9 +262,10 @@ starter packages.
 
 ## 1.0.0 — 2026-08-24
 
-The first stable MotionForge release. Scene v1, public packages, extension
+The first stable MotionForge source/API baseline. Scene v1, public package
 contracts, renderer behavior, export adapters, and agent tool names now follow
-the published 1.x compatibility policy.
+the documented 1.x compatibility policy. See the repository-level publication
+qualification above.
 
 ### Hardening gate
 

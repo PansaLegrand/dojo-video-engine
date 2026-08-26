@@ -6,6 +6,10 @@ A motionforge scene is a serializable JSON document. This package defines that d
 
 ## Install
 
+The registry command below applies only after this exact version is visible on
+npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
+the repository root to get an installed local-tarball starter.
+
 ```sh
 npm install @motionforge/schema
 ```

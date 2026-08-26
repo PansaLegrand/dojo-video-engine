@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.0.0 / MF8",
+  "recordedFor": "MotionForge 1.1.0 source candidate / MF9",
   "packages": {
     "@motionforge/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
@@ -59,7 +59,7 @@
       },
       "bin": null
     },
-    "create-motionforge": {
+    "@motionforge/create": {
       "owner": "Starter project generation",
       "stability": "stable",
       "exports": {
@@ -100,6 +100,17 @@
     },
     "@motionforge/inspection": {
       "owner": "Renderer-neutral tree, timeline, layout, hit-test, and composition diagnostics",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": null
+    },
+    "@motionforge/interchange": {
+      "owner": "Bounded common timeline, Remotion-host, and static snapshot interchange",
       "stability": "stable",
       "exports": {
         ".": {

@@ -1,6 +1,6 @@
 {
-  "name": "create-motionforge",
-  "version": "1.0.0",
+  "name": "@motionforge/create",
+  "version": "1.1.0",
   "description": "Create a starter MotionForge video project.",
   "keywords": [
     "motionforge",
@@ -36,7 +36,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19"
   },
   "publishConfig": {
     "access": "public"
@@ -48,6 +48,6 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

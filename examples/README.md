@@ -1,5 +1,15 @@
 # Examples
 
+MF9 developer/agent starters:
+
+- [`agent-workflow-repair.mjs`](agent-workflow-repair.mjs) demonstrates a
+  failed command, failed check, typed repair, final snapshot, and portable
+  evidence references.
+- [`extension-starter.mjs`](extension-starter.mjs) defines and registers a
+  versioned trusted extension without embedding code in Scene JSON.
+- [`macro-starter.mjs`](macro-starter.mjs) defines a bounded macro manifest and
+  expands semantic input to ordinary Scene nodes.
+
 Scene documents that produce real videos. Render any of them with:
 
 ```sh

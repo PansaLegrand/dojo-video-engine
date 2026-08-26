@@ -1,7 +1,7 @@
 # MotionForge public API ownership and deprecation baseline
 
 Status: accepted with RFC 0009  
-Baseline: MotionForge 1.0.0 / post-1.0 milestone MF8
+Baseline: MotionForge 1.1.0 source candidate / post-1.0 milestone MF9
 
 This document classifies the public package entry points that existed at the
 start of the post-1.0 engine program. The machine-readable export-map snapshot
@@ -24,6 +24,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/schema/values`             | Portable visual value grammars, parsed forms, validators, and deterministic serializers                | Stable entry point added in MF1. New optional grammar forms are additive; changing accepted existing semantics needs compatibility evidence. |
 | `@motionforge/core`                      | Scene builders, frame evaluation, layout, text helpers, and ephemeral display-list v1                  | Stable. Existing timing/layout defaults cannot change silently; display-list required fields and capabilities are versioned.                 |
 | `@motionforge/inspection`                | Renderer-neutral tree, timeline, layout, hit testing, sampled checks, and geometry diagnostics         | Stable entry point added in MF3. Result objects may grow additively; geometry remains explicitly qualified as exact, declared, or estimated. |
+| `@motionforge/interchange`               | Common timeline v1, data-only Remotion host descriptors, and sanitized static snapshot bridges          | Stable entry point added in MF9. Format versions and loss codes are versioned; bridges never expand to arbitrary code execution implicitly.   |
 | `@motionforge/layout`                    | Bounded semantic layout plans, intrinsic planning, diagnostics, and Scene v1 compilation               | Stable entry point added in MF7. Existing plan versions and compiler defaults are versioned; new optional fields are additive.               |
 | `@motionforge/runtime`                   | Prepared Scene revisions, backend transactions, lifecycle events/errors, metrics, and artifact sinks   | Stable entry point added in MF5. Required backend/sink fields, revision/token semantics, phases, and error codes follow the 1.x policy.      |
 | `@motionforge/extensions`                | Trusted extension definitions, manifests, registries, version/display resolution, and preflight        | Stable. Standard display v1 and exact opaque capability contracts are versioned; legacy renderer adapters remain supported for 1.x.          |
@@ -40,7 +41,7 @@ introduced; MF0 must not be described as mechanically classifying every symbol.
 | `@motionforge/agent-tools`               | Stateless adapters plus handle workflows, proof planning, browser evidence, sinks, and export tools    | Stable legacy and workflow tool names/required inputs. Contract versions and result fields follow the 1.x additive policy.                   |
 | `@motionforge/cli` and `motionforge`     | CLI loading, validation, inspection, local Studio, and export facade                                   | Stable command names and successful exit semantics. New commands/options are additive.                                                       |
 | `@motionforge/commands`                  | Typed non-recursive Scene commands, compilation, reversibility, manifests, and in-memory workspace     | Stable entry point added in MF4. Command kinds and required fields are versioned; result/history objects may grow additively.                |
-| `create-motionforge` and its bin         | Starter generation                                                                                     | Stable command and generated-project contract; templates may advance with compatible package releases.                                       |
+| `@motionforge/create` and `create-motionforge` bin | Starter generation                                                                            | Scoped package replaces the registry-conflicting repo-only 1.0 name; bin and generated-project contract remain compatible.                    |
 
 ## Current deprecation baseline
 

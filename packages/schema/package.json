@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/schema",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Zod scene schema and validation helpers for motionforge scene documents.",
   "keywords": [
     "motionforge",
@@ -58,6 +58,6 @@
   },
   "devDependencies": {
     "ajv": "^8.20.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }

@@ -5,12 +5,13 @@
   "description": "A deterministic, browser-native video scene engine for apps and coding agents.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@10.22.0",
+  "packageManager": "pnpm@10.34.5",
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm --filter @motionforge/chat dev",
     "dev:chat": "pnpm --filter @motionforge/chat dev",
     "dev:playground": "pnpm --filter @motionforge/playground dev",
+    "mcp": "pnpm --filter @motionforge/mcp start",
     "golden:test": "pnpm --filter @motionforge/golden run golden:test",
     "golden:update": "pnpm --filter @motionforge/golden run update",
     "presets:generate": "node examples/generate-preset-gallery.mjs",
@@ -27,17 +28,25 @@
     "check:contracts": "pnpm check:contracts:test && node scripts/check-package-contracts.mjs",
     "check:schema": "pnpm --filter @motionforge/schema check:schema",
     "check:migrations": "node scripts/check-scene-migrations.mjs",
-    "lint": "pnpm check:contracts && node scripts/check-determinism.mjs && pnpm check:schema && pnpm check:migrations && pnpm -r lint",
+    "check:release": "vitest run scripts/publish-release.test.mjs",
+    "lint": "pnpm check:contracts && node scripts/check-determinism.mjs && pnpm check:schema && pnpm check:migrations && pnpm check:release && pnpm -r lint",
     "format": "prettier --write .",
     "e2e": "pnpm --filter @motionforge/golden run e2e",
     "release:fast": "node scripts/release-gate.mjs fast",
     "release:full": "node scripts/release-gate.mjs full",
+    "release:pack": "node scripts/pack-release.mjs",
     "verify:clean": "node scripts/verify-clean-machine.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.5",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "nanoid@3": "3.3.18",
+      "postcss": "8.5.26"
+    }
   }
 }

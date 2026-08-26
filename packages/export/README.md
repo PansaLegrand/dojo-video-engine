@@ -4,6 +4,10 @@ Browser-native video export for [motionforge](https://github.com/PansaLegrand/mo
 
 ## Install
 
+The registry command below applies only after this exact version is visible on
+npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
+the repository root to get an installed local-tarball starter.
+
 ```sh
 npm install @motionforge/export
 ```
@@ -69,6 +73,34 @@ fails; MotionForge does not choose or operate a cloud renderer.
 can back a dedicated browser worker or a headless/cloud message adapter; worker
 hosts install trusted extensions, non-serializable `assetPolicy` and caches,
 and verification callbacks locally. Duplicate active request ids are rejected.
+
+With Vite or another `new URL(..., import.meta.url)` worker-aware bundler, use a
+real worker entry rather than importing the worker handler on the UI thread:
+
+```ts
+// src/motionforge-export.worker.ts
+import { installExportWorker } from "@motionforge/export/worker";
+
+installExportWorker(self);
+```
+
+```ts
+// UI/host module
+import { ExportWorkerClient } from "@motionforge/export/worker";
+
+const worker = new Worker(
+  new URL("./motionforge-export.worker.ts", import.meta.url),
+  { type: "module" },
+);
+const client = new ExportWorkerClient(worker);
+const job = client.export(scene, {
+  verification: "sampled",
+  onProgress: ({ frameIndex, totalFrames }) =>
+    console.log(`${frameIndex + 1}/${totalFrames}`),
+});
+const result = await job.result;
+// job.cancel() sends the bounded cancellation request while it is active.
+```
 
 ## Lower-level frame loop
 

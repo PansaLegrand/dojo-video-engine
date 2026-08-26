@@ -49,7 +49,7 @@ export const publicPackagePolicy = {
     owner: "Deterministic evaluation and layout",
     allowedMotionforgeDependencies: ["@motionforge/schema"],
   },
-  "create-motionforge": {
+  "@motionforge/create": {
     owner: "Starter project generation",
     allowedMotionforgeDependencies: [],
   },
@@ -72,6 +72,10 @@ export const publicPackagePolicy = {
       "@motionforge/core",
       "@motionforge/schema",
     ],
+  },
+  "@motionforge/interchange": {
+    owner: "Bounded timeline and trusted-host interchange bridges",
+    allowedMotionforgeDependencies: ["@motionforge/schema"],
   },
   "@motionforge/layout": {
     owner: "Bounded semantic layout authoring and Scene v1 compilation",
@@ -120,7 +124,7 @@ export const publicPackagePolicy = {
 /** One source of truth for release/clean-install package coverage. */
 export const publicPackageDirectories = Object.keys(publicPackagePolicy)
   .map((name) =>
-    name === "create-motionforge"
+    name === "@motionforge/create"
       ? "packages/create-motionforge"
       : `packages/${name.slice("@motionforge/".length)}`,
   )

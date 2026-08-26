@@ -52,10 +52,10 @@ test("dependency checks reject an unapproved edge and a cycle", () => {
   assert.match(errors, /dependency cycle/);
 });
 
-test("dependency checks include the unscoped create-motionforge package", () => {
+test("dependency checks include the scoped starter package", () => {
   const packages = [
     packageEntry("@motionforge/core"),
-    packageEntry("create-motionforge", {
+    packageEntry("@motionforge/create", {
       "@motionforge/core": "^1.0.0",
     }),
   ];
@@ -63,7 +63,7 @@ test("dependency checks include the unscoped create-motionforge package", () => 
   assert.match(errors, /must use workspace:\*/);
   assert.match(
     errors,
-    /create-motionforge is not allowed to depend on @motionforge\/core/,
+    /@motionforge\/create is not allowed to depend on @motionforge\/core/,
   );
 });
 
@@ -119,13 +119,13 @@ test("source checks reject relative boundary escapes and unexported subpaths", (
   assert.match(errors, /non-public entry point/);
 });
 
-test("source checks resolve unscoped workspace package entry points", () => {
+test("source checks resolve scoped starter package entry points", () => {
   const manifest = packageEntry("@motionforge/core", {
-    "create-motionforge": "workspace:*",
+    "@motionforge/create": "workspace:*",
   }).manifest;
-  const starter = packageEntry("create-motionforge").manifest;
+  const starter = packageEntry("@motionforge/create").manifest;
   const errors = validateSourceContract({
-    source: 'import "create-motionforge/private";',
+    source: 'import "@motionforge/create/private";',
     sourceFile: "/workspace/packages/core/src/index.ts",
     packageDir: "/workspace/packages/core",
     manifest,

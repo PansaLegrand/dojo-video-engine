@@ -1,6 +1,6 @@
 {
   "name": "@motionforge/renderer-canvas2d",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Deterministic Canvas2D still-frame renderer for motionforge scenes.",
   "keywords": [
     "motionforge",
@@ -56,8 +56,8 @@
     "mediabunny": "^1.46.0"
   },
   "devDependencies": {
-    "vitest": "^3.2.4",
     "lottie-web": "^5.13.0",
+    "vitest": "^3.2.7",
     "zod": "^3.25.67"
   },
   "peerDependencies": {

@@ -4,6 +4,10 @@
 - Date: 2026-08-23
 - Target release: 0.6.0
 
+The current 1.x host trust, capability, worker, migration, failure-isolation,
+and signing/distribution policy is maintained in
+[`../extension-abi.md`](../extension-abi.md).
+
 ## Summary
 
 MotionForge extensions add trusted runtime capabilities without allowing scene
