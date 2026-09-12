@@ -4934,12 +4934,15 @@ function compiledTextInkBounds(operation: DisplayTextOperation): LayoutRect {
       })!;
     }
     for (const run of line.runs) {
-      if (!run.backgroundColor) continue;
+      const color = run.background?.color ?? run.backgroundColor;
+      if (!color) continue;
+      const paddingX = run.background?.paddingX ?? 0;
+      const paddingY = run.background?.paddingY ?? 0;
       lineBounds = unionLayoutRects(lineBounds, {
-        x: run.x,
-        y: line.y - operation.lineHeight / 2,
-        width: run.width,
-        height: operation.lineHeight,
+        x: run.x - paddingX,
+        y: line.y - operation.lineHeight / 2 - paddingY,
+        width: run.width + paddingX * 2,
+        height: operation.lineHeight + paddingY * 2,
       })!;
     }
     result = unionLayoutRects(result, lineBounds);
@@ -7684,7 +7687,8 @@ function drawCompiledText(
         previous.fill === run.fill &&
         previous.opacity === run.opacity &&
         JSON.stringify(previous.stroke) === JSON.stringify(run.stroke) &&
-        previous.backgroundColor === run.backgroundColor;
+        previous.backgroundColor === run.backgroundColor &&
+        JSON.stringify(previous.background) === JSON.stringify(run.background);
       if (equivalent) {
         const right = Math.max(previous.x + previous.width, run.x + run.width);
         previous.x = Math.min(previous.x, run.x);
@@ -7692,16 +7696,23 @@ function drawCompiledText(
         previous.text += run.text;
       } else spans.push({ ...run });
     }
+    // Plates are painted before any glyph spans: a padded active plate must
+    // not cover a neighboring word that happened to be painted first.
     for (const run of spans) {
-      if (run.backgroundColor)
-        drawTextBackground(context, {
-          x: run.x,
-          y: line.y - operation.lineHeight / 2,
-          width: run.width,
-          height: operation.lineHeight,
-          radius: 0,
-          color: run.backgroundColor,
-        });
+      const color = run.background?.color ?? run.backgroundColor;
+      if (!color) continue;
+      const paddingX = run.background?.paddingX ?? 0;
+      const paddingY = run.background?.paddingY ?? 0;
+      drawTextBackground(context, {
+        x: run.x - paddingX,
+        y: line.y - operation.lineHeight / 2 - paddingY,
+        width: run.width + paddingX * 2,
+        height: operation.lineHeight + paddingY * 2,
+        radius: run.background?.radius ?? 0,
+        color,
+      });
+    }
+    for (const run of spans) {
       withSavedContext(context, () => {
         context.globalAlpha *= run.opacity;
         context.textAlign = "left";
@@ -7910,6 +7921,30 @@ function drawRichTextLines(
       });
     }
 
+    let plateX = cursorX;
+    for (const segment of segments) {
+      const width = measureTextLine(
+        context,
+        segment.text,
+        style,
+        textLayout.fontSize,
+        textMeasureCache,
+      );
+      const runStyle = segment.run.style ?? {};
+      const plate = runStyle.textBackgroundColor
+        ? parseTextBackground({ ...style, ...runStyle }, textLayout.fontSize)
+        : null;
+      if (plate)
+        drawTextBackground(context, {
+          x: plateX - plate.paddingX,
+          y: y - textLayout.lineHeight / 2 - plate.paddingY,
+          width: width + plate.paddingX * 2,
+          height: textLayout.lineHeight + plate.paddingY * 2,
+          radius: plate.radius,
+          color: plate.color,
+        });
+      plateX += width;
+    }
     for (const segment of segments) {
       const segmentWidth = measureTextLine(
         context,
@@ -7919,17 +7954,6 @@ function drawRichTextLines(
         textMeasureCache,
       );
       const runStyle = segment.run.style ?? {};
-      if (runStyle.textBackgroundColor) {
-        drawTextBackground(context, {
-          x: cursorX,
-          y: y - textLayout.lineHeight / 2,
-          width: segmentWidth,
-          height: textLayout.lineHeight,
-          radius: 0,
-          color: runStyle.textBackgroundColor,
-        });
-      }
-
       withSavedContext(context, () => {
         context.globalAlpha *= runStyle.opacity ?? 1;
         context.textAlign = "left";

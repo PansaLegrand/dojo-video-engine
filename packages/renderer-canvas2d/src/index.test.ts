@@ -4832,3 +4832,44 @@ describe("audio-reactive trimmed rendering", () => {
     expect(draw({ audioStartTime: 5 }, 0, 0)).toEqual(draw({}, 0, 0));
   });
 });
+
+describe("rich active-plate isolation bounds", () => {
+  it("retains padded plate ink outside the declared glyph box", () => {
+    const harness = createScratchRenderHarness();
+    renderStill(
+      harness.target.context,
+      {
+        schemaVersion: 1,
+        width: 320,
+        height: 240,
+        fps: 30,
+        duration: 1,
+        assets: {},
+        nodes: [
+          {
+            id: "plate",
+            type: "text",
+            runs: [{ text: "X", style: { textBackgroundColor: "#ff00ff" } }],
+            style: {
+              position: "absolute",
+              left: 100,
+              top: 100,
+              width: 20,
+              height: 20,
+              fontSize: 20,
+              isolation: true,
+              textBackgroundPaddingX: 60,
+              textBackgroundPaddingY: 40,
+              textBackgroundRadius: 24,
+            },
+          },
+        ],
+      },
+      0,
+      { scratchSurfacePool: harness.pool },
+    );
+    const composite = harness.target.drawImages[0]!;
+    expect(composite[7]).toBeGreaterThanOrEqual(130);
+    expect(composite[8]).toBeGreaterThanOrEqual(100);
+  });
+});

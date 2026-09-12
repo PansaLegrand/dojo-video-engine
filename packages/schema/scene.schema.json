@@ -247,6 +247,28 @@
                           "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
                           "format": "motionforge-color"
                         },
+                        "textBackgroundPadding": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 128,
+                              "description": "Finite number string with optional px or % unit.",
+                              "format": "motionforge-length"
+                            }
+                          ]
+                        },
+                        "textBackgroundPaddingX": {
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        },
+                        "textBackgroundPaddingY": {
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        },
+                        "textBackgroundRadius": {
+                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        },
                         "opacity": {
                           "type": "number",
                           "minimum": 0,
@@ -498,17 +520,7 @@
                         "const": "rect"
                       },
                       "radius": {
-                        "anyOf": [
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string",
-                            "maxLength": 128,
-                            "description": "Finite number string with optional px or % unit.",
-                            "format": "motionforge-length"
-                          }
-                        ]
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       }
                     },
                     "required": [
@@ -839,25 +851,25 @@
                     ]
                   },
                   "gap": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "width": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "height": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "minWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "minHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "maxWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "maxHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "aspectRatio": {
                     "anyOf": [
@@ -876,49 +888,49 @@
                     "type": "object",
                     "properties": {
                       "top": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "right": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "bottom": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "left": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       }
                     },
                     "additionalProperties": false
                   },
                   "padding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingTop": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingRight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingBottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingLeft": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "margin": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginTop": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginRight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginBottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginLeft": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "position": {
                     "type": "string",
@@ -928,19 +940,19 @@
                     ]
                   },
                   "left": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "right": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "top": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "bottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "inset": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "background": {
                     "type": "string",
@@ -999,19 +1011,19 @@
                     "format": "motionforge-border"
                   },
                   "borderRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderTopLeftRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderTopRightRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderBottomRightRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderBottomLeftRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "boxShadow": {
                     "type": "string",
@@ -1084,7 +1096,7 @@
                     "format": "motionforge-font-family"
                   },
                   "fontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "fontWeight": {
                     "anyOf": [
@@ -1114,10 +1126,10 @@
                     "format": "motionforge-color"
                   },
                   "lineHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "letterSpacing": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textAlign": {
                     "type": "string",
@@ -1151,7 +1163,7 @@
                     "exclusiveMinimum": 0
                   },
                   "minFontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textFit": {
                     "type": "string",
@@ -1174,16 +1186,16 @@
                     "format": "motionforge-color"
                   },
                   "textBackgroundPadding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundPaddingX": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundPaddingY": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "objectFit": {
                     "type": "string",
@@ -1531,7 +1543,7 @@
                             "items": {
                               "properties": {
                                 "value": {
-                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/0/properties/radius"
+                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                                 }
                               }
                             }

@@ -620,3 +620,12 @@ box, lower the minimum size or raise the line limit. Intentional word removal
 requires `textFit: "truncate"`; its existing single-line/ellipsis behavior is
 unchanged. `textOverflow: "ellipsis"` alone does not permit shrink to discard
 caption words.
+
+Active rich-text plates retain `textBackgroundPadding`, `textBackgroundPaddingX`,
+`textBackgroundPaddingY` and `textBackgroundRadius`. A run with its own
+`textBackgroundColor` inherits these paint controls from the text node and may
+override them in its run style. They expand plate ink only, without changing
+wrapping or glyph positions. Plate ink is included in isolated-layer bounds,
+and all plates are painted before text so padded highlights do not cover
+neighboring glyphs. Run `node scripts/verify-run-backgrounds.mjs` for real pixel
+and decoded-export checks of padding, rounding, overrides and isolation.

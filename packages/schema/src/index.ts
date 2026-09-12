@@ -261,6 +261,10 @@ export const textRunStyleSchema = z
     color: colorValueSchema.optional(),
     textStroke: textStrokeValueSchema.optional(),
     textBackgroundColor: colorValueSchema.optional(),
+    textBackgroundPadding: lengthValueSchema.optional(),
+    textBackgroundPaddingX: lengthValueSchema.optional(),
+    textBackgroundPaddingY: lengthValueSchema.optional(),
+    textBackgroundRadius: lengthValueSchema.optional(),
     opacity: z.number().min(0).max(1).optional(),
   })
   .strict();

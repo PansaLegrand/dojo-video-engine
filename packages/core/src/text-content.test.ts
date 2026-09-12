@@ -116,4 +116,68 @@ describe("shaped text layout intent", () => {
     expect(content.lines[0]!.runs[1]!.stroke?.width).toBe(3);
     expect(content.shadow).toBeNull();
   });
+
+  it("inherits fitted active-plate geometry without moving or reflowing glyphs", () => {
+    const runs = [
+      { text: "Active", style: { textBackgroundColor: "#ff00ff" } },
+      { text: " rest" },
+    ];
+    const plain = text({
+      text: undefined,
+      runs,
+      style: { width: 300, height: 100, fontSize: 20 },
+    }).content;
+    const padded = text({
+      text: undefined,
+      runs,
+      style: {
+        width: 300,
+        height: 100,
+        fontSize: 20,
+        textBackgroundPaddingX: 14,
+        textBackgroundPaddingY: 8,
+        textBackgroundRadius: 999,
+      },
+    }).content;
+    expect(padded.lines[0]!.background).toBeNull();
+    expect(padded.lines[0]!.runs[0]!.background).toEqual({
+      color: "#ff00ff",
+      paddingX: 14,
+      paddingY: 8,
+      radius: 999,
+    });
+    expect(padded.lines[0]!.runs[1]!.background).toBeNull();
+    expect(padded.lines[0]!.runs.map((run) => [run.x, run.width])).toEqual(
+      plain.lines[0]!.runs.map((run) => [run.x, run.width]),
+    );
+  });
+
+  it("lets a run override inherited plate padding and corners", () => {
+    const { content } = text({
+      text: undefined,
+      runs: [
+        {
+          text: "Active",
+          style: {
+            textBackgroundColor: "#ff00ff",
+            textBackgroundPaddingX: 24,
+            textBackgroundPaddingY: 12,
+            textBackgroundRadius: 20,
+          },
+        },
+      ],
+      style: {
+        width: 300,
+        height: 100,
+        textBackgroundPadding: 5,
+        textBackgroundRadius: 999,
+      },
+    });
+    expect(content.lines[0]!.runs[0]!.background).toEqual({
+      color: "#ff00ff",
+      paddingX: 24,
+      paddingY: 12,
+      radius: 20,
+    });
+  });
 });

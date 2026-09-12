@@ -251,6 +251,8 @@ export type DisplayTextRun = {
   opacity: number;
   stroke: DisplayTextStroke | null;
   backgroundColor: string | null;
+  /** Fitted plate geometry; optional for older DisplayList v1 producers. */
+  background?: DisplayTextBackground | null;
 };
 
 export type DisplayTextLine = {
@@ -806,6 +808,9 @@ function compileText(
           ? compileTextStroke(runStyle.textStroke, layout.fontSize)
           : nodeStroke,
         backgroundColor: runStyle.textBackgroundColor ?? null,
+        background: runStyle.textBackgroundColor
+          ? compileTextBackground({ ...style, ...runStyle }, layout.fontSize)
+          : null,
       };
       return run;
     });
