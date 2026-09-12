@@ -152,6 +152,8 @@ export type ExportVideoOptions = {
   audioChunkSeconds?: number;
   /** Blob exports default to container verification; deeper modes stay bounded. */
   verification?: ExportVerificationMode;
+  /** Opt in when sound is required; mute and silent inputs are otherwise valid. */
+  requireAudibleAudio?: boolean;
   /** Host-owned reread callback for stream/file/custom sinks. */
   verificationSink?: ExportVerificationSink;
 };
@@ -880,7 +882,9 @@ function exportVerificationExpectation(
     width: options.scene.width,
     height: options.scene.height,
     durationSeconds: result.totalFrames / options.scene.fps,
-    hasAudio: result.audioCodec !== null,
+    hasAudio:
+      options.requireAudibleAudio === true || result.audioCodec !== null,
+    requireAudibleAudio: options.requireAudibleAudio ?? false,
     fps: options.scene.fps,
   };
 }

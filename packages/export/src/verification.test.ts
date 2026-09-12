@@ -146,6 +146,95 @@ describe("verifyExportBlob", () => {
     expect(check(result, "audio_audible").status).toBe("passed");
   });
 
+  it.each([undefined, false])(
+    "accepts decoded silence when audibility is %s without skipping integrity checks",
+    async (requireAudibleAudio) => {
+      const result = await __verifyExportBlobWithInspector(
+        blob,
+        { ...expectation, requireAudibleAudio },
+        "sampled",
+        undefined,
+        () =>
+          inspector(
+            metadata({
+              decodedVideoFrames: 3,
+              pixelAccessAvailable: true,
+              hasNonblankVideoFrame: true,
+              decodedAudioSamples: 8,
+              hasAudibleAudio: false,
+            }),
+          ),
+      );
+      expect(result.status).toBe("verified");
+      for (const id of [
+        "audio_track_presence_match",
+        "audio_video_sync",
+        "audio_samples_decoded",
+      ] as const)
+        expect(check(result, id).status).toBe("passed");
+      expect(check(result, "audio_audible")).toMatchObject({
+        status: "skipped",
+        actual: false,
+      });
+      expect(result.issues).toEqual([]);
+    },
+  );
+
+  it.each(["sampled", "container"] as const)(
+    "rejects silence when sound is explicitly required in %s mode",
+    async (mode) => {
+      const result = await __verifyExportBlobWithInspector(
+        blob,
+        { ...expectation, requireAudibleAudio: true },
+        mode,
+        undefined,
+        () =>
+          inspector(
+            metadata({
+              decodedVideoFrames: 3,
+              pixelAccessAvailable: true,
+              hasNonblankVideoFrame: true,
+              decodedAudioSamples: 8,
+              hasAudibleAudio: false,
+            }),
+          ),
+      );
+      expect(result.status).toBe("failed");
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({ code: "audio_samples_silent" }),
+      );
+      expect(check(result, "audio_samples_decoded").status).toBe("passed");
+    },
+  );
+
+  it.each([
+    [{ hasAudio: false }, "audio_track_presence_mismatch"],
+    [{ decodedAudioSamples: 0 }, "audio_decode_failed"],
+    [{ audioDurationSeconds: 20 }, "audio_video_sync_mismatch"],
+  ] as const)(
+    "retains audio integrity rejection when silence is allowed: %s",
+    async (overrides, code) => {
+      const result = await __verifyExportBlobWithInspector(
+        blob,
+        { ...expectation, requireAudibleAudio: false },
+        "sampled",
+        undefined,
+        () =>
+          inspector(
+            metadata({
+              decodedVideoFrames: 3,
+              pixelAccessAvailable: true,
+              hasNonblankVideoFrame: true,
+              decodedAudioSamples: 8,
+              ...overrides,
+            }),
+          ),
+      );
+      expect(result.status).toBe("failed");
+      expect(result.issues).toContainEqual(expect.objectContaining({ code }));
+    },
+  );
+
   it("turns abort into diagnostics and still disposes the inspector", async () => {
     const controller = new AbortController();
     const dispose = vi.fn();

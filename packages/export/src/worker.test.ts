@@ -59,11 +59,13 @@ describe("ExportWorkerClient", () => {
     const worker = new FakeWorker();
     const progress: number[] = [];
     const task = new ExportWorkerClient(worker).export(scene, {
+      requireAudibleAudio: true,
       onProgress: (event) => progress.push(event.frame),
     });
     expect(worker.messages[0]).toMatchObject({
       type: "motionforge.export.start",
       id: task.id,
+      options: expect.objectContaining({ requireAudibleAudio: true }),
     });
     worker.emit({
       type: "motionforge.export.progress",

@@ -176,3 +176,24 @@ Internal/not public:
 ## License
 
 MIT
+
+## Audio presence and audibility
+
+`hasAudio` in a verification expectation means an audio track must be present.
+Silent source audio and intentional clip/track/bus mute are valid content;
+sampled/full verification still requires that track to decode and remain in sync.
+When decoded samples are silent, the audibility check is marked skipped with
+`actual: false` unless the caller opts into `requireAudibleAudio: true`.
+
+Set `requireAudibleAudio: true` for outputs whose contract requires sound, such
+as a music-video soundtrack. It rejects a missing track or silent representative
+samples. With container verification, this flag additionally enables bounded
+sampled audio decoding. `verification: "none"` remains explicitly unverified.
+The flag is serializable through the worker protocol and is forwarded to custom
+verification sinks. It defaults to false; nonzero gain alone cannot prove that
+an uploaded source contains sound.
+
+Run `node scripts/verify-audio-intent.mjs` for real local browser checks covering
+muted audio/video, compiled track mute, bus/master/envelope mute, silent source
+files, worker export and strict required-sound rejection. Reports retain every
+track/decode/sync/audibility result rather than treating silence as corruption.

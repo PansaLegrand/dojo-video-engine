@@ -66,7 +66,10 @@ export type ExportVerificationExpectation = {
   width: number;
   height: number;
   durationSeconds: number;
+  /** Whether an audio track must be present; silence is valid track content. */
   hasAudio: boolean;
+  /** Require audible decoded samples only when the caller knows sound is mandatory. */
+  requireAudibleAudio?: boolean;
   fps: number;
 };
 
@@ -488,9 +491,13 @@ function evaluateInspection(
 
   if (mode === "sampled" || mode === "full") {
     evaluateVideoDecode(result, inspection);
-    if (expectation.hasAudio && inspection.hasAudio) {
-      evaluateAudioDecode(result, inspection);
-    }
+  }
+  if (
+    expectation.hasAudio &&
+    inspection.hasAudio &&
+    (mode !== "container" || expectation.requireAudibleAudio === true)
+  ) {
+    evaluateAudioDecode(result, inspection);
   }
 
   return finalizeStatus(result);
@@ -598,7 +605,7 @@ function evaluateAudioDecode(
       message:
         "At least one representative audio sample contains audible signal.",
     });
-  } else {
+  } else if (result.expectation.requireAudibleAudio === true) {
     failCheck(
       result,
       "audio_audible",
@@ -607,6 +614,14 @@ function evaluateAudioDecode(
       true,
       false,
     );
+  } else {
+    setCheck(result, {
+      id: "audio_audible",
+      status: "skipped",
+      message:
+        "The decoded audio is silent. Audibility was not required; muted or silent source content is valid.",
+      actual: false,
+    });
   }
 }
 
@@ -689,16 +704,18 @@ class MediabunnyExportInspector implements ExportVerificationInspector {
       }
 
       if (
-        (mode === "sampled" || mode === "full") &&
+        (mode === "sampled" ||
+          mode === "full" ||
+          expectation.requireAudibleAudio === true) &&
         expectation.hasAudio &&
         audioTrack
       ) {
         try {
           const timestamps = uniformlySpacedTimestamps(
             audioDurationSeconds ?? expectation.durationSeconds,
-            mode === "sampled"
-              ? exportVerificationSamplingPolicy.sampledAudioSamples
-              : exportVerificationSamplingPolicy.fullAudioSamples,
+            mode === "full"
+              ? exportVerificationSamplingPolicy.fullAudioSamples
+              : exportVerificationSamplingPolicy.sampledAudioSamples,
           );
           const sink = new AudioSampleSink(audioTrack);
           for await (const sample of sink.samplesAtTimestamps(timestamps, {
@@ -909,6 +926,15 @@ function finalizeStatus(
 function validateExpectation(
   expectation: ExportVerificationExpectation,
 ): string | null {
+  if (typeof expectation.hasAudio !== "boolean")
+    return "Verification hasAudio must be a boolean track-presence expectation.";
+  if (
+    expectation.requireAudibleAudio !== undefined &&
+    typeof expectation.requireAudibleAudio !== "boolean"
+  )
+    return "Verification requireAudibleAudio must be a boolean.";
+  if (expectation.requireAudibleAudio === true && !expectation.hasAudio)
+    return "Audibility requires an expected audio track.";
   if (!Number.isInteger(expectation.width) || expectation.width <= 0) {
     return "Verification width must be a positive integer.";
   }
