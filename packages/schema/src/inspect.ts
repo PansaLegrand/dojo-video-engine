@@ -6,6 +6,7 @@ import {
   type SceneEffectName,
   type SceneNode,
 } from "./index.js";
+import { fontAssetIdsForFamily } from "./font-assets.js";
 
 export type SceneInspection = {
   schemaVersion: number;
@@ -143,12 +144,10 @@ export function inspectScene(input: unknown): SceneInspection {
         reachableAssets.add(node.params.audioAssetId);
       if (node.params?.coverAssetId)
         reachableAssets.add(node.params.coverAssetId);
-      if (
-        node.style?.fontFamily &&
-        scene.assets[node.style.fontFamily]?.type === "font"
-      ) {
-        reachableAssets.add(node.style.fontFamily);
-      }
+      if (node.style?.fontFamily)
+        fontAssetIdsForFamily(scene.assets, node.style.fontFamily).forEach(
+          (id) => reachableAssets.add(id),
+        );
       visit(node.children ?? []);
     }
   };
@@ -344,6 +343,10 @@ export function lintScene(input: unknown): SceneLintResult {
         referencedAssets.add(node.params.audioAssetId);
       if (node.params?.coverAssetId)
         referencedAssets.add(node.params.coverAssetId);
+      if (node.style?.fontFamily)
+        fontAssetIdsForFamily(scene.assets, node.style.fontFamily).forEach(
+          (id) => referencedAssets.add(id),
+        );
 
       visit(node.children ?? [], visibleDuration, [...nodePath, "children"]);
     });

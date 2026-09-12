@@ -589,3 +589,25 @@ A 4-second, 30 fps vertical scene: gradient background, centered title that fade
 normalize them to v1 without mutating the input. Breaking format changes bump
 the version and ship with a documented deterministic migration. See
 [RFC 0002](rfcs/0002-scene-v1.md).
+
+### Prepared fonts and shaped rich captions
+
+Font assets may declare `metadata.fontFamily`, `metadata.fontWeight`, and
+`metadata.fontStyle`. Family defaults to the asset id; weight/style default to
+`normal`. Use a fixed numeric weight (for example 700) or a variable range string
+(for example `"100 900"`). Multiple asset ids can register fixed-weight faces
+under one family. All faces referenced by a font-family fallback list are
+prepared, and descriptor changes invalidate prepared-resource and raster caches.
+
+Text padding constrains the glyph content box, wrapping, and intrinsic height.
+Rich text paints complete shaped lines through style spans, preserving Arabic
+joining and Latin ligatures across paint boundaries. Unicode visual ordering
+comes from pinned `bidi-js` 1.0.3 (MIT; see `packages/core/THIRD_PARTY.md`), so
+LTR word islands and numbers keep their order inside RTL captions. Explicit
+`textStroke: "none"` disables an inherited rich-run outline; `textShadow: "none"`
+disables a node text shadow.
+
+Run `node scripts/verify-text-layout.mjs --variable-font /path/to/variable.woff2`
+for the real-browser padding, Arabic/Latin shaping, mixed-direction DOM-range,
+and variable-weight reference checks. Reports record source hashes and browser
+version. Without `--variable-font`, font-weight checks are omitted explicitly.

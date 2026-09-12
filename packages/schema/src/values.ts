@@ -812,7 +812,7 @@ export function serializeTextStrokeValue(value: ParsedTextStrokeValue): string {
 }
 
 export function isTextStrokeValue(value: string): boolean {
-  return parseTextStrokeValue(value) !== null;
+  return value === "none" || parseTextStrokeValue(value) !== null;
 }
 
 export function parseEasingValue(value: string): ParsedEasingValue | null {
@@ -899,12 +899,12 @@ export const shadowValueSchema = visualStringSchema(
   "Expected comma-separated x/y/optional-blur/color shadows without spread or inset.",
 );
 export const singleShadowValueSchema = visualStringSchema(
-  (value) => parseShadowValue(value) !== null,
-  "Expected one x/y/optional-blur/color shadow without spread or inset.",
+  (value) => value === "none" || parseShadowValue(value) !== null,
+  "Expected one x/y/optional-blur/color shadow without spread or inset, or none.",
 );
 export const textStrokeValueSchema = visualStringSchema(
   isTextStrokeValue,
-  "Expected a positive px width followed by a supported color.",
+  "Expected a positive px width followed by a supported color, or none.",
 );
 export const easingValueSchema = visualStringSchema(
   isEasingValue,

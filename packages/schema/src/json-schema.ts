@@ -14,6 +14,7 @@ import {
   lengthStringSchema,
   parseShadowValue,
 } from "./values.js";
+import { isFontWeightDescriptor } from "./font-assets.js";
 
 export const motionforgeJsonSchemaFormatNames = [
   "motionforge-length",
@@ -26,6 +27,7 @@ export const motionforgeJsonSchemaFormatNames = [
   "motionforge-filter",
   "motionforge-font-family",
   "motionforge-font-weight",
+  "motionforge-font-weight-descriptor",
   "motionforge-border",
   "motionforge-shadow-list",
   "motionforge-single-shadow",
@@ -55,9 +57,11 @@ export const motionforgeJsonSchemaFormats: Readonly<
   "motionforge-filter": isFilterValue,
   "motionforge-font-family": isFontFamilyValue,
   "motionforge-font-weight": isFontWeightString,
+  "motionforge-font-weight-descriptor": isFontWeightDescriptor,
   "motionforge-border": isBorderValue,
   "motionforge-shadow-list": isShadowValue,
-  "motionforge-single-shadow": (value) => parseShadowValue(value) !== null,
+  "motionforge-single-shadow": (value) =>
+    value === "none" || parseShadowValue(value) !== null,
   "motionforge-text-stroke": isTextStrokeValue,
   "motionforge-easing": isEasingValue,
 };
@@ -184,6 +188,8 @@ function annotatePortableFormats(value: unknown): void {
 function formatForDescription(
   description: string,
 ): MotionforgeJsonSchemaFormatName | null {
+  if (description.startsWith("FontFace weight descriptor"))
+    return "motionforge-font-weight-descriptor";
   if (description.startsWith("Finite number string with optional px or %")) {
     return "motionforge-length";
   }

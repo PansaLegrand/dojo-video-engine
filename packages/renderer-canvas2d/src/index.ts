@@ -1,3 +1,4 @@
+import { fontAssetIdsForFamily, fontFamilyNames } from "@motionforge/schema";
 import {
   audioReactiveSourceTime,
   collectAudioReactiveSourceRanges,
@@ -1109,6 +1110,7 @@ function resolvedAssetResourceKey(
     options.maxSourceCacheBytes,
     policyIdentity,
     fontCacheIdentity,
+    asset.type === "font" ? fontDescriptors(asset) : null,
   ]);
 }
 
@@ -2278,12 +2280,10 @@ export function collectReachableAssetIds(
       if (node.assetId) ids.add(node.assetId);
       if (node.params?.audioAssetId) ids.add(node.params.audioAssetId);
       if (node.params?.coverAssetId) ids.add(node.params.coverAssetId);
-      if (
-        node.style?.fontFamily &&
-        scene.assets[node.style.fontFamily]?.type === "font"
-      ) {
-        ids.add(node.style.fontFamily);
-      }
+      if (node.style?.fontFamily)
+        fontAssetIdsForFamily(scene.assets, node.style.fontFamily).forEach(
+          (id) => ids.add(id),
+        );
       visit(node.children ?? []);
     }
   };
@@ -3389,10 +3389,14 @@ async function loadFont(
 
   const cache = configuredCache ?? getSharedFontCache(fontSet);
   const lease = await cache.acquire(
-    `${id}\u0000${request.contentKey}`,
+    `${id}\u0000${request.contentKey}\u0000${JSON.stringify(fontDescriptors(asset))}`,
     async () => {
       const bytes = await readPreparedAssetBytes(asset, request, signal);
-      const face = new FontFace(id, ownedArrayBuffer(bytes));
+      const descriptor = fontDescriptors(asset);
+      const face = new FontFace(descriptor.family, ownedArrayBuffer(bytes), {
+        weight: descriptor.weight,
+        style: descriptor.style,
+      });
       await face.load();
       assertNotAborted(signal);
       return face;
@@ -3401,6 +3405,14 @@ async function loadFont(
   );
   fontSet.add(lease.face);
   return lease;
+}
+
+function fontDescriptors(asset: SceneAsset) {
+  return {
+    family: asset.metadata?.fontFamily ?? asset.id,
+    weight: String(asset.metadata?.fontWeight ?? "normal"),
+    style: asset.metadata?.fontStyle ?? "normal",
+  };
 }
 
 function truncateSrc(src: string): string {
@@ -3935,12 +3947,25 @@ function assertDisplayGroupSemantics(
   const expectedValue =
     node.text ?? node.runs?.map((run) => run.text).join("") ?? "";
   if (node.type === "text" && (node.text !== undefined || node.runs)) {
+    const reference = Math.min(group.box.width, group.box.height);
+    const padding = readLength(style.padding, reference, 0);
+    const left = readLength(style.paddingLeft, reference, padding);
+    const right = readLength(style.paddingRight, reference, padding);
+    const top = readLength(style.paddingTop, reference, padding);
+    const bottom = readLength(style.paddingBottom, reference, padding);
+    const expectedContent = {
+      x: group.box.x + left,
+      y: group.box.y + top,
+      width: Math.max(0, group.box.width - left - right),
+      height: Math.max(0, group.box.height - top - bottom),
+    };
     if (
       content?.kind !== "text" ||
       content.nodeId !== node.id ||
       content.value !== expectedValue ||
       content.fill !== (style.color ?? "#ffffff") ||
-      !sameRect(content.bounds, group.box)
+      !sameRect(content.bounds, expectedContent) ||
+      !sameRect(group.contentBox, expectedContent)
     ) {
       throw new Error(
         `Canvas2D display group ${JSON.stringify(node.id)} has tampered text paint semantics.`,
@@ -4087,14 +4112,22 @@ function createStaticDisplayResourceIdentity(
         assets?.resolvedSources?.get(reference.assetId),
       );
     }
-    const font = assets?.fonts?.get(reference.family);
-    if (!font) {
-      return `system-font:${reference.family}:${reference.weight}:${reference.style}`;
-    }
-    return staticPreparedResourceIdentity(
-      font,
-      assets?.resolvedSources?.get(reference.family),
+    const families = new Set(fontFamilyNames(reference.family));
+    const fonts = [...(assets?.fonts ?? [])].filter(
+      ([id, font]) =>
+        families.has(id) ||
+        fontFamilyNames(font.family ?? id).some((family) =>
+          families.has(family),
+        ),
     );
+    if (!fonts.length)
+      return `system-font:${reference.family}:${reference.weight}:${reference.style}`;
+    return fonts
+      .map(([id, font]) =>
+        staticPreparedResourceIdentity(font, assets?.resolvedSources?.get(id)),
+      )
+      .sort()
+      .join("\u0000");
   };
 }
 
@@ -7639,8 +7672,28 @@ function drawCompiledText(
       continue;
     }
 
+    // Paint the complete shaped line under each color/opacity span. Rendering
+    // fragments independently breaks Arabic joining and Latin ligatures.
+    const spans: typeof line.runs = [];
     for (const run of line.runs) {
-      if (run.backgroundColor) {
+      const previous = spans[spans.length - 1];
+      const equivalent =
+        previous &&
+        (Math.abs(previous.x + previous.width - run.x) < 1e-6 ||
+          Math.abs(run.x + run.width - previous.x) < 1e-6) &&
+        previous.fill === run.fill &&
+        previous.opacity === run.opacity &&
+        JSON.stringify(previous.stroke) === JSON.stringify(run.stroke) &&
+        previous.backgroundColor === run.backgroundColor;
+      if (equivalent) {
+        const right = Math.max(previous.x + previous.width, run.x + run.width);
+        previous.x = Math.min(previous.x, run.x);
+        previous.width = right - previous.x;
+        previous.text += run.text;
+      } else spans.push({ ...run });
+    }
+    for (const run of spans) {
+      if (run.backgroundColor)
         drawTextBackground(context, {
           x: run.x,
           y: line.y - operation.lineHeight / 2,
@@ -7649,19 +7702,40 @@ function drawCompiledText(
           radius: 0,
           color: run.backgroundColor,
         });
-      }
       withSavedContext(context, () => {
         context.globalAlpha *= run.opacity;
         context.textAlign = "left";
         context.fillStyle = run.fill;
+        if (spans.length > 1) {
+          const margin =
+            operation.font.size * 2 +
+            (run.stroke?.width ?? 0) * 2 +
+            (operation.shadow?.blur ?? 0) * 4;
+          const left = run.x <= line.x + 1e-6 ? run.x - margin : run.x;
+          const right =
+            run.x + run.width >= line.x + line.width - 1e-6
+              ? run.x + run.width + margin
+              : run.x + run.width;
+          context.beginPath();
+          context.rect(
+            left,
+            operation.bounds.y - margin,
+            Math.max(0, right - left),
+            operation.bounds.height + margin * 2,
+          );
+          context.clip();
+        }
         if (run.stroke) {
           context.lineWidth = run.stroke.width;
           context.strokeStyle = run.stroke.color;
           context.lineJoin = "round";
           context.miterLimit = 2;
-          context.strokeText(run.text, run.x, line.y);
+          if (line.maxWidth === null)
+            context.strokeText(line.text, line.x, line.y);
+          else context.strokeText(line.text, line.x, line.y, line.maxWidth);
         }
-        context.fillText(run.text, run.x, line.y);
+        if (line.maxWidth === null) context.fillText(line.text, line.x, line.y);
+        else context.fillText(line.text, line.x, line.y, line.maxWidth);
       });
     }
   }

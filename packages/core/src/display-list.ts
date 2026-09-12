@@ -1,3 +1,4 @@
+import { positionBidiTextSegments } from "./bidi-text.js";
 import type {
   SceneEffectName,
   SceneEffectParams,
@@ -731,13 +732,15 @@ function compileText(
   state: CompileState,
 ): DisplayTextOperation {
   const style = box.node.style;
+  const content = getLayoutContentRect(box);
+  const textBox = { ...box, ...content };
   const value =
     box.node.text ?? box.node.runs?.map((run) => run.text).join("") ?? "";
   countText(state, value.length, box.id);
   const baseFontSize = readLength(style.fontSize, box.height, 24);
   const layout = prepareTextLayout(
     value,
-    box.width,
+    content.width,
     baseFontSize,
     (line, size) => state.measure(line, style, size, box.id),
     {
@@ -745,20 +748,20 @@ function compileText(
       minFontSize: readLength(style.minFontSize, box.height, 12),
       textFit: style.textFit,
       textOverflow: style.textOverflow,
-      height: box.height,
+      height: content.height,
       lineHeight: style.lineHeight,
     },
   );
   const align = style.textAlign ?? "left";
   const anchorX =
     align === "center"
-      ? box.x + box.width / 2
+      ? content.x + content.width / 2
       : align === "right"
-        ? box.x + box.width
-        : box.x;
+        ? content.x + content.width
+        : content.x;
   const firstLineY =
-    box.y +
-    box.height / 2 -
+    content.y +
+    content.height / 2 -
     ((layout.lines.length - 1) * layout.lineHeight) / 2;
   // Scene v1 resolves these three against the pre-shrink font size. Keeping
   // that detail here preserves current pixels while exposing it explicitly.
@@ -776,42 +779,43 @@ function compileText(
       style,
       layout.fontSize,
     );
-    const width = Math.min(metrics.width, box.width);
+    const width = box.node.runs
+      ? metrics.width
+      : Math.min(metrics.width, content.width);
     const y = firstLineY + lineIndex * layout.lineHeight;
-    const lineX = textLineStart(align, box, anchorX, width);
-    let cursorX = lineX;
-    const runs = (styledLines?.[lineIndex] ?? []).map(
-      (segment, runIndex): DisplayTextRun => {
-        const segmentWidth = state.measure(
-          segment.text,
-          style,
-          layout.fontSize,
-          box.id,
-        );
-        const runStyle = segment.run.style ?? {};
-        const run: DisplayTextRun = {
-          engineId: `${nodeEngineId(box.id)}/text/line:${lineIndex}/run:${runIndex}`,
-          text: segment.text,
-          x: cursorX,
-          width: segmentWidth,
-          fill: runStyle.color ?? style.color ?? "#ffffff",
-          opacity: runStyle.opacity ?? 1,
-          stroke: runStyle.textStroke
-            ? compileTextStroke(runStyle.textStroke, layout.fontSize)
-            : nodeStroke,
-          backgroundColor: runStyle.textBackgroundColor ?? null,
-        };
-        cursorX += segmentWidth;
-        return run;
-      },
+    const lineX = textLineStart(align, textBox, anchorX, width);
+    const positioned = positionBidiTextSegments(
+      line,
+      styledLines?.[lineIndex] ?? [],
+      style.direction === "rtl" ? "rtl" : "ltr",
+      lineX,
+      width,
+      (value, direction) =>
+        state.measure(value, { ...style, direction }, layout.fontSize, box.id),
     );
+    const runs = positioned.map((segment, runIndex): DisplayTextRun => {
+      const runStyle = segment.run.style ?? {};
+      const run: DisplayTextRun = {
+        engineId: `${nodeEngineId(box.id)}/text/line:${lineIndex}/run:${runIndex}`,
+        text: segment.text,
+        x: segment.x,
+        width: segment.width,
+        fill: runStyle.color ?? style.color ?? "#ffffff",
+        opacity: runStyle.opacity ?? 1,
+        stroke: runStyle.textStroke
+          ? compileTextStroke(runStyle.textStroke, layout.fontSize)
+          : nodeStroke,
+        backgroundColor: runStyle.textBackgroundColor ?? null,
+      };
+      return run;
+    });
     return {
       engineId: `${nodeEngineId(box.id)}/text/line:${lineIndex}`,
       text: line,
       x: box.node.runs ? lineX : anchorX,
       y,
       width,
-      maxWidth: box.node.runs ? null : box.width,
+      maxWidth: box.node.runs ? null : content.width,
       background: nodeBackground,
       runs,
       metrics: {
@@ -827,7 +831,7 @@ function compileText(
     kind: "text",
     engineId: `${nodeEngineId(box.id)}/text`,
     nodeId: box.id,
-    bounds: copyRect(box),
+    bounds: copyRect(content),
     value,
     font: {
       family: style.fontFamily ?? "system-ui, sans-serif",

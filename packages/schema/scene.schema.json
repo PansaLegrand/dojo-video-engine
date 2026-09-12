@@ -104,6 +104,35 @@
                     "minLength": 1,
                     "maxLength": 127
                   },
+                  "fontFamily": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "pattern": "^[^,;{}]+$"
+                  },
+                  "fontWeight": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 24,
+                        "description": "FontFace weight descriptor: normal, bold, fixed 1-1000 or ascending variable range.",
+                        "format": "motionforge-font-weight-descriptor"
+                      }
+                    ]
+                  },
+                  "fontStyle": {
+                    "type": "string",
+                    "enum": [
+                      "normal",
+                      "italic",
+                      "oblique"
+                    ]
+                  },
                   "codec": {
                     "type": "string",
                     "minLength": 1
@@ -210,7 +239,7 @@
                         "textStroke": {
                           "type": "string",
                           "maxLength": 8192,
-                          "description": "Expected a positive px width followed by a supported color.",
+                          "description": "Expected a positive px width followed by a supported color, or none.",
                           "format": "motionforge-text-stroke"
                         },
                         "textBackgroundColor": {
@@ -1109,12 +1138,12 @@
                   "textShadow": {
                     "type": "string",
                     "maxLength": 8192,
-                    "description": "Expected one x/y/optional-blur/color shadow without spread or inset.",
+                    "description": "Expected one x/y/optional-blur/color shadow without spread or inset, or none.",
                     "format": "motionforge-single-shadow"
                   },
                   "textStroke": {
                     "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
-                    "description": "Expected a positive px width followed by a supported color.",
+                    "description": "Expected a positive px width followed by a supported color, or none.",
                     "format": "motionforge-text-stroke"
                   },
                   "maxLines": {
@@ -2191,7 +2220,7 @@
                                 "value": {
                                   "type": "string",
                                   "maxLength": 8192,
-                                  "description": "Expected one x/y/optional-blur/color shadow without spread or inset.",
+                                  "description": "Expected one x/y/optional-blur/color shadow without spread or inset, or none.",
                                   "format": "motionforge-single-shadow"
                                 }
                               }
@@ -2218,7 +2247,7 @@
                               "properties": {
                                 "value": {
                                   "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
-                                  "description": "Expected a positive px width followed by a supported color.",
+                                  "description": "Expected a positive px width followed by a supported color, or none.",
                                   "format": "motionforge-text-stroke"
                                 }
                               }
@@ -2532,6 +2561,7 @@
     "motionforge-filter",
     "motionforge-font-family",
     "motionforge-font-weight",
+    "motionforge-font-weight-descriptor",
     "motionforge-border",
     "motionforge-shadow-list",
     "motionforge-single-shadow",

@@ -2490,20 +2490,34 @@ function textIntrinsicHeight(
   measure: MeasureTextLine,
 ): number {
   const fontSize = readLength(node.style.fontSize, 0, 24);
-  const layout = prepareTextLayout(
-    textNodeContent(node),
-    width,
-    fontSize,
-    (line, size) => measure(line, node.style, size, node.id),
-    {
-      maxLines: node.style.maxLines,
-      minFontSize: readLength(node.style.minFontSize, 0, 12),
-      textFit: node.style.textFit,
-      textOverflow: node.style.textOverflow,
-      lineHeight: node.style.lineHeight,
-    },
-  );
-  return layout.lines.length * layout.lineHeight;
+  let height = fontSize;
+  // Resolve percentage padding against the same min(width,height) reference
+  // used by layoutNode; fixed padding converges on the first extra pass.
+  for (let pass = 0; pass < 12; pass += 1) {
+    const reference = Math.min(width, height);
+    const padding = readLength(node.style.padding, reference, 0);
+    const left = readLength(node.style.paddingLeft, reference, padding);
+    const right = readLength(node.style.paddingRight, reference, padding);
+    const top = readLength(node.style.paddingTop, reference, padding);
+    const bottom = readLength(node.style.paddingBottom, reference, padding);
+    const layout = prepareTextLayout(
+      textNodeContent(node),
+      Math.max(0, width - left - right),
+      fontSize,
+      (line, size) => measure(line, node.style, size, node.id),
+      {
+        maxLines: node.style.maxLines,
+        minFontSize: readLength(node.style.minFontSize, 0, 12),
+        textFit: node.style.textFit,
+        textOverflow: node.style.textOverflow,
+        lineHeight: node.style.lineHeight,
+      },
+    );
+    const nextHeight = layout.lines.length * layout.lineHeight + top + bottom;
+    if (Math.abs(nextHeight - height) < 1e-6) return nextHeight;
+    height = nextHeight;
+  }
+  return height;
 }
 
 function textNodeContent(node: Pick<ResolvedNode, "text" | "runs">): string {

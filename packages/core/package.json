@@ -29,6 +29,7 @@
   },
   "files": [
     "dist",
+    "THIRD_PARTY.md",
     "!dist/**/*.test.*",
     "!dist/.tsbuildinfo"
   ],
@@ -46,7 +47,8 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/schema": "workspace:*"
+    "@motionforge/schema": "workspace:*",
+    "bidi-js": "1.0.3"
   },
   "devDependencies": {
     "vitest": "^3.2.7"

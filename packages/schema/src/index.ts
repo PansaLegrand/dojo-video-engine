@@ -1,5 +1,7 @@
+import { isFontWeightDescriptor } from "./font-assets.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+export { fontAssetIdsForFamily, fontFamilyNames } from "./font-assets.js";
 import {
   borderValueSchema,
   colorValueSchema,
@@ -764,6 +766,30 @@ export const assetSchema = z
         height: z.number().int().positive().optional(),
         byteLength: z.number().int().positive().optional(),
         mimeType: z.string().min(1).max(127).optional(),
+        /** FontFace descriptors; omitted family preserves the asset-id-as-family contract. */
+        fontFamily: z
+          .string()
+          .trim()
+          .min(1)
+          .max(200)
+          .regex(/^[^,;{}]+$/)
+          .optional(),
+        fontWeight: z
+          .union([
+            z.number().int().min(1).max(1000),
+            z
+              .string()
+              .max(24)
+              .refine(
+                isFontWeightDescriptor,
+                "Font weight must be normal, bold, 1-1000, or an ascending variable range such as 100 900.",
+              )
+              .describe(
+                "FontFace weight descriptor: normal, bold, fixed 1-1000 or ascending variable range.",
+              ),
+          ])
+          .optional(),
+        fontStyle: z.enum(["normal", "italic", "oblique"]).optional(),
         codec: z.string().min(1).optional(),
         hasAudio: z.boolean().optional(),
         audioCodec: z.string().min(1).optional(),
