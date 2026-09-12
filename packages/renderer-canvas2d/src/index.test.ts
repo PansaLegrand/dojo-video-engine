@@ -4744,3 +4744,91 @@ describe("Canvas2D display-list facade", () => {
     expect(composite[8]).toBeGreaterThanOrEqual(100);
   });
 });
+
+describe("audio-reactive trimmed rendering", () => {
+  it("renders the same spectrum at equal source times despite different placement and speed", () => {
+    const values = new Uint8Array(4 * 128);
+    values.fill(255, 2 * 128, 3 * 128);
+    const assets = {
+      images: new Map(),
+      fonts: new Map(),
+      videos: new Map(),
+      videoFrames: new Map(),
+      audio: new Map(),
+      audioSpectra: new Map([
+        [
+          "music",
+          {
+            fps: 1,
+            barCount: 128,
+            frameCount: 4,
+            values,
+            startTime: 0,
+            duration: 4,
+          },
+        ],
+      ]),
+      lotties: new Map(),
+      lottieFrames: new Map(),
+    };
+    const draw = (
+      params: Record<string, unknown>,
+      from: number,
+      frame: number,
+    ) => {
+      const tops: number[] = [];
+      const context = {
+        save() {},
+        restore() {},
+        setTransform() {},
+        clearRect() {},
+        translate() {},
+        rotate() {},
+        scale() {},
+        beginPath() {},
+        moveTo() {},
+        arcTo() {},
+        closePath() {},
+        fill() {},
+        createLinearGradient(
+          _x0: number,
+          _y0: number,
+          _x1: number,
+          y1: number,
+        ) {
+          tops.push(y1);
+          return { addColorStop() {} };
+        },
+      } as unknown as CanvasRenderingContext2D;
+      renderStill(
+        context,
+        {
+          schemaVersion: 1,
+          width: 100,
+          height: 100,
+          fps: 30,
+          duration: 120,
+          assets: { music: { id: "music", type: "audio", src: "music.wav" } },
+          nodes: [
+            {
+              id: "spectrum",
+              type: "effect",
+              effect: "spectrumBars",
+              from,
+              duration: 90,
+              style: { position: "absolute", width: 100, height: 100 },
+              params: { audioAssetId: "music", barCount: 8, ...params },
+            },
+          ],
+        },
+        frame,
+        { assets: assets as never },
+      );
+      return tops;
+    };
+    const trimmed = draw({ audioStartTime: 1, audioPlaybackRate: 2 }, 30, 45);
+    expect(trimmed).toEqual(draw({}, 0, 60));
+    expect(trimmed).not.toEqual(draw({}, 30, 45));
+    expect(draw({ audioStartTime: 5 }, 0, 0)).toEqual(draw({}, 0, 0));
+  });
+});

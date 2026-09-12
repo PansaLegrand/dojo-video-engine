@@ -1,4 +1,15 @@
 import {
+  audioReactiveSourceTime,
+  collectAudioReactiveSourceRanges,
+  audioReactiveAnalysisWindow,
+} from "./audio-reactive.js";
+export {
+  audioReactiveSourceTime,
+  collectAudioReactiveSourceRanges,
+  audioReactiveAnalysisWindow,
+  type AudioReactiveSourceRange,
+} from "./audio-reactive.js";
+import {
   compileDisplayList,
   createBoundedTextMetricsProvider,
   evaluateScene,
@@ -808,6 +819,10 @@ function copyAudioSampleChannels(sample: AudioSample): Float32Array[] {
 }
 
 export type AudioSpectrum = {
+  /** Absolute source time covered by the first analysis frame (legacy default 0). */
+  startTime?: number;
+  /** Seconds covered by the analysis; samples beyond it are silent. */
+  duration?: number;
   fps: number;
   barCount: number;
   frameCount: number;
@@ -815,6 +830,8 @@ export type AudioSpectrum = {
 };
 
 export type AudioWaveform = {
+  /** Absolute source offset of this waveform window (legacy default 0). */
+  startTime?: number;
   duration: number;
   values: Float32Array;
 };
@@ -1903,7 +1920,8 @@ export async function resolveAssets(
       failureController,
     );
 
-    const spectrumAssetIds = collectSpectrumAssetIds(parsed.nodes);
+    const spectrumRanges = collectAudioReactiveSourceRanges(parsed);
+    const spectrumAssetIds = new Set(spectrumRanges.keys());
     const analysisAssetIds = new Set([
       ...(options.analyzeWaveforms ? audio.keys() : []),
       ...spectrumAssetIds,
@@ -1938,14 +1956,40 @@ export async function resolveAssets(
           resolvedSources.get(assetId)?.resourceKey ??
           resolvedSources.get(assetId)?.contentKey ??
           `asset:${assetId}`;
-        const analysisKey = `${resourceIdentity}\u0000audio-analysis-v1\u0000${needsSpectrum ? "spectrum" : "waveform"}\u0000${parsed.fps}\u0000${parsed.duration}`;
-        const analysisDuration = Math.min(
-          clip.duration,
-          parsed.duration / parsed.fps,
-        );
+        const spectrumFps = Math.min(SPECTRUM_MAX_FPS, parsed.fps);
+        const requestedRange = needsSpectrum
+          ? spectrumRanges.get(assetId)!
+          : { start: 0, end: parsed.duration / parsed.fps };
+        const analysisWindow = needsSpectrum
+          ? audioReactiveAnalysisWindow(
+              requestedRange,
+              clip.duration,
+              spectrumFps,
+            )
+          : { start: 0, end: Math.min(clip.duration, requestedRange.end) };
+        const analysisDuration = analysisWindow.end - analysisWindow.start;
+        // Include transient mono PCM as well as the retained spectrum in the
+        // resource ceiling, before allocating either for a long source window.
+        const estimatedAnalysisBytes = needsSpectrum
+          ? Math.ceil(analysisDuration * SPECTRUM_SAMPLE_RATE) * 4 +
+            Math.ceil(analysisDuration * spectrumFps) * SPECTRUM_BAR_COUNT +
+            2048 * 4
+          : 2048 * 4;
+        if (estimatedAnalysisBytes > configuredAnalysisBytes) {
+          throw new Error(
+            `Audio-reactive analysis needs approximately ${estimatedAnalysisBytes} bytes, above the ${configuredAnalysisBytes}-byte budget. Shorten the source window or raise maxAudioAnalysisCacheBytes.`,
+          );
+        }
+        const analysisKey = `${resourceIdentity}\u0000audio-analysis-v2\u0000${needsSpectrum ? "spectrum" : "waveform"}\u0000${parsed.fps}\u0000${analysisWindow.start}\u0000${analysisDuration}`;
         const createAnalysis = async (): Promise<AudioAnalysis> => {
           const analysis = needsSpectrum
-            ? await analyzeAudio(clip, analysisDuration, parsed.fps, signal)
+            ? await analyzeAudio(
+                clip,
+                analysisDuration,
+                parsed.fps,
+                signal,
+                analysisWindow.start,
+              )
             : {
                 waveform: await analyzeAudioWaveform(
                   clip,
@@ -2424,26 +2468,6 @@ function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return copy.buffer;
 }
 
-function collectSpectrumAssetIds(nodes: Scene["nodes"]): Set<string> {
-  const ids = new Set<string>();
-
-  const visit = (items: Scene["nodes"]): void => {
-    items.forEach((node) => {
-      if (
-        node.type === "effect" &&
-        isAudioReactiveEffect(node.effect) &&
-        node.params?.audioAssetId
-      ) {
-        ids.add(node.params.audioAssetId);
-      }
-      visit(node.children ?? []);
-    });
-  };
-
-  visit(nodes);
-  return ids;
-}
-
 const SPECTRUM_SAMPLE_RATE = 8192;
 const SPECTRUM_FFT_SIZE = 512;
 const SPECTRUM_BAR_COUNT = 128;
@@ -2454,6 +2478,7 @@ async function analyzeAudio(
   durationSeconds: number,
   sceneFps: number,
   signal?: AbortSignal,
+  sourceStartTime = 0,
 ): Promise<AudioAnalysis> {
   assertNotAborted(signal);
   const sampleCount = Math.max(
@@ -2462,18 +2487,24 @@ async function analyzeAudio(
   );
   const mono = new Float32Array(sampleCount);
 
-  for await (const sample of clip.sink.samples(0, durationSeconds)) {
+  for await (const sample of clip.sink.samples(
+    sourceStartTime,
+    sourceStartTime + durationSeconds,
+  )) {
     try {
       assertNotAborted(signal);
       const sourceRate = sample.sampleRate;
       const channels = copyAudioSampleChannels(sample);
       const startIndex = Math.max(
         0,
-        Math.floor(sample.timestamp * SPECTRUM_SAMPLE_RATE),
+        Math.floor((sample.timestamp - sourceStartTime) * SPECTRUM_SAMPLE_RATE),
       );
       const endIndex = Math.min(
         sampleCount,
-        Math.ceil((sample.timestamp + sample.duration) * SPECTRUM_SAMPLE_RATE),
+        Math.ceil(
+          (sample.timestamp + sample.duration - sourceStartTime) *
+            SPECTRUM_SAMPLE_RATE,
+        ),
       );
 
       for (
@@ -2486,7 +2517,9 @@ async function analyzeAudio(
           Math.max(
             0,
             Math.floor(
-              (targetIndex / SPECTRUM_SAMPLE_RATE - sample.timestamp) *
+              (sourceStartTime +
+                targetIndex / SPECTRUM_SAMPLE_RATE -
+                sample.timestamp) *
                 sourceRate,
             ),
           ),
@@ -2556,8 +2589,16 @@ async function analyzeAudio(
   }
 
   return {
-    spectrum: { fps, barCount: SPECTRUM_BAR_COUNT, frameCount, values },
+    spectrum: {
+      fps,
+      barCount: SPECTRUM_BAR_COUNT,
+      frameCount,
+      values,
+      startTime: sourceStartTime,
+      duration: durationSeconds,
+    },
     waveform: {
+      startTime: sourceStartTime,
       duration: durationSeconds,
       values: waveformFromSamples(mono),
     },
@@ -5510,9 +5551,18 @@ function spectrumValues(
     8,
     Math.min(128, Math.round(params.barCount ?? 64)),
   );
+  const sourceTime = audioReactiveSourceTime(params, localFrame, sceneFps);
+  const analysisStart = spectrum.startTime ?? 0;
+  if (
+    sourceTime < analysisStart ||
+    (spectrum.duration !== undefined &&
+      sourceTime >= analysisStart + spectrum.duration)
+  ) {
+    return new Array(requestedCount).fill(0);
+  }
   const frame = Math.min(
     spectrum.frameCount - 1,
-    Math.max(0, Math.floor((localFrame / sceneFps) * spectrum.fps)),
+    Math.max(0, Math.floor((sourceTime - analysisStart) * spectrum.fps + 1e-9)),
   );
   const sensitivity = params.sensitivity ?? 1;
   const values = Array.from({ length: requestedCount }, (_, index) => {

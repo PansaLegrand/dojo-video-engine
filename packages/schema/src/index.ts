@@ -568,6 +568,10 @@ export const effectParamsSchema = z
     glow: z.number().min(0).max(1).optional(),
     scope: z.enum(["text", "frame"]).optional(),
     audioAssetId: z.string().min(1).optional(),
+    /** Audio-reactive effects: source offset in seconds, independent of scene placement. */
+    audioStartTime: z.number().finite().nonnegative().optional(),
+    /** Audio-reactive effects: positive source-time multiplier, matching a trimmed media clip. */
+    audioPlaybackRate: z.number().finite().positive().max(16).optional(),
     coverAssetId: z.string().min(1).optional(),
     barCount: z.number().int().min(8).max(128).optional(),
     sensitivity: z.number().min(0.2).max(10).optional(),

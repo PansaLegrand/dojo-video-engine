@@ -199,6 +199,19 @@ Audio-reactive effects: `spectrumBars`, `cassetteVuMeter`, `waveformLine`,
 only audio assets used by active effect definitions and caches a compact,
 deterministic spectrum for preview and export.
 
+To follow a trimmed or retimed clip, set `params.audioStartTime` to its source
+offset in seconds and `params.audioPlaybackRate` to its positive playback rate
+(at most 16). Both default to 0 seconds and 1 respectively. For example,
+`{ "audioAssetId": "music", "audioStartTime": 10, "audioPlaybackRate": 2 }`
+samples source second 11 at effect-local second 0.5. The effect's `from` moves
+it on the composition without changing that mapping. Parent clipping is
+respected. Analysis covers the required source window, with bounded FFT padding;
+it does not decode the entire prefix before a late trim point. Multiple effects
+on one asset share the union of their source windows. Their transient mono PCM
+and retained spectrum must fit `maxAudioAnalysisCacheBytes`. Source times beyond
+the file end yield a silent response. These controls retime the visualizer only;
+the audible media node must carry its own matching trim/rate.
+
 Effect parameters are intentionally bounded and schema-validated. Supported
 controls include intensity, seed, colors, particle count, direction, density,
 stroke/radius, wobble/pulse/scale/spread/softness/glow, text/frame scope,
