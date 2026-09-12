@@ -971,20 +971,64 @@ describe("text fit modes", () => {
     expect(layout.lines.length * layout.lineHeight).toBeLessThanOrEqual(40);
   });
 
-  it("does not shrink below minFontSize", () => {
-    const layout = prepareTextLayout(
-      "aaaaaaaaaaaaaaaaaaaaaaaa",
-      20,
-      20,
-      measureTextLine,
-      {
+  it("reports an impossible minimum instead of silently dropping text", () => {
+    expect(() =>
+      prepareTextLayout("aaaaaaaaaaaaaaaaaaaaaaaa", 20, 20, measureTextLine, {
         textFit: "shrink",
         height: 10,
         minFontSize: 12,
-      },
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "TEXT_DOES_NOT_FIT",
+        constraints: expect.objectContaining({ minFontSize: 12 }),
+      }),
     );
+  });
 
-    expect(layout.fontSize).toBe(12);
+  it("fits the entire caption before enforcing the maximum line count", () => {
+    const text = "Every word must fit inside this narrow caption box";
+    const layout = prepareTextLayout(text, 210, 40, measureTextLine, {
+      textFit: "shrink",
+      maxLines: 2,
+      height: 80,
+      minFontSize: 12,
+    });
+    expect(layout.lines.join(" ")).toBe(text);
+    expect(layout.lines.length).toBeLessThanOrEqual(2);
+    expect(layout.fontSize).toBeLessThan(40);
+    expect(
+      layout.lines.every(
+        (line) => measureTextLine(line, layout.fontSize) <= 210,
+      ),
+    ).toBe(true);
+  });
+
+  it("does not turn shrink plus ellipsis into implicit text truncation", () => {
+    expect(() =>
+      prepareTextLayout(
+        "Every word must be retained",
+        60,
+        40,
+        measureTextLine,
+        {
+          textFit: "shrink",
+          maxLines: 1,
+          height: 20,
+          minFontSize: 20,
+          textOverflow: "ellipsis",
+        },
+      ),
+    ).toThrow(/complete text cannot fit/);
+    const explicit = prepareTextLayout(
+      "Every word must be retained",
+      60,
+      40,
+      measureTextLine,
+      { textFit: "truncate", textOverflow: "ellipsis" },
+    );
+    expect(explicit.lines).toHaveLength(1);
+    expect(explicit.lines[0]).toContain("…");
   });
 });
 

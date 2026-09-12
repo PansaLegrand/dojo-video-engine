@@ -1997,6 +1997,24 @@ export type PreparedTextLayout = {
   lineHeight: number;
 };
 
+/** Shrink fitting never discards text when the authored minimum cannot fit. */
+export class TextFitError extends Error {
+  readonly code = "TEXT_DOES_NOT_FIT";
+  constructor(
+    readonly constraints: {
+      width: number;
+      height?: number;
+      maxLines?: number;
+      minFontSize: number;
+    },
+  ) {
+    super(
+      `The complete text cannot fit at the minimum font size of ${constraints.minFontSize}px. Enlarge the text box, lower the minimum font size, increase the line limit, or choose explicit truncation.`,
+    );
+    this.name = "TextFitError";
+  }
+}
+
 export function prepareTextLines(
   text: string,
   maxWidth: number,
@@ -2041,7 +2059,9 @@ export function prepareTextLayout(
       text,
       maxWidth,
       (line) => measure(line, size),
-      baseOptions,
+      // Fitting a clipped prefix makes an overflowing caption look as if it
+      // fits. Shrink must inspect every source line throughout the search.
+      textFit === "shrink" ? {} : baseOptions,
     );
   const makeLayout = (size: number): PreparedTextLayout => ({
     fontSize: size,
@@ -2064,12 +2084,23 @@ export function prepareTextLayout(
       options.height === undefined ||
       lines.length * lineHeight <= options.height;
     const widthFits = lines.every((line) => measure(line, size) <= maxWidth);
+    const lineCountFits =
+      options.maxLines === undefined || lines.length <= options.maxLines;
 
-    return heightFits && widthFits;
+    return heightFits && widthFits && lineCountFits;
   };
 
   if (fits(fontSize)) {
     return makeLayout(fontSize);
+  }
+
+  if (!fits(minFontSize)) {
+    throw new TextFitError({
+      width: maxWidth,
+      height: options.height,
+      maxLines: options.maxLines,
+      minFontSize,
+    });
   }
 
   let low = minFontSize;

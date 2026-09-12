@@ -55,7 +55,8 @@ window.runTextProof = async () => {
   const context=canvas.getContext('2d',{willReadFrequently:true});
   const make=(text,runs,style={},assets={})=>parseScene({schemaVersion:1,width:640,height:220,fps:30,duration:1,assets,nodes:[{id:'text',type:'text',...(text===undefined?{runs}:{text}),style:{position:'absolute',left:30,top:30,width:580,height:160,fontSize:56,color:'#ffffff',direction:'rtl',textAlign:'left',...style}}]});
   const images={};
-  async function capture(label,scene){const assets=await resolveAssets(scene);try{renderStill(context,scene,0,{assets});const rgba=context.getImageData(0,0,640,220).data;let hash=2166136261,minimumX=640;const mask=[];for(let i=0;i<rgba.length;i++){hash=Math.imul(hash^rgba[i],16777619)>>>0;if(i%4===3){mask.push(rgba[i]>127?1:0);if(rgba[i]>64)minimumX=Math.min(minimumX,((i-3)/4)%640);}}images[label]=canvas.toDataURL('image/png');const display=compileCanvas2DDisplayList(context,scene,0,{assets});return {hash,mask,minimumX,bounds:display.groups[0].content.bounds,lines:display.groups[0].content.lines};}finally{await disposeAssetsAsync(assets);}}
+  let drawnLines=[];const nativeFillText=context.fillText.bind(context);context.fillText=(value,...args)=>{drawnLines.push(value);nativeFillText(value,...args);};
+  async function capture(label,scene){drawnLines=[];const assets=await resolveAssets(scene);try{renderStill(context,scene,0,{assets});const rgba=context.getImageData(0,0,640,220).data;let hash=2166136261,minimumX=640;const mask=[];for(let i=0;i<rgba.length;i++){hash=Math.imul(hash^rgba[i],16777619)>>>0;if(i%4===3){mask.push(rgba[i]>127?1:0);if(rgba[i]>64)minimumX=Math.min(minimumX,((i-3)/4)%640);}}images[label]=canvas.toDataURL('image/png');const display=compileCanvas2DDisplayList(context,scene,0,{assets});return {hash,mask,minimumX,drawnLines:[...drawnLines],fontSize:display.groups[0].content.font.size,bounds:display.groups[0].content.bounds,lines:display.groups[0].content.lines};}finally{await disposeAssetsAsync(assets);}}
   const arabic='السلام عليكم';
   const plain=await capture('plain-arabic',make(arabic));
   const same=await capture('same-color-runs-arabic',make(undefined,[{text:'الس'},{text:'لام '},{text:'عليكم'}]));
@@ -66,6 +67,12 @@ window.runTextProof = async () => {
   const padding=await capture('padding',make('Padding',undefined,{direction:'ltr',padding:24,fontSize:32}));
   const latinPlain=await capture('latin-plain',make('office',undefined,{direction:'ltr',fontFamily:'serif'}));
   const latinRuns=await capture('latin-runs',make(undefined,[{text:'of'},{text:'fi'},{text:'ce'}],{direction:'ltr',fontFamily:'serif'}));
+  const caption='Every word must fit inside this narrow caption box';
+  const shrinkAssets=variableFont?{'shrink-face':{id:'shrink-face',type:'font',src:variableFont,metadata:{fontFamily:'ShrinkVariable',fontWeight:'100 900'}}}:{};
+  const shrinkStyle={direction:'ltr',width:210,height:80,fontSize:40,fontWeight:600,maxLines:2,textFit:'shrink',minFontSize:12,...(variableFont?{fontFamily:'ShrinkVariable'}:{})};
+  const shrink=await capture('shrink-full-caption',make(caption,undefined,shrinkStyle,shrinkAssets));
+  let impossibleFit=null;try{await capture('shrink-impossible',make(caption,undefined,{...shrinkStyle,minFontSize:40},shrinkAssets));}catch(error){impossibleFit={code:error.code,message:error.message};}
+  const truncate=await capture('explicit-truncate',make(caption,undefined,{...shrinkStyle,textFit:'truncate',textOverflow:'ellipsis'},shrinkAssets));
   let font=null;
   if(variableFont){
     const asset={id:'font-face',type:'font',src:variableFont,metadata:{fontFamily:'EngineVariable',fontWeight:'100 900'}};
@@ -76,7 +83,7 @@ window.runTextProof = async () => {
     font={five:five.hash,eight:eight.hash,reference:reference.hash};
   }
   const changedMask=plain.mask.reduce((count,value,index)=>count+(value!==highlight.mask[index]?1:0),0);
-  return {images,checks:{sameColorArabicMatchesPlain:plain.hash===same.hash,highlightPreservesArabicGlyphs:changedMask/plain.mask.length<0.002,rtlLogicalOrder:rtl.lines[0].runs[0].x>rtl.lines[0].runs[1].x,mixedBidiMatchesDomRange:Math.abs(mixedCenter-referenceCenter)<1,textPaddingHonored:padding.minimumX>=54&&padding.bounds.x===54&&padding.bounds.width===532,latinLigaturesPreserved:latinPlain.hash===latinRuns.hash,...(font?{variableWeightsDiffer:font.five!==font.eight,variableWeightMatchesBrowserReference:font.five===font.reference}:{})},arabic:{plain:plain.hash,same:same.hash,highlightMaskChangedPixels:changedMask},padding:{minimumX:padding.minimumX,bounds:padding.bounds},mixedBidi:{mixedCenter,referenceCenter},font};
+  return {images,checks:{shrinkRetainsEveryDrawnWord:shrink.drawnLines.join(' ')===caption&&shrink.lines.length<=2&&shrink.fontSize<40,impossibleFitIsExplicit:impossibleFit?.code==='TEXT_DOES_NOT_FIT',explicitTruncateUnchanged:truncate.drawnLines.length===1&&truncate.drawnLines[0].includes('…'),sameColorArabicMatchesPlain:plain.hash===same.hash,highlightPreservesArabicGlyphs:changedMask/plain.mask.length<0.002,rtlLogicalOrder:rtl.lines[0].runs[0].x>rtl.lines[0].runs[1].x,mixedBidiMatchesDomRange:Math.abs(mixedCenter-referenceCenter)<1,textPaddingHonored:padding.minimumX>=54&&padding.bounds.x===54&&padding.bounds.width===532,latinLigaturesPreserved:latinPlain.hash===latinRuns.hash,...(font?{variableWeightsDiffer:font.five!==font.eight,variableWeightMatchesBrowserReference:font.five===font.reference}:{})},arabic:{plain:plain.hash,same:same.hash,highlightMaskChangedPixels:changedMask},shrink:{drawnLines:shrink.drawnLines,fontSize:shrink.fontSize,source:caption,impossibleFit},padding:{minimumX:padding.minimumX,bounds:padding.bounds},mixedBidi:{mixedCenter,referenceCenter},font};
 };
 `,
 );

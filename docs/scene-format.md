@@ -611,3 +611,12 @@ Run `node scripts/verify-text-layout.mjs --variable-font /path/to/variable.woff2
 for the real-browser padding, Arabic/Latin shaping, mixed-direction DOM-range,
 and variable-weight reference checks. Reports record source hashes and browser
 version. Without `--variable-font`, font-weight checks are omitted explicitly.
+
+`textFit: "shrink"` fits the complete wrapped text against width, height and
+`maxLines` before returning a layout. It never uses a line-clipped prefix as
+proof of fit. When `minFontSize` cannot satisfy the bounds, it throws
+`TextFitError` (`TEXT_DOES_NOT_FIT`) with the failed constraints. Enlarge the
+box, lower the minimum size or raise the line limit. Intentional word removal
+requires `textFit: "truncate"`; its existing single-line/ellipsis behavior is
+unchanged. `textOverflow: "ellipsis"` alone does not permit shrink to discard
+caption words.
