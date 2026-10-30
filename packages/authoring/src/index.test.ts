@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { validateScene } from "@motionforge/schema";
-import { evaluateKeyframes } from "@motionforge/core";
+import { validateScene } from "@dojo-video-engine/schema";
+import { evaluateKeyframes } from "@dojo-video-engine/core";
 import {
   audioOverlay,
   audioTrack,
@@ -36,7 +36,7 @@ import {
   videoOverlay,
 } from "./index.js";
 
-describe("@motionforge/authoring", () => {
+describe("@dojo-video-engine/authoring", () => {
   it("builds a valid portrait scene with seconds-based timing", () => {
     const scene = makeScene({
       size: "portrait",
@@ -44,7 +44,7 @@ describe("@motionforge/authoring", () => {
       duration: seconds(5),
       children: [
         bg("#0f172a", { id: "bg" }),
-        title("Hello MotionForge", {
+        title("Hello DojoVideoEngine", {
           id: "title",
           at: seconds(0.5),
           duration: seconds(3),
@@ -69,7 +69,7 @@ describe("@motionforge/authoring", () => {
       from: 15,
       duration: 90,
       type: "text",
-      text: "Hello MotionForge",
+      text: "Hello DojoVideoEngine",
       animations: [
         { kind: "keyframes", property: "transform" },
         { kind: "keyframes", property: "opacity" },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   MAX_EXTENSION_REUSE_KEY_LENGTH,
   compileExtensionDisplay,

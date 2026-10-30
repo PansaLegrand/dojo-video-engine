@@ -5,7 +5,7 @@ import type {
   SceneNode,
   SceneStyle,
   VolumeEnvelope,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export * from "./motion.js";
 
@@ -3279,7 +3279,7 @@ type CaptionSegment = {
 };
 
 /**
- * Community subtitle templates translated into native motionforge scene data.
+ * Community subtitle templates translated into native dojo-video-engine scene data.
  * The result is still just nodes, timings, styles, and keyframes; no Remotion,
  * DOM, or adapter layer is involved.
  */

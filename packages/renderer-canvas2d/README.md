@@ -1,6 +1,6 @@
-# @motionforge/renderer-canvas2d
+# @dojo-video-engine/renderer-canvas2d
 
-Deterministic Canvas2D still-frame renderer for [motionforge](https://github.com/PansaLegrand/motionforge) scenes. The same renderer drives preview and export, so what you scrub is what you ship.
+Deterministic Canvas2D still-frame renderer for [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine) scenes. The same renderer drives preview and export, so what you scrub is what you ship.
 
 ## Install
 
@@ -9,7 +9,7 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/renderer-canvas2d
+npm install @dojo-video-engine/renderer-canvas2d
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ import {
   prepareFrame,
   renderStill,
   resolveAssets,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 
 const canvas = document.createElement("canvas");
 canvas.width = scene.width;
@@ -52,7 +52,7 @@ Rendering is pure given `(scene, frame, assets)`: the same inputs always produce
 import {
   compileCanvas2DDisplayList,
   executeCanvas2DDisplayList,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 
 const list = compileCanvas2DDisplayList(context, scene, frame, { assets });
 executeCanvas2DDisplayList(context, list, { scene, assets });
@@ -135,7 +135,7 @@ requirements and returns typed issues without fetching media.
 For iterative editors, import the MF5 adapter from the public runtime subpath:
 
 ```ts
-import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
+import { createCanvas2DSceneRuntime } from "@dojo-video-engine/renderer-canvas2d/runtime";
 
 const runtime = await createCanvas2DSceneRuntime({ scene });
 await runtime.renderFrame(0, canvas.getContext("2d"));
@@ -183,7 +183,7 @@ Stable for 1.x integrations:
 - `ResolveAssetsOptions`, `Canvas2DExtensionAdapter`, and `Canvas2DExtensionDrawContext` for trusted extension hosts.
 - Display extension registries/handlers, bounded scratch/static/text cache
   implementations, their policies, and lifecycle statistics.
-- The `@motionforge/renderer-canvas2d/runtime` entry point, including
+- The `@dojo-video-engine/renderer-canvas2d/runtime` entry point, including
   `createCanvas2DSceneRuntime()`, `createCanvas2DRuntimeBackend()`, metrics
   providers, and the serialized compatibility scope.
 - `AssetPolicy`, `MediaResourceBudget`, bounded font/audio-analysis caches,

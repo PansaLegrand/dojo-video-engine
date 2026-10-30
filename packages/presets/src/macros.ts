@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   canonicalEffectParamKeys,
   effectParamAliases,
@@ -12,7 +12,7 @@ import {
   type SceneEffectName,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   audioOverlay,
   audioOverlayTemplates,

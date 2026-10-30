@@ -3,7 +3,7 @@ import {
   applyScenePatch,
   parseScene,
   type ScenePatch,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   SceneWorkspaceError,
   createSceneWorkspace,

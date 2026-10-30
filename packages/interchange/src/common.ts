@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 
 export const INTERCHANGE_VERSION = 1 as const;
 export const MAX_TICK = 100_000_000;
@@ -58,7 +58,7 @@ export type InterchangeDiagnostic = z.infer<typeof interchangeDiagnosticSchema>;
 export const interchangeFailureSchema = z
   .object({
     ok: z.literal(false),
-    kind: z.literal("motionforge.interchange.failure"),
+    kind: z.literal("dojo-video-engine.interchange.failure"),
     version: z.literal(INTERCHANGE_VERSION),
     errors: z
       .array(
@@ -269,7 +269,7 @@ export function zodFailure(
 ): InterchangeFailure {
   return {
     ok: false,
-    kind: "motionforge.interchange.failure",
+    kind: "dojo-video-engine.interchange.failure",
     version: 1,
     errors: error.issues.slice(0, 64).map((issue) => ({
       code: "invalid_input",
@@ -286,7 +286,7 @@ export function failure(
 ): InterchangeFailure {
   return {
     ok: false,
-    kind: "motionforge.interchange.failure",
+    kind: "dojo-video-engine.interchange.failure",
     version: 1,
     errors: [
       {

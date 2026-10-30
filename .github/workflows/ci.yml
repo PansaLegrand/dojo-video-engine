@@ -18,7 +18,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @motionforge/golden exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm --filter @dojo-video-engine/golden exec playwright install --with-deps chromium firefox webkit
       # Build first: package tsconfigs use project references, so typecheck
       # needs the referenced declaration outputs to exist.
       - run: pnpm release:full

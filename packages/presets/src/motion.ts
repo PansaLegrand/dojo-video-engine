@@ -2,8 +2,8 @@ import {
   isEasingExpression,
   type SceneAnimation,
   type SceneAnimationTarget,
-} from "@motionforge/schema";
-import { z } from "zod";
+} from "@dojo-video-engine/schema";
+import { z } from "zod/v3";
 
 export const motionPresetParamsSchema = z
   .object({

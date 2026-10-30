@@ -1,8 +1,8 @@
-# @motionforge/schema
+# @dojo-video-engine/schema
 
-Zod scene schema and validation helpers for [motionforge](https://github.com/PansaLegrand/motionforge), a deterministic, browser-native video scene engine.
+Zod scene schema and validation helpers for [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine), a deterministic, browser-native video scene engine.
 
-A motionforge scene is a serializable JSON document. This package defines that document's schema and the helpers used to validate it before rendering.
+A dojo-video-engine scene is a serializable JSON document. This package defines that document's schema and the helpers used to validate it before rendering.
 
 ## Install
 
@@ -11,7 +11,7 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/schema
+npm install @dojo-video-engine/schema
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ import {
   preflightScene,
   repairSceneInput,
   validateScene,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 // Throws SceneValidationError with readable messages on invalid input.
 const scene = parseScene(sceneJson);
@@ -62,7 +62,7 @@ validation as well.
 
 ### Portable visual values
 
-`@motionforge/schema/values` exposes the bounded value grammar shared by
+`@dojo-video-engine/schema/values` exposes the bounded value grammar shared by
 validation, interpolation, and Canvas2D painting:
 
 ```ts
@@ -71,7 +71,7 @@ import {
   parseTransformValue,
   parseShadowListValue,
   serializePaintValue,
-} from "@motionforge/schema/values";
+} from "@dojo-video-engine/schema/values";
 ```
 
 The portable subset includes numeric/px/% lengths, standard named/hex colors,
@@ -85,7 +85,7 @@ fail canonical validation instead of becoming renderer no-ops.
 
 ### Effect nodes
 
-MotionForge supports bounded procedural visual layers through `effect` nodes.
+Dojo Video Engine supports bounded procedural visual layers through `effect` nodes.
 They use the same timing, style, animation, selection, and timeline semantics as
 other visual nodes:
 
@@ -115,7 +115,7 @@ not raw Canvas or shader code.
 
 Trusted host capabilities use `extension` nodes containing only
 `{name, version, params}`. Versions are exact, params must be JSON, and the
-host supplies executable definitions through `@motionforge/extensions`.
+host supplies executable definitions through `@dojo-video-engine/extensions`.
 Missing definitions or incompatible versions fail during renderer preflight;
 scene documents never contain functions, module URLs, or shader source.
 
@@ -144,17 +144,17 @@ declare hold/loop edge behavior and may use muted negative playback rates.
 
 For tools and agents that want to validate scenes without running the Zod
 schema, the package exports a JSON Schema (draft-07) and ships it as
-`scene.schema.json`. Register the MotionForge format vocabulary before
+`scene.schema.json`. Register the Dojo Video Engine format vocabulary before
 compiling it; unknown formats must not be ignored:
 
 ```ts
 import Ajv from "ajv";
 import {
-  registerMotionforgeJsonSchemaFormats,
+  registerDojoVideoEngineJsonSchemaFormats,
   sceneJsonSchema,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
-const ajv = registerMotionforgeJsonSchemaFormats(
+const ajv = registerDojoVideoEngineJsonSchemaFormats(
   new Ajv({ allErrors: true, strict: false }),
 );
 const validate = ajv.compile(sceneJsonSchema());
@@ -167,7 +167,7 @@ descriptor compatibility) remain enforced by `parseScene` / `validateScene`.
 Ingestion tools can obtain the legacy structure from
 `legacySceneV0JsonSchema()`.
 
-See the [scene format docs](https://github.com/PansaLegrand/motionforge/blob/main/docs/scene-format.md) for the full document shape and the style support matrix.
+See the [scene format docs](https://github.com/PansaLegrand/dojo-video-engine/blob/main/docs/scene-format.md) for the full document shape and the style support matrix.
 
 ## API Stability
 
@@ -175,12 +175,12 @@ Stable for 1.x integrations:
 
 - `Scene`, `SceneNode`, `SceneAsset`, `SceneStyle`, `SceneAnimation`, `SceneTextRun`, `SceneExtensionDescriptor`, `SceneShapeGeometry`, `SceneMaskDescriptor`, `SceneJsonValue`, and `VolumeEnvelope` types.
 - `CURRENT_SCENE_VERSION`, `parseScene()`, `validateScene()`, `migrateScene()`, `repairSceneInput()`, `preflightScene()`, `SceneValidationError`, `sceneJsonSchema()`, and `legacySceneV0JsonSchema()`.
-- `motionforgeJsonSchemaFormats`, `motionforgeJsonSchemaFormatNames`, and
-  `registerMotionforgeJsonSchemaFormats()` for configured draft-07 validation.
+- `dojoVideoEngineJsonSchemaFormats`, `dojoVideoEngineJsonSchemaFormatNames`, and
+  `registerDojoVideoEngineJsonSchemaFormats()` for configured draft-07 validation.
 - `inspectScene()` for stable feature summaries and `lintScene()` for valid-but-suspicious scene warnings.
 - Scene patch APIs: `applyScenePatch()`, `scenePatchSchema`, `sceneOpSchema`, `ScenePatch`, `SceneOp`, and `ApplyScenePatchResult`.
 - Portable visual grammar APIs are available from both the root package and
-  `@motionforge/schema/values`; the subpath is the focused import for parsers,
+  `@dojo-video-engine/schema/values`; the subpath is the focused import for parsers,
   schemas, parsed types, and deterministic serializers.
 - Zod schemas for tool builders and validators: canonical `sceneSchema`, `legacySceneV0Schema`, `sceneNodeSchema`, `textRunSchema`, `extensionDescriptorSchema`, `shapeGeometrySchema`, `maskDescriptorSchema`, `safeAreaSchema`, `jsonValueSchema`, `assetSchema`, `styleSchema`, `animationSchema`, and `volumeEnvelopeSchema`.
 
@@ -191,7 +191,7 @@ Evolving additively in 1.x:
 
 Internal/not public:
 
-- Files outside the package root export are implementation details. Import from `@motionforge/schema`, not from `dist/*` or `src/*`.
+- Files outside the package root export are implementation details. Import from `@dojo-video-engine/schema`, not from `dist/*` or `src/*`.
 
 ## License
 

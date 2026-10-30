@@ -1,10 +1,10 @@
 # Animation Guide
 
-MotionForge animations are deterministic keyframes on style properties. Keyframe frames are node-local: frame `0` is the first frame the node is active.
+Dojo Video Engine animations are deterministic keyframes on style properties. Keyframe frames are node-local: frame `0` is the first frame the node is active.
 
 ## Presets
 
-The fastest path is to use presets re-exported by `@motionforge/authoring`:
+The fastest path is to use presets re-exported by `@dojo-video-engine/authoring`:
 
 ```ts
 import {
@@ -14,7 +14,7 @@ import {
   slideIn,
   textBlock,
   title,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 title("Launch Week", {
   at: seconds(0.5),
@@ -37,7 +37,7 @@ Available motion presets:
 ## Raw Keyframes
 
 ```ts
-import { box } from "@motionforge/authoring";
+import { box } from "@dojo-video-engine/authoring";
 
 box({
   style: { opacity: 0, transform: "translate(0px, 40px)" },
@@ -84,10 +84,10 @@ spring(0.3)
 
 ## Timeline Choreography
 
-Use `@motionforge/presets` when several nodes need coordinated entrance timing:
+Use `@dojo-video-engine/presets` when several nodes need coordinated entrance timing:
 
 ```ts
-import { fadeUp, popIn, slideIn, timeline } from "@motionforge/presets";
+import { fadeUp, popIn, slideIn, timeline } from "@dojo-video-engine/presets";
 
 const tl = timeline()
   .add("title", popIn({ durationInFrames: 12 }))
@@ -104,21 +104,21 @@ Attach the compiled animation arrays to nodes with matching ids, or use `compile
 - Use `seconds()` for node timing and preset `delay` for staggered entrances inside the same node window.
 - Keep `transformOrigin` explicit when scaling or rotating cards.
 - Prefer transform and opacity animation over changing layout properties every frame.
-- Validate early with `motionforge validate src/video.ts`; validation errors are designed to be read by humans and agents.
+- Validate early with `dojo-video-engine validate src/video.ts`; validation errors are designed to be read by humans and agents.
 
 ## Text Overlay Templates
 
-Use `@motionforge/presets` for production-shaped text overlays that are not subtitles:
+Use `@dojo-video-engine/presets` for production-shaped text overlays that are not subtitles:
 
 ```ts
-import { textOverlay } from "@motionforge/presets";
+import { textOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   textOverlay({
     template: "quoteCard",
     id: "quote",
     body: "The scene is data, not a screenshot.",
-    attribution: "MotionForge",
+    attribution: "Dojo Video Engine",
     from: 30,
     duration: 120,
   }),
@@ -132,7 +132,7 @@ Available templates: `titleCard`, `lowerThird`, `quoteCard`, `statCallout`, `ann
 Transitions are full-frame nodes that sit above clips:
 
 ```ts
-import { transitionOverlay } from "@motionforge/presets";
+import { transitionOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   transitionOverlay("flash", {

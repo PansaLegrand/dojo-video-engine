@@ -1,11 +1,11 @@
-import type { DisplayExtensionOperation } from "@motionforge/core";
+import type { DisplayExtensionOperation } from "@dojo-video-engine/core";
 import {
   defineExtension,
   type ExtensionSceneNode,
-} from "@motionforge/extensions";
-import type { Scene, SceneJsonValue } from "@motionforge/schema";
+} from "@dojo-video-engine/extensions";
+import type { Scene, SceneJsonValue } from "@dojo-video-engine/schema";
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   compileResolvedCanvas2DDisplayExtension,
   createCanvas2DOpaqueExtensionRegistry,
@@ -583,7 +583,7 @@ describe("Canvas2D opaque extension registry", () => {
         params: {},
       },
       capability: {
-        id: "motionforge.legacy.renderer-adapter",
+        id: "dojo-video-engine.legacy.renderer-adapter",
         version: "1.0.0",
       },
     });
@@ -643,7 +643,7 @@ describe("Canvas2D opaque extension registry", () => {
             params: {},
           },
           capability: {
-            id: "motionforge.legacy.renderer-adapter",
+            id: "dojo-video-engine.legacy.renderer-adapter",
             version: "1.0.0",
           },
         }),
@@ -795,7 +795,7 @@ describe("resolved Canvas2D extension display compilation", () => {
             kind: "legacy-opaque",
             renderer: "canvas2d",
             capability: {
-              id: "motionforge.legacy.renderer-adapter",
+              id: "dojo-video-engine.legacy.renderer-adapter",
               version: "1.0.0",
             },
             realm: "main",

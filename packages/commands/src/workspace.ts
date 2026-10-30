@@ -7,7 +7,7 @@ import {
   type SceneOp,
   type ScenePatch,
   type ScenePatchError,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   compileSceneCommands,
   type CommandDiagnostic,

@@ -1,4 +1,4 @@
-import { z, type ZodType } from "zod";
+import { z, type ZodType } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   applyScenePatch,
@@ -11,16 +11,16 @@ import {
   validateScene,
   type Scene,
   type ScenePatch,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   motionPresetDefinitions,
   type MotionPresetDefinition,
-} from "@motionforge/presets";
-import { macroNames, macroPromptGuide } from "@motionforge/presets/macros";
+} from "@dojo-video-engine/presets";
+import { macroNames, macroPromptGuide } from "@dojo-video-engine/presets/macros";
 import {
   createExtensionRegistry,
   type ExtensionRegistry,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 import {
   disposeAssetsAsync,
   prepareFrame,
@@ -28,7 +28,7 @@ import {
   resolveAssets,
   type ResolveAssetsOptions,
   type ResolvedAssets,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 import {
   detectExportCapability,
   estimateExport,
@@ -36,7 +36,7 @@ import {
   preflightExport,
   type ExportVideoOptions,
   type ExportVideoResult,
-} from "@motionforge/export";
+} from "@dojo-video-engine/export";
 import {
   analyzeComposition,
   checkScene,
@@ -44,7 +44,7 @@ import {
   inspectLayout,
   inspectTimeline,
   inspectTree,
-} from "@motionforge/inspection";
+} from "@dojo-video-engine/inspection";
 import type {
   AnalyzeCompositionOptions,
   CheckSceneOptions,
@@ -78,13 +78,13 @@ import type {
   TimelineSource,
   TreeInspection,
   TreeInspectionNode,
-} from "@motionforge/inspection";
+} from "@dojo-video-engine/inspection";
 import {
   applySceneCommands,
   sceneCommandJsonSchema,
   sceneCommandsSchema,
   type CompileSceneCommandsContext,
-} from "@motionforge/commands";
+} from "@dojo-video-engine/commands";
 
 export type SceneChange = {
   kind: "add" | "remove" | "change";
@@ -390,7 +390,7 @@ export class AgentToolRegistry {
     const entry = this.tools.get(name);
     if (!entry)
       throw new Error(
-        `Unknown MotionForge agent tool ${JSON.stringify(name)}.`,
+        `Unknown DojoVideoEngine agent tool ${JSON.stringify(name)}.`,
       );
     return entry.execute(input);
   }
@@ -506,7 +506,7 @@ export function createAgentToolRegistry(
     return entry;
   };
   const commandApplyTool = strictSchemaTool(
-    "motionforge.commands.apply",
+    "dojo-video-engine.commands.apply",
     "Compile typed non-recursive edit commands and apply them as one transactional Scene patch.",
     commandApplyInputSchema,
     (input) => {
@@ -524,37 +524,37 @@ export function createAgentToolRegistry(
     commandDocument.definitions as
       | Record<string, Record<string, unknown>>
       | undefined
-  )?.MotionforgeSceneCommands;
+  )?.DojoVideoEngineSceneCommands;
   const commandToolProperties = commandApplyTool.inputSchema.properties as
     | Record<string, Record<string, unknown>>
     | undefined;
   if (!commandRoot || !commandToolProperties?.commands) {
     throw new Error(
-      "MotionForge internal error: command JSON Schema root is unavailable.",
+      "DojoVideoEngine internal error: command JSON Schema root is unavailable.",
     );
   }
   commandToolProperties.commands = structuredClone(commandRoot);
   return new AgentToolRegistry([
     tool(
-      "motionforge.validate",
+      "dojo-video-engine.validate",
       "Validate and normalize a scene.",
       sceneSchema,
       (input) => validateScene(sceneSchema.parse(input).scene),
     ),
     tool(
-      "motionforge.migrate",
+      "dojo-video-engine.migrate",
       "Migrate a scene to canonical Scene v1.",
       sceneSchema,
       (input) => migrateScene(sceneSchema.parse(input).scene),
     ),
     tool(
-      "motionforge.inspect",
+      "dojo-video-engine.inspect",
       "Inspect scene capabilities and resource declarations.",
       sceneSchema,
       (input) => inspectScene(sceneSchema.parse(input).scene),
     ),
     strictSchemaTool(
-      "motionforge.inspect.tree",
+      "dojo-video-engine.inspect.tree",
       "Inspect the canonical node tree with source paths, parent/depth metadata, and local/absolute active windows.",
       treeInputSchema,
       (input) => {
@@ -564,7 +564,7 @@ export function createAgentToolRegistry(
       ["scene"],
     ),
     strictSchemaTool(
-      "motionforge.inspect.timeline",
+      "dojo-video-engine.inspect.timeline",
       "Inspect absolute node timing and source-media windows without rendering pixels.",
       treeInputSchema,
       (input) => {
@@ -574,7 +574,7 @@ export function createAgentToolRegistry(
       ["scene"],
     ),
     strictSchemaTool(
-      "motionforge.inspect.layout",
+      "dojo-video-engine.inspect.layout",
       "Inspect renderer-neutral layout, transforms, clipping, z-order, text/media geometry, and diagnostics at one frame.",
       layoutInputSchema,
       (input) => {
@@ -589,7 +589,7 @@ export function createAgentToolRegistry(
       ["scene", "frame"],
     ),
     strictSchemaTool(
-      "motionforge.hitTest",
+      "dojo-video-engine.hitTest",
       "Return topmost-first geometry hits for a scene point at one frame.",
       hitTestInputSchema,
       (input) => {
@@ -605,7 +605,7 @@ export function createAgentToolRegistry(
       ["scene", "frame", "point"],
     ),
     strictSchemaTool(
-      "motionforge.check",
+      "dojo-video-engine.check",
       "Return one bounded validation, tree, timeline, sampled-layout, and diagnostics envelope.",
       checkInputSchema,
       (input) => {
@@ -628,13 +628,13 @@ export function createAgentToolRegistry(
     ),
     commandApplyTool,
     tool(
-      "motionforge.lint",
+      "dojo-video-engine.lint",
       "Find valid-but-suspicious scene data.",
       sceneSchema,
       (input) => lintScene(sceneSchema.parse(input).scene),
     ),
     tool(
-      "motionforge.patch",
+      "dojo-video-engine.patch",
       "Apply a transactional id-addressed scene patch.",
       z.object({ scene: z.unknown(), patch: z.unknown() }),
       (input) => {
@@ -645,7 +645,7 @@ export function createAgentToolRegistry(
       },
     ),
     tool(
-      "motionforge.diff",
+      "dojo-video-engine.diff",
       "Produce a stable semantic scene diff.",
       z.object({ before: z.unknown(), after: z.unknown() }),
       (input) => {
@@ -656,19 +656,19 @@ export function createAgentToolRegistry(
       },
     ),
     tool(
-      "motionforge.capabilities",
+      "dojo-video-engine.capabilities",
       "Discover scene, preset, macro, extension, and export capabilities.",
       z.object({}),
       () => discoverCapabilities(options),
     ),
     tool(
-      "motionforge.export.estimate",
+      "dojo-video-engine.export.estimate",
       "Estimate export work and output size.",
       sceneSchema,
       (input) => estimateExport(parseScene(sceneSchema.parse(input).scene)),
     ),
     tool(
-      "motionforge.export.preflight",
+      "dojo-video-engine.export.preflight",
       "Preflight renderer, resource, worker, and encoder capabilities.",
       sceneSchema,
       (input) =>
@@ -679,7 +679,7 @@ export function createAgentToolRegistry(
         ),
     ),
     tool(
-      "motionforge.render.still",
+      "dojo-video-engine.render.still",
       "Render one scene frame to a browser canvas.",
       z.object({ scene: z.unknown(), frame: z.number().int().nonnegative() }),
       (input) => {
@@ -694,7 +694,7 @@ export function createAgentToolRegistry(
       },
     ),
     tool(
-      "motionforge.render.contactSheet",
+      "dojo-video-engine.render.contactSheet",
       "Render selected frames into a browser contact-sheet canvas.",
       z.object({
         scene: z.unknown(),
@@ -721,7 +721,7 @@ export function createAgentToolRegistry(
       },
     ),
     tool(
-      "motionforge.export",
+      "dojo-video-engine.export",
       "Export a scene to an MP4 Blob in a WebCodecs runtime.",
       z.object({
         scene: z.unknown(),
@@ -826,7 +826,7 @@ export {
   sceneCommandJsonSchema,
   sceneCommandSchema,
   sceneCommandsSchema,
-} from "@motionforge/commands";
+} from "@dojo-video-engine/commands";
 export type { Scene, ScenePatch };
 export type {
   AnalyzeCompositionOptions,
@@ -879,7 +879,7 @@ export type {
   WorkspaceHistoryEntry,
   WorkspaceSemanticChange,
   WorkspaceSemanticDiff,
-} from "@motionforge/commands";
+} from "@dojo-video-engine/commands";
 
 export * from "./browser-evidence.js";
 export * from "./evidence.js";

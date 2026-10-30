@@ -1581,9 +1581,9 @@ describe("scene schema", () => {
       definitions?: Record<string, { properties?: Record<string, unknown> }>;
     };
 
-    expect(jsonSchema.$ref).toBe("#/definitions/MotionforgeScene");
+    expect(jsonSchema.$ref).toBe("#/definitions/DojoVideoEngineScene");
 
-    const scene = jsonSchema.definitions?.MotionforgeScene;
+    const scene = jsonSchema.definitions?.DojoVideoEngineScene;
     expect(scene?.properties).toHaveProperty("schemaVersion");
     expect(scene?.properties).toHaveProperty("nodes");
     const serialized = JSON.stringify(jsonSchema);

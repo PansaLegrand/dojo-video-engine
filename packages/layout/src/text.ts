@@ -5,14 +5,14 @@ import {
   type ResolvedMeasurementProvenance,
   type ResolvedTextLineMetrics,
   type TextMetricsProvider,
-} from "@motionforge/core";
-import type { SceneNode, SceneStyle } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { SceneNode, SceneStyle } from "@dojo-video-engine/schema";
 import { LayoutCompileError } from "./types.js";
 
 export const LAYOUT_TEXT_PLAN_VERSION = 1 as const;
 /** Pinned table scope; changes require text-plan compatibility evidence. */
 export const LAYOUT_TEXT_UNICODE_TABLE_VERSION =
-  "motionforge-layout-text-1/unicode-15.1-subset" as const;
+  "dojo-video-engine-layout-text-1/unicode-15.1-subset" as const;
 
 const MAX_LAYOUT_TEXT_SCALAR = 10_000_000;
 const MAX_LAYOUT_TEXT_FONT_SIZE = 1_000_000;

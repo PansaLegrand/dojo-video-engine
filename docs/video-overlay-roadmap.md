@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Video Overlay Roadmap
 
 **Status:** implementation started 2026-06-18
 
-MotionForge already supports full-frame `video` nodes, source trimming with `videoStartTime`, `playbackRate`, clip audio through `volume`, object-fit styling, media looks, clip layouts, and chat media sequencing. The next goal is production video overlays: picture-in-picture clips, reaction cams, product/app demos, background loops, and muted b-roll that programmers and agents can add with stable names.
+Dojo Video Engine already supports full-frame `video` nodes, source trimming with `videoStartTime`, `playbackRate`, clip audio through `volume`, object-fit styling, media looks, clip layouts, and chat media sequencing. The next goal is production video overlays: picture-in-picture clips, reaction cams, product/app demos, background loops, and muted b-roll that programmers and agents can add with stable names.
 
 This remains a base-layer open-source feature. Apps should consume ordinary scene assets and `video` nodes from shared helpers, not carry one-off layout code.
 
@@ -45,7 +47,7 @@ Known gaps:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - docs/tests
 
 Done:
@@ -58,7 +60,7 @@ Done:
 
 ## Slice VX2 - Authoring Video Overlay Helper ✅
 
-**Goal:** `@motionforge/authoring` makes video overlays as easy as image overlays and video clips.
+**Goal:** `@dojo-video-engine/authoring` makes video overlays as easy as image overlays and video clips.
 
 Targets:
 
@@ -71,7 +73,7 @@ Done:
 - passing a video asset object auto-adds it to `scene.assets`
 - helper compiles through the preset helper with scene-aware composition defaults
 - docs show picture-in-picture, reaction cam, background loop, and muted b-roll workflows
-- generated nodes validate through `@motionforge/schema`
+- generated nodes validate through `@dojo-video-engine/schema`
 
 ## Slice VX3 - Preset Catalog And Patch Examples ✅
 
@@ -79,7 +81,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - playground preset catalog
 - docs/guides
 
@@ -112,7 +114,7 @@ Done:
 
 Targets:
 
-- `@motionforge/showcase`
+- `@dojo-video-engine/showcase`
 - examples
 - golden harness
 - docs assets

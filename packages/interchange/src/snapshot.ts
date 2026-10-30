@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   sceneSchema,
   validateScene,
   type SceneAsset,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   INTERCHANGE_VERSION,
   MAX_DIMENSION,
@@ -145,7 +145,7 @@ export type StaticHtmlSnapshotV1 = z.infer<typeof staticHtmlSnapshotV1Schema>;
 const importSuccessSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.static-snapshot-import"),
+    kind: z.literal("dojo-video-engine.static-snapshot-import"),
     version: z.literal(INTERCHANGE_VERSION),
     scene: sceneSchema,
     diagnostics: z.array(interchangeDiagnosticSchema).max(8_192),
@@ -305,7 +305,7 @@ export function importStaticHtmlSnapshot(
     }
     return {
       ok: true,
-      kind: "motionforge.static-snapshot-import",
+      kind: "dojo-video-engine.static-snapshot-import",
       version: 1,
       scene: validation.scene,
       diagnostics: structuredClone(diagnostics),

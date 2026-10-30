@@ -4,7 +4,7 @@ import {
   validateScene,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   clipLayout,
   clipLayoutEntries,

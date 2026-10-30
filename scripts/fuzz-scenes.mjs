@@ -16,7 +16,7 @@ const random = () => {
 const integer = (min, max) => min + Math.floor(random() * (max - min + 1));
 const color = () => `#${integer(0, 0xffffff).toString(16).padStart(6, "0")}`;
 
-const iterations = Number(process.env.MOTIONFORGE_FUZZ_ITERATIONS ?? 750);
+const iterations = Number(process.env.DOJO_VIDEO_ENGINE_FUZZ_ITERATIONS ?? 750);
 let evaluatedFrames = 0;
 
 for (let iteration = 0; iteration < iterations; iteration += 1) {

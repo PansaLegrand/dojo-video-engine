@@ -1,4 +1,4 @@
-import { fontAssetIdsForFamily, fontFamilyNames } from "@motionforge/schema";
+import { fontAssetIdsForFamily, fontFamilyNames } from "@dojo-video-engine/schema";
 import {
   audioReactiveSourceTime,
   collectAudioReactiveSourceRanges,
@@ -39,7 +39,7 @@ import {
   type TextMetricsProvider,
   type ResolvedNode,
   type ResolvedScene,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   inspectScene,
   parseScene,
@@ -50,7 +50,7 @@ import {
   type SceneShapeGeometry,
   type SceneStyle,
   type SceneTextRun,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   parseBorderValue,
   parseConicGradientValue,
@@ -63,7 +63,7 @@ import {
   parseTransformValue,
   resolveGradientStopOffsets,
   type TransformOriginComponent,
-} from "@motionforge/schema/values";
+} from "@dojo-video-engine/schema/values";
 import {
   createExtensionRegistry,
   extensionResourceReuseKey,
@@ -74,7 +74,7 @@ import {
   type ExtensionPreflightIssue,
   type ExtensionSceneNode,
   type ResolvedExtensionNode,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 import {
   AudioAnalysisCache as BoundedAudioAnalysisCache,
   FontAssetCache,
@@ -171,7 +171,7 @@ export {
 } from "./surface-pool.js";
 
 // Re-exported so existing imports keep working; the implementation moved to
-// @motionforge/core where layout uses it for intrinsic text sizing.
+// @dojo-video-engine/core where layout uses it for intrinsic text sizing.
 export { wrapTextLines };
 import {
   ALL_FORMATS,
@@ -1129,7 +1129,7 @@ function createSharedAssetResource(
     value,
     retain() {
       if (references <= 0 || disposal) {
-        throw new Error("Cannot retain a disposed MotionForge asset resource.");
+        throw new Error("Cannot retain a disposed DojoVideoEngine asset resource.");
       }
       references += 1;
     },
@@ -1174,7 +1174,7 @@ function createSharedExtensionResource(
     retain() {
       if (references <= 0 || disposal) {
         throw new Error(
-          "Cannot retain a disposed MotionForge extension resource.",
+          "Cannot retain a disposed DojoVideoEngine extension resource.",
         );
       }
       references += 1;
@@ -1355,7 +1355,7 @@ function assertNotAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) {
     throw signal.reason instanceof Error
       ? signal.reason
-      : new Error("MotionForge asset resolution was aborted.");
+      : new Error("DojoVideoEngine asset resolution was aborted.");
   }
 }
 
@@ -2046,7 +2046,7 @@ export async function resolveAssets(
     } catch (cleanupError) {
       throw new AggregateError(
         [cause, cleanupError],
-        "MotionForge asset resolution failed and rollback reported errors.",
+        "DojoVideoEngine asset resolution failed and rollback reported errors.",
         { cause },
       );
     }
@@ -2253,7 +2253,7 @@ export function disposeAssetsAsync(assets: ResolvedAssets): Promise<void> {
     if (disposalErrors.length > 0) {
       throw new AggregateError(
         disposalErrors,
-        "One or more MotionForge media resources failed to dispose.",
+        "One or more DojoVideoEngine media resources failed to dispose.",
       );
     }
   })();
@@ -3419,14 +3419,14 @@ function truncateSrc(src: string): string {
   if (src.startsWith("data:")) return "data:[redacted]";
   let redacted = src;
   try {
-    const parsed = new URL(src, "https://motionforge.invalid");
+    const parsed = new URL(src, "https://dojo-video-engine.invalid");
     parsed.username = "";
     parsed.password = "";
     parsed.search = "";
     parsed.hash = "";
     redacted = src.startsWith("/")
       ? `${parsed.pathname}`
-      : parsed.origin === "https://motionforge.invalid"
+      : parsed.origin === "https://dojo-video-engine.invalid"
         ? parsed.pathname
         : parsed.toString();
   } catch {
@@ -3755,12 +3755,12 @@ function assertCanvas2DDisplayComposition(
   scene: Scene,
 ): void {
   if (
-    displayList.kind !== "motionforge.display-list" ||
+    displayList.kind !== "dojo-video-engine.display-list" ||
     displayList.version !== 1 ||
     displayList.ephemeral !== true
   ) {
     throw new Error(
-      "Canvas2D requires an ephemeral MotionForge display-list v1.",
+      "Canvas2D requires an ephemeral DojoVideoEngine display-list v1.",
     );
   }
   const expected = {
@@ -4155,8 +4155,8 @@ function assertCanvas2DDisplayCapabilities(
 ): void {
   for (const requirement of displayList.requirements) {
     const capability = `${requirement.id}@${requirement.version}`;
-    if (capability === "motionforge.effect@1") continue;
-    if (capability === "motionforge.mask.soft@1") {
+    if (capability === "dojo-video-engine.effect@1") continue;
+    if (capability === "dojo-video-engine.mask.soft@1") {
       const needsFeatherFilter = requirement.nodeIds.some(
         (nodeId) =>
           (execution.displayGroups.get(nodeId)?.mask?.feather ?? 0) > 0,
@@ -4168,7 +4168,7 @@ function assertCanvas2DDisplayCapabilities(
       }
       continue;
     }
-    if (capability === "motionforge.filter@1") {
+    if (capability === "dojo-video-engine.filter@1") {
       if (!("filter" in context)) {
         throw new Error(
           "Canvas2D display list requires context.filter support.",
@@ -4176,7 +4176,7 @@ function assertCanvas2DDisplayCapabilities(
       }
       continue;
     }
-    if (capability === "motionforge.paint.conic@1") {
+    if (capability === "dojo-video-engine.paint.conic@1") {
       if (typeof context.createConicGradient !== "function") {
         throw new Error(
           "Canvas2D display list requires createConicGradient() support.",

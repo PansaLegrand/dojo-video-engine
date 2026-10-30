@@ -6,7 +6,7 @@ Milestone: MF3 — spatial and temporal inspection
 MF3 adds a renderer-neutral answer to a basic editing question: where is a
 node at a particular frame, when is it active, and what geometry may overlap,
 clip, or hide it? The implementation is the public
-`@motionforge/inspection` package. It depends only on schema and core and does
+`@dojo-video-engine/inspection` package. It depends only on schema and core and does
 not create a canvas, decode media, call a model, or import product code.
 
 ## Public surface
@@ -27,10 +27,10 @@ not create a canvas, decode media, call a model, or import product code.
   validation/structural/lint/tree/timeline/composition envelope. Invalid
   Scenes are data, not an unparsable exception result.
 
-The CLI exposes `motionforge inspect-layout <scene> --frame N` and
-`motionforge check <scene> [--frames ... | --sample-count N]`. The agent tool
+The CLI exposes `dojo-video-engine inspect-layout <scene> --frame N` and
+`dojo-video-engine check <scene> [--frames ... | --sample-count N]`. The agent tool
 registry exposes the same bounded operations without replacing the existing
-structural `motionforge.inspect` tool.
+structural `dojo-video-engine.inspect` tool.
 
 ## Measurement and intent rules
 

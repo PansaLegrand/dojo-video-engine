@@ -1,6 +1,6 @@
 # RFC 0001: Scene patch operations
 
-**Status:** implemented (`@motionforge/schema` — `applyScenePatch`, `scenePatchSchema`, `sceneOpSchema`, `closestIds`; see `packages/schema/src/patch.ts`)
+**Status:** implemented (`@dojo-video-engine/schema` — `applyScenePatch`, `scenePatchSchema`, `sceneOpSchema`, `closestIds`; see `packages/schema/src/patch.ts`)
 **Owner:** agent-layer workstream
 **Consumers:** chat-driven editing (a chat UI), any tool that edits scenes incrementally
 
@@ -33,7 +33,7 @@ type SceneOp =
       duration?: number;
     };
 
-// @motionforge/schema (new exports)
+// @dojo-video-engine/schema (new exports)
 function applyScenePatch(
   scene: unknown,
   patch: ScenePatch,

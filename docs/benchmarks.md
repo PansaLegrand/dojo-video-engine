@@ -1,6 +1,6 @@
 # Export benchmarks
 
-Measured with `pnpm --filter @motionforge/golden run benchmark [width height fps seconds]` — headless pinned Chromium, Apple Silicon, AVC encode via WebCodecs, synthesized full-motion footage (animated gradient + moving box) so the encoder sees real per-frame change. Stage 1 is pure render+encode; stages 2–3 round-trip the footage through video nodes (decode + composite + encode — the real workload).
+Measured with `pnpm --filter @dojo-video-engine/golden run benchmark [width height fps seconds]` — headless pinned Chromium, Apple Silicon, AVC encode via WebCodecs, synthesized full-motion footage (animated gradient + moving box) so the encoder sees real per-frame change. Stage 1 is pure render+encode; stages 2–3 round-trip the footage through video nodes (decode + composite + encode — the real workload).
 
 Run `pnpm resource:smoke` for the cheap long-scene resource gate. It does not encode media; it asserts 10-minute audio chunk coverage, looped-bed source range splitting, volume-envelope chunk offsets, and many-node evaluate/layout behavior.
 

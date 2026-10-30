@@ -38,47 +38,47 @@ async function run(currentMode: GoldenMode): Promise<void> {
     // stale or missing dist build.
     resolve: {
       alias: {
-        "@motionforge/presets/macros": resolve(
+        "@dojo-video-engine/presets/macros": resolve(
           rootDir,
           "packages/presets/src/macros.ts",
         ),
-        "@motionforge/schema/values": resolve(
+        "@dojo-video-engine/schema/values": resolve(
           rootDir,
           "packages/schema/src/values.ts",
         ),
-        "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
-        "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
-        "@motionforge/agent-tools": resolve(
+        "@dojo-video-engine/schema": resolve(rootDir, "packages/schema/src/index.ts"),
+        "@dojo-video-engine/core": resolve(rootDir, "packages/core/src/index.ts"),
+        "@dojo-video-engine/agent-tools": resolve(
           rootDir,
           "packages/agent-tools/src/index.ts",
         ),
-        "@motionforge/extensions": resolve(
+        "@dojo-video-engine/extensions": resolve(
           rootDir,
           "packages/extensions/src/index.ts",
         ),
-        "@motionforge/layout": resolve(rootDir, "packages/layout/src/index.ts"),
-        "@motionforge/presets": resolve(
+        "@dojo-video-engine/layout": resolve(rootDir, "packages/layout/src/index.ts"),
+        "@dojo-video-engine/presets": resolve(
           rootDir,
           "packages/presets/src/index.ts",
         ),
-        "@motionforge/showcase": resolve(
+        "@dojo-video-engine/showcase": resolve(
           rootDir,
           "packages/showcase/src/index.ts",
         ),
-        "@motionforge/renderer-canvas2d/runtime": resolve(
+        "@dojo-video-engine/renderer-canvas2d/runtime": resolve(
           rootDir,
           "packages/renderer-canvas2d/src/runtime.ts",
         ),
-        "@motionforge/renderer-canvas2d": resolve(
+        "@dojo-video-engine/renderer-canvas2d": resolve(
           rootDir,
           "packages/renderer-canvas2d/src/index.ts",
         ),
-        "@motionforge/runtime": resolve(
+        "@dojo-video-engine/runtime": resolve(
           rootDir,
           "packages/runtime/src/index.ts",
         ),
-        "@motionforge/export": resolve(rootDir, "packages/export/src/index.ts"),
-        "@motionforge/player": resolve(rootDir, "packages/player/src/index.ts"),
+        "@dojo-video-engine/export": resolve(rootDir, "packages/export/src/index.ts"),
+        "@dojo-video-engine/player": resolve(rootDir, "packages/player/src/index.ts"),
       },
     },
     server: {

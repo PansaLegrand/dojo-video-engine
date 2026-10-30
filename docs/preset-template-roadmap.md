@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Preset And Template Roadmap
 
 **Status:** implementation started 2026-06-17
 
-MotionForge now has the programmer DX foundation: authoring helpers, CLI validation, Studio preview, a starter generator, asset-path conventions, and programmer-first guides. The next high-leverage layer is a richer preset/template system.
+Dojo Video Engine now has the programmer DX foundation: authoring helpers, CLI validation, Studio preview, a starter generator, asset-path conventions, and programmer-first guides. The next high-leverage layer is a richer preset/template system.
 
 The goal is not to hide the scene format. The goal is to give programmers, apps, and LLMs a strong visual vocabulary that compiles into normal validated scene data.
 
@@ -69,7 +71,7 @@ Templates:
 API shape:
 
 ```ts
-import { textOverlay, textOverlayTemplates } from "@motionforge/presets";
+import { textOverlay, textOverlayTemplates } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   textOverlay({
@@ -107,7 +109,7 @@ Templates:
 API shape:
 
 ```ts
-import { mediaLook } from "@motionforge/presets";
+import { mediaLook } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {
@@ -139,7 +141,7 @@ Templates:
 API shape:
 
 ```ts
-import { clipLayout } from "@motionforge/presets";
+import { clipLayout } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: clipLayout("phoneSafeVertical"),
@@ -167,7 +169,7 @@ Templates:
 API shape:
 
 ```ts
-import { transitionOverlay } from "@motionforge/presets";
+import { transitionOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(transitionOverlay("dipToBlack", { at: 90, duration: 18 }));
 ```

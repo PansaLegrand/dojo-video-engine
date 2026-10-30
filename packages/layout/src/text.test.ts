@@ -4,8 +4,8 @@ import {
   evaluateScene,
   layoutScene,
   type TextMetricsProvider,
-} from "@motionforge/core";
-import type { Scene } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { Scene } from "@dojo-video-engine/schema";
 import { LayoutCompileError } from "./types.js";
 import {
   LAYOUT_TEXT_UNICODE_TABLE_VERSION,
@@ -73,7 +73,7 @@ describe("bundled Layout v2 grapheme segmentation", () => {
     });
     try {
       expect(LAYOUT_TEXT_UNICODE_TABLE_VERSION).toBe(
-        "motionforge-layout-text-1/unicode-15.1-subset",
+        "dojo-video-engine-layout-text-1/unicode-15.1-subset",
       );
       expect(
         segmentLayoutTextGraphemes("نَक्🚀").map((cluster) => cluster.text),

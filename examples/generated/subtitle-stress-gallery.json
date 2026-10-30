@@ -487,7 +487,7 @@
     {
       "id": "subtitle-stress-footer",
       "type": "text",
-      "text": "Refresh: pnpm showcase:generate then render examples/generated/subtitle-stress-gallery.json with @motionforge/golden.",
+      "text": "Refresh: pnpm showcase:generate then render examples/generated/subtitle-stress-gallery.json with @dojo-video-engine/golden.",
       "from": 0,
       "style": {
         "height": 72,
@@ -751,7 +751,7 @@
             {
               "id": "subtitle-stress-vtt-s1-text",
               "type": "text",
-              "text": "https://motionforge.dev/docs/examples/generated/subtitle-stress-gallery.json?source=subtitle-overlay-roadmap&case=url",
+              "text": "https://dojo-video-engine.dev/docs/examples/generated/subtitle-stress-gallery.json?source=subtitle-overlay-roadmap&case=url",
               "from": 0,
               "style": {
                 "width": "100%",

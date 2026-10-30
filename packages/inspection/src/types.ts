@@ -3,12 +3,12 @@ import type {
   SceneLintIssue,
   SceneNode,
   SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import type {
   MeasurementQuality,
   MediaMetricsProvider,
   TextMetricsProvider,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 
 // Compatibility re-exports: MF5 moves ownership to core so layout,
 // inspection, runtime, and renderer adapters share one metrics contract.
@@ -25,7 +25,7 @@ export type {
   TextLineMetricsInput,
   TextMetricField,
   TextMetricsProvider,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 
 export type SourcePath = Array<string | number>;
 export type Rect = { x: number; y: number; width: number; height: number };
@@ -72,7 +72,7 @@ export type TreeInspectionNode = {
 };
 
 export type TreeInspection = {
-  kind: "motionforge.tree";
+  kind: "dojo-video-engine.tree";
   version: 1;
   fps: number;
   durationFrames: number;
@@ -101,7 +101,7 @@ export type TimelineInspectionNode = TreeInspectionNode & {
 };
 
 export type TimelineInspection = {
-  kind: "motionforge.timeline";
+  kind: "dojo-video-engine.timeline";
   version: 1;
   fps: number;
   durationFrames: number;
@@ -211,7 +211,7 @@ export type InspectionDiagnostic = {
 };
 
 export type LayoutInspection = {
-  kind: "motionforge.layout";
+  kind: "dojo-video-engine.layout";
   version: 1;
   width: number;
   height: number;
@@ -240,7 +240,7 @@ export type HitTestOptions = LayoutInspectionOptions & {
 };
 
 export type HitTestResult = {
-  kind: "motionforge.hit-test";
+  kind: "dojo-video-engine.hit-test";
   version: 1;
   frame: number;
   timeSeconds: number;
@@ -263,7 +263,7 @@ export type AnalyzeCompositionOptions = LayoutInspectionOptions & {
 };
 
 export type CompositionInspection = {
-  kind: "motionforge.composition";
+  kind: "dojo-video-engine.composition";
   version: 1;
   sampledFrames: number[];
   frames: LayoutInspection[];
@@ -279,7 +279,7 @@ export type CompositionInspection = {
 export type CheckSceneOptions = AnalyzeCompositionOptions;
 export type SceneCheckEnvelope =
   | {
-      kind: "motionforge.check";
+      kind: "dojo-video-engine.check";
       version: 1;
       ok: false;
       validation: { ok: false; errors: string[] };
@@ -297,7 +297,7 @@ export type SceneCheckEnvelope =
       };
     }
   | {
-      kind: "motionforge.check";
+      kind: "dojo-video-engine.check";
       version: 1;
       ok: boolean;
       validation: { ok: true; errors: [] };

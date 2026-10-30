@@ -1,10 +1,10 @@
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   createCanvas2DSceneRuntime,
   type Canvas2DRenderTarget,
   type Canvas2DSceneRuntime,
   type CreateCanvas2DSceneRuntimeOptions,
-} from "@motionforge/renderer-canvas2d/runtime";
+} from "@dojo-video-engine/renderer-canvas2d/runtime";
 import type {
   ComparisonSheetPlan,
   EvidenceArtifactRef,

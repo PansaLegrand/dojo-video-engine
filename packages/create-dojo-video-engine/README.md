@@ -1,6 +1,6 @@
-# @motionforge/create
+# @dojo-video-engine/create
 
-Starter project generator for MotionForge.
+Starter project generator for Dojo Video Engine.
 
 ## Usage
 
@@ -18,15 +18,14 @@ pnpm verify:clean -- --keep
 After registry publication:
 
 ```sh
-pnpm dlx @motionforge/create hello-video
+pnpm dlx @dojo-video-engine/create hello-video
 cd hello-video
 pnpm install
 pnpm validate
 pnpm lint
-pnpm dev
 ```
 
-The generated project uses `@motionforge/authoring` for scene source and `@motionforge/cli` for validation, scene printing, Studio preview, and browser MP4 export.
+The generated project uses `@dojo-video-engine/authoring` for scene source and `@dojo-video-engine/cli` for validation, scene printing, and headless inspection.
 
 The starter intentionally keeps the authored project small:
 
@@ -37,7 +36,6 @@ package.json
 tsconfig.json
 ```
 
-Run `pnpm dev` to open MotionForge Studio for `src/video.ts`.
 
 Add images, video, audio, fonts, or Lottie JSON under `public/assets`. Reference them in source with `publicAsset("assets/file.ext")`; the generated scene JSON stores the fetchable URL `/assets/file.ext`.
 
@@ -46,16 +44,16 @@ Add images, video, audio, fonts, or Lottie JSON under `public/assets`. Reference
 Stable for 1.x integrations:
 
 - After verified registry publication, CLI usage through package managers is
-  `npx @motionforge/create@latest <name>` or
-  `pnpm dlx @motionforge/create <name>`; the installed bin remains
-  `create-motionforge`. Before publication, use the retained-tarball command
+  `npx @dojo-video-engine/create@latest <name>` or
+  `pnpm dlx @dojo-video-engine/create <name>`; the installed bin remains
+  `create-dojo-video-engine`. Before publication, use the retained-tarball command
   above.
 - Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `dev`, `validate`, `print`, `migrate`, `inspect`, `lint`, and `build`.
-- Programmatic generator entry points: `createMotionforgeProject()`, `helpText()`, `CreateMotionforgeOptions`, and `CreateMotionforgeResult`.
+- Programmatic generator entry points: `createDojoVideoEngineProject()`, `helpText()`, `CreateDojoVideoEngineOptions`, and `CreateDojoVideoEngineResult`.
 
 Evolving additively in 1.x:
 
-- Template contents may evolve as the authoring API and Studio improve. Generated projects should remain small and data-first.
+- Template contents may evolve as the authoring API improves. Generated projects should remain small and data-first.
 - Dependency ranges follow public package SemVer while templates evolve additively.
 
 Internal/not public:
@@ -65,3 +63,5 @@ Internal/not public:
 ## License
 
 MIT
+
+This generator creates a headless authoring project. For the visual editor and agent, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).

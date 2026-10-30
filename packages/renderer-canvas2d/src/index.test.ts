@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { sampleScene } from "@motionforge/core";
+import { sampleScene } from "@dojo-video-engine/core";
 import {
   createExtensionRegistry,
   defineExtension,
-} from "@motionforge/extensions";
-import { z } from "zod";
+} from "@dojo-video-engine/extensions";
+import { z } from "zod/v3";
 import {
   compileCanvas2DDisplayList,
   BoundedTextMeasureCache,

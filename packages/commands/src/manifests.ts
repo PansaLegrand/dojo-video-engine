@@ -1,8 +1,8 @@
 import {
   motionPresetDefinitions,
   type MotionPresetCategory,
-} from "@motionforge/presets";
-import { macroDefinitions } from "@motionforge/presets/macros";
+} from "@dojo-video-engine/presets";
+import { macroDefinitions } from "@dojo-video-engine/presets/macros";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 export const COMMAND_MANIFEST_VERSION = 1 as const;
@@ -262,7 +262,7 @@ export function motionPresetManifests(): MotionPresetManifest[] {
 /**
  * Deterministic, detached manifests for the built-in macro registry snapshot.
  * Runtime macros registered by an application need their own host manifest,
- * because MotionForge cannot infer asset requirements or output semantics.
+ * because DojoVideoEngine cannot infer asset requirements or output semantics.
  */
 export function macroManifests(): MacroManifest[] {
   return cloneJson(macroManifestSource);

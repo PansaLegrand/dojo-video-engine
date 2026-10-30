@@ -7,7 +7,7 @@
 
 ## Decision
 
-MotionForge publishes a deterministic, provider-neutral editing workflow over
+Dojo Video Engine publishes a deterministic, provider-neutral editing workflow over
 the existing command workspace, inspection, prepared runtime, export, and
 artifact contracts. It does not publish an autonomous agent or depend on an
 LLM SDK.
@@ -23,7 +23,7 @@ to read, search, edit, check, undo, redo, or request proof.
 Repeated whole-Scene function arguments recreate the original one-shot
 failure mode: large context, stale UI state, accidental replacement, and no
 transaction boundary. A handle gives the host one authoritative in-memory
-workspace for a run while preserving MotionForge's canonical Scene document as
+workspace for a run while preserving Dojo Video Engine's canonical Scene document as
 the durable artifact.
 
 Handles are deliberately process/session local. They are not database ids,

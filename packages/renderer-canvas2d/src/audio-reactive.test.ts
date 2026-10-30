@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseScene } from "@motionforge/schema";
+import { parseScene } from "@dojo-video-engine/schema";
 import {
   audioReactiveSourceTime,
   collectAudioReactiveSourceRanges,

@@ -1,6 +1,6 @@
-# @motionforge/cli
+# @dojo-video-engine/cli
 
-Command-line validation and inspection tools for MotionForge scene modules.
+Command-line validation and inspection tools for Dojo Video Engine scene modules.
 
 ## Install
 
@@ -9,28 +9,27 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install -D @motionforge/cli
+npm install -D @dojo-video-engine/cli
 ```
 
 ## Usage
 
 ```sh
-motionforge validate src/video.ts
-motionforge print src/video.ts
-motionforge migrate src/video.ts
-motionforge inspect src/video.ts
-motionforge inspect-layout src/video.ts --frame 45
-motionforge lint src/video.ts
-motionforge check src/video.ts --frames 0,45,89
-motionforge diff before.ts after.ts
-motionforge capabilities
-motionforge dev src/video.ts
+dojo-video-engine validate src/video.ts
+dojo-video-engine print src/video.ts
+dojo-video-engine migrate src/video.ts
+dojo-video-engine inspect src/video.ts
+dojo-video-engine inspect-layout src/video.ts --frame 45
+dojo-video-engine lint src/video.ts
+dojo-video-engine check src/video.ts --frames 0,45,89
+dojo-video-engine diff before.ts after.ts
+dojo-video-engine capabilities
 ```
 
 The module may export a scene object directly, a function returning a scene, or a promise resolving to either.
 
 ```ts
-import { bg, makeScene, seconds, title } from "@motionforge/authoring";
+import { bg, makeScene, seconds, title } from "@dojo-video-engine/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -98,7 +97,7 @@ unused-asset conditions.
 ```
 
 `diff` produces the stable id-aware semantic diff from
-`@motionforge/agent-tools`. `capabilities` prints runtime-derived schema,
+`@dojo-video-engine/agent-tools`. `capabilities` prints runtime-derived schema,
 motion-preset, macro, extension, and export capability metadata.
 
 `inspect-layout` returns renderer-neutral border/content/transformed/clip
@@ -109,24 +108,22 @@ samples, and diagnostics. Invalid scenes still produce a parseable envelope
 and exit `1`; valid scenes with warnings exit `0`. Use either an explicit
 comma-separated `--frames` list or `--sample-count` (both are capped at 100).
 
-`dev` starts MotionForge Studio for the scene module. The studio validates the source, renders it on Canvas2D, exposes a frame scrubber and JSON inspector, and enables browser MP4 export when WebCodecs is available.
+For the visual editor and agent, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
 
 ## API Stability
 
 Stable for 1.x integrations:
 
-- CLI commands: `motionforge validate`, `motionforge print`, `motionforge migrate`, `motionforge inspect`, `motionforge inspect-layout`, `motionforge lint`, `motionforge check`, `motionforge diff`, `motionforge capabilities`, and `motionforge dev`.
+- CLI commands: `dojo-video-engine validate`, `dojo-video-engine print`, `dojo-video-engine migrate`, `dojo-video-engine inspect`, `dojo-video-engine inspect-layout`, `dojo-video-engine lint`, `dojo-video-engine check`, `dojo-video-engine diff`, `dojo-video-engine capabilities`.
 - Programmatic helpers: `executeCli()`, `runCli()`, `inspectScene()`, `CliResult`, `CliIo`, and `SceneInspection`.
 - Scene module loading contract: JSON files, JS/ESM modules, TypeScript modules through `tsx`, default export or named `scene`, and scene-returning functions/promises.
 
 Evolving additively in 1.x:
 
-- Studio UI served by `motionforge dev` is part of the developer workflow, but its HTML/CSS/client internals are not stable.
 - `inspect` output may gain additive fields; existing field names are intended to stay stable through 1.x.
 
 Internal/not public:
 
-- `createStudioServer()` and Vite virtual-module internals are exported only within package source today; do not rely on deep imports.
 - Files outside the package root export and CLI binary are implementation details.
 
 ## License

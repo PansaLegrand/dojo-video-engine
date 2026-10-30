@@ -1,5 +1,5 @@
 {
-  "name": "@motionforge/showcase",
+  "name": "@dojo-video-engine/showcase",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,16 +13,16 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/dist/**\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/core": "workspace:*",
-    "@motionforge/presets": "workspace:*",
-    "@motionforge/schema": "workspace:*"
+    "@dojo-video-engine/core": "workspace:*",
+    "@dojo-video-engine/presets": "workspace:*",
+    "@dojo-video-engine/schema": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^3.2.7"
+    "vitest": "4.1.12"
   }
 }

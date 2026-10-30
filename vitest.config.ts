@@ -4,30 +4,31 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
-      "@motionforge/schema/values": fileURLToPath(
+      "@dojo-video-engine/schema/values": fileURLToPath(
         new URL("./packages/schema/src/values.ts", import.meta.url),
       ),
-      "@motionforge/schema": fileURLToPath(
+      "@dojo-video-engine/schema": fileURLToPath(
         new URL("./packages/schema/src/index.ts", import.meta.url),
       ),
-      "@motionforge/core": fileURLToPath(
+      "@dojo-video-engine/core": fileURLToPath(
         new URL("./packages/core/src/index.ts", import.meta.url),
       ),
-      "@motionforge/renderer-canvas2d/runtime": fileURLToPath(
+      "@dojo-video-engine/renderer-canvas2d/runtime": fileURLToPath(
         new URL("./packages/renderer-canvas2d/src/runtime.ts", import.meta.url),
       ),
-      "@motionforge/renderer-canvas2d": fileURLToPath(
+      "@dojo-video-engine/renderer-canvas2d": fileURLToPath(
         new URL("./packages/renderer-canvas2d/src/index.ts", import.meta.url),
       ),
-      "@motionforge/runtime": fileURLToPath(
+      "@dojo-video-engine/runtime": fileURLToPath(
         new URL("./packages/runtime/src/index.ts", import.meta.url),
       ),
-      "@motionforge/export": fileURLToPath(
+      "@dojo-video-engine/export": fileURLToPath(
         new URL("./packages/export/src/index.ts", import.meta.url),
       ),
     },
   },
   test: {
     passWithNoTests: true,
+    exclude: ["**/node_modules/**", "**/dist/**"],
   },
 });

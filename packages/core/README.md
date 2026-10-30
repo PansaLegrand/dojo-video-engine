@@ -1,6 +1,6 @@
-# @motionforge/core
+# @dojo-video-engine/core
 
-Scene builder API, keyframe animation evaluator, and layout pass for [motionforge](https://github.com/PansaLegrand/motionforge), a deterministic, browser-native video scene engine.
+Scene builder API, keyframe animation evaluator, and layout pass for [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine), a deterministic, browser-native video scene engine.
 
 ## Install
 
@@ -9,7 +9,7 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/core
+npm install @dojo-video-engine/core
 ```
 
 ## Usage
@@ -22,7 +22,7 @@ import {
   compileDisplayList,
   evaluateScene,
   layoutScene,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 
 const scene = composition({ width: 1080, height: 1920, fps: 30, duration: 120 })
   .children(
@@ -69,7 +69,7 @@ Evolving additively in 1.x:
 
 Internal/not public:
 
-- The core package does not render pixels or decode media. Use `@motionforge/renderer-canvas2d`, `@motionforge/player`, or `@motionforge/export` for those jobs.
+- The core package does not render pixels or decode media. Use `@dojo-video-engine/renderer-canvas2d`, `@dojo-video-engine/player`, or `@dojo-video-engine/export` for those jobs.
 - Files outside the package root export are implementation details.
 
 ## License

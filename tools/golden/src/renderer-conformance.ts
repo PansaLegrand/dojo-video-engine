@@ -9,8 +9,8 @@ import {
   type DisplayList,
   type DisplayListCompileOptions,
   type TextMetricsProvider,
-} from "@motionforge/core";
-import type { Scene } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { Scene } from "@dojo-video-engine/schema";
 
 /**
  * Reuse from another DisplayList v1 backend:
@@ -301,12 +301,12 @@ const fixtureDefinitions: readonly FixtureDefinition[] = [
       ],
       requirements: [
         {
-          id: "motionforge.filter",
+          id: "dojo-video-engine.filter",
           version: "1",
           nodeIds: ["affine-card"],
         },
         {
-          id: "motionforge.mask.soft",
+          id: "dojo-video-engine.mask.soft",
           version: "1",
           nodeIds: ["affine-card"],
         },
@@ -541,7 +541,7 @@ const fixtureDefinitions: readonly FixtureDefinition[] = [
       operations: ["0:badge-shape:shape:mf:node:11:badge-shape/shape"],
       requirements: [
         {
-          id: "motionforge.paint.conic",
+          id: "dojo-video-engine.paint.conic",
           version: "1",
           nodeIds: ["badge-shape"],
         },
@@ -590,7 +590,7 @@ const fixtureDefinitions: readonly FixtureDefinition[] = [
       operations: ["0:semantic-fx:effect:mf:node:11:semantic-fx/effect"],
       requirements: [
         {
-          id: "motionforge.effect",
+          id: "dojo-video-engine.effect",
           version: "1",
           nodeIds: ["semantic-fx"],
         },
@@ -602,7 +602,7 @@ const fixtureDefinitions: readonly FixtureDefinition[] = [
         return ["compiled content was not effect"];
       return content.effect === "confettiBurst" &&
         content.localFrame === 7 &&
-        content.capability.id === "motionforge.effect"
+        content.capability.id === "dojo-video-engine.effect"
         ? []
         : ["semantic effect payload changed"];
     },
@@ -617,7 +617,7 @@ const fixtureDefinitions: readonly FixtureDefinition[] = [
   }),
   extensionFixture("extension-opaque", "opaque", {
     kind: "opaque",
-    capability: { id: "dev.motionforge.special-painter", version: "2" },
+    capability: { id: "dev.dojo-video-engine.special-painter", version: "2" },
     payload: { phase: 3, palette: ["#0ea5e9", "#f97316"] },
   }),
   extensionFixture("extension-legacy", "legacy"),
@@ -634,7 +634,7 @@ function extensionFixture(
     mode === "opaque"
       ? [
           {
-            id: "dev.motionforge.special-painter",
+            id: "dev.dojo-video-engine.special-painter",
             version: "2",
             nodeIds: [nodeId],
           },
@@ -642,7 +642,7 @@ function extensionFixture(
       : mode === "legacy"
         ? [
             {
-              id: "motionforge.legacy.renderer-adapter",
+              id: "dojo-video-engine.legacy.renderer-adapter",
               version: "1.0.0",
               nodeIds: [nodeId],
             },
@@ -658,7 +658,7 @@ function extensionFixture(
         id: nodeId,
         type: "extension",
         extension: {
-          name: `dev.motionforge.${mode}`,
+          name: `dev.dojo-video-engine.${mode}`,
           version: "1.0.0",
           params: { fixture: mode, stable: true },
         },
@@ -697,13 +697,13 @@ function extensionFixture(
       }
       if (mode === "opaque") {
         return content.mode === "opaque" &&
-          content.capability.id === "dev.motionforge.special-painter" &&
+          content.capability.id === "dev.dojo-video-engine.special-painter" &&
           content.capability.version === "2"
           ? []
           : ["opaque extension capability changed"];
       }
       return content.mode === "legacy-opaque" &&
-        content.capability.id === "motionforge.legacy.renderer-adapter"
+        content.capability.id === "dojo-video-engine.legacy.renderer-adapter"
         ? []
         : ["legacy extension capability changed"];
     },
@@ -879,7 +879,7 @@ function validateFixtureContract(
   failures: string[],
 ): void {
   if (
-    displayList.kind !== "motionforge.display-list" ||
+    displayList.kind !== "dojo-video-engine.display-list" ||
     displayList.version !== 1 ||
     displayList.ephemeral !== true
   ) {

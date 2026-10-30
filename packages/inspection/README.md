@@ -1,8 +1,8 @@
-# @motionforge/inspection
+# @dojo-video-engine/inspection
 
-Synchronous, renderer-neutral inspection for canonical MotionForge Scene v1
-documents. The package depends only on `@motionforge/schema` and
-`@motionforge/core`; it never creates a canvas, decodes media, or guesses
+Synchronous, renderer-neutral inspection for canonical Dojo Video Engine Scene v1
+documents. The package depends only on `@dojo-video-engine/schema` and
+`@dojo-video-engine/core`; it never creates a canvas, decodes media, or guesses
 semantic roles from node names.
 
 ```ts
@@ -13,7 +13,7 @@ import {
   inspectLayout,
   inspectTimeline,
   inspectTree,
-} from "@motionforge/inspection";
+} from "@dojo-video-engine/inspection";
 
 const tree = inspectTree(scene, {
   semanticRoles: { captions: "subtitle" },

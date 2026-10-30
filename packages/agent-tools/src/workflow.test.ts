@@ -94,17 +94,17 @@ describe("MF8 workflow schemas", () => {
     const descriptors = workflowToolDescriptors();
     expect(descriptors).toHaveLength(11);
     expect(descriptors.map(({ name }) => name)).toEqual([
-      "motionforge.workflow.load",
-      "motionforge.workflow.read",
-      "motionforge.workflow.search",
-      "motionforge.workflow.check",
-      "motionforge.workflow.commands",
-      "motionforge.workflow.undo",
-      "motionforge.workflow.redo",
-      "motionforge.workflow.evidence",
-      "motionforge.workflow.close",
-      "motionforge.workflow.events",
-      "motionforge.workflow.dispose",
+      "dojo-video-engine.workflow.load",
+      "dojo-video-engine.workflow.read",
+      "dojo-video-engine.workflow.search",
+      "dojo-video-engine.workflow.check",
+      "dojo-video-engine.workflow.commands",
+      "dojo-video-engine.workflow.undo",
+      "dojo-video-engine.workflow.redo",
+      "dojo-video-engine.workflow.evidence",
+      "dojo-video-engine.workflow.close",
+      "dojo-video-engine.workflow.events",
+      "dojo-video-engine.workflow.dispose",
     ]);
     expect(descriptors[0]).toMatchObject({
       inputSchema: { $ref: expect.any(String) },
@@ -145,13 +145,13 @@ describe("MF8 workflow schemas", () => {
       }),
     ).toBe(false);
     const searchDescriptor = descriptors.find(
-      ({ name }) => name === "motionforge.workflow.search",
+      ({ name }) => name === "dojo-video-engine.workflow.search",
     )!;
     const checkDescriptor = descriptors.find(
-      ({ name }) => name === "motionforge.workflow.check",
+      ({ name }) => name === "dojo-video-engine.workflow.check",
     )!;
     const evidenceDescriptor = descriptors.find(
-      ({ name }) => name === "motionforge.workflow.evidence",
+      ({ name }) => name === "dojo-video-engine.workflow.evidence",
     )!;
     const parity: Array<{
       name: string;
@@ -292,11 +292,11 @@ describe("MF8 workflow schemas", () => {
       sessionOptions: { sessionId: "RegistrySession" },
     });
     const loaded = success(
-      await registry.call("motionforge.workflow.load", { scene }),
+      await registry.call("dojo-video-engine.workflow.load", { scene }),
     );
     const handle = loaded.handle!;
     const applied = success(
-      await registry.call("motionforge.workflow.commands", {
+      await registry.call("dojo-video-engine.workflow.commands", {
         handle,
         expectedRevision: 0,
         commands: [{ kind: "text.set", id: "title", text: "Host result" }],
@@ -321,14 +321,14 @@ describe("MF8 workflow schemas", () => {
     expect(Object.isFrozen(history)).toBe(true);
 
     failure(
-      await registry.call("motionforge.workflow.read", {
+      await registry.call("dojo-video-engine.workflow.read", {
         action: "workspace.read",
         handle,
       }),
       "invalid_request",
     );
     failure(
-      await registry.call("motionforge.workflow.missing", {}),
+      await registry.call("dojo-video-engine.workflow.missing", {}),
       "invalid_request",
     );
   });
@@ -357,7 +357,7 @@ describe("MF8 workflow schemas", () => {
     });
     let call: Promise<WorkflowResult> | undefined;
     expect(() => {
-      call = registry.call("motionforge.workflow.load", hostile);
+      call = registry.call("dojo-video-engine.workflow.load", hostile);
     }).not.toThrow();
     failure(await call!, "invalid_request");
   });
@@ -427,7 +427,7 @@ describe("MF8 handle workflow", () => {
       }),
     );
     expect(record(checked.data)).toMatchObject({
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       version: 1,
       validation: { ok: true, errors: [] },
     });

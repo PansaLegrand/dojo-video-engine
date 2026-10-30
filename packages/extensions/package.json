@@ -1,9 +1,9 @@
 {
-  "name": "@motionforge/extensions",
+  "name": "@dojo-video-engine/extensions",
   "version": "1.1.0",
-  "description": "Versioned deterministic extension registry and lifecycle contracts for MotionForge.",
+  "description": "Versioned deterministic extension registry and lifecycle contracts for DojoVideoEngine.",
   "keywords": [
-    "motionforge",
+    "dojo-video-engine",
     "video",
     "extensions",
     "plugins",
@@ -13,11 +13,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PansaLegrand/motionforge.git",
+    "url": "git+https://github.com/PansaLegrand/dojo-video-engine.git",
     "directory": "packages/extensions"
   },
-  "homepage": "https://github.com/PansaLegrand/motionforge#readme",
-  "bugs": "https://github.com/PansaLegrand/motionforge/issues",
+  "homepage": "https://github.com/PansaLegrand/dojo-video-engine#readme",
+  "bugs": "https://github.com/PansaLegrand/dojo-video-engine/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -41,16 +41,16 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/dist/**\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/schema": "workspace:*",
-    "zod": "^3.25.67",
+    "@dojo-video-engine/schema": "workspace:*",
+    "zod": "4.6.7",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "vitest": "^3.2.7"
+    "vitest": "4.1.12"
   }
 }

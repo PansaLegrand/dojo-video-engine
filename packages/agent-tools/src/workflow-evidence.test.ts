@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   createAgentWorkflowToolRegistry,
   workflowResultSchema,
@@ -60,11 +60,11 @@ async function loadedEditedRegistry(adapter: WorkflowEvidenceController) {
     sessionOptions: { sessionId: "EvidenceFlow", evidence: adapter },
   });
   const loaded = success(
-    await registry.call("motionforge.workflow.load", { scene: sourceScene() }),
+    await registry.call("dojo-video-engine.workflow.load", { scene: sourceScene() }),
   );
   const handle = loaded.handle!;
   const applied = success(
-    await registry.call("motionforge.workflow.commands", {
+    await registry.call("dojo-video-engine.workflow.commands", {
       handle,
       expectedRevision: 0,
       commands: [{ kind: "text.set", id: "title", text: "Edited" }],
@@ -173,7 +173,7 @@ describe("workflow evidence adapter integration", () => {
     const adapter = createWorkflowEvidenceAdapter();
     const { registry, handle } = await loadedEditedRegistry(adapter);
     const proof = success(
-      await registry.call("motionforge.workflow.evidence", {
+      await registry.call("dojo-video-engine.workflow.evidence", {
         handle,
         expectedRevision: 1,
         operation: "proof.frames",
@@ -183,7 +183,7 @@ describe("workflow evidence adapter integration", () => {
     const result = evidenceResult(proof);
     expect(result).toMatchObject({
       ok: true,
-      kind: "motionforge.proof-frame-selection",
+      kind: "dojo-video-engine.proof-frame-selection",
     });
     expect(
       result.frames.some((frame: any) =>
@@ -202,7 +202,7 @@ describe("workflow evidence adapter integration", () => {
     const adapter = createWorkflowEvidenceAdapter(ports);
     const { registry, handle } = await loadedEditedRegistry(adapter);
     const planned = success(
-      await registry.call("motionforge.workflow.evidence", {
+      await registry.call("dojo-video-engine.workflow.evidence", {
         handle,
         expectedRevision: 1,
         operation: "proof.comparison.plan",
@@ -212,13 +212,13 @@ describe("workflow evidence adapter integration", () => {
     const planResult = evidenceResult(planned);
     expect(planResult).toMatchObject({
       ok: true,
-      kind: "motionforge.workflow-proof-comparison",
+      kind: "dojo-video-engine.workflow-proof-comparison",
       plan: { title: "Proof", artifacts: expect.any(Array) },
     });
     expect(containsSceneObject(planResult)).toBe(false);
 
     const rendered = success(
-      await registry.call("motionforge.workflow.evidence", {
+      await registry.call("dojo-video-engine.workflow.evidence", {
         handle,
         expectedRevision: 1,
         operation: "proof.comparison.render",
@@ -228,9 +228,9 @@ describe("workflow evidence adapter integration", () => {
     const renderResult = evidenceResult(rendered);
     expect(renderResult).toMatchObject({
       ok: true,
-      kind: "motionforge.workflow-proof-render",
+      kind: "dojo-video-engine.workflow-proof-render",
       artifacts: {
-        kind: "motionforge.evidence-artifacts",
+        kind: "dojo-video-engine.evidence-artifacts",
         artifacts: expect.arrayContaining([
           expect.objectContaining({
             uri: expect.stringMatching(/^memory:\/\//),
@@ -252,7 +252,7 @@ describe("workflow evidence adapter integration", () => {
     const noPorts = createWorkflowEvidenceAdapter();
     const { registry, handle } = await loadedEditedRegistry(noPorts);
     const frames = success(
-      await registry.call("motionforge.workflow.evidence", {
+      await registry.call("dojo-video-engine.workflow.evidence", {
         handle,
         expectedRevision: 1,
         operation: "proof.frames",
@@ -266,7 +266,7 @@ describe("workflow evidence adapter integration", () => {
       ["proof.unknown", {}],
     ] as const) {
       const output = success(
-        await registry.call("motionforge.workflow.evidence", {
+        await registry.call("dojo-video-engine.workflow.evidence", {
           handle,
           expectedRevision: 1,
           operation,
@@ -275,7 +275,7 @@ describe("workflow evidence adapter integration", () => {
       );
       expect(evidenceResult(output)).toMatchObject({
         ok: false,
-        kind: "motionforge.evidence.failure",
+        kind: "dojo-video-engine.evidence.failure",
         errors: [{ code: "invalid_request" }],
       });
     }
@@ -284,7 +284,7 @@ describe("workflow evidence adapter integration", () => {
     const failingAdapter = createWorkflowEvidenceAdapter(failingPorts);
     const failing = await loadedEditedRegistry(failingAdapter);
     const output = success(
-      await failing.registry.call("motionforge.workflow.evidence", {
+      await failing.registry.call("dojo-video-engine.workflow.evidence", {
         handle: failing.handle,
         expectedRevision: 1,
         operation: "proof.comparison.render",
@@ -322,7 +322,7 @@ describe("workflow evidence adapter integration", () => {
       },
     });
     const { registry, handle } = await loadedEditedRegistry(adapter);
-    const renderPromise = registry.call("motionforge.workflow.evidence", {
+    const renderPromise = registry.call("dojo-video-engine.workflow.evidence", {
       handle,
       expectedRevision: 1,
       operation: "proof.comparison.render",
@@ -337,7 +337,7 @@ describe("workflow evidence adapter integration", () => {
     expect(ports.state.aborts).toBe(1);
 
     const closed = success(
-      await registry.call("motionforge.workflow.close", {
+      await registry.call("dojo-video-engine.workflow.close", {
         handle,
         expectedRevision: 1,
       }),
@@ -354,7 +354,7 @@ describe("workflow evidence adapter integration", () => {
       },
     });
     const { registry, handle } = await loadedEditedRegistry(adapter);
-    const closed = await registry.call("motionforge.workflow.close", {
+    const closed = await registry.call("dojo-video-engine.workflow.close", {
       handle,
       expectedRevision: 1,
     });
@@ -362,7 +362,7 @@ describe("workflow evidence adapter integration", () => {
       ok: false,
       error: { code: "cleanup_failed" },
     });
-    const read = await registry.call("motionforge.workflow.read", {
+    const read = await registry.call("dojo-video-engine.workflow.read", {
       handle,
       view: "summary",
     });
@@ -384,18 +384,18 @@ describe("workflow evidence adapter integration", () => {
       sessionOptions: { sessionId: "MultiEvidence", evidence: adapter },
     });
     const first = success(
-      await registry.call("motionforge.workflow.load", {
+      await registry.call("dojo-video-engine.workflow.load", {
         scene: sourceScene(),
       }),
     ).handle!;
     const second = success(
-      await registry.call("motionforge.workflow.load", {
+      await registry.call("dojo-video-engine.workflow.load", {
         scene: sourceScene(),
       }),
     ).handle!;
     for (const handle of [first, second]) {
       success(
-        await registry.call("motionforge.workflow.evidence", {
+        await registry.call("dojo-video-engine.workflow.evidence", {
           handle,
           expectedRevision: 0,
           operation: "proof.comparison.render",
@@ -410,7 +410,7 @@ describe("workflow evidence adapter integration", () => {
       store.list({ sessionId: "MultiEvidence", handle: second }).length,
     ).toBeGreaterThan(0);
     success(
-      await registry.call("motionforge.workflow.close", {
+      await registry.call("dojo-video-engine.workflow.close", {
         handle: first,
         expectedRevision: 0,
       }),

@@ -1,6 +1,6 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
-import { validateScene, type Scene } from "@motionforge/schema";
+import { validateScene, type Scene } from "@dojo-video-engine/schema";
 import {
   createRemotionFramePayload,
   createRemotionHostDescriptor,
@@ -488,7 +488,7 @@ describe("Remotion host data bridge", () => {
     });
     expect(created.descriptor.hostContract).toEqual({
       frameSource: "host",
-      renderEntry: "motionforge-canvas2d",
+      renderEntry: "dojo-video-engine-canvas2d",
       reactExecution: false,
       arbitraryCompositionImport: false,
     });

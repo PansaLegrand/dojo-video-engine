@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Ajv } from "ajv";
-import { motionPresetDefinitions } from "@motionforge/presets";
-import { macroDefinitions, macroNames } from "@motionforge/presets/macros";
+import { motionPresetDefinitions } from "@dojo-video-engine/presets";
+import { macroDefinitions, macroNames } from "@dojo-video-engine/presets/macros";
 import {
   COMMAND_MANIFEST_VERSION,
   capabilityManifests,

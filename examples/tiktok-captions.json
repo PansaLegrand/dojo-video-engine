@@ -71,7 +71,7 @@
     {
       "id": "title",
       "type": "text",
-      "text": "MOTIONFORGE",
+      "text": "DOJO_VIDEO_ENGINE",
       "style": {
         "position": "absolute",
         "left": 0,

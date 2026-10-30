@@ -10,7 +10,7 @@ many small changes without decoding every unchanged resource again.
 
 ## Public boundary
 
-`@motionforge/runtime` owns:
+`@dojo-video-engine/runtime` owns:
 
 - strict Scene loading and backend preflight;
 - monotonic revisions and latest-intent generations;
@@ -21,7 +21,7 @@ many small changes without decoding every unchanged resource again.
   asynchronous disposal;
 - bounded, transactional frame-image artifact delivery to a host sink.
 
-`@motionforge/renderer-canvas2d/runtime` supplies the reference backend,
+`@dojo-video-engine/renderer-canvas2d/runtime` supplies the reference backend,
 `createCanvas2DSceneRuntime()`, resolved text/media metrics, and
 `withCanvas2DResolvedAssets()`. The base runtime has no DOM, Canvas, encoder,
 storage, application, or model-provider dependency.
@@ -104,10 +104,10 @@ impossible abort claim.
 
 - The compatibility asset scope is serialized. Do not retain its Scene or
   resolved assets after the callback/player/export operation settles.
-- Canvas extension reuse is explicit; MotionForge cannot infer the lifetime of
+- Canvas extension reuse is explicit; Dojo Video Engine cannot infer the lifetime of
   arbitrary opaque state.
 - Frame-image artifacts currently support the Canvas backend's declared PNG,
-  JPEG, and WebP encoders. Video muxing stays in `@motionforge/export`.
+  JPEG, and WebP encoders. Video muxing stays in `@dojo-video-engine/export`.
 - MF5 deliberately does not introduce a display list, new layout vocabulary,
   second renderer, durable session store, or collaborative revision service.
 
@@ -130,10 +130,10 @@ The milestone gate includes:
 Run the focused checks with:
 
 ```sh
-pnpm --filter @motionforge/runtime test
-pnpm --filter @motionforge/renderer-canvas2d test
-pnpm --filter @motionforge/player test
-pnpm --filter @motionforge/export test
+pnpm --filter @dojo-video-engine/runtime test
+pnpm --filter @dojo-video-engine/renderer-canvas2d test
+pnpm --filter @dojo-video-engine/player test
+pnpm --filter @dojo-video-engine/export test
 pnpm golden:test
 pnpm release:full
 pnpm verify:clean

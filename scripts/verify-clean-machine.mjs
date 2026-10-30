@@ -11,7 +11,7 @@ const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const keep = process.argv.includes("--keep");
 const suppliedPackDir = readOption("--pack-dir");
 
-const tempDir = await mkdtemp(join(tmpdir(), "motionforge-clean-machine-"));
+const tempDir = await mkdtemp(join(tmpdir(), "dojo-video-engine-clean-machine-"));
 const packDir = suppliedPackDir
   ? resolve(rootDir, suppliedPackDir)
   : join(tempDir, "packs");
@@ -47,8 +47,8 @@ try {
   console.log(`starter project: ${projectDir}`);
   console.log(
     keep
-      ? "manual Studio check: cd into the starter project and run pnpm dev"
-      : "rerun with --keep to preserve the starter for a manual Studio check",
+      ? "Headless starter ready; editor and chat: https://github.com/PansaLegrand/dojo-video-harness"
+      : "rerun with --keep to preserve the headless authoring starter",
   );
 } finally {
   if (!keep) {
@@ -80,7 +80,7 @@ async function packWorkspacePackages() {
 async function verifyReleaseBundle(directory) {
   const manifest = await readJson(join(directory, "release-manifest.json"));
   if (
-    manifest.format !== "motionforge.release-manifest" ||
+    manifest.format !== "dojo-video-engine.release-manifest" ||
     manifest.version !== 2 ||
     !Array.isArray(manifest.packages)
   ) {
@@ -137,26 +137,26 @@ async function verifyReleaseBundle(directory) {
     }
   }
   console.log(
-    `verified retained MotionForge ${manifest.releaseVersion} release bundle (${packed.size} packages)`,
+    `verified retained DojoVideoEngine ${manifest.releaseVersion} release bundle (${packed.size} packages)`,
   );
   return packed;
 }
 
 async function installPackedCreate(packed) {
-  const createTarball = packed.get("@motionforge/create");
+  const createTarball = packed.get("@dojo-video-engine/create");
   if (!createTarball)
-    throw new Error("Packed @motionforge/create is unavailable.");
+    throw new Error("Packed @dojo-video-engine/create is unavailable.");
   await mkdir(launcherDir, { recursive: true });
   await writeFile(
     join(launcherDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "motionforge-create-launcher",
+        name: "dojo-video-engine-create-launcher",
         version: "0.0.0",
         private: true,
         packageManager: "pnpm@10.34.5",
         dependencies: {
-          "@motionforge/create": `file:${toProjectRelative(
+          "@dojo-video-engine/create": `file:${toProjectRelative(
             launcherDir,
             createTarball,
           )}`,
@@ -169,7 +169,7 @@ async function installPackedCreate(packed) {
   await run("pnpm", ["install"], { cwd: launcherDir });
   return join(
     launcherDir,
-    "node_modules/@motionforge/create/dist/bin/create-motionforge.js",
+    "node_modules/@dojo-video-engine/create/dist/bin/create-dojo-video-engine.js",
   );
 }
 
@@ -188,15 +188,15 @@ async function rewriteStarterDependencies(packed) {
 
   manifest.dependencies = {
     ...manifest.dependencies,
-    "@motionforge/agent-tools": spec("@motionforge/agent-tools"),
-    "@motionforge/authoring": spec("@motionforge/authoring"),
-    "@motionforge/cli": spec("@motionforge/cli"),
-    "@motionforge/commands": spec("@motionforge/commands"),
-    "@motionforge/export": spec("@motionforge/export"),
-    "@motionforge/interchange": spec("@motionforge/interchange"),
-    "@motionforge/renderer-canvas2d": spec("@motionforge/renderer-canvas2d"),
-    "@motionforge/runtime": spec("@motionforge/runtime"),
-    "@motionforge/schema": spec("@motionforge/schema"),
+    "@dojo-video-engine/agent-tools": spec("@dojo-video-engine/agent-tools"),
+    "@dojo-video-engine/authoring": spec("@dojo-video-engine/authoring"),
+    "@dojo-video-engine/cli": spec("@dojo-video-engine/cli"),
+    "@dojo-video-engine/commands": spec("@dojo-video-engine/commands"),
+    "@dojo-video-engine/export": spec("@dojo-video-engine/export"),
+    "@dojo-video-engine/interchange": spec("@dojo-video-engine/interchange"),
+    "@dojo-video-engine/renderer-canvas2d": spec("@dojo-video-engine/renderer-canvas2d"),
+    "@dojo-video-engine/runtime": spec("@dojo-video-engine/runtime"),
+    "@dojo-video-engine/schema": spec("@dojo-video-engine/schema"),
   };
   manifest.devDependencies = {
     ...manifest.devDependencies,
@@ -210,7 +210,7 @@ async function rewriteStarterDependencies(packed) {
     ...manifest.pnpm,
     overrides: Object.fromEntries(
       [...packed.keys()]
-        .filter((name) => name !== "@motionforge/create")
+        .filter((name) => name !== "@dojo-video-engine/create")
         .map((name) => [name, spec(name)]),
     ),
   };
@@ -219,8 +219,8 @@ async function rewriteStarterDependencies(packed) {
 }
 
 async function writeRuntimeSmoke() {
-  const source = `import { createSceneRuntime } from "@motionforge/runtime";
-import { createCanvas2DRuntimeBackend } from "@motionforge/renderer-canvas2d/runtime";
+  const source = `import { createSceneRuntime } from "@dojo-video-engine/runtime";
+import { createCanvas2DRuntimeBackend } from "@dojo-video-engine/renderer-canvas2d/runtime";
 
 const scene = {
   schemaVersion: 1,
@@ -289,9 +289,9 @@ console.log("packed runtime entry points ok");
 }
 
 async function writePlatformSmokes() {
-  const nodeSource = `import { createAgentWorkflowToolRegistry } from "@motionforge/agent-tools";
-import { exportTimelineV1, importTimelineV1 } from "@motionforge/interchange";
-import { createExportWorkerHandler } from "@motionforge/export/worker";
+  const nodeSource = `import { createAgentWorkflowToolRegistry } from "@dojo-video-engine/agent-tools";
+import { exportTimelineV1, importTimelineV1 } from "@dojo-video-engine/interchange";
+import { createExportWorkerHandler } from "@dojo-video-engine/export/worker";
 
 const scene = {
   schemaVersion: 1,
@@ -305,9 +305,9 @@ const scene = {
 const registry = createAgentWorkflowToolRegistry({
   sessionOptions: { sessionId: "PackedPlatform" },
 });
-const loaded = await registry.call("motionforge.workflow.load", { scene });
+const loaded = await registry.call("dojo-video-engine.workflow.load", { scene });
 if (!loaded.ok || !loaded.handle) throw new Error("packed workflow load failed");
-const edited = await registry.call("motionforge.workflow.commands", {
+const edited = await registry.call("dojo-video-engine.workflow.commands", {
   handle: loaded.handle,
   expectedRevision: 0,
   commands: [{ kind: "text.set", id: "title", text: "After" }],
@@ -324,9 +324,9 @@ if (typeof createExportWorkerHandler !== "function") {
 await registry.dispose();
 console.log("packed workflow/interchange/worker entry points ok");
 `;
-  const browserSource = `import { createAgentWorkflowToolRegistry } from "@motionforge/agent-tools";
-import { detectExportCapability } from "@motionforge/export";
-import { createRemotionHostDescriptor } from "@motionforge/interchange";
+  const browserSource = `import { createAgentWorkflowToolRegistry } from "@dojo-video-engine/agent-tools";
+import { detectExportCapability } from "@dojo-video-engine/export";
+import { createRemotionHostDescriptor } from "@dojo-video-engine/interchange";
 
 const scene = {
   schemaVersion: 1,
@@ -340,7 +340,7 @@ const scene = {
 const registry = createAgentWorkflowToolRegistry({
   sessionOptions: { sessionId: "BrowserExample" },
 });
-const loaded = await registry.call("motionforge.workflow.load", { scene });
+const loaded = await registry.call("dojo-video-engine.workflow.load", { scene });
 const descriptor = createRemotionHostDescriptor(scene);
 const capability = detectExportCapability(globalThis);
 const status = document.querySelector("#status");
@@ -357,13 +357,13 @@ await registry.dispose();
 export const createExportWorker = () =>
   new Worker(new URL("./export-worker.ts", import.meta.url), { type: "module" });
 `;
-  const workerSource = `import { installExportWorker } from "@motionforge/export/worker";
+  const workerSource = `import { installExportWorker } from "@dojo-video-engine/export/worker";
 
 installExportWorker(
   globalThis as unknown as Parameters<typeof installExportWorker>[0],
 );
 `;
-  const html = `<!doctype html><meta charset="utf-8"><title>MotionForge packed browser smoke</title><pre id="status"></pre><script type="module" src="/src/browser-smoke.ts"></script>`;
+  const html = `<!doctype html><meta charset="utf-8"><title>DojoVideoEngine packed browser smoke</title><pre id="status"></pre><script type="module" src="/src/browser-smoke.ts"></script>`;
   const viteConfig = `import { defineConfig } from "vite";
 export default defineConfig({
   root: ".",

@@ -6,7 +6,7 @@
 
 ## Summary
 
-MotionForge animation remains ordinary scene data. The engine adds only the
+Dojo Video Engine animation remains ordinary scene data. The engine adds only the
 playback semantics that cannot compile away—repeat/yoyo and named markers.
 Higher-level sequence, stagger, motion-path, seeded-signal, mask-reveal, and
 named preset intent compiles into normal keyframe tracks before storage/render.
@@ -34,7 +34,7 @@ inspection, and timeline compilation preserve markers as data.
 
 ## Compilers
 
-`@motionforge/presets` provides pure compilers:
+`@dojo-video-engine/presets` provides pure compilers:
 
 - timeline `.sequence()`, `.stagger()`, and named `.marker()` positioning;
 - distance-weighted `motionPath()` with optional tangent orientation;

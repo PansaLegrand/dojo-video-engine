@@ -3,8 +3,8 @@ import type {
   MeasurementQuality,
   ResolvedMeasurementProvenance,
   TextMetricsProvider,
-} from "@motionforge/core";
-import type { Scene, SceneAsset } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { Scene, SceneAsset } from "@dojo-video-engine/schema";
 import type { LayoutPlan, LayoutPlanValidationIssue } from "./schema.js";
 import type { LayoutTextMeasurement } from "./text.js";
 

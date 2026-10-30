@@ -7,9 +7,9 @@
 
 ## Decision
 
-`Scene` v1 remains MotionForge's only canonical, persistable render document.
+`Scene` v1 remains Dojo Video Engine's only canonical, persistable render document.
 After frame evaluation and layout, `compileDisplayList()` creates a defensive,
-JSON-safe `motionforge.display-list` v1 artifact for that frame. The artifact is
+JSON-safe `dojo-video-engine.display-list` v1 artifact for that frame. The artifact is
 ephemeral paint intent: it can be cached inside a prepared runtime, inspected,
 or consumed by a renderer, but it is not a storage or migration format.
 
@@ -22,7 +22,7 @@ unbalanced.
 
 ## Public contract
 
-`@motionforge/core` owns the neutral types and compiler:
+`@dojo-video-engine/core` owns the neutral types and compiler:
 
 ```ts
 const list = compileDisplayList(layoutScene(evaluateScene(scene, frame)), {
@@ -50,7 +50,7 @@ being dishonestly described as a few primitive draws.
 
 An existing extension with only its Canvas2D draw adapter compiles to an
 explicit `legacy-opaque` operation and requires
-`motionforge.legacy.renderer-adapter@1.0.0`. A host extension bridge may instead
+`dojo-video-engine.legacy.renderer-adapter@1.0.0`. A host extension bridge may instead
 supply:
 
 - a versioned standard-operation payload; or

@@ -15,8 +15,8 @@ Scene documents that produce real videos. Render any of them with:
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden exec playwright install chromium  # once
-pnpm --filter @motionforge/golden run example examples/generated/tiktok-captions.json out.mp4 60
+pnpm --filter @dojo-video-engine/golden exec playwright install chromium  # once
+pnpm --filter @dojo-video-engine/golden run example examples/generated/tiktok-captions.json out.mp4 60
 ```
 
 The trailing numbers are optional frame indices written as PNGs next to the MP4.
@@ -42,11 +42,11 @@ Render the docs thumbnails with the browser golden harness:
 
 ```sh
 mkdir -p docs/assets/presets
-pnpm --filter @motionforge/golden run example examples/generated/presets/preset-subtitles.json docs/assets/presets/preset-subtitles.mp4 45
-pnpm --filter @motionforge/golden run example examples/generated/presets/preset-text-overlays.json docs/assets/presets/preset-text-overlays.mp4 45
-pnpm --filter @motionforge/golden run example examples/generated/presets/preset-media-looks.json docs/assets/presets/preset-media-looks.mp4 45
-pnpm --filter @motionforge/golden run example examples/generated/presets/preset-clip-layouts.json docs/assets/presets/preset-clip-layouts.mp4 45
-pnpm --filter @motionforge/golden run example examples/generated/presets/preset-transitions.json docs/assets/presets/preset-transitions.mp4 30
+pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-subtitles.json docs/assets/presets/preset-subtitles.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-text-overlays.json docs/assets/presets/preset-text-overlays.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-media-looks.json docs/assets/presets/preset-media-looks.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-clip-layouts.json docs/assets/presets/preset-clip-layouts.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-transitions.json docs/assets/presets/preset-transitions.mp4 30
 ```
 
 The PNG frames are committed for docs. The intermediate MP4 files are ignored.
@@ -56,20 +56,20 @@ The PNG frames are committed for docs. The intermediate MP4 files are ignored.
 The generated showcase now includes two use-case demos aimed at agent and editor workflows:
 
 - `launch-info-display.json` — a prompt-to-video style launch display with animated panels, scan lines, countdown text, and progress motion.
-- `timed-text-overlay.json` — a written timing prompt mapped to frame-accurate overlays: `motionforge.dev` at top center for the first 5 seconds, then `Coming soon...` in the bottom-right corner for the final 10 seconds.
+- `timed-text-overlay.json` — a written timing prompt mapped to frame-accurate overlays: `dojo-video-engine.dev` at top center for the first 5 seconds, then `Coming soon...` in the bottom-right corner for the final 10 seconds.
 - `text-stress-gallery.json` — long Latin, URLs, CJK, emoji, long single-token text, and multiline captions in bounded overlay cards.
 - `subtitle-stress-gallery.json` — parsed SRT, parsed WebVTT, manual subtitle segments, long Latin, URLs, CJK, emoji, and fast cue changes in timed subtitle tracks.
 - `image-overlay-stress-gallery.json` — logo bug, watermark, transparent sticker, product shot, avatar badge, and oversized corner badge presets in one self-contained scene.
 - `video-overlay-stress-gallery.json` — picture-in-picture, reaction cam, screen demo, muted background loop, b-roll strip, and video badge presets backed by one embedded MP4 asset.
 
-These examples prove the scene contract is ready for prompt-generated videos. The repository does not yet ship a natural-language compiler; today an agent, app, or preset layer writes the scene JSON and motionforge validates, previews, and exports it.
+These examples prove the scene contract is ready for prompt-generated videos. The repository does not yet ship a natural-language compiler; today an agent, app, or preset layer writes the scene JSON and dojo-video-engine validates, previews, and exports it.
 
 Render the text stress gallery when changing text layout or renderer behavior:
 
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden run example examples/generated/text-stress-gallery.json out/text-stress-gallery.mp4 30
+pnpm --filter @dojo-video-engine/golden run example examples/generated/text-stress-gallery.json out/text-stress-gallery.mp4 30
 ```
 
 Render the subtitle stress gallery when changing subtitle parsing, templates, or renderer text-fit behavior:
@@ -77,7 +77,7 @@ Render the subtitle stress gallery when changing subtitle parsing, templates, or
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden run example examples/generated/subtitle-stress-gallery.json out/subtitle-stress-gallery.mp4 90
+pnpm --filter @dojo-video-engine/golden run example examples/generated/subtitle-stress-gallery.json out/subtitle-stress-gallery.mp4 90
 ```
 
 Render the image overlay stress gallery when changing image assets, object-fit behavior, safe-area placement, or overlay presets:
@@ -85,7 +85,7 @@ Render the image overlay stress gallery when changing image assets, object-fit b
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden run example examples/generated/image-overlay-stress-gallery.json out/image-overlay-stress-gallery.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/image-overlay-stress-gallery.json out/image-overlay-stress-gallery.mp4 45
 ```
 
 Render the video overlay stress gallery when changing video trim, playback rate, clip volume, object-fit behavior, rounded crop, or overlay presets:
@@ -93,7 +93,7 @@ Render the video overlay stress gallery when changing video trim, playback rate,
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden run example examples/generated/video-overlay-stress-gallery.json out/video-overlay-stress-gallery.mp4 45
+pnpm --filter @dojo-video-engine/golden run example examples/generated/video-overlay-stress-gallery.json out/video-overlay-stress-gallery.mp4 45
 ```
 
 ## Assets And Transcript Files
@@ -118,12 +118,12 @@ asset — all from one JSON document, no code.
 
 The same caption track, generated instead of hand-written: one
 `tiktokCaptions(words, { fps, highlightIndices })` call from
-[`@motionforge/presets`](../packages/presets) replaces ~300 lines of JSON.
+[`@dojo-video-engine/presets`](../packages/presets) replaces ~300 lines of JSON.
 The generated version uses renderer-measured text pills (`textBackgroundColor`
 and padding/radius on text nodes) instead of hand-sized wrapper boxes.
 
 ```sh
 pnpm build
 node examples/generate-tiktok.mjs > /tmp/tiktok-presets.json
-pnpm --filter @motionforge/golden run example /tmp/tiktok-presets.json out.mp4 50
+pnpm --filter @dojo-video-engine/golden run example /tmp/tiktok-presets.json out.mp4 50
 ```

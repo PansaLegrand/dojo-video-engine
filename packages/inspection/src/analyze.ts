@@ -3,7 +3,7 @@ import {
   lintScene,
   parseScene,
   validateScene,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import { inspectLayout } from "./layout.js";
 import { inspectTimeline, inspectTree } from "./tree.js";
 import type {
@@ -57,7 +57,7 @@ export function analyzeComposition(
     byCode[diagnostic.code] = (byCode[diagnostic.code] ?? 0) + 1;
   });
   return {
-    kind: "motionforge.composition",
+    kind: "dojo-video-engine.composition",
     version: 1,
     sampledFrames: frames,
     frames: snapshots,
@@ -115,7 +115,7 @@ export function checkScene(
   const validation = validateScene(sceneInput);
   if (!validation.ok) {
     return {
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       version: 1,
       ok: false,
       validation: { ok: false, errors: validation.errors },
@@ -147,7 +147,7 @@ export function checkScene(
     (diagnostic) => diagnostic.severity === "error",
   ).length;
   return {
-    kind: "motionforge.check",
+    kind: "dojo-video-engine.check",
     version: 1,
     ok: errors === 0,
     validation: { ok: true, errors: [] },

@@ -1,6 +1,6 @@
 # Code of Conduct
 
-MotionForge is committed to a respectful, technically rigorous community in
+Dojo Video Engine is committed to a respectful, technically rigorous community in
 which people can participate without harassment.
 
 ## Expected behavior

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   compileDisplayList,
   evaluateScene,
@@ -202,7 +202,7 @@ describe("renderer-neutral display list", () => {
       groups.find((group) => group.nodeId === "effect-node")?.content,
     ).toMatchObject({
       kind: "effect",
-      capability: { id: "motionforge.effect", version: "1" },
+      capability: { id: "dojo-video-engine.effect", version: "1" },
     });
     expect(
       groups.find((group) => group.nodeId === "extension-node")?.content,
@@ -212,12 +212,12 @@ describe("renderer-neutral display list", () => {
     });
     expect(result.requirements).toEqual([
       {
-        id: "motionforge.effect",
+        id: "dojo-video-engine.effect",
         version: "1",
         nodeIds: ["effect-node"],
       },
       {
-        id: "motionforge.legacy.renderer-adapter",
+        id: "dojo-video-engine.legacy.renderer-adapter",
         version: "1.0.0",
         nodeIds: ["extension-node"],
       },
@@ -292,9 +292,9 @@ describe("renderer-neutral display list", () => {
       ),
     ).toEqual([0, 1, 2]);
     expect(result.requirements.map((entry) => entry.id)).toEqual([
-      "motionforge.filter",
-      "motionforge.mask.soft",
-      "motionforge.paint.conic",
+      "dojo-video-engine.filter",
+      "dojo-video-engine.mask.soft",
+      "dojo-video-engine.paint.conic",
     ]);
   });
 

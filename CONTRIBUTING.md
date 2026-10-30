@@ -1,4 +1,4 @@
-# Contributing to motionforge
+# Contributing to dojo-video-engine
 
 Thanks for helping build a deterministic, browser-native video scene engine.
 This document covers development and review. Participation is also governed by
@@ -11,7 +11,7 @@ the [Code of Conduct](CODE_OF_CONDUCT.md), [governance](GOVERNANCE.md), and
   `engines` may document a narrower runtime boundary)
 - the exact pnpm version pinned by `packageManager` (`corepack enable` respects
   it); the pin must remain on a security-supported release
-- One-time, for golden tests: `pnpm --filter @motionforge/golden exec playwright install chromium`
+- One-time, for golden tests: `pnpm --filter @dojo-video-engine/golden exec playwright install chromium`
 
 ## Development workflow
 
@@ -48,11 +48,11 @@ Golden tests render fixture scenes in the Playwright-pinned Chromium and hash th
 - `strict` and `noUncheckedIndexedAccess` stay on; do not weaken `tsconfig.base.json`.
 - No `any`, no non-null assertions (`!`) in library code; narrow with checks instead.
 - Public API types are explicit — exported functions declare parameter and return types rather than relying on inference.
-- Library packages are ESM-only (`"type": "module"`). Imports between packages go through the `@motionforge/*` entry points, never deep paths.
+- Library packages are ESM-only (`"type": "module"`). Imports between packages go through the `@dojo-video-engine/*` entry points, never deep paths.
 
 ### Package layout
 
-- Public packages live in `packages/*`; `apps/*` and `tools/*` are private. The browser-engine packages (`schema`, `core`, `renderer-*`, `export`, `player`, `presets`, and `authoring`) may not depend on Node-only or application-framework APIs. The CLI and starter packages are intentionally Node-based entry points.
+- Public packages live in `packages/*`; `tools/*` contains private engine verification infrastructure. The browser-engine packages (`schema`, `core`, `renderer-*`, `export`, `player`, `presets`, and `authoring`) may not depend on Node-only or application-framework APIs. The CLI and starter packages are intentionally Node-based entry points.
 - Dependency direction: `schema` ← `core` ← `renderer-*`, `export`. The schema package depends on nothing but zod.
 - Every publishable package ships `dist` only (with tests and buildinfo excluded), plus its own `README.md` and `LICENSE`.
 - The standalone repository is authoritative. Read [`docs/source-of-truth.md`](docs/source-of-truth.md) before integrating changes from a downstream application.
@@ -97,9 +97,9 @@ provenance. A manifest version or changelog heading is therefore a source
 baseline until the external release record is complete.
 
 Release managers follow [`docs/release-process.md`](docs/release-process.md).
-The 1.1 candidate uses the scoped starter package `@motionforge/create`; the
-unscoped npm package `create-motionforge` belongs to another project, although
-the MotionForge executable remains named `create-motionforge`.
+The 1.1 candidate uses the scoped starter package `@dojo-video-engine/create`; the
+unscoped npm package `create-dojo-video-engine` belongs to another project, although
+the Dojo Video Engine executable remains named `create-dojo-video-engine`.
 
 Use `pnpm pack`/`pnpm publish` semantics for workspace packages. Direct
 `npm pack` or `npm publish` from a package source directory can leave

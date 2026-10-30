@@ -1,8 +1,8 @@
-# @motionforge/authoring
+# @dojo-video-engine/authoring
 
-Seconds-first TypeScript helpers for writing MotionForge scenes with less boilerplate.
+Seconds-first TypeScript helpers for writing Dojo Video Engine scenes with less boilerplate.
 
-This package is intentionally small. It does not replace the scene schema or lower-level builder; it compiles author-friendly options into the same validated MotionForge `Scene` JSON.
+This package is intentionally small. It does not replace the scene schema or lower-level builder; it compiles author-friendly options into the same validated Dojo Video Engine `Scene` JSON.
 
 ## Install
 
@@ -11,7 +11,7 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/authoring
+npm install @dojo-video-engine/authoring
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ import {
   seconds,
   textBlock,
   title,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -32,7 +32,7 @@ export default makeScene({
   duration: seconds(5),
   children: [
     bg("#0f172a"),
-    title("Hello MotionForge", {
+    title("Hello Dojo Video Engine", {
       at: seconds(0.8),
       enter: fadeUp(),
     }),
@@ -45,7 +45,7 @@ export default makeScene({
 });
 ```
 
-`makeScene()` returns a normal MotionForge scene document. Store it, diff it, validate it, patch it, preview it, or export it with the existing MotionForge packages.
+`makeScene()` returns a normal Dojo Video Engine scene document. Store it, diff it, validate it, patch it, preview it, or export it with the existing Dojo Video Engine packages.
 
 ## Timing
 
@@ -72,7 +72,7 @@ import {
   seconds,
   videoAsset,
   videoClip,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const logo = imageAsset("logo", publicAsset("assets/logo.png"));
 const clip = videoAsset("clip", publicAsset("assets/clip.mp4"), {
@@ -122,7 +122,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const sticker = lottieAsset("sparkle", publicAsset("assets/sparkle.json"));
 
@@ -171,7 +171,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const logo = imageAsset("logo", publicAsset("assets/logo.svg"));
 
@@ -202,7 +202,7 @@ import {
   seconds,
   videoAsset,
   videoOverlay,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const clip = videoAsset("clip", publicAsset("assets/demo.mp4"));
 
@@ -233,7 +233,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const music = audioAsset("music", publicAsset("assets/music.mp3"));
 const ping = audioAsset("ping", publicAsset("assets/ping.wav"));
@@ -275,7 +275,7 @@ import {
   parseSrt,
   seconds,
   subtitleTrack,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const subtitles = parseSrt(`1
 00:00:00,500 --> 00:00:02,100

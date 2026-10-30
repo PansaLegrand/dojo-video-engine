@@ -23,11 +23,11 @@ if (outputIndex >= 0 && !argumentsList[outputIndex + 1])
 const outputDirectory = path.resolve(
   outputIndex >= 0
     ? argumentsList[outputIndex + 1]
-    : path.join(os.tmpdir(), "motionforge-run-backgrounds-proof"),
+    : path.join(os.tmpdir(), "dojo-video-engine-run-backgrounds-proof"),
 );
 await mkdir(outputDirectory, { recursive: true });
 const fixtureDirectory = await mkdtemp(
-  path.join(os.tmpdir(), "motionforge-run-backgrounds-"),
+  path.join(os.tmpdir(), "dojo-video-engine-run-backgrounds-"),
 );
 const config = JSON.parse(
   await readFile(path.join(repo, "tsconfig.base.json"), "utf8"),
@@ -49,9 +49,9 @@ await writeFile(
 await writeFile(
   path.join(fixtureDirectory, "main.ts"),
   `
-import { parseScene } from '@motionforge/schema';
-import { renderStill, compileCanvas2DDisplayList, disposeMediaInputSafely } from '@motionforge/renderer-canvas2d';
-import { exportVideo } from '@motionforge/export';
+import { parseScene } from '@dojo-video-engine/schema';
+import { renderStill, compileCanvas2DDisplayList, disposeMediaInputSafely } from '@dojo-video-engine/renderer-canvas2d';
+import { exportVideo } from '@dojo-video-engine/export';
 import { Input, BlobSource, ALL_FORMATS, CanvasSink } from 'mediabunny';
 window.runBackgroundProof = async () => {
  const canvas=document.querySelector('canvas');canvas.width=320;canvas.height=180;const context=canvas.getContext('2d',{willReadFrequently:true});const images={};

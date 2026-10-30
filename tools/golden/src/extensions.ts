@@ -1,9 +1,9 @@
 import {
   createExtensionRegistry,
   defineExtension,
-} from "@motionforge/extensions";
-import type { Canvas2DExtensionAdapter } from "@motionforge/renderer-canvas2d";
-import { z } from "zod";
+} from "@dojo-video-engine/extensions";
+import type { Canvas2DExtensionAdapter } from "@dojo-video-engine/renderer-canvas2d";
+import { z } from "zod/v3";
 
 const checkerAdapter: Canvas2DExtensionAdapter = {
   draw: ({ context, box, params, preparedFrame }) => {
@@ -30,7 +30,7 @@ const checkerAdapter: Canvas2DExtensionAdapter = {
 };
 
 const checker = defineExtension({
-  name: "dev.motionforge.golden-checker",
+  name: "dev.dojo-video-engine.golden-checker",
   version: "1.0.0",
   paramsSchema: z
     .object({

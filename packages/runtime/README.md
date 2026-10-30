@@ -1,9 +1,9 @@
-# @motionforge/runtime
+# @dojo-video-engine/runtime
 
-Renderer-neutral, reusable prepared Scene sessions for MotionForge.
+Renderer-neutral, reusable prepared Scene sessions for Dojo Video Engine.
 
 ```ts
-import { createSceneRuntime } from "@motionforge/runtime";
+import { createSceneRuntime } from "@dojo-video-engine/runtime";
 
 const runtime = await createSceneRuntime({ scene, backend });
 const token = await runtime.prepareFrame(30);
@@ -21,7 +21,7 @@ exporter, provider SDK, storage, or product dependency.
 `capabilities.audioResources` means a backend-specific compatibility adapter
 can borrow prepared audio-bearing media; it does not claim that this
 renderer-neutral package exposes PCM rendering. Canvas player/export wrappers
-own that bridge while the mixer remains in `@motionforge/export`.
+own that bridge while the mixer remains in `@dojo-video-engine/export`.
 
 Backends implement `PreparedSceneBackend` and return a provisional
 `BackendUpdateTransaction`; only the synchronous `commit()` point can publish

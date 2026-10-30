@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * Renderer-supported visual value grammars.
  *
- * These parsers deliberately describe MotionForge's portable Canvas2D subset,
+ * These parsers deliberately describe DojoVideoEngine's portable Canvas2D subset,
  * not the full CSS grammar. Parsed values are JSON-safe and serializers emit a
  * deterministic canonical spelling. Callers that need the author's original
  * color spelling can use `ParsedColorValue.source`.

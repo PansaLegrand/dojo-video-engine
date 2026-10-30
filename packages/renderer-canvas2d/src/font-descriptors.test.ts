@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseScene } from "@motionforge/schema";
+import { parseScene } from "@dojo-video-engine/schema";
 import { disposeAssetsAsync, FontAssetCache, resolveAssets } from "./index.js";
 
 describe("font descriptor lifecycle", () => {

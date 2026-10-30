@@ -7,8 +7,8 @@
 
 ## Decision
 
-MotionForge adds a versioned, compile-time Layout Contract in the independent
-`@motionforge/layout` package. Contract v1 is the first contract shipped by the
+Dojo Video Engine adds a versioned, compile-time Layout Contract in the independent
+`@dojo-video-engine/layout` package. Contract v1 is the first contract shipped by the
 Layout v2 milestone. It is a flat, non-recursive plan referencing existing
 direct Scene child IDs. It compiles completely to numeric absolute geometry on
 an otherwise ordinary Scene v1.
@@ -16,7 +16,7 @@ an otherwise ordinary Scene v1.
 Scene v1 remains the only canonical render and storage document. A layout plan
 is authoring input like a command or macro: hosts may retain it as source or
 history, but the engine never requires it to preview, render, export, migrate,
-or inspect the compiled Scene. Existing `@motionforge/core` `layoutScene()` and
+or inspect the compiled Scene. Existing `@dojo-video-engine/core` `layoutScene()` and
 Scene-v1 flex/default semantics do not change.
 
 Compilation is a target-size projection. Products that offer responsive
@@ -113,7 +113,7 @@ Contract v1 may gain optional fields under normal package compatibility rules.
 Changing an existing solve default or required field needs a new Layout
 Contract version.
 
-A future Scene v2 is required only if MotionForge decides to retain semantic
+A future Scene v2 is required only if Dojo Video Engine decides to retain semantic
 layout in the canonical render document and reevaluate it after target-size,
 font/media-metric, or per-frame animation changes. That future decision needs a
 Scene migration and renderer/runtime contract. MF7 does not reserve hidden

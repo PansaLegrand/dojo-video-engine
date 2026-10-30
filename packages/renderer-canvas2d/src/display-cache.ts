@@ -1,4 +1,4 @@
-import type { DisplayGroup } from "@motionforge/core";
+import type { DisplayGroup } from "@dojo-video-engine/core";
 import type { DetachedScratchSurface } from "./surface-pool.js";
 
 const STATIC_NODE_TYPES = new Set<DisplayGroup["nodeType"]>([
@@ -93,7 +93,7 @@ export function fingerprintStaticDisplayGroup(
   const digest = fnv1a64(signature).toString(16).padStart(16, "0");
   return Object.freeze({
     version: FINGERPRINT_VERSION,
-    key: `motionforge.static-display.v1:${digest}`,
+    key: `dojo-video-engine.static-display.v1:${digest}`,
     signature,
   });
 }

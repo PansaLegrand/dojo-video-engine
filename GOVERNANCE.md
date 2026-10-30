@@ -1,12 +1,12 @@
-# MotionForge governance
+# Dojo Video Engine governance
 
-MotionForge is a maintainer-led open-source project. This document explains
+Dojo Video Engine is a maintainer-led open-source project. This document explains
 how authority is earned and exercised; it does not imply a foundation,
 corporate steering committee, or guaranteed release schedule.
 
 ## Roles
 
-- **Users** consume MotionForge and report requirements or defects.
+- **Users** consume Dojo Video Engine and report requirements or defects.
 - **Contributors** submit issues, designs, documentation, tests, or code.
 - **Reviewers** are contributors whom a maintainer trusts to review a defined
   area. Review authority does not include release or security credentials.

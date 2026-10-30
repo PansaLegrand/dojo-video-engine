@@ -1,5 +1,5 @@
 // Captures the README hero screenshot of the playground at a representative
-// frame. Run with: pnpm --filter @motionforge/golden run screenshot
+// frame. Run with: pnpm --filter @dojo-video-engine/golden run screenshot
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,28 +16,28 @@ const server = await createServer({
   logLevel: "error",
   resolve: {
     alias: {
-      "@motionforge/schema/values": resolve(
+      "@dojo-video-engine/schema/values": resolve(
         rootDir,
         "packages/schema/src/values.ts",
       ),
-      "@motionforge/schema": resolve(rootDir, "packages/schema/src/index.ts"),
-      "@motionforge/core": resolve(rootDir, "packages/core/src/index.ts"),
-      "@motionforge/presets": resolve(rootDir, "packages/presets/src/index.ts"),
-      "@motionforge/showcase": resolve(
+      "@dojo-video-engine/schema": resolve(rootDir, "packages/schema/src/index.ts"),
+      "@dojo-video-engine/core": resolve(rootDir, "packages/core/src/index.ts"),
+      "@dojo-video-engine/presets": resolve(rootDir, "packages/presets/src/index.ts"),
+      "@dojo-video-engine/showcase": resolve(
         rootDir,
         "packages/showcase/src/index.ts",
       ),
-      "@motionforge/renderer-canvas2d/runtime": resolve(
+      "@dojo-video-engine/renderer-canvas2d/runtime": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/runtime.ts",
       ),
-      "@motionforge/renderer-canvas2d": resolve(
+      "@dojo-video-engine/renderer-canvas2d": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/index.ts",
       ),
-      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
-      "@motionforge/export": resolve(rootDir, "packages/export/src/index.ts"),
-      "@motionforge/player": resolve(rootDir, "packages/player/src/index.ts"),
+      "@dojo-video-engine/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
+      "@dojo-video-engine/export": resolve(rootDir, "packages/export/src/index.ts"),
+      "@dojo-video-engine/player": resolve(rootDir, "packages/player/src/index.ts"),
     },
   },
   server: { host: "127.0.0.1", port: 0, strictPort: false },

@@ -13,7 +13,7 @@ import type {
   SceneStyle,
   SceneTextRun,
   VolumeEnvelope,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   audio,
   composition,
@@ -32,7 +32,7 @@ import {
   type LottieNodeOptions,
   type NodeOptions,
   type VideoNodeOptions,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   audioFadeEnvelope,
   audioOverlay as presetAudioOverlay,
@@ -52,7 +52,7 @@ import {
   type SubtitleSegment,
   type SubtitleTrackOptions as PresetSubtitleTrackOptions,
   type VideoOverlayOptions as PresetVideoOverlayOptions,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 export {
   audioFadeEnvelope,
   audioOverlayTemplates,
@@ -69,7 +69,7 @@ export {
   slideIn,
   subtitleTemplates,
   videoOverlayTemplates,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 export type {
   CaptionRenderMode,
   CaptionTemplateKey,
@@ -87,7 +87,7 @@ export type {
   SubtitleTemplateKey,
   VideoOverlayPlacement,
   VideoOverlayTemplateKey,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 
 export type TimeValue = {
   unit: "frames" | "seconds";

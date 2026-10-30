@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateScene } from "@motionforge/schema";
+import { validateScene } from "@dojo-video-engine/schema";
 import { presetGalleryScenes, showcaseScenes } from "./index.js";
 
 describe("showcase scenes", () => {
@@ -54,7 +54,7 @@ describe("showcase scenes", () => {
     expect(timed?.scene.fps).toBe(30);
     expect(timed?.scene.duration).toBe(450);
 
-    expect(topText?.text).toBe("motionforge.dev");
+    expect(topText?.text).toBe("dojo-video-engine.dev");
     expect(topText?.from).toBe(0);
     expect(topText?.duration).toBe(150);
     expect(topText?.style?.top).toBe(74);
@@ -126,7 +126,7 @@ describe("showcase scenes", () => {
     expect(manualTrack?.children).toHaveLength(6);
     expect(serialized).toContain("SRT multiline cue");
     expect(serialized).toContain("WebVTT cue settings");
-    expect(serialized).toContain("https://motionforge.dev");
+    expect(serialized).toContain("https://dojo-video-engine.dev");
     expect(serialized).toContain("这是一段没有空格的中文字幕");
     expect(serialized).toContain("🚀");
     expect(serialized).toContain("FAST 3");

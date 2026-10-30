@@ -7,7 +7,7 @@ import {
   type AudioSample,
   type WrappedCanvas,
 } from "mediabunny";
-import { disposeMediaInputSafely } from "@motionforge/renderer-canvas2d";
+import { disposeMediaInputSafely } from "@dojo-video-engine/renderer-canvas2d";
 
 /** How deeply an exported artifact should be read back after encoding. */
 export type ExportVerificationMode = "none" | "container" | "sampled" | "full";
@@ -100,7 +100,7 @@ export type ExportVerificationSinkRequest = {
 
 /**
  * Host callback for stream/file/custom targets that can reopen their output.
- * MotionForge never uploads output or assumes a storage provider: the host
+ * DojoVideoEngine never uploads output or assumes a storage provider: the host
  * rereads its sink and returns the same stable verification result contract.
  */
 export type ExportVerificationSink = (

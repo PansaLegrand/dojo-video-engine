@@ -5,7 +5,7 @@ Milestone: MF4 — typed commands and revisioned workspace
 
 MF4 creates one deterministic edit vocabulary above low-level ScenePatch. A
 human editor, script, or agent can describe intent with the same bounded,
-non-recursive commands; MotionForge compiles those commands into canonical
+non-recursive commands; Dojo Video Engine compiles those commands into canonical
 transactional patches and can reverse committed changes.
 
 ## Layers
@@ -25,7 +25,7 @@ document format.
 
 ## Command boundary
 
-`@motionforge/commands` owns a strict discriminated command union and its
+`@dojo-video-engine/commands` owns a strict discriminated command union and its
 non-recursive draft-07 JSON Schema. It covers:
 
 - text and style changes;

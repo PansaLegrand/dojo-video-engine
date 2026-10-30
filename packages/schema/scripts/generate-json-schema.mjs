@@ -16,7 +16,7 @@ if (process.argv.includes("--check")) {
   const committed = await readFile(outPath, "utf8").catch(() => null);
   if (committed !== generated) {
     console.error(
-      `${outPath} is stale. Run pnpm --filter @motionforge/schema generate:schema.`,
+      `${outPath} is stale. Run pnpm --filter @dojo-video-engine/schema generate:schema.`,
     );
     process.exit(1);
   }

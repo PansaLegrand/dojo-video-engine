@@ -1,12 +1,12 @@
 # Scene Format
 
-The scene document is the stable contract between humans, framework adapters, agents, renderers, and exporters. Everything else in motionforge sits above or below this format.
+The scene document is the stable contract between humans, framework adapters, agents, renderers, and exporters. Everything else in dojo-video-engine sits above or below this format.
 
 A machine-readable JSON Schema for this format ships with the schema package at
 [`packages/schema/scene.schema.json`](../packages/schema/scene.schema.json) and
 is exported at runtime as `sceneJsonSchema()`. It covers canonical structure,
 portable visual-value formats, and target-specific animation values. Register
-`motionforgeJsonSchemaFormats` before compiling it; a validator must not ignore
+`dojoVideoEngineJsonSchemaFormats` before compiling it; a validator must not ignore
 unknown formats. Cross-field invariants listed below remain enforced by
 `parseScene` / `validateScene`.
 
@@ -247,7 +247,7 @@ skips an extension node.
 Exact versions preserve old scene pixels. A newer implementation may serve an
 older descriptor only when it explicitly lists that exact version in
 `compatibleVersions`. See [RFC 0003](rfcs/0003-extension-kernel.md) and the
-[`@motionforge/extensions`](../packages/extensions) package.
+[`@dojo-video-engine/extensions`](../packages/extensions) package.
 
 ### Shapes, clips, and masks
 
@@ -395,7 +395,7 @@ import {
   prepareFrame,
   renderStill,
   resolveAssets,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 
 const assets = await resolveAssets(scene); // fetches + decodes scene.assets
 await prepareFrame(scene, frame, assets); // stages video frames (no-op without video)
@@ -480,7 +480,7 @@ Beyond per-field types, `parseScene` / `validateScene` enforce:
 
 ```txt
 nodes.0.children.1.id: Duplicate node id "title". Node ids must be unique across the scene so tools can patch and diff nodes reliably.
-nodes.0.style: Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.
+nodes.0.style: Unsupported style property. Dojo Video Engine Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.
 ```
 
 For intentionally tolerant model/import boundaries, `repairSceneInput(input)`

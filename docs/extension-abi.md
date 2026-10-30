@@ -2,9 +2,9 @@
 
 Status: public 1.x integration policy
 
-MotionForge's extension ABI is a TypeScript, JSON-manifest, lifecycle, and
+Dojo Video Engine's extension ABI is a TypeScript, JSON-manifest, lifecycle, and
 display contract. It is not a native binary ABI and it is not a remote plugin
-loader. The authoritative implementation is `@motionforge/extensions`; this
+loader. The authoritative implementation is `@dojo-video-engine/extensions`; this
 document defines how hosts package, trust, negotiate, migrate, and isolate
 extensions without weakening Scene v1.
 
@@ -37,7 +37,7 @@ sandbox.
 - `name` is a stable namespaced identifier owned by the extension publisher.
 - `version` is an exact semantic version. Stored Scenes never use ranges.
 - A registry rejects duplicate name/version identities.
-- MotionForge never assumes SemVer compatibility. A definition may resolve an
+- Dojo Video Engine never assumes SemVer compatibility. A definition may resolve an
   older exact version only by listing it in `compatibleVersions`, which asserts
   equivalent accepted parameters, behavior, lifecycle, and pixel semantics.
 - The host must be able to keep multiple incompatible extension versions when
@@ -93,7 +93,7 @@ backend behavior receives a new capability version and explicit migration.
 ### Legacy renderer bridge
 
 Definitions that expose legacy `renderers` remain supported for the 1.x line as
-`motionforge.legacy.renderer-adapter@1.0.0`. A display-list backend must
+`dojo-video-engine.legacy.renderer-adapter@1.0.0`. A display-list backend must
 advertise that bridge explicitly. Legacy adapters are opaque, backend-specific,
 and may have conservative full-composition damage bounds; they are not
 misrepresented as portable standard operations.
@@ -191,7 +191,7 @@ boundary.
 
 ## Distribution and signing
 
-MotionForge does not currently define an extension marketplace, package
+Dojo Video Engine does not currently define an extension marketplace, package
 signature format, certificate authority, revocation service, or remote
 installer. Hosts own distribution policy.
 
@@ -218,5 +218,5 @@ Before publishing or enabling an extension:
   reviewed by the host.
 
 See [RFC 0003](rfcs/0003-extension-kernel.md),
-[`@motionforge/extensions`](../packages/extensions/README.md), and the
+[`@dojo-video-engine/extensions`](../packages/extensions/README.md), and the
 [1.x compatibility contract](compatibility.md) for the underlying public API.

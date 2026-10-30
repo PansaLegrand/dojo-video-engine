@@ -1,7 +1,7 @@
 import type { BackendFrameImage } from "./types.js";
 
 export type FrameImageArtifactDescriptor = {
-  kind: "motionforge.frame-image";
+  kind: "dojo-video-engine.frame-image";
   version: 1;
   sessionId: string;
   revision: number;

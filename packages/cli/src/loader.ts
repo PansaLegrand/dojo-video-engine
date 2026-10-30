@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 
 type SceneExport = Scene | (() => Scene | Promise<Scene>) | Promise<Scene>;
 

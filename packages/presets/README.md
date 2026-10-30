@@ -1,6 +1,6 @@
-# @motionforge/presets
+# @dojo-video-engine/presets
 
-Pure functions that compile animation intent into [motionforge](https://github.com/PansaLegrand/motionforge) scene data. No runtime, no rendering — every helper returns plain keyframes or nodes that pass `validateScene`.
+Pure functions that compile animation intent into [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine) scene data. No runtime, no rendering — every helper returns plain keyframes or nodes that pass `validateScene`.
 
 ## Install
 
@@ -9,13 +9,13 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/presets
+npm install @dojo-video-engine/presets
 ```
 
 ## Motion presets
 
 ```ts
-import { popIn, fadeUp, slideIn, pulse } from "@motionforge/presets";
+import { popIn, fadeUp, slideIn, pulse } from "@dojo-video-engine/presets";
 
 const node = {
   id: "title",
@@ -33,7 +33,7 @@ helpers. The registry adds 38 discoverable presets:
 import {
   compileMotionPreset,
   motionPresetDefinitions,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 
 node.animations = compileMotionPreset("bounceIn", {
   durationInFrames: 18,
@@ -60,7 +60,7 @@ import {
   karaokeCaptions,
   styledCaptions,
   tiktokCaptions,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 
 const track = tiktokCaptions(
   [
@@ -88,14 +88,14 @@ scene.nodes.push(captions);
 console.log(Object.keys(captionTemplates));
 ```
 
-Available templates: `classic`, `minimalBar`, `handwritten`, `retro`, `cinematic`, `storyteller`, `hustle`, `spotlight`, `karaoke`, `neon`, `future`, `terminal`, and `colorShift`. They compile to plain motionforge scene nodes; there is no Remotion, DOM, or adapter dependency.
+Available templates: `classic`, `minimalBar`, `handwritten`, `retro`, `cinematic`, `storyteller`, `hustle`, `spotlight`, `karaoke`, `neon`, `future`, `terminal`, and `colorShift`. They compile to plain dojo-video-engine scene nodes; there is no Remotion, DOM, or adapter dependency.
 
 ## Text overlay templates
 
 Common non-subtitle overlays are also compiled to ordinary scene nodes:
 
 ```ts
-import { textOverlay, textOverlayTemplates } from "@motionforge/presets";
+import { textOverlay, textOverlayTemplates } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   textOverlay({
@@ -118,7 +118,7 @@ All templates accept `id`, `from`, `duration`, `accentColor`, container `style`,
 
 ## Agent macro registry
 
-The `@motionforge/presets/macros` entry point accepts compact, semantic nodes
+The `@dojo-video-engine/presets/macros` entry point accepts compact, semantic nodes
 and expands them into normal validated scene nodes. This is the preferred
 authoring surface for agents and other structured generators:
 
@@ -127,7 +127,7 @@ import {
   expandMacroNodes,
   macroNames,
   macroPromptGuide,
-} from "@motionforge/presets/macros";
+} from "@dojo-video-engine/presets/macros";
 
 const result = expandMacroNodes(
   [
@@ -157,7 +157,7 @@ exported by the existing engine.
 
 ## Layout intent compiler manifests
 
-`@motionforge/presets/intents` exposes the versioned, JSON-facing discovery
+`@dojo-video-engine/presets/intents` exposes the versioned, JSON-facing discovery
 boundary behind the existing `place`, `textRole`, media `look`, and clip
 `layout` authoring sugar:
 
@@ -166,7 +166,7 @@ import {
   compileLayoutIntent,
   getLayoutCompilerManifest,
   layoutCompilerManifests,
-} from "@motionforge/presets/intents";
+} from "@dojo-video-engine/presets/intents";
 
 const available = layoutCompilerManifests();
 const titleRole = getLayoutCompilerManifest("text-role/title");
@@ -315,7 +315,7 @@ canonical params are the stable scene contract.
 Named looks return plain `SceneStyle` fragments, so they compose with image/video helpers and layout presets:
 
 ```ts
-import { mediaLook, mediaLooks } from "@motionforge/presets";
+import { mediaLook, mediaLooks } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {
@@ -330,14 +330,14 @@ console.log(Object.keys(mediaLooks));
 
 Available looks: `cleanProduct`, `punchySocial`, `cinematicWarm`, `coolNoir`, `retroTape`, `softPortrait`, and `blurredBackdrop`.
 
-The styles use MotionForge's supported `filter` subset. Safari may preview filters differently or ignore them; exported support follows the browser Canvas2D implementation.
+The styles use Dojo Video Engine's supported `filter` subset. Safari may preview filters differently or ignore them; exported support follows the browser Canvas2D implementation.
 
 ## Clip layout presets
 
 Clip layouts return `SceneStyle` fragments for common media placements:
 
 ```ts
-import { clipLayout, mediaLook } from "@motionforge/presets";
+import { clipLayout, mediaLook } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {
@@ -354,7 +354,7 @@ Available layouts: `fullscreen`, `containCenter`, `pictureInPicture`, `splitLeft
 Transitions are normal full-frame overlay nodes with keyframed opacity or transform:
 
 ```ts
-import { transitionOverlay } from "@motionforge/presets";
+import { transitionOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   transitionOverlay("dipToBlack", {
@@ -372,7 +372,7 @@ Available transitions: `fade`, `dipToBlack`, `flash`, `wipeLeft`, `wipeRight`, a
 Sequencing several nodes means deriving frame offsets from other durations — the arithmetic both humans and LLMs get wrong. `timeline()` owns it:
 
 ```ts
-import { timeline, popIn, fadeUp, slideIn } from "@motionforge/presets";
+import { timeline, popIn, fadeUp, slideIn } from "@dojo-video-engine/presets";
 
 const tl = timeline()
   .marker("intro", 0)
@@ -411,14 +411,14 @@ Stable for 1.x integrations:
 
 Evolving additively in 1.x:
 
-- The `@motionforge/presets/catalog` export, `presetCatalog`, and `buildPresetPatchExample()` are shared UI infrastructure for Playground/Studio and may evolve with those apps.
+- The `@dojo-video-engine/presets/catalog` export, `presetCatalog`, and `buildPresetPatchExample()` are provider-neutral catalog helpers for downstream editors.
 - Older caption helpers `tiktokCaptions()` and `karaokeCaptions()` remain supported, but new subtitle work should prefer `styledCaptions()` / `subtitleTrack()` templates.
 - Template visual details may change additively; rely on template keys and options rather than exact generated child ids unless you control the preset version.
 
 Internal/not public:
 
-- Helpers that are not exported from the package root or `@motionforge/presets/catalog` are implementation details.
-- Presets do not render or schedule runtime behavior. They compile data; render with MotionForge packages.
+- Helpers that are not exported from the package root or `@dojo-video-engine/presets/catalog` are implementation details.
+- Presets do not render or schedule runtime behavior. They compile data; render with Dojo Video Engine packages.
 
 ## License
 

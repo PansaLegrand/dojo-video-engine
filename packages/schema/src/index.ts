@@ -1,5 +1,5 @@
 import { isFontWeightDescriptor } from "./font-assets.js";
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 export { fontAssetIdsForFamily, fontFamilyNames } from "./font-assets.js";
 import {
@@ -251,7 +251,7 @@ export const styleSchema = z
   })
   .strict({
     message:
-      "Unsupported style property. MotionForge Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.",
+      "Unsupported style property. DojoVideoEngine Scene v1 supports a curated CSS-like subset; move unsupported behavior into supported transforms, layout, or extension nodes.",
   });
 
 export type SceneStyle = z.infer<typeof styleSchema>;
@@ -585,7 +585,7 @@ export const effectParamsSchema = z
   })
   .strict({
     message:
-      "Unsupported effect param. Use the documented params for this MotionForge effect preset.",
+      "Unsupported effect param. Use the documented params for this DojoVideoEngine effect preset.",
   });
 
 export type SceneEffectName = (typeof effectNames)[number];
@@ -1785,7 +1785,7 @@ function formatSceneIssues(issues: z.ZodIssue[]): string {
 export function sceneJsonSchema(): Record<string, unknown> {
   return decorateSceneJsonSchema(
     zodToJsonSchema(sceneSchema, {
-      name: "MotionforgeScene",
+      name: "DojoVideoEngineScene",
       target: "jsonSchema7",
     }) as Record<string, unknown>,
     animationTargets,
@@ -1795,7 +1795,7 @@ export function sceneJsonSchema(): Record<string, unknown> {
 /** Structural JSON Schema for legacy v0 ingestion and migration tooling. */
 export function legacySceneV0JsonSchema(): Record<string, unknown> {
   return zodToJsonSchema(legacySceneV0Schema, {
-    name: "MotionforgeSceneV0",
+    name: "DojoVideoEngineSceneV0",
     target: "jsonSchema7",
   }) as Record<string, unknown>;
 }
@@ -1830,12 +1830,12 @@ export {
 } from "./preflight.js";
 
 export {
-  motionforgeJsonSchemaFormatNames,
-  motionforgeJsonSchemaFormats,
-  registerMotionforgeJsonSchemaFormats,
+  dojoVideoEngineJsonSchemaFormatNames,
+  dojoVideoEngineJsonSchemaFormats,
+  registerDojoVideoEngineJsonSchemaFormats,
   type JsonSchemaFormatRegistrar,
-  type MotionforgeJsonSchemaFormatName,
-  type MotionforgeJsonSchemaFormatPredicate,
+  type DojoVideoEngineJsonSchemaFormatName,
+  type DojoVideoEngineJsonSchemaFormatPredicate,
 } from "./json-schema.js";
 
 export * from "./values.js";

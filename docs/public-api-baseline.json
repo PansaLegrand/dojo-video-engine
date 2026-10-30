@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "recordedFor": "MotionForge 1.1.0 source candidate / MF9",
+  "recordedFor": "DojoVideoEngine 1.1.0 source candidate / MF9",
   "packages": {
-    "@motionforge/agent-tools": {
+    "@dojo-video-engine/agent-tools": {
       "owner": "Framework-neutral validation, inspection, diff, render, capability, and export adapters",
       "stability": "stable",
       "exports": {
@@ -13,7 +13,7 @@
       },
       "bin": null
     },
-    "@motionforge/authoring": {
+    "@dojo-video-engine/authoring": {
       "owner": "Seconds-first TypeScript authoring compilers",
       "stability": "stable",
       "exports": {
@@ -24,7 +24,7 @@
       },
       "bin": null
     },
-    "@motionforge/cli": {
+    "@dojo-video-engine/cli": {
       "owner": "Command-line and local Studio facade",
       "stability": "stable",
       "exports": {
@@ -34,10 +34,10 @@
         }
       },
       "bin": {
-        "motionforge": "./dist/bin/motionforge.js"
+        "dojo-video-engine": "./dist/bin/dojo-video-engine.js"
       }
     },
-    "@motionforge/commands": {
+    "@dojo-video-engine/commands": {
       "owner": "Typed Scene commands, reversible edits, and revisioned in-memory workspaces",
       "stability": "stable",
       "exports": {
@@ -48,7 +48,7 @@
       },
       "bin": null
     },
-    "@motionforge/core": {
+    "@dojo-video-engine/core": {
       "owner": "Scene builders, deterministic evaluation, animation, and layout",
       "stability": "stable",
       "exports": {
@@ -59,7 +59,7 @@
       },
       "bin": null
     },
-    "@motionforge/create": {
+    "@dojo-video-engine/create": {
       "owner": "Starter project generation",
       "stability": "stable",
       "exports": {
@@ -69,10 +69,10 @@
         }
       },
       "bin": {
-        "create-motionforge": "./dist/bin/create-motionforge.js"
+        "create-dojo-video-engine": "./dist/bin/create-dojo-video-engine.js"
       }
     },
-    "@motionforge/export": {
+    "@dojo-video-engine/export": {
       "owner": "Frame/audio export, WebCodecs encoding, muxing, streams, and worker protocol",
       "stability": "stable",
       "exports": {
@@ -87,7 +87,7 @@
       },
       "bin": null
     },
-    "@motionforge/extensions": {
+    "@dojo-video-engine/extensions": {
       "owner": "Trusted versioned extension definitions and lifecycle preflight",
       "stability": "stable",
       "exports": {
@@ -98,7 +98,7 @@
       },
       "bin": null
     },
-    "@motionforge/inspection": {
+    "@dojo-video-engine/inspection": {
       "owner": "Renderer-neutral tree, timeline, layout, hit-test, and composition diagnostics",
       "stability": "stable",
       "exports": {
@@ -109,7 +109,7 @@
       },
       "bin": null
     },
-    "@motionforge/interchange": {
+    "@dojo-video-engine/interchange": {
       "owner": "Bounded common timeline, Remotion-host, and static snapshot interchange",
       "stability": "stable",
       "exports": {
@@ -120,7 +120,7 @@
       },
       "bin": null
     },
-    "@motionforge/layout": {
+    "@dojo-video-engine/layout": {
       "owner": "Bounded semantic layout authoring and Scene v1 compilation",
       "stability": "stable",
       "exports": {
@@ -131,7 +131,7 @@
       },
       "bin": null
     },
-    "@motionforge/player": {
+    "@dojo-video-engine/player": {
       "owner": "Canvas preview, playback clock, seeking, and audio synchronization",
       "stability": "stable",
       "exports": {
@@ -142,7 +142,7 @@
       },
       "bin": null
     },
-    "@motionforge/presets": {
+    "@dojo-video-engine/presets": {
       "owner": "Pure presets, templates, macros, intents, and choreography compilers",
       "stability": "stable",
       "exports": {
@@ -165,7 +165,7 @@
       },
       "bin": null
     },
-    "@motionforge/renderer-canvas2d": {
+    "@dojo-video-engine/renderer-canvas2d": {
       "owner": "Canvas2D reference rendering and browser-media preparation",
       "stability": "stable",
       "exports": {
@@ -180,7 +180,7 @@
       },
       "bin": null
     },
-    "@motionforge/runtime": {
+    "@dojo-video-engine/runtime": {
       "owner": "Prepared Scene sessions, backend lifecycle, events, metrics, and artifact sinks",
       "stability": "stable",
       "exports": {
@@ -191,7 +191,7 @@
       },
       "bin": null
     },
-    "@motionforge/schema": {
+    "@dojo-video-engine/schema": {
       "owner": "Canonical Scene validation, migration, inspection, lint, JSON Schema, and patches",
       "stability": "stable",
       "exports": {

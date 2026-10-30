@@ -1,6 +1,6 @@
-# @motionforge/agent-tools
+# @dojo-video-engine/agent-tools
 
-Stable data and browser-media tools for agent-native MotionForge workflows.
+Stable data and browser-media tools for agent-native Dojo Video Engine workflows.
 
 ```ts
 import {
@@ -16,7 +16,7 @@ import {
   discoverCapabilities,
   inspectLayout,
   renderContactSheet,
-} from "@motionforge/agent-tools";
+} from "@dojo-video-engine/agent-tools";
 
 const tools = createAgentToolRegistry();
 const workspace = createSceneWorkspace(scene);
@@ -49,22 +49,22 @@ const workflow = createAgentWorkflowToolRegistry({
   sessionOptions: { evidence },
 });
 
-const loaded = await workflow.call("motionforge.workflow.load", { scene });
+const loaded = await workflow.call("dojo-video-engine.workflow.load", { scene });
 if (!loaded.ok || !loaded.handle) throw new Error("load failed");
 
-const edited = await workflow.call("motionforge.workflow.commands", {
+const edited = await workflow.call("dojo-video-engine.workflow.commands", {
   handle: loaded.handle,
   expectedRevision: 0,
   commands: [{ kind: "text.set", id: "title", text: "A better title" }],
 });
 if (!edited.ok) throw new Error(edited.error.message);
 
-await workflow.call("motionforge.workflow.check", {
+await workflow.call("dojo-video-engine.workflow.check", {
   handle: loaded.handle,
   expectedRevision: edited.revision,
   sampleCount: 5,
 });
-await workflow.call("motionforge.workflow.evidence", {
+await workflow.call("dojo-video-engine.workflow.evidence", {
   handle: loaded.handle,
   expectedRevision: edited.revision,
   operation: "proof.comparison.render",
@@ -75,7 +75,7 @@ const finalScene = (await workflow.hostSnapshot(loaded.handle)).scene;
 await workflow.dispose();
 ```
 
-Only `motionforge.workflow.load` accepts a recursive Scene. Provider-facing
+Only `dojo-video-engine.workflow.load` accepts a recursive Scene. Provider-facing
 descriptors from `workflowToolDescriptors()` omit the internal action field;
 all later inputs use an opaque handle and typed non-recursive commands. Every
 descriptor includes detached draft-07 input and output schemas. Results are

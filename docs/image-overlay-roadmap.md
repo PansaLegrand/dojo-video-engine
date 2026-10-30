@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Image Overlay Roadmap
 
 **Status:** implementation started 2026-06-18
 
-MotionForge already renders image assets with `objectFit` and `objectPosition`, and the authoring layer can place images directly. The next goal is production image overlays: programmers and agents should be able to add logos, stickers, product shots, watermarks, avatars, and badges without hand-coding every absolute box and style detail.
+Dojo Video Engine already renders image assets with `objectFit` and `objectPosition`, and the authoring layer can place images directly. The next goal is production image overlays: programmers and agents should be able to add logos, stickers, product shots, watermarks, avatars, and badges without hand-coding every absolute box and style detail.
 
 This theme stays base-layer first. Chat, Studio, and Playground should consume the same image scene nodes, asset references, safe-area boxes, and preset names rather than carrying app-specific overlay layout logic.
 
@@ -42,7 +44,7 @@ Known gaps:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - docs/tests
 
 Done:
@@ -55,7 +57,7 @@ Done:
 
 ## Slice IX2 - Authoring Image Overlay Helper ✅
 
-**Goal:** `@motionforge/authoring` makes image overlays as easy as text boxes and subtitle tracks.
+**Goal:** `@dojo-video-engine/authoring` makes image overlays as easy as text boxes and subtitle tracks.
 
 Targets:
 
@@ -68,7 +70,7 @@ Done:
 - passing an asset object auto-adds it to `scene.assets`
 - helper compiles through the preset helper with scene-aware composition defaults
 - docs show logo, watermark, sticker, product shot, and avatar examples
-- generated nodes validate through `@motionforge/schema`
+- generated nodes validate through `@dojo-video-engine/schema`
 
 ## Slice IX3 - Preset Catalog And Patch Examples ✅
 
@@ -76,7 +78,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - playground preset catalog
 - docs/guides
 
@@ -110,7 +112,7 @@ Done:
 
 Targets:
 
-- `@motionforge/showcase`
+- `@dojo-video-engine/showcase`
 - examples
 - golden harness
 - docs assets

@@ -6,7 +6,7 @@
 
 ## Summary
 
-MotionForge export is one renderer/audio pipeline with multiple orchestration
+Dojo Video Engine export is one renderer/audio pipeline with multiple orchestration
 and output adapters: buffered main-thread export, worker export, positional
 stream output, and headless message handling.
 
@@ -24,12 +24,12 @@ as unavailable Worker preserve a valid main-thread fallback.
 `exportVideo()` remains the backwards-compatible Blob API.
 `exportVideoToStream()` writes Mediabunny positional chunks to a caller-owned
 `WritableStream`, propagating backpressure without retaining the final file in
-MotionForge memory. The browser smoke reconstructs a streamed MP4 and validates
+Dojo Video Engine memory. The browser smoke reconstructs a streamed MP4 and validates
 its `ftyp` header.
 
 ## Worker protocol
 
-`@motionforge/export/worker` provides:
+`@dojo-video-engine/export/worker` provides:
 
 - serializable start/cancel requests;
 - progress/complete/error events keyed by request id;

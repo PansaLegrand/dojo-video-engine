@@ -1,4 +1,4 @@
-import { z, type ZodTypeAny } from "zod";
+import { z, type ZodTypeAny } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   createSceneWorkspace,
@@ -10,12 +10,12 @@ import {
   type SceneCommands,
   type WorkspaceDraft,
   type WorkspaceHistoryEntry,
-} from "@motionforge/commands";
+} from "@dojo-video-engine/commands";
 import {
   checkScene,
   inspectTree,
   type TreeInspectionNode,
-} from "@motionforge/inspection";
+} from "@dojo-video-engine/inspection";
 import {
   defaultSceneComplexityLimits,
   preflightScene,
@@ -23,7 +23,7 @@ import {
   type Scene,
   type SceneComplexityLimits,
   type SceneNode,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 const MAX_HANDLE_LENGTH = 191;
 const MAX_ACTION_LENGTH = 96;
@@ -38,7 +38,7 @@ const DEFAULT_MAX_RESULT_VALUES = 20_000;
 const DEFAULT_MAX_RESULT_DEPTH = 8;
 const DEFAULT_HISTORY_LIMIT = 100;
 const DEFAULT_READ_LIMIT = 100;
-const BOUNDED_JSON_OBJECT_MARKER = "motionforge:bounded-workflow-json-object";
+const BOUNDED_JSON_OBJECT_MARKER = "dojo-video-engine:bounded-workflow-json-object";
 
 export type WorkflowJsonValue =
   | string
@@ -383,70 +383,70 @@ const workflowToolDefinitions: ReadonlyArray<{
   schema: WorkflowInputSchema;
 }> = [
   {
-    name: "motionforge.workflow.load",
+    name: "dojo-video-engine.workflow.load",
     action: "workspace.load",
     description:
       "Strictly ingest one recursive Scene and return an opaque workspace handle.",
     schema: workflowLoadInputSchema,
   },
   {
-    name: "motionforge.workflow.read",
+    name: "dojo-video-engine.workflow.read",
     action: "workspace.read",
     description: "Read a flat workspace summary or one flat node by handle.",
     schema: workflowReadInputSchema,
   },
   {
-    name: "motionforge.workflow.search",
+    name: "dojo-video-engine.workflow.search",
     action: "workspace.search",
     description: "Search flat node summaries without resending the Scene.",
     schema: workflowSearchInputSchema,
   },
   {
-    name: "motionforge.workflow.check",
+    name: "dojo-video-engine.workflow.check",
     action: "workspace.check",
     description:
       "Run bounded structural/layout checks on a workspace revision.",
     schema: workflowCheckInputSchema,
   },
   {
-    name: "motionforge.workflow.commands",
+    name: "dojo-video-engine.workflow.commands",
     action: "commands.apply",
     description: "Apply strict non-recursive commands transactionally.",
     schema: workflowCommandsInputSchema,
   },
   {
-    name: "motionforge.workflow.undo",
+    name: "dojo-video-engine.workflow.undo",
     action: "workspace.undo",
     description: "Undo one committed workspace change at an exact revision.",
     schema: workflowUndoInputSchema,
   },
   {
-    name: "motionforge.workflow.redo",
+    name: "dojo-video-engine.workflow.redo",
     action: "workspace.redo",
     description: "Redo one workspace change at an exact revision.",
     schema: workflowRedoInputSchema,
   },
   {
-    name: "motionforge.workflow.evidence",
+    name: "dojo-video-engine.workflow.evidence",
     action: "evidence.run",
     description:
       "Run a host-injected render/artifact/evidence operation by handle.",
     schema: workflowEvidenceInputSchema,
   },
   {
-    name: "motionforge.workflow.close",
+    name: "dojo-video-engine.workflow.close",
     action: "workspace.close",
     description: "Release one workspace handle deterministically.",
     schema: workflowCloseInputSchema,
   },
   {
-    name: "motionforge.workflow.events",
+    name: "dojo-video-engine.workflow.events",
     action: "events.read",
     description: "Read the bounded provider-neutral session event stream.",
     schema: workflowEventsInputSchema,
   },
   {
-    name: "motionforge.workflow.dispose",
+    name: "dojo-video-engine.workflow.dispose",
     action: "session.dispose",
     description: "Dispose all handles and injected evidence resources.",
     schema: workflowDisposeInputSchema,
@@ -534,18 +534,18 @@ function toolInputJsonSchema(
     | undefined;
   const root = definitions?.[name] ?? output;
   const properties = root.properties as Record<string, unknown> | undefined;
-  if (name === "motionforge_workflow_load" && properties && definitions) {
+  if (name === "dojo-video-engine_workflow_load" && properties && definitions) {
     const canonical = sceneJsonSchema() as {
       definitions?: Record<string, Record<string, unknown>>;
     };
-    const sceneDefinition = canonical.definitions?.MotionforgeScene;
+    const sceneDefinition = canonical.definitions?.DojoVideoEngineScene;
     if (!sceneDefinition) {
       throw new Error(
-        "Canonical Scene JSON Schema has no MotionforgeScene root.",
+        "Canonical Scene JSON Schema has no DojoVideoEngineScene root.",
       );
     }
-    definitions.MotionforgeScene = structuredClone(sceneDefinition);
-    properties.scene = { $ref: "#/definitions/MotionforgeScene" };
+    definitions.DojoVideoEngineScene = structuredClone(sceneDefinition);
+    properties.scene = { $ref: "#/definitions/DojoVideoEngineScene" };
     root.required = [
       ...new Set([
         ...(Array.isArray(root.required) ? root.required : []),

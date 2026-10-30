@@ -1,6 +1,6 @@
 # Authoring API
 
-`@motionforge/authoring` is the high-level TypeScript layer. It reduces boilerplate but still emits the same validated MotionForge scene JSON.
+`@dojo-video-engine/authoring` is the high-level TypeScript layer. It reduces boilerplate but still emits the same validated Dojo Video Engine scene JSON.
 
 Use this package first for programmer-facing videos: `textBox()` handles unknown-length overlay copy, `subtitleTrack()` handles SRT/VTT-style subtitle cues, and `captionTrack()` handles word-timed ASR captions while keeping the output as ordinary scene nodes.
 
@@ -13,7 +13,7 @@ import {
   seconds,
   toFrames,
   toSeconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -78,7 +78,7 @@ Every helper accepts `id`, `at`, `duration`, and most visual helpers accept `sty
 Use `textBox()` when copy may come from users, chat instructions, CSV rows, or any other source where the final length is not known ahead of time. It emits ordinary text nodes with bounded dimensions, `textFit`, `maxLines`, `minFontSize`, and ellipsis behavior already set.
 
 ```ts
-import { bg, makeScene, seconds, textBox } from "@motionforge/authoring";
+import { bg, makeScene, seconds, textBox } from "@dojo-video-engine/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -116,7 +116,7 @@ export default makeScene({
 When you need the placement box without creating a text node, use the same primitives directly:
 
 ```ts
-import { resolveSafeArea, safeAreaBox } from "@motionforge/authoring";
+import { resolveSafeArea, safeAreaBox } from "@dojo-video-engine/authoring";
 
 const size = { width: 1080, height: 1920 };
 
@@ -145,12 +145,12 @@ import {
   subtitleTrack,
   videoAsset,
   videoClip,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const clip = videoAsset("clip", "/assets/interview.mp4");
 const subtitles = parseSrt(`1
 00:00:00,500 --> 00:00:02,100
-Welcome to MotionForge
+Welcome to Dojo Video Engine
 
 2
 00:00:02,400 --> 00:00:04,600
@@ -173,7 +173,7 @@ export default makeScene({
 Paste WebVTT the same way:
 
 ```ts
-import { parseVtt, subtitleTrack } from "@motionforge/authoring";
+import { parseVtt, subtitleTrack } from "@dojo-video-engine/authoring";
 
 subtitleTrack(
   parseVtt(`WEBVTT
@@ -214,7 +214,7 @@ subtitleTrack(
 Use `captionTrack()` when ASR gives word-level timings and you want TikTok/karaoke-style templates:
 
 ```ts
-import { captionTrack } from "@motionforge/authoring";
+import { captionTrack } from "@dojo-video-engine/authoring";
 
 captionTrack(
   [
@@ -242,7 +242,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const logo = imageAsset("logo", publicAsset("assets/logo.svg"));
 const product = imageAsset("product", publicAsset("assets/product.png"));
@@ -290,7 +290,7 @@ import {
   seconds,
   videoAsset,
   videoOverlay,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const demo = videoAsset("demo", publicAsset("assets/demo.mp4"));
 const reaction = videoAsset("reaction", publicAsset("assets/reaction.mp4"));
@@ -340,7 +340,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const music = audioAsset("music", publicAsset("assets/music.mp3"));
 const voice = audioAsset("voice", publicAsset("assets/voiceover.mp3"));
@@ -401,7 +401,7 @@ import {
   seconds,
   videoAsset,
   videoClip,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const poster = imageAsset("poster", publicAsset("assets/poster.png"));
 const clip = videoAsset("clip", publicAsset("assets/clip.mp4"));
@@ -436,7 +436,7 @@ import {
   seconds,
   videoAsset,
   videoClip,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 makeScene({
   size: "landscape",
@@ -451,7 +451,7 @@ makeScene({
 The lower-level packages remain available when you need exact control:
 
 ```ts
-import { composition, div, text } from "@motionforge/core";
+import { composition, div, text } from "@dojo-video-engine/core";
 
 const scene = composition({ width: 1080, height: 1920, fps: 30, duration: 90 })
   .children(

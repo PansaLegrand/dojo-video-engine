@@ -8,14 +8,14 @@ import type {
   SceneShapeGeometry,
   SceneStyle,
   SceneTextRun,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   parseBorderValue,
   parsePaintValue,
   parseShadowListValue,
   parseTextStrokeValue,
   resolveGradientStopOffsets,
-} from "@motionforge/schema/values";
+} from "@dojo-video-engine/schema/values";
 import {
   getLayoutContentRect,
   identityAffineMatrix,
@@ -42,10 +42,10 @@ import {
 
 /**
  * Display lists are evaluated, ephemeral frame artifacts. Scene remains the
- * only canonical and persistable MotionForge document format.
+ * only canonical and persistable DojoVideoEngine document format.
  */
 export type DisplayList = {
-  kind: "motionforge.display-list";
+  kind: "dojo-video-engine.display-list";
   version: 1;
   ephemeral: true;
   composition: {
@@ -333,7 +333,7 @@ export type DisplayEffectOperation = DisplayOperationBase & {
   localFrame: number;
   duration: number;
   sceneFps: number;
-  capability: { id: "motionforge.effect"; version: "1" };
+  capability: { id: "dojo-video-engine.effect"; version: "1" };
 };
 
 export type DisplayExtensionCompilationInput =
@@ -355,7 +355,7 @@ export type DisplayExtensionOperation = DisplayOperationBase &
         mode: "legacy-opaque";
         extension: { name: string; version: string; params: SceneJsonValue };
         capability: {
-          id: "motionforge.legacy.renderer-adapter";
+          id: "dojo-video-engine.legacy.renderer-adapter";
           version: "1.0.0";
         };
       }
@@ -480,7 +480,7 @@ export function compileDisplayList(
       nodeIds: Array.from(nodeIds).sort(compareCodeUnits),
     }));
   const result: DisplayList = {
-    kind: "motionforge.display-list",
+    kind: "dojo-video-engine.display-list",
     version: 1,
     ephemeral: true,
     composition: {
@@ -542,7 +542,7 @@ function compileGroup(
     strategy: style.isolation || softMask ? "isolated" : "direct",
   };
   if (composite.filter) {
-    requireCapability(state, "motionforge.filter", "1", box.id);
+    requireCapability(state, "dojo-video-engine.filter", "1", box.id);
   }
   const clip = box.node.clip ? compileGeometry(box.node.clip, rect) : null;
   const overflowClip =
@@ -551,7 +551,7 @@ function compileGroup(
       : null;
   const mask = box.node.mask ? compileMask(box.node.mask, rect) : null;
   if (mask?.strategy === "soft-raster") {
-    requireCapability(state, "motionforge.mask.soft", "1", box.id);
+    requireCapability(state, "dojo-video-engine.mask.soft", "1", box.id);
   }
   const group: DisplayGroup = {
     kind: "group",
@@ -672,7 +672,7 @@ function compileContent(
     return compileShape(box, state);
   }
   if (node.type === "effect" && node.effect) {
-    requireCapability(state, "motionforge.effect", "1", node.id);
+    requireCapability(state, "dojo-video-engine.effect", "1", node.id);
     return operation(state, {
       kind: "effect",
       engineId: `${nodeEngineId(node.id)}/effect`,
@@ -687,7 +687,7 @@ function compileContent(
       localFrame: node.localFrame,
       duration: node.duration ?? 30,
       sceneFps: layout.fps,
-      capability: { id: "motionforge.effect", version: "1" },
+      capability: { id: "dojo-video-engine.effect", version: "1" },
     });
   }
   if (node.type === "extension" && node.extension) {
@@ -952,7 +952,7 @@ function compileExtension(
     countOpaqueBytes(state, extension.params, box.id);
     requireCapability(
       state,
-      "motionforge.legacy.renderer-adapter",
+      "dojo-video-engine.legacy.renderer-adapter",
       "1.0.0",
       box.id,
     );
@@ -964,7 +964,7 @@ function compileExtension(
       bounds: opaqueBounds,
       extension,
       capability: {
-        id: "motionforge.legacy.renderer-adapter",
+        id: "dojo-video-engine.legacy.renderer-adapter",
         version: "1.0.0",
       },
     });
@@ -1128,7 +1128,7 @@ function compilePaint(
       stops,
     };
   }
-  requireCapability(state, "motionforge.paint.conic", "1", nodeId);
+  requireCapability(state, "dojo-video-engine.paint.conic", "1", nodeId);
   return {
     kind: "conic-gradient",
     source,

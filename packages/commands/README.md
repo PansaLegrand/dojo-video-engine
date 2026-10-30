@@ -1,14 +1,14 @@
-# @motionforge/commands
+# @dojo-video-engine/commands
 
 Typed, non-recursive editing commands and a revisioned in-memory workspace for
-canonical MotionForge Scenes.
+canonical Dojo Video Engine Scenes.
 
 ```ts
 import {
   applySceneCommands,
   createSceneWorkspace,
   sceneCommandJsonSchema,
-} from "@motionforge/commands";
+} from "@dojo-video-engine/commands";
 
 const edited = applySceneCommands(scene, [
   { kind: "scene.set", width: 1920, height: 1080, fps: 60 },

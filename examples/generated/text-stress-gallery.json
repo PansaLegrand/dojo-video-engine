@@ -188,7 +188,7 @@
         {
           "id": "stress-url-value",
           "type": "text",
-          "text": "https://example.com/products/motionforge/releases/2026/very-long-share-link?utm_source=chat_instruction&clip=final_render",
+          "text": "https://example.com/products/dojo-video-engine/releases/2026/very-long-share-link?utm_source=chat_instruction&clip=final_render",
           "from": 0,
           "style": {
             "width": "100%",
@@ -493,7 +493,7 @@
     {
       "id": "stress-footer",
       "type": "text",
-      "text": "Refresh: pnpm showcase:generate then render examples/generated/text-stress-gallery.json with @motionforge/golden.",
+      "text": "Refresh: pnpm showcase:generate then render examples/generated/text-stress-gallery.json with @dojo-video-engine/golden.",
       "from": 0,
       "style": {
         "height": 82,

@@ -1,18 +1,18 @@
-# @motionforge/extensions
+# @dojo-video-engine/extensions
 
-Versioned deterministic extension contracts for MotionForge Scene v1.
+Versioned deterministic extension contracts for Dojo Video Engine Scene v1.
 
 Extensions let trusted host applications add renderer capabilities while scene
 documents remain JSON-only, validated, portable, and safe for agent editing.
 
 ```ts
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   createExtensionRegistry,
   defineExtension,
   extensionManifest,
   preflightExtensions,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 
 const grid = defineExtension({
   name: "com.example.grid",
@@ -48,7 +48,7 @@ the bounded renderer-neutral v1 subset (`rect`, `text`, and declared-asset
 import {
   compileExtensionDisplay,
   defineExtension,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 
 const portableGrid = defineExtension({
   name: "com.example.portable-grid",
@@ -127,7 +127,7 @@ output, a matching handler that declares the worker realm.
 
 Legacy `renderers` definitions remain supported unchanged throughout 1.x.
 Discovery and preflight identify them as `legacy-opaque` through
-`motionforge.legacy.renderer-adapter@1.0.0`; a display-list backend must
+`dojo-video-engine.legacy.renderer-adapter@1.0.0`; a display-list backend must
 explicitly advertise that bridge. Legacy adapters keep their existing runtime
 behavior and pixels and are not incorrectly described as portable standard
 operations. A definition cannot combine a new `display` contract with legacy

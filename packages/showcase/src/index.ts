@@ -1,4 +1,4 @@
-import { sampleScene } from "@motionforge/core";
+import { sampleScene } from "@dojo-video-engine/core";
 import {
   imageOverlay,
   karaokeCaptions,
@@ -8,8 +8,8 @@ import {
   tiktokCaptions,
   videoOverlay,
   type CaptionWord,
-} from "@motionforge/presets";
-import { parseScene, type Scene, type SceneNode } from "@motionforge/schema";
+} from "@dojo-video-engine/presets";
+import { parseScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
 export {
   findPresetGalleryScene,
   presetGalleryScenes,
@@ -539,7 +539,7 @@ export function launchInfoDisplayScene(): Scene {
       launchMetricCard(
         "launch-card-payload",
         "PAYLOAD",
-        "MOTIONFORGE",
+        "DOJO_VIDEO_ENGINE",
         576,
         486,
         "rgba(255,209,102,0.9)",
@@ -691,7 +691,7 @@ export function timedTextOverlayScene(): Scene {
       {
         id: "timed-top-text",
         type: "text",
-        text: "motionforge.dev",
+        text: "dojo-video-engine.dev",
         from: 0,
         duration: 150,
         style: {
@@ -1005,7 +1005,7 @@ export function textStressGalleryScene(): Scene {
       stressTextCard(
         "stress-url",
         "URL / PATH",
-        "https://example.com/products/motionforge/releases/2026/very-long-share-link?utm_source=chat_instruction&clip=final_render",
+        "https://example.com/products/dojo-video-engine/releases/2026/very-long-share-link?utm_source=chat_instruction&clip=final_render",
         564,
         300,
         444,
@@ -1060,7 +1060,7 @@ export function textStressGalleryScene(): Scene {
       {
         id: "stress-footer",
         type: "text",
-        text: "Refresh: pnpm showcase:generate then render examples/generated/text-stress-gallery.json with @motionforge/golden.",
+        text: "Refresh: pnpm showcase:generate then render examples/generated/text-stress-gallery.json with @dojo-video-engine/golden.",
         style: {
           position: "absolute",
           left: 96,
@@ -1203,7 +1203,7 @@ intro
 WebVTT cue settings are ignored while the cue text stays deterministic.
 
 00:00:07.900 --> 00:00:10.200
-https://motionforge.dev/docs/examples/generated/subtitle-stress-gallery.json?source=subtitle-overlay-roadmap&case=url`),
+https://dojo-video-engine.dev/docs/examples/generated/subtitle-stress-gallery.json?source=subtitle-overlay-roadmap&case=url`),
     {
       fps: 30,
       idPrefix: "subtitle-stress-vtt",
@@ -1310,7 +1310,7 @@ https://motionforge.dev/docs/examples/generated/subtitle-stress-gallery.json?sou
       {
         id: "subtitle-stress-footer",
         type: "text",
-        text: "Refresh: pnpm showcase:generate then render examples/generated/subtitle-stress-gallery.json with @motionforge/golden.",
+        text: "Refresh: pnpm showcase:generate then render examples/generated/subtitle-stress-gallery.json with @dojo-video-engine/golden.",
         style: {
           position: "absolute",
           left: 96,
@@ -1355,7 +1355,7 @@ function imageOverlayAssetSvg(kind: string): string {
   <rect width="960" height="300" rx="96" fill="rgba(255,255,255,0.92)"/>
   <circle cx="138" cy="150" r="76" fill="#111827"/>
   <path d="M94 178l44-92 44 92h-36l-8-20h-38l-8 20z" fill="#66f5d7"/>
-  <text x="250" y="172" font-family="Inter, Arial, sans-serif" font-size="86" font-weight="900" fill="#111827">MOTIONFORGE</text>
+  <text x="250" y="172" font-family="Inter, Arial, sans-serif" font-size="86" font-weight="900" fill="#111827">DOJO_VIDEO_ENGINE</text>
 </svg>`);
   }
 
@@ -1684,7 +1684,7 @@ export function imageOverlayStressGalleryScene(): Scene {
       {
         id: "image-stress-footer",
         type: "text",
-        text: "Refresh: pnpm showcase:generate then render examples/generated/image-overlay-stress-gallery.json with @motionforge/golden.",
+        text: "Refresh: pnpm showcase:generate then render examples/generated/image-overlay-stress-gallery.json with @dojo-video-engine/golden.",
         style: {
           position: "absolute",
           left: 96,
@@ -1976,7 +1976,7 @@ export function videoOverlayStressGalleryScene(): Scene {
       {
         id: "video-stress-footer",
         type: "text",
-        text: "Render examples/generated/video-overlay-stress-gallery.json with @motionforge/golden.",
+        text: "Render examples/generated/video-overlay-stress-gallery.json with @dojo-video-engine/golden.",
         style: {
           position: "absolute",
           left: 96,

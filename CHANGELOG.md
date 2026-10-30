@@ -10,7 +10,20 @@ requires the receipts and provenance in
 
 ## Unreleased
 
-No changes recorded after the 1.1.0 source candidate.
+### 2026-10-31 — Engine naming and application split
+
+- Renamed the repository, package namespace, executables, schema/tool identities,
+  source paths, and exported identifiers to Dojo Video Engine.
+- Removed the chat/playground/MCP applications, model-agent examples/evaluation,
+  app-only spikes, and CLI Studio. Editor and agent development now lives in
+  [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+- Kept the headless authoring starter, engine SDKs, and browser verification harness.
+- Updated compatible validation/test dependencies, made release gates build before
+  referenced-package checks, and excluded emitted test duplicates from Vitest.
+- Refreshed the inspected visual-primitives baseline for pinned Chromium: 13 pixels
+  changed by at most one channel level; exact pixel assertions remain enabled.
+
+This changes source/API names. It does not claim npm publication under the new scope.
 
 ## 1.1.0 — 2026-08-26
 
@@ -33,11 +46,11 @@ until the receipts required by `docs/release-process.md` exist.
 
 ### Open-source platform and interoperability
 
-- Added `@motionforge/interchange` with a versioned common flat-timeline
+- Added `@dojo-video-engine/interchange` with a versioned common flat-timeline
   contract, deterministic rational/NTSC conversion, explicit import/export
   losses, a data-only Remotion host descriptor, and a sanitized static
   HTML-snapshot bridge that never executes scripts or arbitrary React code.
-- Added a provider-neutral MotionForge Agent Skill, a private thin MCP/JSON-RPC
+- Added a provider-neutral Dojo Video Engine Agent Skill, a private thin MCP/JSON-RPC
   adapter over the exact public workflow registry, evidence-manifest discovery,
   protocol-clean stdio guidance, and repair, macro, and extension starter
   examples. Provider-facing Scene load descriptors now embed the canonical
@@ -46,8 +59,8 @@ until the receipts required by `docs/release-process.md` exist.
   comparison, extension ABI, 1.0-to-1.1 migration notes, and compatibility,
   browser, performance, and deterministic agent-evaluation reports.
 - Renamed the repository starter package from the registry-conflicting
-  unscoped `create-motionforge` identity to `@motionforge/create`, while
-  retaining the `create-motionforge` command.
+  unscoped `create-dojo-video-engine` identity to `@dojo-video-engine/create`, while
+  retaining the `create-dojo-video-engine` command.
 - Synchronized all 16 public packages at `1.1.0`; added exact pack-once release
   artifacts, SHA-256/SHA-512 integrity, frozen-lock CycloneDX/license/audit
   evidence, pinned CI actions, staged/idempotent npm provenance publication,
@@ -69,7 +82,7 @@ until the receipts required by `docs/release-process.md` exist.
   animations, and keyframes without changing Scene v1 document validity.
 - Added compatibility coverage spanning top-level, asset, node, style, text-run,
   animation, keyframe, envelope, audio, shape/mask, effect, and extension data.
-- Added the shared `@motionforge/schema/values` portable grammar for lengths,
+- Added the shared `@dojo-video-engine/schema/values` portable grammar for lengths,
   named/hex/legacy-and-modern RGB/HSL colors, gradients, transforms/origins,
   filters, borders, shadows, text strokes, and easing; schema, core
   interpolation, and Canvas2D now consume the same parsed semantics.
@@ -128,7 +141,7 @@ until the receipts required by `docs/release-process.md` exist.
 
 ### Renderer-neutral composition inspection
 
-- Added `@motionforge/inspection` with JSON-safe tree, timeline, per-frame
+- Added `@dojo-video-engine/inspection` with JSON-safe tree, timeline, per-frame
   layout, hit-test, sampled-composition, and unified check APIs.
 - Inspection reports stable hierarchy/source paths, half-open local and
   absolute windows, border/content/transformed/clip bounds, paint order,
@@ -140,13 +153,13 @@ until the receipts required by `docs/release-process.md` exist.
 - Moved affine-transform and object-fit geometry into renderer-neutral core
   helpers while retaining the existing Canvas2D compatibility export and
   pixel behavior.
-- Added `motionforge inspect-layout` and `motionforge check`; the latter emits
+- Added `dojo-video-engine inspect-layout` and `dojo-video-engine check`; the latter emits
   one versioned JSON envelope even for invalid scenes. Agent tools expose the
   same bounded tree/timeline/layout/hit-test/check operations.
 
 ### Typed commands and revisioned workspaces
 
-- Added `@motionforge/commands` with 16 strict, discriminated, non-recursive
+- Added `@dojo-video-engine/commands` with 16 strict, discriminated, non-recursive
   command kinds for text/style/layout/timing/media/node/preset/macro edits and
   a draft-07 JSON Schema for editors and function-calling agents.
 - Commands compile sequentially against a private Scene into one canonical,
@@ -162,7 +175,7 @@ until the receipts required by `docs/release-process.md` exist.
 
 ### Reusable prepared Scene runtime
 
-- Added `@motionforge/runtime` with revisioned prepared sessions, backend
+- Added `@dojo-video-engine/runtime` with revisioned prepared sessions, backend
   preflight/capabilities, transactional incremental updates, latest-intent
   cancellation, opaque frame tokens, portable phase events/errors, artifact
   sinks, and asynchronous idempotent disposal.
@@ -172,7 +185,7 @@ until the receipts required by `docs/release-process.md` exist.
 - Added shared text/media intrinsic-metrics providers with per-field
   exact/declared/estimated provenance, defensive provider inputs, and bounded
   caches consumed by layout, inspection, and the prepared Canvas backend.
-- Added `@motionforge/renderer-canvas2d/runtime`, safe player/export borrowing
+- Added `@dojo-video-engine/renderer-canvas2d/runtime`, safe player/export borrowing
   facades, headless Canvas factories, neutral target compositing, strict
   portable progress metadata, and packed external entry-point verification.
 
@@ -198,7 +211,7 @@ until the receipts required by `docs/release-process.md` exist.
 
 ### Semantic Layout v2 authoring
 
-- Added the public `@motionforge/layout` package and accepted RFC 0012. Flat,
+- Added the public `@dojo-video-engine/layout` package and accepted RFC 0012. Flat,
   bounded Layout Contract v1 plans compile stack/row/column, wrapping, grid,
   overlay, safe-area, fill/hug, grow/shrink, track/span, anchor, and sibling
   constraint intent completely into ordinary numeric Scene v1 geometry.
@@ -211,7 +224,7 @@ until the receipts required by `docs/release-process.md` exist.
   height plan with bounded Latin/CJK/supported-emoji/RTL wrapping, fitting, source
   cluster/ellipsis evidence, and an explicit Scene-v1 projection. Existing
   Scene-v1 layout and pixels remain isolated from the opt-in compiler.
-- Added stable `@motionforge/presets/intents` discovery and nonthrowing
+- Added stable `@dojo-video-engine/presets/intents` discovery and nonthrowing
   compilation for `place`, safe-area boxes, text roles, media looks, and clip
   layouts through versioned JSON-safe manifests.
 - Documented the compiled Scene as a target-specific render projection:
@@ -262,7 +275,7 @@ until the receipts required by `docs/release-process.md` exist.
 
 ## 1.0.0 — 2026-08-24
 
-The first stable MotionForge source/API baseline. Scene v1, public package
+The first stable Dojo Video Engine source/API baseline. Scene v1, public package
 contracts, renderer behavior, export adapters, and agent tool names now follow
 the documented 1.x compatibility policy. See the repository-level publication
 qualification above.
@@ -287,11 +300,11 @@ qualification above.
 
 ## 0.11.0 — 2026-08-24
 
-The agent-tools release: MotionForge's complete generation/edit/render/export
+The agent-tools release: Dojo Video Engine's complete generation/edit/render/export
 workflow is available through one stable public package and function-calling
 registry.
 
-### @motionforge/agent-tools
+### @dojo-video-engine/agent-tools
 
 - Added validation, migration, inspection, lint, patch, semantic diff, and
   runtime capability discovery APIs.
@@ -304,7 +317,7 @@ registry.
 
 ### CLI and verification
 
-- Added `motionforge diff <before> <after>` and `motionforge capabilities`.
+- Added `dojo-video-engine diff <before> <after>` and `dojo-video-engine capabilities`.
 - Added id-addressed/order-aware diff tests, registry execution tests, and
   browser checks for painted stills and contact-sheet layout.
 - Accepted [RFC 0008](docs/rfcs/0008-agent-tools.md).
@@ -324,7 +337,7 @@ share one deterministic render/audio/mux pipeline.
 
 ### Worker/headless adapter
 
-- Added `@motionforge/export/worker` with serializable start/cancel requests,
+- Added `@dojo-video-engine/export/worker` with serializable start/cancel requests,
   progress/complete/error events, `ExportWorkerClient`, worker installation,
   and a reusable handler for cloud/headless message hosts.
 - Worker jobs own AbortControllers, force worker extension compatibility, and
@@ -409,7 +422,7 @@ keyframes.
 
 ## 0.7.0 — 2026-08-24
 
-The visual-primitives release: MotionForge gains a compact serializable vector
+The visual-primitives release: Dojo Video Engine gains a compact serializable vector
 and compositing vocabulary instead of growing one hard-coded effect at a time.
 
 ### Scene, layout, and authoring
@@ -449,7 +462,7 @@ and compositing vocabulary instead of growing one hard-coded effect at a time.
 The extension-kernel release: trusted host applications can add deterministic,
 versioned renderer capabilities while scenes remain portable, validated JSON.
 
-### @motionforge/extensions
+### @dojo-video-engine/extensions
 
 - Added the public extension package with `defineExtension()`,
   `createExtensionRegistry()`, exact-version resolution, and explicit
@@ -482,16 +495,16 @@ versioned renderer capabilities while scenes remain portable, validated JSON.
   versioning, trust boundaries, lifecycle, determinism, and rejected designs.
 - Added registry/preflight/schema/builder/lifecycle unit coverage and a
   pinned-Chromium pixel golden that exercises resolve → prepare → draw.
-- Added `@motionforge/extensions` to package, dependency-boundary,
+- Added `@dojo-video-engine/extensions` to package, dependency-boundary,
   clean-install, and release gates.
 
 ## 0.5.0 — 2026-08-23
 
-The Scene v1 compatibility release: MotionForge now has a canonical versioned
+The Scene v1 compatibility release: Dojo Video Engine now has a canonical versioned
 document, deterministic legacy migration, early reference validation, and
 machine-readable inspection/preflight APIs.
 
-### @motionforge/schema
+### @dojo-video-engine/schema
 
 - `schemaVersion: 1` is canonical. Builders, examples, fixtures, prompts, and
   generated documents now emit Scene v1.
@@ -508,7 +521,7 @@ machine-readable inspection/preflight APIs.
   `lintScene()` for valid-but-suspicious timing, visibility, animation, audio,
   and unused-asset warnings.
 
-### @motionforge/renderer-canvas2d
+### @dojo-video-engine/renderer-canvas2d
 
 - Added `preflightCanvas2D()` with typed Canvas, image/video/audio decoder,
   font-loading, and DOM-Lottie requirements. Unsupported environments can now
@@ -518,9 +531,9 @@ machine-readable inspection/preflight APIs.
 
 ### CLI, starter, and tooling
 
-- Added `motionforge migrate` and `motionforge lint`; CLI inspection now uses
+- Added `dojo-video-engine migrate` and `dojo-video-engine lint`; CLI inspection now uses
   the shared schema inspection API.
-- Starter projects expose migrate/lint scripts, and `create-motionforge`
+- Starter projects expose migrate/lint scripts, and `create-dojo-video-engine`
   derives dependency versions from its own package manifest instead of a
   drift-prone source constant.
 - Added generated JSON Schema parity checking to the standard lint/release
@@ -533,7 +546,7 @@ machine-readable inspection/preflight APIs.
 The production reconciliation release: reusable engine improvements proven in
 DojoClip's Video Agent are now part of the open-source source of truth.
 
-### @motionforge/schema
+### @dojo-video-engine/schema
 
 - Added deterministic `effect` nodes with a bounded parameter contract and 24
   built-in effect names, including six general motion effects and 18
@@ -542,7 +555,7 @@ DojoClip's Video Agent are now part of the open-source source of truth.
   effect parameters and node properties.
 - Regenerated the shipped JSON Schema from the reconciled runtime contract.
 
-### @motionforge/renderer-canvas2d
+### @dojo-video-engine/renderer-canvas2d
 
 - Added deterministic procedural rendering for impact, confetti, cloud,
   speed-line, aura, annotation, waveform, spectrum, particle, tunnel, vinyl,
@@ -554,7 +567,7 @@ DojoClip's Video Agent are now part of the open-source source of truth.
 - Added pixelated media rendering and hardened text, transform, filter, media,
   Lottie, and resource-lifecycle behavior.
 
-### @motionforge/player and @motionforge/export
+### @dojo-video-engine/player and @dojo-video-engine/export
 
 - Player creation no longer waits for the whole preview audio mix before
   painting its first frame; late audio joins the current playback position.
@@ -563,7 +576,7 @@ DojoClip's Video Agent are now part of the open-source source of truth.
 - Export now reuses resolved frame evaluation and text-measure caches, reduces
   progress callback pressure, and keeps encoder backpressure explicit.
 
-### @motionforge/presets
+### @dojo-video-engine/presets
 
 - Added the schema-backed macro registry and `expandMacroNodes()` /
   `expandMacroNodeInput()` APIs for agent-friendly, compact scene authoring.
@@ -574,7 +587,7 @@ DojoClip's Video Agent are now part of the open-source source of truth.
   normalization. Macro metadata generates an agent prompt guide from the same
   registered definitions used at runtime.
 
-### @motionforge/core and @motionforge/authoring
+### @dojo-video-engine/core and @dojo-video-engine/authoring
 
 - Added complete builder coverage for the reconciled node union through
   `lottie()` and `effect()` in core.
@@ -597,30 +610,30 @@ DojoClip's Video Agent are now part of the open-source source of truth.
 
 The agent-loop and playback release: scenes are now editable by patch, playable in real time with sound, and can carry Lottie vector animations.
 
-### @motionforge/schema
+### @dojo-video-engine/schema
 
 - **Scene patch ops (RFC 0001)**: `applyScenePatch(scene, patch)` applies id-addressed, transactional edits — `setStyle` (merge, null deletes), `setText`, `retime`, `setAnimations`, `insertNode`/`removeNode`/`moveNode`, `setAsset`/`removeAsset` (guarded by references), `setSceneMeta`. Pure: a failing op rejects the whole patch and never mutates the input; misspelled ids get closest-match suggestions. `scenePatchSchema`/`sceneOpSchema` exported.
 - New style properties: `filter` (validated brightness/contrast/saturate/grayscale/sepia/invert/opacity/hue-rotate/blur chains), `zIndex`, `border`, `boxShadow`.
 - New node/asset type `lottie`; `volume` now validates on video nodes; `playbackRate` on video and lottie nodes.
 
-### @motionforge/player (new package)
+### @dojo-video-engine/player (new package)
 
 - Real-time playback: deterministic `FrameClock` (wall-clock time exists only here), play/pause/seek/loop, latest-frame-wins decode policy, `frame`/`play`/`pause`/`ended` events.
 - Audio preview: scenes with audible nodes play sound via one cached buffer mixed by the exact export functions; audio is the master clock (frame clock re-anchors on drift). Injectable `AudioPreview`/`now`/scheduler keep everything unit-testable.
 
-### @motionforge/renderer-canvas2d
+### @dojo-video-engine/renderer-canvas2d
 
 - `filter` chains (Canvas2D `context.filter`), `zIndex` sibling paint order, `border` strokes, `boxShadow` on background fills.
 - **Lottie nodes**: self-contained vector Lottie documents render frame-exactly (clamped seek, per-node staging, `objectFit`). Documents with JS expressions or external images are rejected — determinism contract. lottie-web is an optional peer dependency, loaded only when a scene uses it.
 - Video clips expose their own audio track (`VideoClip.audio`).
 
-### @motionforge/export
+### @dojo-video-engine/export
 
 - Video nodes contribute their clip soundtrack to the export at `volume`, trimmed with the picture; `playbackRate` retimes audio varispeed-style.
 - Audio mixes in fixed windows (`audioChunkSeconds`, default 10 s) — flat memory at any scene length. `mixSceneAudio`, `audioChunkRanges` exported.
 - Benchmarked: 1080p two-decoder export beats realtime (see `docs/benchmarks.md`).
 
-### @motionforge/presets
+### @dojo-video-engine/presets
 
 - **`timeline()` choreography**: `.add(id, preset, { at | after | overlap | gap })`, `.stagger(ids, preset, { every })`, `.compile()` per-node keyframes or `.compileToPatch()` ready-to-apply patch ops. Frame-0 holds keep entrances hidden until their slot.
 
@@ -634,18 +647,18 @@ The agent-loop and playback release: scenes are now editable by patch, playable 
 
 Animation maturity release. This is the publish target for the first public launch, skipping the unpublished 0.1.0 package set.
 
-### @motionforge/schema
+### @dojo-video-engine/schema
 
 - Easing expressions are now part of the scene contract: named easings plus `cubic-bezier(x1, y1, x2, y2)`, `spring`, and `spring(bounce)`.
 - Validation rejects malformed easing expressions with actionable messages while keeping existing scenes compatible.
 
-### @motionforge/core
+### @dojo-video-engine/core
 
 - `transform` keyframes now interpolate numerically for matching `translate(...)`, `scale(...)`, and `rotate(...)` function lists and compatible units.
 - Mismatched transform lists or unit conflicts keep deterministic step behavior, matching the documented fallback.
 - Added deterministic cubic-bezier and spring easing evaluators used by numeric, color, and transform interpolation.
 
-### @motionforge/presets
+### @dojo-video-engine/presets
 
 - New package: pure animation presets and caption generators that compile to scene data.
 - Motion presets: `popIn`, `fadeUp`, `slideIn(direction)`, and `pulse`.
@@ -663,26 +676,26 @@ Verified by 80 unit tests, 15 golden fixtures, 11 in-browser integration checks,
 
 First release. A deterministic, browser-native video scene engine: the canonical video is a JSON scene document, and preview and export share the same Canvas2D renderer.
 
-### @motionforge/schema
+### @dojo-video-engine/schema
 
 - Zod scene schema for `schemaVersion: 0`: frame-based timing, a curated CSS-like style subset, keyframe animations, and an asset map.
 - `parseScene` / `validateScene` with actionable, path-qualified error messages; cross-field invariants (unique node ids, asset key = asset id, per-node-type requirements, strictly increasing keyframes).
 - Parse-once semantics: re-parsing an already-parsed scene is an identity no-op, so frame loops never re-validate.
 - `sceneJsonSchema()` plus a shipped `scene.schema.json` (draft-07) for validating scenes without executing code.
 
-### @motionforge/core
+### @dojo-video-engine/core
 
 - Builder API (`composition`, `div`, `text`, `img`, `video`) with deterministic auto ids, serializing to the exact scene format.
 - `evaluateScene(scene, frame)`: pure keyframe evaluation — numeric interpolation with easing, color interpolation in RGBA space (`parseColor` exported), string stepping.
 - `layoutScene`: absolute and flex layout implementing every validated layout property (insets, margin, min/max clamps, padding, gap, `justify-content` including `space-between`, `align-items` including `stretch`).
 
-### @motionforge/renderer-canvas2d
+### @dojo-video-engine/renderer-canvas2d
 
 - `renderStill(ctx, scene, frame, { assets })`: deterministic still-frame rendering for window and offscreen canvases.
 - `resolveAssets(scene)`: the engine's only async phase — decodes image assets (SVG included) and registers font assets under their asset id. Missing media fails loudly, never silently.
 - Multi-line text with measured word wrap, `lineHeight`, `letterSpacing`, `fontStyle`; images with the full `objectFit` set and `objectPosition`; `linear-gradient` with arbitrary stops and angles; `overflow: "hidden"` clipping that follows `borderRadius`; transforms with `transformOrigin`.
 
-### @motionforge/export
+### @dojo-video-engine/export
 
 - `exportVideo({ scene })`: in-browser MP4 export via WebCodecs, encoded and muxed by mediabunny, with codec negotiation (AVC → VP9/AV1 fallback), sub-range export, abort, progress, and bitrate control.
 - `renderFrameSequence`: the deterministic frame loop with microsecond timestamps that `exportVideo` is built on.

@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { sceneSchema, validateScene } from "@motionforge/schema";
+import { z } from "zod/v3";
+import { sceneSchema, validateScene } from "@dojo-video-engine/schema";
 import {
   INTERCHANGE_VERSION,
   budgetsOf,
@@ -20,7 +20,7 @@ const compositionIdSchema = z
 export const remotionHostDescriptorSchema = z
   .object({
     bridgeVersion: z.literal(INTERCHANGE_VERSION),
-    kind: z.literal("motionforge.remotion-host"),
+    kind: z.literal("dojo-video-engine.remotion-host"),
     composition: z
       .object({
         id: compositionIdSchema,
@@ -34,7 +34,7 @@ export const remotionHostDescriptorSchema = z
     hostContract: z
       .object({
         frameSource: z.literal("host"),
-        renderEntry: z.literal("motionforge-canvas2d"),
+        renderEntry: z.literal("dojo-video-engine-canvas2d"),
         reactExecution: z.literal(false),
         arbitraryCompositionImport: z.literal(false),
       })
@@ -48,7 +48,7 @@ export type RemotionHostDescriptor = z.infer<
 export const remotionFramePayloadSchema = z
   .object({
     bridgeVersion: z.literal(INTERCHANGE_VERSION),
-    kind: z.literal("motionforge.remotion-frame"),
+    kind: z.literal("dojo-video-engine.remotion-frame"),
     compositionId: compositionIdSchema,
     frame: z.number().int().nonnegative().max(86_399_999),
     scene: sceneSchema,
@@ -60,7 +60,7 @@ export const remotionHostResultSchema = z.union([
   z
     .object({
       ok: z.literal(true),
-      kind: z.literal("motionforge.remotion-host-result"),
+      kind: z.literal("dojo-video-engine.remotion-host-result"),
       version: z.literal(INTERCHANGE_VERSION),
       descriptor: remotionHostDescriptorSchema,
     })
@@ -71,7 +71,7 @@ export const remotionFrameResultSchema = z.union([
   z
     .object({
       ok: z.literal(true),
-      kind: z.literal("motionforge.remotion-frame-result"),
+      kind: z.literal("dojo-video-engine.remotion-frame-result"),
       version: z.literal(INTERCHANGE_VERSION),
       payload: remotionFramePayloadSchema,
     })
@@ -83,11 +83,11 @@ export type RemotionFrameResult = z.infer<typeof remotionFrameResultSchema>;
 
 /**
  * This bridge is intentionally one-way and data-only. A host React composition
- * owns the current frame and calls MotionForge; no React tree is evaluated here.
+ * owns the current frame and calls DojoVideoEngine; no React tree is evaluated here.
  */
 export const remotionBridgeCapabilities = Object.freeze({
   version: INTERCHANGE_VERSION,
-  direction: "motionforge-to-remotion-host" as const,
+  direction: "dojo-video-engine-to-remotion-host" as const,
   evaluatesReact: false,
   importsArbitraryCompositions: false,
   payload: "canonical-scene-and-host-frame" as const,
@@ -130,9 +130,9 @@ export function createRemotionHostDescriptor(
     if (budgetFailure) return budgetFailure;
     const parsed = remotionHostDescriptorSchema.safeParse({
       bridgeVersion: 1,
-      kind: "motionforge.remotion-host",
+      kind: "dojo-video-engine.remotion-host",
       composition: {
-        id: options.compositionId ?? "MotionForgeScene",
+        id: options.compositionId ?? "DojoVideoEngineScene",
         width: validation.scene.width,
         height: validation.scene.height,
         fps: validation.scene.fps,
@@ -141,7 +141,7 @@ export function createRemotionHostDescriptor(
       scene: validation.scene,
       hostContract: {
         frameSource: "host",
-        renderEntry: "motionforge-canvas2d",
+        renderEntry: "dojo-video-engine-canvas2d",
         reactExecution: false,
         arbitraryCompositionImport: false,
       },
@@ -149,7 +149,7 @@ export function createRemotionHostDescriptor(
     if (!parsed.success) return zodFailure(parsed.error, ["descriptor"]);
     return {
       ok: true,
-      kind: "motionforge.remotion-host-result",
+      kind: "dojo-video-engine.remotion-host-result",
       version: 1,
       descriptor: structuredClone(parsed.data),
     };
@@ -199,7 +199,7 @@ export function createRemotionFramePayload(
     }
     const payload = remotionFramePayloadSchema.safeParse({
       bridgeVersion: 1,
-      kind: "motionforge.remotion-frame",
+      kind: "dojo-video-engine.remotion-frame",
       compositionId: descriptor.data.composition.id,
       frame: frame.data,
       scene: descriptor.data.scene,
@@ -207,7 +207,7 @@ export function createRemotionFramePayload(
     if (!payload.success) return zodFailure(payload.error, ["payload"]);
     return {
       ok: true,
-      kind: "motionforge.remotion-frame-result",
+      kind: "dojo-video-engine.remotion-frame-result",
       version: 1,
       payload: structuredClone(payload.data),
     };

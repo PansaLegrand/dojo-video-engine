@@ -2,11 +2,11 @@
 
 Status: complete
 Decision: [RFC 0013](rfcs/0013-framework-neutral-agent-workflow.md)
-Public package: `@motionforge/agent-tools`
+Public package: `@dojo-video-engine/agent-tools`
 
 ## Outcome
 
-MF8 turns MotionForge's independent capabilities into one coding-agent-like
+MF8 turns Dojo Video Engine's independent capabilities into one coding-agent-like
 loop without putting an agent framework in the engine:
 
 ```text
@@ -34,16 +34,16 @@ descriptors identify tools by name and omit the redundant action field.
 
 | Tool                             | Purpose                                     | Recursive Scene input  |
 | -------------------------------- | ------------------------------------------- | ---------------------- |
-| `motionforge.workflow.load`      | Strict parse/preflight and create a handle  | Yes, the only boundary |
-| `motionforge.workflow.read`      | Flat composition or exact-node summary      | No                     |
-| `motionforge.workflow.search`    | Bounded id/text/asset/type lookup           | No                     |
-| `motionforge.workflow.check`     | Validation/lint/sampled layout diagnostics  | No                     |
-| `motionforge.workflow.commands`  | One transactional typed command batch       | No                     |
-| `motionforge.workflow.undo/redo` | Exact workspace history transition          | No                     |
-| `motionforge.workflow.evidence`  | Proof selection/plan/materialization by ref | No                     |
-| `motionforge.workflow.events`    | Bounded ordered provider-neutral events     | No                     |
-| `motionforge.workflow.close`     | Cancel evidence and release one handle      | No                     |
-| `motionforge.workflow.dispose`   | Join and release the whole session          | No                     |
+| `dojo-video-engine.workflow.load`      | Strict parse/preflight and create a handle  | Yes, the only boundary |
+| `dojo-video-engine.workflow.read`      | Flat composition or exact-node summary      | No                     |
+| `dojo-video-engine.workflow.search`    | Bounded id/text/asset/type lookup           | No                     |
+| `dojo-video-engine.workflow.check`     | Validation/lint/sampled layout diagnostics  | No                     |
+| `dojo-video-engine.workflow.commands`  | One transactional typed command batch       | No                     |
+| `dojo-video-engine.workflow.undo/redo` | Exact workspace history transition          | No                     |
+| `dojo-video-engine.workflow.evidence`  | Proof selection/plan/materialization by ref | No                     |
+| `dojo-video-engine.workflow.events`    | Bounded ordered provider-neutral events     | No                     |
+| `dojo-video-engine.workflow.close`     | Cancel evidence and release one handle      | No                     |
+| `dojo-video-engine.workflow.dispose`   | Join and release the whole session          | No                     |
 
 Every descriptor includes detached strict draft-07 input and output schemas.
 All results are finite JSON trees with configurable value/depth limits plus
@@ -130,7 +130,7 @@ Every request begins with the current browser Scene, so Inspector, timeline,
 manual asset, undo, and redo changes are visible. The provider prompt receives
 flat inspection data rather than the recursive document. The provider SDK,
 model choice, timeout, conversation policy, and local fallback remain in the
-app, outside public MotionForge packages.
+app, outside public Dojo Video Engine packages.
 
 A client project epoch plus monotonic workspace revision prevent an in-flight
 response from overwriting newer manual or asset-shelf changes—or applying an
@@ -170,7 +170,7 @@ are diagnostic evidence, never a deterministic release dependency.
 ## Compatibility and limits
 
 - Existing stateless `createAgentToolRegistry()` tools remain stable.
-- Workflow APIs are additive root exports from `@motionforge/agent-tools`.
+- Workflow APIs are additive root exports from `@dojo-video-engine/agent-tools`.
 - Handles are neither durable ids nor authorization credentials.
 - Evidence checks geometry and rendered differences; it does not claim to
   understand video meaning or aesthetic quality.
@@ -184,10 +184,10 @@ Before the final release gate:
 
 | Command                                       | Evidence                                                     |
 | --------------------------------------------- | ------------------------------------------------------------ |
-| `pnpm --filter @motionforge/commands test`    | 67 tests                                                     |
-| `pnpm --filter @motionforge/agent-tools test` | 49 tests                                                     |
-| `pnpm --filter @motionforge/chat test`        | 129 tests                                                    |
-| `pnpm --filter @motionforge/agent-eval test`  | 15 tests; offline only                                       |
+| `pnpm --filter @dojo-video-engine/commands test`    | 67 tests                                                     |
+| `pnpm --filter @dojo-video-engine/agent-tools test` | 49 tests                                                     |
+| `pnpm --filter @dojo-video-engine/chat test`        | 129 tests                                                    |
+| `pnpm --filter @dojo-video-engine/agent-eval test`  | 15 tests; offline only                                       |
 | `pnpm golden:test`                            | workflow before/after/diff/contact pixels and cleanup passed |
 
 The pinned browser workflow loads one Scene, applies a typed command, renders

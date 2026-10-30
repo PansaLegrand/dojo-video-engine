@@ -1,4 +1,4 @@
-import { z, type ZodType } from "zod";
+import { z, type ZodType } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   colorValueSchema,
@@ -9,7 +9,7 @@ import {
   type SceneExtensionDescriptor,
   type SceneJsonValue,
   type SceneNode,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export type ExtensionSceneNode = SceneNode & {
   type: "extension";
@@ -78,7 +78,7 @@ export const extensionDisplayLimits = Object.freeze({
 });
 
 export const legacyExtensionRendererCapability = Object.freeze({
-  id: "motionforge.legacy.renderer-adapter" as const,
+  id: "dojo-video-engine.legacy.renderer-adapter" as const,
   version: "1.0.0" as const,
 });
 
@@ -241,7 +241,7 @@ type ExtensionHook<Context, Result> = {
   bivarianceHack(context: Context): Result;
 }["bivarianceHack"];
 
-export type MotionForgeExtensionDefinition<
+export type DojoVideoEngineExtensionDefinition<
   P,
   ResolvedAssets = undefined,
   PreparedFrame = undefined,
@@ -290,13 +290,13 @@ export type MotionForgeExtensionDefinition<
   disposeAssets?: ExtensionHook<ResolvedAssets, void | Promise<void>>;
 };
 
-export type MotionForgeExtensionInput<
+export type DojoVideoEngineExtensionInput<
   P,
   ResolvedAssets = undefined,
   PreparedFrame = undefined,
   DisplayPayload extends SceneJsonValue = SceneJsonValue,
 > = Omit<
-  MotionForgeExtensionDefinition<
+  DojoVideoEngineExtensionDefinition<
     P,
     ResolvedAssets,
     PreparedFrame,
@@ -320,7 +320,7 @@ export type MotionForgeExtensionInput<
       }
   );
 
-export type RegisteredExtensionDefinition = MotionForgeExtensionDefinition<
+export type RegisteredExtensionDefinition = DojoVideoEngineExtensionDefinition<
   unknown,
   unknown,
   unknown,
@@ -338,7 +338,7 @@ export type ExtensionDisplayManifest =
       kind: "legacy-opaque";
       capabilities: readonly Readonly<{
         renderer: string;
-        id: "motionforge.legacy.renderer-adapter";
+        id: "dojo-video-engine.legacy.renderer-adapter";
         version: "1.0.0";
         realms: readonly ExtensionExecutionRealm[];
       }>[];
@@ -365,7 +365,7 @@ export function extensionManifest<
   PreparedFrame,
   DisplayPayload extends SceneJsonValue,
 >(
-  definition: MotionForgeExtensionDefinition<
+  definition: DojoVideoEngineExtensionDefinition<
     P,
     ResolvedAssets,
     PreparedFrame,
@@ -419,7 +419,7 @@ function extensionDisplayManifest(
       .sort(compareCodeUnits)
       .map((renderer) => ({
         renderer,
-        id: "motionforge.legacy.renderer-adapter" as const,
+        id: "dojo-video-engine.legacy.renderer-adapter" as const,
         version: "1.0.0" as const,
         realms: [...realms],
       })),
@@ -432,13 +432,13 @@ export function defineExtension<
   PreparedFrame = undefined,
   DisplayPayload extends SceneJsonValue = SceneJsonValue,
 >(
-  definition: MotionForgeExtensionInput<
+  definition: DojoVideoEngineExtensionInput<
     P,
     ResolvedAssets,
     PreparedFrame,
     DisplayPayload
   >,
-): MotionForgeExtensionDefinition<
+): DojoVideoEngineExtensionDefinition<
   P,
   ResolvedAssets,
   PreparedFrame,
@@ -560,20 +560,20 @@ function normalizeExtensionDefinition<
   PreparedFrame,
   DisplayPayload extends SceneJsonValue,
 >(
-  definition: MotionForgeExtensionInput<
+  definition: DojoVideoEngineExtensionInput<
     P,
     ResolvedAssets,
     PreparedFrame,
     DisplayPayload
   >,
-): MotionForgeExtensionDefinition<
+): DojoVideoEngineExtensionDefinition<
   P,
   ResolvedAssets,
   PreparedFrame,
   DisplayPayload
 > {
   if (definition.display === undefined) {
-    return definition as MotionForgeExtensionDefinition<
+    return definition as DojoVideoEngineExtensionDefinition<
       P,
       ResolvedAssets,
       PreparedFrame,
@@ -591,7 +591,7 @@ function normalizeExtensionDefinition<
   return {
     ...definition,
     renderers: Object.freeze({}),
-  } as MotionForgeExtensionDefinition<
+  } as DojoVideoEngineExtensionDefinition<
     P,
     ResolvedAssets,
     PreparedFrame,
@@ -749,7 +749,7 @@ export function compileExtensionDisplay<
   PreparedFrame,
   DisplayPayload extends SceneJsonValue,
 >(
-  definition: MotionForgeExtensionDefinition<
+  definition: DojoVideoEngineExtensionDefinition<
     P,
     ResolvedAssets,
     PreparedFrame,
@@ -1195,7 +1195,7 @@ function assertEncodedDisplaySize(
 
 /** Calls and validates an extension's opt-in resource-reuse identity. */
 export function extensionResourceReuseKey<P, ResolvedAssets, PreparedFrame>(
-  definition: MotionForgeExtensionDefinition<P, ResolvedAssets, PreparedFrame>,
+  definition: DojoVideoEngineExtensionDefinition<P, ResolvedAssets, PreparedFrame>,
   context: ExtensionReuseContext<P>,
 ): string | null {
   if (!definition.reuseKey) return null;
@@ -1222,7 +1222,7 @@ export class ExtensionRegistry {
   readonly #definitions = new Map<string, RegisteredExtensionDefinition>();
 
   constructor(
-    definitions: readonly MotionForgeExtensionDefinition<
+    definitions: readonly DojoVideoEngineExtensionDefinition<
       unknown,
       unknown,
       unknown
@@ -1234,7 +1234,7 @@ export class ExtensionRegistry {
   }
 
   register<P, ResolvedAssets, PreparedFrame>(
-    definition: MotionForgeExtensionDefinition<
+    definition: DojoVideoEngineExtensionDefinition<
       P,
       ResolvedAssets,
       PreparedFrame
@@ -1294,7 +1294,7 @@ export class ExtensionRegistry {
 }
 
 export function createExtensionRegistry(
-  definitions: readonly MotionForgeExtensionDefinition<
+  definitions: readonly DojoVideoEngineExtensionDefinition<
     unknown,
     unknown,
     unknown

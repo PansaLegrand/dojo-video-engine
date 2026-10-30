@@ -1,6 +1,6 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
-import type { Scene, SceneNode } from "@motionforge/schema";
+import type { Scene, SceneNode } from "@dojo-video-engine/schema";
 import {
   comparisonSheetPlanJsonSchema,
   comparisonSheetPlanRequestJsonSchema,
@@ -82,7 +82,7 @@ function expectPlan(value: ReturnType<typeof planComparisonSheet>) {
 function proofSelection(frames = [0, 10]): ProofFrameSelection {
   return {
     ok: true,
-    kind: "motionforge.proof-frame-selection",
+    kind: "dojo-video-engine.proof-frame-selection",
     version: 1,
     beforeDuration: 30,
     afterDuration: 60,
@@ -322,7 +322,7 @@ describe("proof-frame evidence selection", () => {
     expect(ajv.validate(artifactRequest, plan.artifacts[0])).toBe(true);
     const artifactEnvelope = {
       ok: true,
-      kind: "motionforge.evidence-artifacts",
+      kind: "dojo-video-engine.evidence-artifacts",
       version: 1,
       planId: plan.id,
       totalBytes: 3,
@@ -542,7 +542,7 @@ describe("evidence artifact materialization", () => {
     });
     expect(result).toMatchObject({
       ok: true,
-      kind: "motionforge.evidence-artifacts",
+      kind: "dojo-video-engine.evidence-artifacts",
       planId: plan.id,
       totalBytes: plan.artifacts.length * 3,
     });

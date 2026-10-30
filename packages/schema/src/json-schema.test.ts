@@ -1,8 +1,8 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
 import {
-  motionforgeJsonSchemaFormatNames,
-  registerMotionforgeJsonSchemaFormats,
+  dojoVideoEngineJsonSchemaFormatNames,
+  registerDojoVideoEngineJsonSchemaFormats,
   sceneJsonSchema,
   sceneSchema,
 } from "./index.js";
@@ -10,21 +10,21 @@ import {
 describe("generated Scene JSON Schema parity", () => {
   it("publishes and registers the portable-value format vocabulary", () => {
     const schema = sceneJsonSchema();
-    expect(schema["x-motionforge-format-vocabulary"]).toEqual(
-      motionforgeJsonSchemaFormatNames,
+    expect(schema["x-dojo-video-engine-format-vocabulary"]).toEqual(
+      dojoVideoEngineJsonSchemaFormatNames,
     );
 
     const registered: string[] = [];
-    registerMotionforgeJsonSchemaFormats({
+    registerDojoVideoEngineJsonSchemaFormats({
       addFormat(name) {
         registered.push(name);
       },
     });
-    expect(registered).toEqual(motionforgeJsonSchemaFormatNames);
+    expect(registered).toEqual(dojoVideoEngineJsonSchemaFormatNames);
   });
 
   it("agrees with canonical Zod validation on shared value and animation cases", () => {
-    const ajv = registerMotionforgeJsonSchemaFormats(
+    const ajv = registerDojoVideoEngineJsonSchemaFormats(
       new Ajv({ allErrors: true, strict: false }),
     );
     const validateJsonSchema = ajv.compile(sceneJsonSchema());

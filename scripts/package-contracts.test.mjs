@@ -15,11 +15,11 @@ test("release package directories derive from every public package owner", () =>
     Object.keys(publicPackagePolicy).length,
   );
   assert.ok(publicPackageDirectories.includes("packages/commands"));
-  assert.ok(publicPackageDirectories.includes("packages/create-motionforge"));
+  assert.ok(publicPackageDirectories.includes("packages/create-dojo-video-engine"));
 });
 
 const packageEntry = (name, dependencies = {}, extra = {}) => ({
-  packageDir: `/workspace/packages/${name.replace(/^@motionforge\//, "")}`,
+  packageDir: `/workspace/packages/${name.replace(/^@dojo-video-engine\//, "")}`,
   manifest: {
     name,
     version: "1.0.0",
@@ -31,8 +31,8 @@ const packageEntry = (name, dependencies = {}, extra = {}) => ({
 
 test("a minimal accepted graph has no forbidden edge or cycle", () => {
   const packages = Object.keys(publicPackagePolicy).map((name) =>
-    name === "@motionforge/core"
-      ? packageEntry(name, { "@motionforge/schema": "workspace:*" })
+    name === "@dojo-video-engine/core"
+      ? packageEntry(name, { "@dojo-video-engine/schema": "workspace:*" })
       : packageEntry(name),
   );
   assert.deepEqual(validateWorkspaceGraph(packages), []);
@@ -40,39 +40,39 @@ test("a minimal accepted graph has no forbidden edge or cycle", () => {
 
 test("dependency checks reject an unapproved edge and a cycle", () => {
   const packages = [
-    packageEntry("@motionforge/schema", {
-      "@motionforge/core": "workspace:*",
+    packageEntry("@dojo-video-engine/schema", {
+      "@dojo-video-engine/core": "workspace:*",
     }),
-    packageEntry("@motionforge/core", {
-      "@motionforge/schema": "workspace:*",
+    packageEntry("@dojo-video-engine/core", {
+      "@dojo-video-engine/schema": "workspace:*",
     }),
   ];
   const errors = validateWorkspaceGraph(packages).join("\n");
-  assert.match(errors, /not allowed to depend on @motionforge\/core/);
+  assert.match(errors, /not allowed to depend on @dojo-video-engine\/core/);
   assert.match(errors, /dependency cycle/);
 });
 
 test("dependency checks include the scoped starter package", () => {
   const packages = [
-    packageEntry("@motionforge/core"),
-    packageEntry("@motionforge/create", {
-      "@motionforge/core": "^1.0.0",
+    packageEntry("@dojo-video-engine/core"),
+    packageEntry("@dojo-video-engine/create", {
+      "@dojo-video-engine/core": "^1.0.0",
     }),
   ];
   const errors = validateWorkspaceGraph(packages).join("\n");
   assert.match(errors, /must use workspace:\*/);
   assert.match(
     errors,
-    /@motionforge\/create is not allowed to depend on @motionforge\/core/,
+    /@dojo-video-engine\/create is not allowed to depend on @dojo-video-engine\/core/,
   );
 });
 
 test("source checks reject product frameworks and undeclared package imports", () => {
-  const manifest = packageEntry("@motionforge/core").manifest;
-  const schema = packageEntry("@motionforge/schema").manifest;
+  const manifest = packageEntry("@dojo-video-engine/core").manifest;
+  const schema = packageEntry("@dojo-video-engine/schema").manifest;
   const errors = validateSourceContract({
     source:
-      'import next from "next/server"; import { parseScene } from "@motionforge/schema";',
+      'import next from "next/server"; import { parseScene } from "@dojo-video-engine/schema";',
     sourceFile: "/workspace/packages/core/src/index.ts",
     packageDir: "/workspace/packages/core",
     manifest,
@@ -86,7 +86,7 @@ test("source checks reject product frameworks and undeclared package imports", (
 });
 
 test("source checks reject CommonJS and cloud/data provider escapes", () => {
-  const manifest = packageEntry("@motionforge/core").manifest;
+  const manifest = packageEntry("@dojo-video-engine/core").manifest;
   const errors = validateSourceContract({
     source:
       'const queue = require("bullmq"); import { S3Client } from "@aws-sdk/client-s3";',
@@ -100,13 +100,13 @@ test("source checks reject CommonJS and cloud/data provider escapes", () => {
 });
 
 test("source checks reject relative boundary escapes and unexported subpaths", () => {
-  const manifest = packageEntry("@motionforge/core", {
-    "@motionforge/schema": "workspace:*",
+  const manifest = packageEntry("@dojo-video-engine/core", {
+    "@dojo-video-engine/schema": "workspace:*",
   }).manifest;
-  const schema = packageEntry("@motionforge/schema").manifest;
+  const schema = packageEntry("@dojo-video-engine/schema").manifest;
   const errors = validateSourceContract({
     source:
-      'import "../../schema/src/index.js"; import "@motionforge/schema/private";',
+      'import "../../schema/src/index.js"; import "@dojo-video-engine/schema/private";',
     sourceFile: "/workspace/packages/core/src/index.ts",
     packageDir: "/workspace/packages/core",
     manifest,
@@ -120,12 +120,12 @@ test("source checks reject relative boundary escapes and unexported subpaths", (
 });
 
 test("source checks resolve scoped starter package entry points", () => {
-  const manifest = packageEntry("@motionforge/core", {
-    "@motionforge/create": "workspace:*",
+  const manifest = packageEntry("@dojo-video-engine/core", {
+    "@dojo-video-engine/create": "workspace:*",
   }).manifest;
-  const starter = packageEntry("@motionforge/create").manifest;
+  const starter = packageEntry("@dojo-video-engine/create").manifest;
   const errors = validateSourceContract({
-    source: 'import "@motionforge/create/private";',
+    source: 'import "@dojo-video-engine/create/private";',
     sourceFile: "/workspace/packages/core/src/index.ts",
     packageDir: "/workspace/packages/core",
     manifest,
@@ -138,13 +138,13 @@ test("source checks resolve scoped starter package entry points", () => {
 });
 
 test("source checks close external, self-subpath, import-type, and JSX bypasses", () => {
-  const manifest = packageEntry("@motionforge/core").manifest;
+  const manifest = packageEntry("@dojo-video-engine/core").manifest;
   const packageManifests = new Map([[manifest.name, manifest]]);
   const errors = validateSourceContract({
     source: [
       'import "left-pad";',
-      'import "@motionforge/core/private";',
-      'type Private = typeof import("@motionforge/core/private");',
+      'import "@dojo-video-engine/core/private";',
+      'type Private = typeof import("@dojo-video-engine/core/private");',
       'import "ai/react";',
     ].join("\n"),
     sourceFile: "/workspace/packages/core/src/component.jsx",
@@ -160,7 +160,7 @@ test("source checks close external, self-subpath, import-type, and JSX bypasses"
 
 test("test sources may use declared dev dependencies on Windows paths", () => {
   const manifest = packageEntry(
-    "@motionforge/core",
+    "@dojo-video-engine/core",
     {},
     {
       devDependencies: { vitest: "^3.2.4" },
@@ -179,11 +179,11 @@ test("test sources may use declared dev dependencies on Windows paths", () => {
 });
 
 test("entrypoint checks require deliberate baseline updates", () => {
-  const entry = packageEntry("@motionforge/schema");
+  const entry = packageEntry("@dojo-video-engine/schema");
   const baseline = {
     schemaVersion: 1,
     packages: {
-      "@motionforge/schema": {
+      "@dojo-video-engine/schema": {
         owner: "Canonical Scene contract",
         stability: "stable",
         ...normalizePublicSurface(entry.manifest),

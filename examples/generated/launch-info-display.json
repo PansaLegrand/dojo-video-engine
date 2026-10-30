@@ -497,7 +497,7 @@
         {
           "id": "launch-card-payload-value",
           "type": "text",
-          "text": "MOTIONFORGE",
+          "text": "DOJO_VIDEO_ENGINE",
           "from": 0,
           "style": {
             "width": 316,

@@ -52,14 +52,14 @@ describe("release bundle validation", () => {
     ).rejects.toThrow(/sha256|byte length/);
 
     const wrongIdentity = await releaseFixture({
-      packedName: "@motionforge/wrong",
+      packedName: "@dojo-video-engine/wrong",
     });
     await expect(
       loadAndVerifyReleaseBundle({
         directory: wrongIdentity.directory,
         expectedPackageNames: wrongIdentity.names,
       }),
-    ).rejects.toThrow(/contains @motionforge\/wrong/);
+    ).rejects.toThrow(/contains @dojo-video-engine\/wrong/);
 
     const workspace = await releaseFixture({ workspaceDependency: true });
     await expect(
@@ -85,10 +85,10 @@ describe("release bundle validation", () => {
       /keys must be exactly/,
     );
 
-    const entry = packageEvidence("@motionforge/alpha", Buffer.from("alpha"));
+    const entry = packageEvidence("@dojo-video-engine/alpha", Buffer.from("alpha"));
     const withPackage = baseManifest([entry]);
     expect(() =>
-      validateReleaseManifest(withPackage, ["@motionforge/beta"]),
+      validateReleaseManifest(withPackage, ["@dojo-video-engine/beta"]),
     ).toThrow(/package set mismatch/);
     withPackage.packages[0].integrity = "sha256-not-sri";
     expect(() => validateReleaseManifest(withPackage)).toThrow(/sha512 SRI/);
@@ -131,7 +131,7 @@ describe("staged registry publication", () => {
   it("skips identical versions, stages only missing tarballs, then promotes the complete set", async () => {
     const bundle = publicationBundle();
     const registry = new FakeRegistry({
-      "@motionforge/alpha": {
+      "@dojo-video-engine/alpha": {
         integrity: bundle.packages[0].integrity,
         tags: { latest: "1.0.0" },
       },
@@ -139,22 +139,22 @@ describe("staged registry publication", () => {
 
     const result = await publishVerifiedRelease(bundle, registry);
     expect(result).toMatchObject({
-      temporaryTag: "motionforge-1-1-0-candidate",
-      published: ["@motionforge/beta"],
-      skipped: ["@motionforge/alpha"],
-      promoted: ["@motionforge/alpha", "@motionforge/beta"],
+      temporaryTag: "dojo-video-engine-1-1-0-candidate",
+      published: ["@dojo-video-engine/beta"],
+      skipped: ["@dojo-video-engine/alpha"],
+      promoted: ["@dojo-video-engine/alpha", "@dojo-video-engine/beta"],
     });
     expect(registry.calls.filter(({ kind }) => kind === "publish")).toEqual([
       {
         kind: "publish",
-        name: "@motionforge/beta",
-        tag: "motionforge-1-1-0-candidate",
+        name: "@dojo-video-engine/beta",
+        tag: "dojo-video-engine-1-1-0-candidate",
       },
     ]);
-    expect(registry.records.get("@motionforge/alpha").tags).toEqual({
+    expect(registry.records.get("@dojo-video-engine/alpha").tags).toEqual({
       latest: "1.1.0",
     });
-    expect(registry.records.get("@motionforge/beta").tags).toEqual({
+    expect(registry.records.get("@dojo-video-engine/beta").tags).toEqual({
       latest: "1.1.0",
     });
   });
@@ -193,7 +193,7 @@ describe("staged registry publication", () => {
     expect(cleanup.calls).toEqual([
       {
         kind: "removeTag",
-        name: "@motionforge/alpha",
+        name: "@dojo-video-engine/alpha",
         tag: temporaryTag,
       },
     ]);
@@ -202,7 +202,7 @@ describe("staged registry publication", () => {
   it("fails before mutation on differing immutable content or a newer latest", async () => {
     const bundle = publicationBundle();
     const different = new FakeRegistry({
-      "@motionforge/alpha": {
+      "@dojo-video-engine/alpha": {
         integrity: "sha512-ZGlmZmVyZW50",
         tags: { latest: "1.0.0" },
       },
@@ -213,7 +213,7 @@ describe("staged registry publication", () => {
     expect(different.calls).toEqual([]);
 
     const newer = new FakeRegistry({
-      "@motionforge/alpha": {
+      "@dojo-video-engine/alpha": {
         integrity: bundle.packages[0].integrity,
         tags: { latest: "2.0.0" },
       },
@@ -225,7 +225,7 @@ describe("staged registry publication", () => {
 
     const temporaryTag = temporaryReleaseTag("1.1.0");
     const conflictingStage = new FakeRegistry({
-      "@motionforge/alpha": {
+      "@dojo-video-engine/alpha": {
         integrity: bundle.packages[0].integrity,
         tags: { latest: "1.0.0", [temporaryTag]: "1.0.0" },
       },
@@ -241,7 +241,7 @@ describe("staged registry publication", () => {
     const registry = new FakeRegistry();
     const publish = registry.publish.bind(registry);
     registry.publish = async (entry, tag) => {
-      if (entry.name === "@motionforge/beta") {
+      if (entry.name === "@dojo-video-engine/beta") {
         throw new Error("simulated registry outage");
       }
       await publish(entry, tag);
@@ -250,27 +250,27 @@ describe("staged registry publication", () => {
     await expect(publishVerifiedRelease(bundle, registry)).rejects.toThrow(
       /simulated registry outage/,
     );
-    expect(registry.records.get("@motionforge/alpha").tags).toEqual({
-      "motionforge-1-1-0-candidate": "1.1.0",
+    expect(registry.records.get("@dojo-video-engine/alpha").tags).toEqual({
+      "dojo-video-engine-1-1-0-candidate": "1.1.0",
     });
     expect(
-      registry.records.get("@motionforge/alpha").tags.latest,
+      registry.records.get("@dojo-video-engine/alpha").tags.latest,
     ).toBeUndefined();
 
     registry.publish = publish;
     const result = await publishVerifiedRelease(bundle, registry);
-    expect(result.published).toEqual(["@motionforge/beta"]);
-    expect(result.skipped).toEqual(["@motionforge/alpha"]);
-    expect(registry.records.get("@motionforge/alpha").tags).toEqual({
+    expect(result.published).toEqual(["@dojo-video-engine/beta"]);
+    expect(result.skipped).toEqual(["@dojo-video-engine/alpha"]);
+    expect(registry.records.get("@dojo-video-engine/alpha").tags).toEqual({
       latest: "1.1.0",
     });
-    expect(registry.records.get("@motionforge/beta").tags).toEqual({
+    expect(registry.records.get("@dojo-video-engine/beta").tags).toEqual({
       latest: "1.1.0",
     });
   });
 
   it("uses a deterministic non-SemVer temporary tag", () => {
-    expect(temporaryReleaseTag("1.1.0")).toBe("motionforge-1-1-0-candidate");
+    expect(temporaryReleaseTag("1.1.0")).toBe("dojo-video-engine-1-1-0-candidate");
     expect(() => temporaryReleaseTag("1.1.0-beta.1")).toThrow(
       /stable canonical/,
     );
@@ -320,10 +320,10 @@ class FakeRegistry {
 
 function publicationBundle() {
   const packages = ["alpha", "beta"].map((suffix) => ({
-    name: `@motionforge/${suffix}`,
+    name: `@dojo-video-engine/${suffix}`,
     version: "1.1.0",
-    file: `motionforge-${suffix}-1.1.0.tgz`,
-    path: `/release/motionforge-${suffix}-1.1.0.tgz`,
+    file: `dojo-video-engine-${suffix}-1.1.0.tgz`,
+    path: `/release/dojo-video-engine-${suffix}-1.1.0.tgz`,
     byteLength: suffix.length,
     sha256: "a".repeat(64),
     integrity: sha512Integrity(Buffer.from(suffix)),
@@ -332,9 +332,9 @@ function publicationBundle() {
 }
 
 async function releaseFixture(options = {}) {
-  const directory = await mkdtemp(join(tmpdir(), "motionforge-publish-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "dojo-video-engine-publish-test-"));
   temporaryPaths.push(directory);
-  const names = ["@motionforge/alpha", "@motionforge/beta"];
+  const names = ["@dojo-video-engine/alpha", "@dojo-video-engine/beta"];
   const packagePaths = [];
   const packageEntries = [];
   for (const [index, name] of names.entries()) {
@@ -342,9 +342,9 @@ async function releaseFixture(options = {}) {
       index === 0 && options.packedName ? options.packedName : name;
     const dependencies =
       index === 0 && options.workspaceDependency
-        ? { "@motionforge/beta": "workspace:*" }
+        ? { "@dojo-video-engine/beta": "workspace:*" }
         : index === 0
-          ? { "@motionforge/beta": "1.1.0" }
+          ? { "@dojo-video-engine/beta": "1.1.0" }
           : {};
     const path = await createTarball(directory, name, {
       name: packedName,
@@ -373,9 +373,9 @@ async function releaseFixture(options = {}) {
           component: {
             version: "1.1.0",
             properties: [
-              { name: "motionforge:gitCommit", value: commit },
+              { name: "dojo-video-engine:gitCommit", value: commit },
               {
-                name: "motionforge:pnpmLockSha256",
+                name: "dojo-video-engine:pnpmLockSha256",
                 value: identity.lockfileSha256,
               },
             ],
@@ -388,14 +388,14 @@ async function releaseFixture(options = {}) {
     ),
     "release-licenses.json": Buffer.from(
       `${JSON.stringify({
-        format: "motionforge.release-licenses",
+        format: "dojo-video-engine.release-licenses",
         ...identity,
         packages: [{ name: "zod", version: "3.25.76", license: "MIT" }],
       })}\n`,
     ),
     "release-audit.json": Buffer.from(
       `${JSON.stringify({
-        format: "motionforge.release-audit",
+        format: "dojo-video-engine.release-audit",
         ...identity,
         metadata: { vulnerabilities: { high: 0, critical: 0 } },
       })}\n`,
@@ -432,7 +432,7 @@ function baseManifest(packages, files = {}) {
   };
   const lockfile = files["pnpm-lock.yaml"] ?? Buffer.from("lock");
   return {
-    format: "motionforge.release-manifest",
+    format: "dojo-video-engine.release-manifest",
     version: 2,
     releaseVersion: "1.1.0",
     gitCommit: commit,
@@ -462,7 +462,7 @@ function packageEvidence(name, bytes) {
 }
 
 async function createTarball(directory, releaseName, manifest) {
-  const source = await mkdtemp(join(tmpdir(), "motionforge-package-test-"));
+  const source = await mkdtemp(join(tmpdir(), "dojo-video-engine-package-test-"));
   temporaryPaths.push(source);
   const packageDirectory = join(source, "package");
   await mkdir(packageDirectory);

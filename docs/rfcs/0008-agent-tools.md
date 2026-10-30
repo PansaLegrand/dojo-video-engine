@@ -6,7 +6,7 @@
 
 ## Summary
 
-`@motionforge/agent-tools` exposes the complete agent-native workflow as stable
+`@dojo-video-engine/agent-tools` exposes the complete agent-native workflow as stable
 data and browser-media APIs instead of requiring product-specific wrappers.
 
 ## Data tools

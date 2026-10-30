@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   closestIds,
   sceneNodeSchema,
   styleSchema,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   clipLayout,
   clipLayouts,

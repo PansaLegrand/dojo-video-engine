@@ -1,16 +1,18 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Core Engine Release Candidate Roadmap
 
 **Status:** started 2026-06-19
 
 **Completed slices:** RC1 CLI scene inspection; RC2 public API surface audit; RC3 golden RC matrix; RC4 release gate script; RC5 clean-machine verification; RC6 long-scene and resource confidence.
 
-MotionForge has enough feature surface to stop chasing overlay breadth for a moment. The next milestone is release-candidate confidence for the open-source base layer: a programmer can author, validate, inspect, preview, test, and export deterministic video scenes with clear APIs and failure modes.
+Dojo Video Engine has enough feature surface to stop chasing overlay breadth for a moment. The next milestone is release-candidate confidence for the open-source base layer: a programmer can author, validate, inspect, preview, test, and export deterministic video scenes with clear APIs and failure modes.
 
 This track is not about making the chat app smarter. The chat app remains a useful reference consumer, but the RC bar is set by the engine packages, CLI/Studio, golden harness, docs, and starter workflow.
 
 ## Product Rule
 
-Core readiness work must make MotionForge easier to trust, automate, and maintain:
+Core readiness work must make Dojo Video Engine easier to trust, automate, and maintain:
 
 - strengthen public contracts before adding more preset convenience
 - prefer machine-readable tooling output for CI, agents, and release checks
@@ -47,13 +49,13 @@ Not RC-ready yet:
 
 Targets:
 
-- `@motionforge/cli`
+- `@dojo-video-engine/cli`
 - root/package docs
 - tests
 
 Done when:
 
-- `motionforge inspect <scene-module>` validates the module and prints stable JSON metadata
+- `dojo-video-engine inspect <scene-module>` validates the module and prints stable JSON metadata
 - output includes dimensions, fps, duration, node count, asset counts, media-node counts, and detected capabilities such as audio/video/lottie/presets-relevant media
 - invalid scenes fail exactly like `validate`
 - CLI docs explain when to use `validate`, `print`, `inspect`, and `dev`
@@ -77,7 +79,7 @@ Done when:
 Completed:
 
 - Package READMEs now classify stable, experimental, and internal API surfaces.
-- `@motionforge/showcase` is documented as private workspace infrastructure rather than a public integration package.
+- `@dojo-video-engine/showcase` is documented as private workspace infrastructure rather than a public integration package.
 - Guide and scene-format wording was refreshed where it still implied shipped audio preview, fade, or loop behavior was future-only.
 
 ## Slice RC3 - Golden RC Matrix
@@ -151,8 +153,8 @@ Completed:
 
 Targets:
 
-- `@motionforge/export`
-- `@motionforge/player`
+- `@dojo-video-engine/export`
+- `@dojo-video-engine/player`
 - golden/benchmark docs
 
 Done when:
@@ -169,7 +171,7 @@ Completed:
 
 ## Acceptance Criteria
 
-- A new programmer can create, validate, inspect, preview, and export a MotionForge scene by following docs only.
+- A new programmer can create, validate, inspect, preview, and export a Dojo Video Engine scene by following docs only.
 - CI can run a clear pre-release gate without reading project history.
 - Core package APIs have documented stability expectations.
 - Golden/browser checks cover every media class and the newest audio automation paths.

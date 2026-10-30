@@ -6,13 +6,13 @@ import {
   fontFamilyNames,
   inspectScene,
   parseScene,
-  registerMotionforgeJsonSchemaFormats,
+  registerDojoVideoEngineJsonSchemaFormats,
   sceneJsonSchema,
 } from "./index.js";
 
 describe("font-face asset descriptors", () => {
   it("keeps descriptor and explicit no-paint JSON validation aligned with Zod", () => {
-    const validate = registerMotionforgeJsonSchemaFormats(
+    const validate = registerDojoVideoEngineJsonSchemaFormats(
       new Ajv({ strict: false }),
     ).compile(sceneJsonSchema());
     for (const [fontWeight, valid] of [

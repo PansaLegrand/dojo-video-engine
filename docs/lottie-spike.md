@@ -1,7 +1,7 @@
 # Lottie node spike — findings and integration design
 
 **Date:** 2026-06-11 · **Status:** complete — **implemented** (lottie asset/node types shipped per this design) · **Spike code:** `tools/spike-lottie` (throwaway — this document is the deliverable)
-**Question:** can Lottie animations render as deterministic, frame-exact pixels inside motionforge's pure `(scene, frame)` contract?
+**Question:** can Lottie animations render as deterministic, frame-exact pixels inside dojo-video-engine's pure `(scene, frame)` contract?
 
 ## Verdict: yes — green-light the `lottie` node
 
@@ -22,7 +22,7 @@ Follow the video-node pattern exactly — Lottie is "footage with a JSON codec":
 
 - **Schema:** asset type `"lottie"` (src → Lottie JSON document); node type `lottie` with `assetId`, optional `playbackRate`, drawn with `objectFit`/`objectPosition` like other media. Frame mapping mirrors video: `lottieFrame = clamp((localFrame / scene.fps) × playbackRate × lottie.fr, ip, op − 1)` — scenes outlasting the animation hold the last frame.
 - **Renderer:** `resolveAssets()` fetches + parses the JSON and instantiates one offscreen lottie-web canvas player per asset; `prepareFrame()` seeks and stages the canvas (the async phase); `renderStill()` draws the staged canvas synchronously. `disposeAssetsAsync()` awaits transactional teardown and calls `animation.destroy()`.
-- **Dependency policy:** lottie-web (~310 KB min, MIT) must **not** become a hard dependency of `@motionforge/renderer-canvas2d`. Make it an optional peer dependency, dynamically imported inside `resolveAssets()` only when the scene contains a lottie asset, with an actionable error otherwise: _"Scene uses lottie asset X; install lottie-web (optional peer dependency) to render it."_ Scenes without Lottie pay zero bytes.
+- **Dependency policy:** lottie-web (~310 KB min, MIT) must **not** become a hard dependency of `@dojo-video-engine/renderer-canvas2d`. Make it an optional peer dependency, dynamically imported inside `resolveAssets()` only when the scene contains a lottie asset, with an actionable error otherwise: _"Scene uses lottie asset X; install lottie-web (optional peer dependency) to render it."_ Scenes without Lottie pay zero bytes.
 
 ## Determinism caveats to enforce
 

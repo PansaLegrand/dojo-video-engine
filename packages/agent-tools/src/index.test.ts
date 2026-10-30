@@ -67,37 +67,37 @@ describe("agent tool registry", () => {
     const registry = createAgentToolRegistry({ globalObject: {} });
     const names = registry.list().map((tool) => tool.name);
     expect(names).toEqual([
-      "motionforge.capabilities",
-      "motionforge.check",
-      "motionforge.commands.apply",
-      "motionforge.diff",
-      "motionforge.export",
-      "motionforge.export.estimate",
-      "motionforge.export.preflight",
-      "motionforge.hitTest",
-      "motionforge.inspect",
-      "motionforge.inspect.layout",
-      "motionforge.inspect.timeline",
-      "motionforge.inspect.tree",
-      "motionforge.lint",
-      "motionforge.migrate",
-      "motionforge.patch",
-      "motionforge.render.contactSheet",
-      "motionforge.render.still",
-      "motionforge.validate",
+      "dojo-video-engine.capabilities",
+      "dojo-video-engine.check",
+      "dojo-video-engine.commands.apply",
+      "dojo-video-engine.diff",
+      "dojo-video-engine.export",
+      "dojo-video-engine.export.estimate",
+      "dojo-video-engine.export.preflight",
+      "dojo-video-engine.hitTest",
+      "dojo-video-engine.inspect",
+      "dojo-video-engine.inspect.layout",
+      "dojo-video-engine.inspect.timeline",
+      "dojo-video-engine.inspect.tree",
+      "dojo-video-engine.lint",
+      "dojo-video-engine.migrate",
+      "dojo-video-engine.patch",
+      "dojo-video-engine.render.contactSheet",
+      "dojo-video-engine.render.still",
+      "dojo-video-engine.validate",
     ]);
     expect(registry.list()[0]?.inputSchema).toMatchObject({ type: "object" });
     await expect(
-      registry.call("motionforge.inspect", { scene }),
+      registry.call("dojo-video-engine.inspect", { scene }),
     ).resolves.toMatchObject({ width: 320, nodes: { total: 2 } });
     await expect(
-      registry.call("motionforge.patch", {
+      registry.call("dojo-video-engine.patch", {
         scene,
         patch: [{ op: "setText", id: "a", text: "Updated" }],
       }),
     ).resolves.toMatchObject({ ok: true });
     await expect(
-      registry.call("motionforge.commands.apply", {
+      registry.call("dojo-video-engine.commands.apply", {
         scene,
         commands: [{ kind: "text.set", id: "a", text: "By command" }],
       }),
@@ -112,50 +112,50 @@ describe("agent tool registry", () => {
     });
 
     await expect(
-      registry.call("motionforge.inspect.tree", {
+      registry.call("dojo-video-engine.inspect.tree", {
         scene,
         semanticRoles: { a: "subtitle" },
       }),
     ).resolves.toMatchObject({
-      kind: "motionforge.tree",
+      kind: "dojo-video-engine.tree",
       nodes: expect.arrayContaining([
         expect.objectContaining({ id: "a", semanticRole: "subtitle" }),
       ]),
     });
     await expect(
-      registry.call("motionforge.inspect.timeline", { scene }),
+      registry.call("dojo-video-engine.inspect.timeline", { scene }),
     ).resolves.toMatchObject({
-      kind: "motionforge.timeline",
+      kind: "dojo-video-engine.timeline",
       durationFrames: 30,
     });
     await expect(
-      registry.call("motionforge.inspect.layout", {
+      registry.call("dojo-video-engine.inspect.layout", {
         scene,
         frame: 0,
         allowedOverlaps: [["a", "b"]],
       }),
     ).resolves.toMatchObject({
-      kind: "motionforge.layout",
+      kind: "dojo-video-engine.layout",
       frame: 0,
       nodes: expect.arrayContaining([expect.objectContaining({ id: "a" })]),
     });
     await expect(
-      registry.call("motionforge.hitTest", {
+      registry.call("dojo-video-engine.hitTest", {
         scene,
         frame: 0,
         point: { x: 10, y: 10 },
       }),
     ).resolves.toMatchObject({
-      kind: "motionforge.hit-test",
+      kind: "dojo-video-engine.hit-test",
       hits: expect.arrayContaining([expect.objectContaining({ nodeId: "b" })]),
     });
     await expect(
-      registry.call("motionforge.check", {
+      registry.call("dojo-video-engine.check", {
         scene,
         frames: [0, 15, 29],
       }),
     ).resolves.toMatchObject({
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       validation: { ok: true },
       composition: { sampledFrames: [0, 15, 29] },
     });
@@ -167,11 +167,11 @@ describe("agent tool registry", () => {
       registry.list().map((descriptor) => [descriptor.name, descriptor]),
     );
     for (const name of [
-      "motionforge.inspect.tree",
-      "motionforge.inspect.timeline",
-      "motionforge.inspect.layout",
-      "motionforge.hitTest",
-      "motionforge.check",
+      "dojo-video-engine.inspect.tree",
+      "dojo-video-engine.inspect.timeline",
+      "dojo-video-engine.inspect.layout",
+      "dojo-video-engine.hitTest",
+      "dojo-video-engine.check",
     ]) {
       expect(descriptors.get(name)?.inputSchema).toMatchObject({
         type: "object",
@@ -181,16 +181,16 @@ describe("agent tool registry", () => {
     }
     expect(
       (
-        descriptors.get("motionforge.inspect.tree")?.inputSchema.properties as
+        descriptors.get("dojo-video-engine.inspect.tree")?.inputSchema.properties as
           | Record<string, Record<string, unknown>>
           | undefined
       )?.semanticRoles,
     ).toMatchObject({ maxProperties: 100 });
-    expect(descriptors.get("motionforge.check")?.inputSchema).toMatchObject({
+    expect(descriptors.get("dojo-video-engine.check")?.inputSchema).toMatchObject({
       allOf: [{ not: { required: ["frames", "sampleCount"] } }],
     });
     expect(
-      descriptors.get("motionforge.commands.apply")?.inputSchema,
+      descriptors.get("dojo-video-engine.commands.apply")?.inputSchema,
     ).toMatchObject({
       type: "object",
       additionalProperties: false,
@@ -199,51 +199,51 @@ describe("agent tool registry", () => {
     const commandDocument = sceneCommandJsonSchema();
     expect(
       (
-        descriptors.get("motionforge.commands.apply")?.inputSchema
+        descriptors.get("dojo-video-engine.commands.apply")?.inputSchema
           .properties as Record<string, unknown>
       ).commands,
     ).toEqual(
       (commandDocument.definitions as Record<string, Record<string, unknown>>)
-        .MotionforgeSceneCommands,
+        .DojoVideoEngineSceneCommands,
     );
     await expect(
-      registry.call("motionforge.inspect.layout", { scene, frame: -1 }),
+      registry.call("dojo-video-engine.inspect.layout", { scene, frame: -1 }),
     ).rejects.toThrow();
     await expect(
-      registry.call("motionforge.check", { scene, sampleCount: 101 }),
+      registry.call("dojo-video-engine.check", { scene, sampleCount: 101 }),
     ).rejects.toThrow();
     await expect(
-      registry.call("motionforge.check", {
+      registry.call("dojo-video-engine.check", {
         scene,
         frames: [0],
         sampleCount: 1,
       }),
     ).rejects.toThrow(/either frames or sampleCount/);
-    await expect(registry.call("motionforge.inspect.tree", {})).rejects.toThrow(
+    await expect(registry.call("dojo-video-engine.inspect.tree", {})).rejects.toThrow(
       /scene is required/,
     );
     await expect(
-      registry.call("motionforge.check", {
+      registry.call("dojo-video-engine.check", {
         scene,
         frames: Array.from({ length: 101 }, (_, index) => index),
       }),
     ).rejects.toThrow();
     await expect(
-      registry.call("motionforge.check", { scene, frames: [30] }),
+      registry.call("dojo-video-engine.check", { scene, frames: [30] }),
     ).rejects.toThrow(/outside Scene duration/);
     await expect(
-      registry.call("motionforge.inspect.tree", {
+      registry.call("dojo-video-engine.inspect.tree", {
         scene,
         unknownOption: true,
       }),
     ).rejects.toThrow();
     await expect(
-      registry.call("motionforge.check", {
+      registry.call("dojo-video-engine.check", {
         scene: { schemaVersion: 1, width: 0 },
         frames: [0],
       }),
     ).resolves.toMatchObject({
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       ok: false,
       validation: { ok: false, errors: expect.any(Array) },
       tree: null,
@@ -252,13 +252,13 @@ describe("agent tool registry", () => {
   });
 
   it("re-exports direct renderer-neutral inspection functions", () => {
-    expect(inspectTree(scene).kind).toBe("motionforge.tree");
-    expect(inspectTimeline(scene).kind).toBe("motionforge.timeline");
-    expect(inspectLayout(scene, 0).kind).toBe("motionforge.layout");
-    expect(hitTest(scene, 0, { x: 1, y: 1 }).kind).toBe("motionforge.hit-test");
+    expect(inspectTree(scene).kind).toBe("dojo-video-engine.tree");
+    expect(inspectTimeline(scene).kind).toBe("dojo-video-engine.timeline");
+    expect(inspectLayout(scene, 0).kind).toBe("dojo-video-engine.layout");
+    expect(hitTest(scene, 0, { x: 1, y: 1 }).kind).toBe("dojo-video-engine.hit-test");
     expect(analyzeComposition(scene, { frames: [0] }).sampledFrames).toEqual([
       0,
     ]);
-    expect(checkScene(scene, { frames: [0] }).kind).toBe("motionforge.check");
+    expect(checkScene(scene, { frames: [0] }).kind).toBe("dojo-video-engine.check");
   });
 });

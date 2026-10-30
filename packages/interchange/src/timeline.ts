@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   sceneSchema,
   validateScene,
   type SceneAsset,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   INTERCHANGE_VERSION,
   budgetsOf,
@@ -183,7 +183,7 @@ export type TimelineClip = z.infer<typeof timelineClipSchema>;
 const timelineImportSuccessSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.timeline-import"),
+    kind: z.literal("dojo-video-engine.timeline-import"),
     version: z.literal(INTERCHANGE_VERSION),
     scene: sceneSchema,
     diagnostics: z.array(interchangeDiagnosticSchema).max(8_192),
@@ -193,7 +193,7 @@ const timelineImportSuccessSchema = z
 const timelineExportSuccessSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.timeline-export"),
+    kind: z.literal("dojo-video-engine.timeline-export"),
     version: z.literal(INTERCHANGE_VERSION),
     timeline: timelineInterchangeV1Schema,
     diagnostics: z.array(interchangeDiagnosticSchema).max(8_192),
@@ -457,7 +457,7 @@ export function importTimelineV1(
     }
     return {
       ok: true,
-      kind: "motionforge.timeline-import",
+      kind: "dojo-video-engine.timeline-import",
       version: 1,
       scene: validation.scene,
       diagnostics: structuredClone(diagnostics),
@@ -832,7 +832,7 @@ export function exportTimelineV1(
     if (!output.success) return zodFailure(output.error, ["timeline"]);
     return {
       ok: true,
-      kind: "motionforge.timeline-export",
+      kind: "dojo-video-engine.timeline-export",
       version: 1,
       timeline: structuredClone(output.data),
       diagnostics: structuredClone(diagnostics),

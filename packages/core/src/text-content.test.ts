@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseScene, type SceneNodeInput } from "@motionforge/schema";
+import { parseScene, type SceneNodeInput } from "@dojo-video-engine/schema";
 import { compileDisplayList, evaluateScene, layoutScene } from "./index.js";
 
 function text(node: Partial<SceneNodeInput>) {

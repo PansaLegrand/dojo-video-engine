@@ -1,4 +1,4 @@
-import { inspectScene, parseScene, type Scene } from "@motionforge/schema";
+import { inspectScene, parseScene, type Scene } from "@dojo-video-engine/schema";
 import {
   BoundedTextMeasureCache,
   disposeAssetsAsync,
@@ -11,11 +11,11 @@ import {
   type Canvas2DStaticDisplayCache,
   type Canvas2DOpaqueExtensionRegistry,
   type TextMeasureCache,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 import {
   withCanvas2DResolvedAssets,
   type Canvas2DSceneRuntime,
-} from "@motionforge/renderer-canvas2d/runtime";
+} from "@dojo-video-engine/renderer-canvas2d/runtime";
 import {
   ChunkedWebAudioPreview,
   WebAudioPreview,

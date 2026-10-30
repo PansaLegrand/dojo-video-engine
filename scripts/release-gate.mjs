@@ -7,10 +7,10 @@ import { fileURLToPath } from "node:url";
 import { publicPackageDirectories } from "./package-contracts.mjs";
 
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const cliBin = join(rootDir, "packages/cli/dist/bin/motionforge.js");
+const cliBin = join(rootDir, "packages/cli/dist/bin/dojo-video-engine.js");
 const createBin = join(
   rootDir,
-  "packages/create-motionforge/dist/bin/create-motionforge.js",
+  "packages/create-dojo-video-engine/dist/bin/create-dojo-video-engine.js",
 );
 const mode = process.argv[2] ?? "fast";
 
@@ -22,25 +22,23 @@ if (!["fast", "full", "smoke", "pack"].includes(mode)) {
 const steps =
   mode === "fast"
     ? [
+        ["pnpm", ["build"]],
         ["pnpm", ["typecheck"]],
         ["pnpm", ["test"]],
         ["pnpm", ["lint"]],
-        ["pnpm", ["build"]],
         ["node", ["scripts/release-gate.mjs", "smoke"]],
       ]
     : [
+        ["pnpm", ["build"]],
         ["pnpm", ["typecheck"]],
         ["pnpm", ["test"]],
         ["pnpm", ["lint"]],
-        ["pnpm", ["build"]],
         ["pnpm", ["fuzz:scene"]],
         ["pnpm", ["corpus:check"]],
-        ["pnpm", ["agent:gate"]],
         ["pnpm", ["resource:smoke"]],
         ["pnpm", ["golden:test"]],
         ["pnpm", ["cross-browser"]],
         ["pnpm", ["performance:gate"]],
-        ["pnpm", ["e2e"]],
         ["node", ["scripts/release-gate.mjs", "smoke"]],
         ["node", ["scripts/release-gate.mjs", "pack"]],
       ];
@@ -60,7 +58,7 @@ async function runSteps(items) {
 }
 
 async function runSmokeChecks() {
-  const dir = await mkdtemp(join(tmpdir(), "motionforge-release-gate-"));
+  const dir = await mkdtemp(join(tmpdir(), "dojo-video-engine-release-gate-"));
 
   try {
     const scenePath = join(dir, "scene.json");
@@ -96,7 +94,6 @@ async function runSmokeChecks() {
     );
 
     for (const script of [
-      "dev",
       "validate",
       "print",
       "migrate",

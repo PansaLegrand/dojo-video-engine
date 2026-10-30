@@ -10,7 +10,7 @@ and signing/distribution policy is maintained in
 
 ## Summary
 
-MotionForge extensions add trusted runtime capabilities without allowing scene
+Dojo Video Engine extensions add trusted runtime capabilities without allowing scene
 documents or agents to carry executable code. A scene names a versioned
 extension and supplies bounded JSON parameters; the host supplies the matching
 installed definition and renderer adapter.
@@ -45,12 +45,12 @@ The descriptor is data only. `name` is a stable namespaced identifier;
 the installed definition. Unknown extension fields are rejected by Scene v1.
 
 Exact versions make stored scenes reproducible. A definition may explicitly
-list older exact versions in `compatibleVersions`; MotionForge does not infer
+list older exact versions in `compatibleVersions`; Dojo Video Engine does not infer
 SemVer compatibility or silently choose a newer implementation.
 
 ## Trusted definition contract
 
-`@motionforge/extensions` provides `defineExtension()` and
+`@dojo-video-engine/extensions` provides `defineExtension()` and
 `createExtensionRegistry()`.
 
 A definition declares:

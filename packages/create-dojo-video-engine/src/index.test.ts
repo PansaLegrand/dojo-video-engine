@@ -2,14 +2,14 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { createMotionforgeProject } from "./index.js";
+import { createDojoVideoEngineProject } from "./index.js";
 
-describe("create-motionforge", () => {
+describe("create-dojo-video-engine", () => {
   it("creates a minimal starter project", async () => {
     const dir = await tempDir();
 
     try {
-      const result = await createMotionforgeProject("Hello Video", {
+      const result = await createDojoVideoEngineProject("Hello Video", {
         cwd: dir,
       });
 
@@ -33,19 +33,18 @@ describe("create-motionforge", () => {
       expect(packageJson.name).toBe("hello-video");
       expect(packageJson.packageManager).toBe("pnpm@10.34.5");
       expect(packageJson.scripts).toMatchObject({
-        dev: "motionforge dev src/video.ts",
-        validate: "motionforge validate src/video.ts",
-        print: "motionforge print src/video.ts",
-        migrate: "motionforge migrate src/video.ts",
-        inspect: "motionforge inspect src/video.ts",
-        lint: "motionforge lint src/video.ts",
+        validate: "dojo-video-engine validate src/video.ts",
+        print: "dojo-video-engine print src/video.ts",
+        migrate: "dojo-video-engine migrate src/video.ts",
+        inspect: "dojo-video-engine inspect src/video.ts",
+        lint: "dojo-video-engine lint src/video.ts",
       });
       const ownPackage = JSON.parse(
         await readFile(new URL("../package.json", import.meta.url), "utf8"),
       ) as { version: string };
       expect(packageJson.dependencies).toMatchObject({
-        "@motionforge/authoring": `^${ownPackage.version}`,
-        "@motionforge/cli": `^${ownPackage.version}`,
+        "@dojo-video-engine/authoring": `^${ownPackage.version}`,
+        "@dojo-video-engine/cli": `^${ownPackage.version}`,
       });
 
       await expect(
@@ -67,15 +66,15 @@ describe("create-motionforge", () => {
 
     try {
       const projectDir = join(dir, "existing");
-      await createMotionforgeProject("existing", { cwd: dir });
+      await createDojoVideoEngineProject("existing", { cwd: dir });
       await writeFile(join(projectDir, "custom.txt"), "do not overwrite");
 
       await expect(
-        createMotionforgeProject("existing", { cwd: dir }),
+        createDojoVideoEngineProject("existing", { cwd: dir }),
       ).rejects.toThrow("not empty");
 
       await expect(
-        createMotionforgeProject("existing", { cwd: dir, force: true }),
+        createDojoVideoEngineProject("existing", { cwd: dir, force: true }),
       ).resolves.toMatchObject({
         projectName: "existing",
         projectDir,
@@ -90,5 +89,5 @@ describe("create-motionforge", () => {
 });
 
 async function tempDir() {
-  return await mkdtemp(join(tmpdir(), "create-motionforge-"));
+  return await mkdtemp(join(tmpdir(), "create-dojo-video-engine-"));
 }

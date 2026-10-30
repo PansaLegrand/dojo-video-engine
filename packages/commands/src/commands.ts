@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   animationTargets,
@@ -17,7 +17,7 @@ import {
   type SceneNode,
   type ScenePatch,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   clipLayout,
   clipLayouts,
@@ -30,11 +30,11 @@ import {
   type ClipLayoutKey,
   type MediaLookKey,
   type MotionPresetName,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 import {
   expandMacroNodeInput,
   type MacroContext,
-} from "@motionforge/presets/macros";
+} from "@dojo-video-engine/presets/macros";
 
 /**
  * A non-recursive, intent-level editing vocabulary. Commands deliberately do
@@ -66,7 +66,7 @@ const MAX_OPAQUE_PROPERTIES = 64;
 const MAX_ANIMATION_TRACKS = 128;
 const MAX_KEYFRAMES_PER_TRACK = 2048;
 const MAX_ANIMATION_REPEAT = 1000;
-const OPAQUE_OBJECT_MARKER = "motionforge:bounded-opaque-object";
+const OPAQUE_OBJECT_MARKER = "dojo-video-engine:bounded-opaque-object";
 const OPAQUE_FORBIDDEN_KEYS = ["children", "nodes", "scene"] as const;
 
 const boundedTextSchema = z.string().max(MAX_TEXT_LENGTH);
@@ -564,7 +564,7 @@ export type SceneCommands = SceneCommand[];
 /** Draft-07 schema suitable for constrained model output and editor forms. */
 export function sceneCommandJsonSchema(): Record<string, unknown> {
   const schema = zodToJsonSchema(sceneCommandsSchema, {
-    name: "MotionforgeSceneCommands",
+    name: "DojoVideoEngineSceneCommands",
     target: "jsonSchema7",
     $refStrategy: "none",
   }) as Record<string, unknown>;
@@ -573,7 +573,7 @@ export function sceneCommandJsonSchema(): Record<string, unknown> {
 
   return {
     ...schema,
-    title: "MotionForge scene commands",
+    title: "DojoVideoEngine scene commands",
     description:
       "Strict, discriminated, non-recursive commands that compile to canonical ScenePatch operations.",
   };

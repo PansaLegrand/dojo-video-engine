@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
-import { registerMacro } from "@motionforge/presets/macros";
+import { z } from "zod/v3";
+import { registerMacro } from "@dojo-video-engine/presets/macros";
 
 describe("runtime custom macro isolation", () => {
   it("keeps built-in manifests independent of host-only macro semantics", async () => {

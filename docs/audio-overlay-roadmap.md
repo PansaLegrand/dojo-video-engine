@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Audio Overlay Roadmap
 
 **Status:** implementation started 2026-06-19
 
-MotionForge already has `audio` assets, `audio` nodes, source trimming with `audioStartTime`, static `volume`, browser preview through `@motionforge/player`, and AAC export mixing. The next goal is production audio overlays: music beds, voiceover, sound effects, beat accents, ambience, and notification-style cues that programmers and agents can add with stable helper names.
+Dojo Video Engine already has `audio` assets, `audio` nodes, source trimming with `audioStartTime`, static `volume`, browser preview through `@dojo-video-engine/player`, and AAC export mixing. The next goal is production audio overlays: music beds, voiceover, sound effects, beat accents, ambience, and notification-style cues that programmers and agents can add with stable helper names.
 
 This stays a base-layer open-source feature. Audio overlays compile to ordinary scene assets and audio nodes. Apps may expose richer UI, but they should not need app-specific mixer semantics.
 
@@ -60,7 +62,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - docs/tests
 
 Done:
@@ -73,7 +75,7 @@ Done:
 
 ## Slice AX3 - Authoring Audio Overlay Helper ✅
 
-**Goal:** `@motionforge/authoring` makes audio roles as easy as `audioTrack()` and media overlays.
+**Goal:** `@dojo-video-engine/authoring` makes audio roles as easy as `audioTrack()` and media overlays.
 
 Targets:
 
@@ -86,7 +88,7 @@ Done:
 - passing an audio asset object auto-adds it to `scene.assets`
 - helper compiles through the preset helper with seconds-first authoring time values
 - role templates are documented through `audioOverlay({ template })`
-- generated nodes validate through `@motionforge/schema`
+- generated nodes validate through `@dojo-video-engine/schema`
 
 ## Slice AX4 - Preset Catalog And Chat/App Refresh ✅
 
@@ -94,7 +96,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - Playground preset catalog
 - `apps/chat`
 - docs/examples
@@ -113,10 +115,10 @@ Done:
 
 Targets:
 
-- `@motionforge/schema`
-- `@motionforge/core`
-- `@motionforge/export`
-- `@motionforge/player`
+- `@dojo-video-engine/schema`
+- `@dojo-video-engine/core`
+- `@dojo-video-engine/export`
+- `@dojo-video-engine/player`
 - docs/tests
 
 Done when:
@@ -141,7 +143,7 @@ Progress:
 
 Targets:
 
-- `@motionforge/showcase`
+- `@dojo-video-engine/showcase`
 - examples
 - golden harness
 - docs assets

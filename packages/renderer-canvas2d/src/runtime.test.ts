@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveMediaMetrics } from "@motionforge/core";
+import { resolveMediaMetrics } from "@dojo-video-engine/core";
 import {
   createExtensionRegistry,
   defineExtension,
-} from "@motionforge/extensions";
-import { createSceneRuntime } from "@motionforge/runtime";
-import { parseScene } from "@motionforge/schema";
-import { z } from "zod";
+} from "@dojo-video-engine/extensions";
+import { createSceneRuntime } from "@dojo-video-engine/runtime";
+import { parseScene } from "@dojo-video-engine/schema";
+import { z } from "zod/v3";
 import {
   createCanvas2DRuntimeBackend,
   createCanvas2DSceneRuntime,

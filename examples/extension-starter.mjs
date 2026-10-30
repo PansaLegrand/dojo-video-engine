@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   createExtensionRegistry,
   defineExtension,
   extensionManifest,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 
 export const brandGridExtension = defineExtension({
   name: "example.brand-grid",

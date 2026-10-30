@@ -6,7 +6,7 @@
 
 ## Summary
 
-Scene v1 is MotionForge's first canonical compatibility contract. New builders,
+Scene v1 is Dojo Video Engine's first canonical compatibility contract. New builders,
 authoring helpers, examples, and generated scenes emit `schemaVersion: 1`.
 Legacy v0 documents remain accepted through deterministic migration.
 
@@ -32,7 +32,7 @@ Repeated parsing of the same object is cached and returns the same canonical
 object identity.
 
 Future or unknown versions fail with an error naming the supported canonical
-version and available migration source versions. MotionForge never guesses how
+version and available migration source versions. Dojo Video Engine never guesses how
 to interpret a future document.
 
 ### `migrateScene(input)`

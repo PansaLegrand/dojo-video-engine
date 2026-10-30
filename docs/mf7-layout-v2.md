@@ -7,12 +7,12 @@ Decision: [RFC 0012](rfcs/0012-layout-v2-authoring.md)
 
 ## Decision and layer boundary
 
-MF7 adds `@motionforge/layout`, a bounded semantic authoring compiler for
+MF7 adds `@dojo-video-engine/layout`, a bounded semantic authoring compiler for
 responsive video composition. The milestone is called Layout v2 because it is
 the second authoring model; the first shipped data contract is explicitly
 `layoutVersion: 1` and has its own compatibility lifecycle.
 
-The compiler does not change `@motionforge/core`'s existing Scene-v1 layout
+The compiler does not change `@dojo-video-engine/core`'s existing Scene-v1 layout
 semantics and does not add fields to Scene v1:
 
 ```text
@@ -41,7 +41,7 @@ visual children by id. It is flat and non-recursive so a function tool does not
 need to emit another Scene tree:
 
 ```ts
-import { compileLayout, grid, item } from "@motionforge/layout";
+import { compileLayout, grid, item } from "@dojo-video-engine/layout";
 
 const plan = grid({
   containerId: "cards",
@@ -73,7 +73,7 @@ that boundary supplies semantic issue codes such as `duplicate_item` and
 
 ## Public APIs
 
-`@motionforge/layout` exports:
+`@dojo-video-engine/layout` exports:
 
 - `layoutPlanSchema`, `layoutPlanJsonSchema()`, and `validateLayoutPlan()`;
 - `compileLayout()` and nonthrowing `tryCompileLayout()`;
@@ -193,7 +193,7 @@ unstructured exceptions.
 
 ## Intent compiler interoperability
 
-`@motionforge/presets/intents` is the discovery layer for established
+`@dojo-video-engine/presets/intents` is the discovery layer for established
 single-node authoring sugar. Its stable manifest ids cover:
 
 - `place` and `safe-area/box`;
@@ -203,7 +203,7 @@ single-node authoring sugar. Its stable manifest ids cover:
 Use `layoutCompilerManifests()` and `getLayoutCompilerManifest()` for detached
 JSON-safe discovery, then `compileLayoutIntent()` for a nonthrowing compilation
 to a Scene-v1 style or wrapper. These intents preserve existing preset output
-and complement `@motionforge/layout`: intents style/place one node, while a
+and complement `@dojo-video-engine/layout`: intents style/place one node, while a
 LayoutPlan solves relationships among all direct siblings.
 
 ## Compatibility and non-goals
@@ -224,11 +224,11 @@ Focused evidence recorded before the final release gate:
 
 | Command                                             | Evidence                    |
 | --------------------------------------------------- | --------------------------- |
-| `pnpm --filter @motionforge/layout test`            | 59 tests passed             |
-| `pnpm --filter @motionforge/presets test`           | 191 tests passed            |
-| `pnpm --filter @motionforge/schema test`            | 102 tests passed            |
-| `pnpm --filter @motionforge/core test`              | 75 tests passed             |
-| `pnpm --filter @motionforge/renderer-canvas2d test` | 223 tests passed            |
+| `pnpm --filter @dojo-video-engine/layout test`            | 59 tests passed             |
+| `pnpm --filter @dojo-video-engine/presets test`           | 191 tests passed            |
+| `pnpm --filter @dojo-video-engine/schema test`            | 102 tests passed            |
+| `pnpm --filter @dojo-video-engine/core test`              | 75 tests passed             |
+| `pnpm --filter @dojo-video-engine/renderer-canvas2d test` | 223 tests passed            |
 | `pnpm check:contracts`                              | 15 public packages verified |
 | `npm pack --dry-run` in `packages/layout`           | 23 files; 68.8 kB tarball   |
 

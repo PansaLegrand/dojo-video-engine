@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   materializeEvidenceArtifacts,
   planComparisonSheet,
@@ -161,7 +161,7 @@ function scene(label: "before" | "after", width = 2, height = 1): Scene {
 function selection(frames = [0]): ProofFrameSelection {
   return {
     ok: true,
-    kind: "motionforge.proof-frame-selection",
+    kind: "dojo-video-engine.proof-frame-selection",
     version: 1,
     beforeDuration: 2,
     afterDuration: 2,

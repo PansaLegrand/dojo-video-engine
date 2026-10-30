@@ -1,6 +1,6 @@
-# @motionforge/layout
+# @dojo-video-engine/layout
 
-`@motionforge/layout` is MotionForge's bounded semantic authoring layer for
+`@dojo-video-engine/layout` is Dojo Video Engine's bounded semantic authoring layer for
 stacks, wrapping rows/columns, grids, overlays, intrinsic sizing, safe areas,
 and small sibling-relative constraints. It compiles a flat plan over existing
 child IDs into ordinary numeric Scene v1 geometry.
@@ -16,7 +16,7 @@ Never keep only the compiled projection as the sole editable source: its
 semantic `hug`/`fill`/track/constraint intent has deliberately compiled away.
 
 ```ts
-import { compileLayout, item, row } from "@motionforge/layout";
+import { compileLayout, item, row } from "@dojo-video-engine/layout";
 
 const plan = row({
   items: [

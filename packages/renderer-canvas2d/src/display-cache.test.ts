@@ -3,7 +3,7 @@ import type {
   DisplayGroup,
   DisplayMediaOperation,
   DisplayTextOperation,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import { describe, expect, it, vi } from "vitest";
 import {
   Canvas2DStaticDisplayCache,

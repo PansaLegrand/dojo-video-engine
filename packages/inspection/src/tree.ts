@@ -3,11 +3,11 @@ import {
   type Scene,
   type SceneAsset,
   type SceneNode,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   resolveMediaMetrics,
   type ResolvedMediaMetrics,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import type {
   InspectionBaseOptions,
   MediaMetricsProvider,
@@ -85,7 +85,7 @@ export function inspectTree(
     "nodes",
   ]);
   return {
-    kind: "motionforge.tree",
+    kind: "dojo-video-engine.tree",
     version: 1,
     fps: scene.fps,
     durationFrames: scene.duration,
@@ -129,7 +129,7 @@ export function inspectTimeline(
       left.documentOrder - right.documentOrder,
   );
   return {
-    kind: "motionforge.timeline",
+    kind: "dojo-video-engine.timeline",
     version: 1,
     fps: scene.fps,
     durationFrames: scene.duration,

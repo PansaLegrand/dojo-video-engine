@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   expandMacroNodeInput,
   registerMacro,
-} from "@motionforge/presets/macros";
+} from "@dojo-video-engine/presets/macros";
 
 export const calloutMacro = {
   name: "example.callout",

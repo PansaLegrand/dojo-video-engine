@@ -182,7 +182,7 @@
     {
       "id": "subtitle",
       "type": "text",
-      "text": "a motionforge picture",
+      "text": "a dojo-video-engine picture",
       "from": 84,
       "duration": 84,
       "style": {

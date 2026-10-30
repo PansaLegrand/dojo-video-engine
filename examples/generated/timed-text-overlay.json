@@ -55,7 +55,7 @@
     {
       "id": "timed-top-text",
       "type": "text",
-      "text": "motionforge.dev",
+      "text": "dojo-video-engine.dev",
       "from": 0,
       "duration": 150,
       "style": {

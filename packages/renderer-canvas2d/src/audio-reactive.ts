@@ -2,7 +2,7 @@ import {
   isAudioReactiveEffect,
   type Scene,
   type SceneEffectParams,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export type AudioReactiveSourceRange = { start: number; end: number };
 

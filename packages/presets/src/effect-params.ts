@@ -1,5 +1,5 @@
 /**
- * Single source of truth for MotionForge effect param normalization: key
+ * Single source of truth for DojoVideoEngine effect param normalization: key
  * aliases and value coercions shared by macro expansion and downstream raw
  * effect-node adapters. Callers may keep different policies for unknown keys,
  * but the same synonym must resolve to the same canonical parameter and value.

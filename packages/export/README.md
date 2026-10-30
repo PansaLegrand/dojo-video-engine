@@ -1,6 +1,6 @@
-# @motionforge/export
+# @dojo-video-engine/export
 
-Browser-native video export for [motionforge](https://github.com/PansaLegrand/motionforge) scenes: the same deterministic Canvas2D renderer that drives preview feeds WebCodecs frame by frame, and [mediabunny](https://github.com/Vanilagy/mediabunny) muxes the result to MP4 — entirely in the browser, no server.
+Browser-native video export for [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine) scenes: the same deterministic Canvas2D renderer that drives preview feeds WebCodecs frame by frame, and [mediabunny](https://github.com/Vanilagy/mediabunny) muxes the result to MP4 — entirely in the browser, no server.
 
 ## Install
 
@@ -9,13 +9,13 @@ npm. For the repository source candidate, use `pnpm verify:clean -- --keep` at
 the repository root to get an installed local-tarball starter.
 
 ```sh
-npm install @motionforge/export
+npm install @dojo-video-engine/export
 ```
 
 ## Usage
 
 ```ts
-import { detectExportCapability, exportVideo } from "@motionforge/export";
+import { detectExportCapability, exportVideo } from "@dojo-video-engine/export";
 
 if (!detectExportCapability().videoEncoder) {
   // Gate export UI: this browser has no WebCodecs encoder.
@@ -66,9 +66,9 @@ Streaming/custom sinks remain explicitly `unverified` unless the host supplies
 
 Use `exportVideoWithFallback(options, hostFallback)` when a product has an
 explicit server/headless path. The callback runs only after local preflight
-fails; MotionForge does not choose or operate a cloud renderer.
+fails; Dojo Video Engine does not choose or operate a cloud renderer.
 
-`@motionforge/export/worker` exports `ExportWorkerClient`,
+`@dojo-video-engine/export/worker` exports `ExportWorkerClient`,
 `installExportWorker()`, and `createExportWorkerHandler()`. The same protocol
 can back a dedicated browser worker or a headless/cloud message adapter; worker
 hosts install trusted extensions, non-serializable `assetPolicy` and caches,
@@ -78,18 +78,18 @@ With Vite or another `new URL(..., import.meta.url)` worker-aware bundler, use a
 real worker entry rather than importing the worker handler on the UI thread:
 
 ```ts
-// src/motionforge-export.worker.ts
-import { installExportWorker } from "@motionforge/export/worker";
+// src/dojo-video-engine-export.worker.ts
+import { installExportWorker } from "@dojo-video-engine/export/worker";
 
 installExportWorker(self);
 ```
 
 ```ts
 // UI/host module
-import { ExportWorkerClient } from "@motionforge/export/worker";
+import { ExportWorkerClient } from "@dojo-video-engine/export/worker";
 
 const worker = new Worker(
-  new URL("./motionforge-export.worker.ts", import.meta.url),
+  new URL("./dojo-video-engine-export.worker.ts", import.meta.url),
   { type: "module" },
 );
 const client = new ExportWorkerClient(worker);
@@ -107,7 +107,7 @@ const result = await job.result;
 `renderFrameSequence()` is the deterministic bridge `exportVideo()` is built on — use it to feed frames into your own encoder or pipeline:
 
 ```ts
-import { renderFrameSequence } from "@motionforge/export";
+import { renderFrameSequence } from "@dojo-video-engine/export";
 
 await renderFrameSequence({
   scene,
@@ -128,7 +128,7 @@ import {
   exportVideoFromRuntime,
   mixSceneAudioDataFromRuntime,
   renderFrameSequenceFromRuntime,
-} from "@motionforge/export";
+} from "@dojo-video-engine/export";
 
 await renderFrameSequenceFromRuntime(runtime, { context });
 const pcm = await mixSceneAudioDataFromRuntime(runtime, 0, 89);

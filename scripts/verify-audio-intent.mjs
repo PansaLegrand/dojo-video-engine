@@ -24,11 +24,11 @@ if (outputIndex >= 0 && !argumentsList[outputIndex + 1])
 const outputDirectory = path.resolve(
   outputIndex >= 0
     ? argumentsList[outputIndex + 1]
-    : path.join(os.tmpdir(), "motionforge-audio-intent-proof"),
+    : path.join(os.tmpdir(), "dojo-video-engine-audio-intent-proof"),
 );
 await mkdir(outputDirectory, { recursive: true });
 const fixtureDirectory = await mkdtemp(
-  path.join(os.tmpdir(), "motionforge-audio-intent-"),
+  path.join(os.tmpdir(), "dojo-video-engine-audio-intent-"),
 );
 const config = JSON.parse(
   await readFile(path.join(repo, "tsconfig.base.json"), "utf8"),
@@ -47,8 +47,8 @@ await writeFile(
 await writeFile(
   path.join(fixtureDirectory, "main.ts"),
   `
-import { parseScene } from '@motionforge/schema';
-import { exportVideo } from '@motionforge/export';
+import { parseScene } from '@dojo-video-engine/schema';
+import { exportVideo } from '@dojo-video-engine/export';
 import { ExportWorkerClient } from '/@fs/${repo}/packages/export/src/worker.ts';
 function sourceWav(silent=false){const rate=48000,buffer=new ArrayBuffer(44+rate*2),v=new DataView(buffer);const text=(at,s)=>[...s].forEach((c,i)=>v.setUint8(at+i,c.charCodeAt(0)));text(0,'RIFF');v.setUint32(4,buffer.byteLength-8,true);text(8,'WAVE');text(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);text(36,'data');v.setUint32(40,rate*2,true);for(let i=0;i<rate;i++)v.setInt16(44+i*2,silent?0:Math.sin(i*2*Math.PI*440/rate)*12000,true);return URL.createObjectURL(new Blob([buffer],{type:'audio/wav'}));}
 window.runAudioIntent = async () => {

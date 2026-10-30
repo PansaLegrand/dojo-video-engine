@@ -3,17 +3,15 @@ import {
   lintScene,
   migrateScene,
   validateScene,
-} from "@motionforge/schema";
-import { diffScenes, discoverCapabilities } from "@motionforge/agent-tools";
-import { checkScene, inspectLayout } from "@motionforge/inspection";
+} from "@dojo-video-engine/schema";
+import { diffScenes, discoverCapabilities } from "@dojo-video-engine/agent-tools";
+import { checkScene, inspectLayout } from "@dojo-video-engine/inspection";
 import { loadSceneModule } from "./loader.js";
-import { createStudioServer, type StudioServerOptions } from "./studio.js";
 
 export type CliResult = {
   exitCode: number;
   stdout: string;
   stderr: string;
-  close?: () => Promise<void>;
 };
 
 export type CliIo = {
@@ -21,19 +19,18 @@ export type CliIo = {
   stderr: (value: string) => void;
 };
 
-const helpText = `motionforge
+const helpText = `dojo-video-engine
 
 Usage:
-  motionforge validate <scene-module>
-  motionforge print <scene-module>
-  motionforge migrate <scene-module>
-  motionforge inspect <scene-module>
-  motionforge inspect-layout <scene-module> --frame <frame>
-  motionforge lint <scene-module>
-  motionforge check <scene-module> [--frames <frame,...> | --sample-count <count>]
-  motionforge diff <before-scene-module> <after-scene-module>
-  motionforge capabilities
-  motionforge dev <scene-module> [--host <host>] [--port <port>]
+  dojo-video-engine validate <scene-module>
+  dojo-video-engine print <scene-module>
+  dojo-video-engine migrate <scene-module>
+  dojo-video-engine inspect <scene-module>
+  dojo-video-engine inspect-layout <scene-module> --frame <frame>
+  dojo-video-engine lint <scene-module>
+  dojo-video-engine check <scene-module> [--frames <frame,...> | --sample-count <count>]
+  dojo-video-engine diff <before-scene-module> <after-scene-module>
+  dojo-video-engine capabilities
 
 Scene modules may be .json, .js, .mjs, .cjs, .ts, .mts, or .cts files.
 The default export may be a Scene, a function returning a Scene, or a Promise.
@@ -66,16 +63,12 @@ export async function executeCli(argv: string[]): Promise<CliResult> {
     return { exitCode: 0, stdout: helpText, stderr: "" };
   }
 
-  if (command === "dev") {
-    return await executeDevCommand(modulePath, rest);
-  }
-
   if (command === "capabilities") {
     if (modulePath || rest.length > 0) {
       return {
         exitCode: 2,
         stdout: "",
-        stderr: "Usage: motionforge capabilities\n",
+        stderr: "Usage: dojo-video-engine capabilities\n",
       };
     }
     return {
@@ -92,7 +85,7 @@ export async function executeCli(argv: string[]): Promise<CliResult> {
         exitCode: 2,
         stdout: "",
         stderr:
-          "Usage: motionforge diff <before-scene-module> <after-scene-module>\n",
+          "Usage: dojo-video-engine diff <before-scene-module> <after-scene-module>\n",
       };
     }
     try {
@@ -193,7 +186,7 @@ export async function executeCli(argv: string[]): Promise<CliResult> {
 
     return {
       exitCode: 0,
-      stdout: `Valid MotionForge scene: ${modulePath}\n`,
+      stdout: `Valid DojoVideoEngine scene: ${modulePath}\n`,
       stderr: "",
     };
   } catch (error) {
@@ -299,7 +292,7 @@ async function executeCompositionInspectionCommand(
         exitCode: 1,
         stdout: `${JSON.stringify(
           {
-            kind: "motionforge.check",
+            kind: "dojo-video-engine.check",
             version: 1,
             ok: false,
             validation: { ok: false, errors: [message] },
@@ -362,7 +355,7 @@ function parseInspectionOptions(
       if (command !== "check") {
         return {
           ok: false,
-          error: `${arg} is only valid for motionforge check.`,
+          error: `${arg} is only valid for dojo-video-engine check.`,
         };
       }
       sampleCount = Number(raw);
@@ -394,7 +387,7 @@ function parseInspectionOptions(
     if (command !== "check") {
       return {
         ok: false,
-        error: `${arg} is only valid for motionforge check.`,
+        error: `${arg} is only valid for dojo-video-engine check.`,
       };
     }
     const parts = raw.split(",");
@@ -443,96 +436,16 @@ function validateInspectionFrames(
 
 function inspectionUsage(command: "inspect-layout" | "check"): string {
   return command === "inspect-layout"
-    ? "Usage: motionforge inspect-layout <scene-module> --frame <frame>"
-    : "Usage: motionforge check <scene-module> [--frames <frame,...> | --sample-count <count>]";
-}
-
-async function executeDevCommand(
-  modulePath: string | undefined,
-  args: string[],
-): Promise<CliResult> {
-  if (!modulePath) {
-    return {
-      exitCode: 2,
-      stdout: "",
-      stderr: `Usage error: expected a scene module path.\n\n${helpText}`,
-    };
-  }
-
-  const options = parseDevOptions(args);
-
-  if (!options.ok) {
-    return {
-      exitCode: 2,
-      stdout: "",
-      stderr: `${options.error}\n\n${helpText}`,
-    };
-  }
-
-  try {
-    const server = await createStudioServer({
-      sceneModulePath: modulePath,
-      host: options.host,
-      port: options.port,
-    });
-
-    return {
-      exitCode: 0,
-      stdout: `MotionForge Studio running at ${server.url}\nScene: ${server.sceneModulePath}\n`,
-      stderr: "",
-      close: server.close,
-    };
-  } catch (error) {
-    return {
-      exitCode: 1,
-      stdout: "",
-      stderr: `${error instanceof Error ? error.message : String(error)}\n`,
-    };
-  }
-}
-
-function parseDevOptions(args: string[]):
-  | ({ ok: true } & Pick<StudioServerOptions, "host" | "port">)
-  | {
-      ok: false;
-      error: string;
-    } {
-  let host: string | undefined;
-  let port: number | undefined;
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-
-    if (arg === "--host") {
-      host = args[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg === "--port") {
-      const rawPort = args[index + 1];
-      port = rawPort ? Number.parseInt(rawPort, 10) : Number.NaN;
-      index += 1;
-
-      if (!Number.isInteger(port) || port < 0) {
-        return { ok: false, error: "--port must be a non-negative integer." };
-      }
-
-      continue;
-    }
-
-    return { ok: false, error: `Unknown dev option "${arg ?? ""}".` };
-  }
-
-  return { ok: true, host, port };
+    ? "Usage: dojo-video-engine inspect-layout <scene-module> --frame <frame>"
+    : "Usage: dojo-video-engine check <scene-module> [--frames <frame,...> | --sample-count <count>]";
 }
 
 function formatValidationErrors(modulePath: string, errors: string[]) {
   return [
-    `Invalid MotionForge scene: ${modulePath}`,
+    `Invalid DojoVideoEngine scene: ${modulePath}`,
     ...errors.map((error) => `- ${error}`),
     "",
   ].join("\n");
 }
 
-export { inspectScene, type SceneInspection } from "@motionforge/schema";
+export { inspectScene, type SceneInspection } from "@dojo-video-engine/schema";

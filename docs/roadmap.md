@@ -1,6 +1,8 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Roadmap
 
-The proposed next implementation program after MotionForge 1.0 is tracked in
+The proposed next implementation program after Dojo Video Engine 1.0 is tracked in
 [`post-1.0-engine-roadmap.md`](post-1.0-engine-roadmap.md). It is the current
 planning contract for strict canonical semantics, resource lifecycle, spatial
 inspection, typed commands, layout v2, reusable runtime sessions, and
@@ -10,11 +12,11 @@ The current base-engine path to a stable v1 contract is tracked in
 [`v1-roadmap.md`](v1-roadmap.md). This document retains the completed M0 and
 chat/editor development history.
 
-Each slice follows the working practice: code + tests + docs + a `progress.md` entry, landed as one commit. motionforge is an independent open-source engine first. Downstream products are reference consumers for requirements and validation, not owners of the roadmap.
+Each slice follows the working practice: code + tests + docs + a `progress.md` entry, landed as one commit. dojo-video-engine is an independent open-source engine first. Downstream products are reference consumers for requirements and validation, not owners of the roadmap.
 
 ## Done — weeks 1–2 (static + time-based media)
 
-All six engine slices landed: asset pipeline + image rendering, font loading with exact-hash text goldens, v0.1.0 release prep, multi-stop/angled gradients + `overflow` clipping, frame-accurate video clips (trim + playbackRate), and audio nodes mixed into the exported MP4. The engine renders all four media types in the browser; 61 unit tests, 14 golden fixtures, and 11 in-browser integration checks are green. Outstanding from this phase: the credential-gated publish (GitHub push, `@motionforge` npm scope, `pnpm publish -r`).
+All six engine slices landed: asset pipeline + image rendering, font loading with exact-hash text goldens, v0.1.0 release prep, multi-stop/angled gradients + `overflow` clipping, frame-accurate video clips (trim + playbackRate), and audio nodes mixed into the exported MP4. The engine renders all four media types in the browser; 61 unit tests, 14 golden fixtures, and 11 in-browser integration checks are green. Outstanding from this phase: the credential-gated publish (GitHub push, `@dojo-video-engine` npm scope, `pnpm publish -r`).
 
 ## Week 3 — animation maturity + public launch
 
@@ -32,7 +34,7 @@ Add `cubic-bezier(x1, y1, x2, y2)` easing strings (validated, deterministic solv
 
 **Done when:** frozen numeric unit tests cover the bezier solver and spring, and a golden uses each.
 
-### Slice 10: `@motionforge/presets` (1–2 days)
+### Slice 10: `@dojo-video-engine/presets` (1–2 days)
 
 A pure helper package that compiles intent into scene data — no runtime, no rendering:
 
@@ -45,11 +47,11 @@ This is simultaneously the agent-facing animation vocabulary and the compiler th
 
 ### Slice 11: Publish + launch surface (1 day, needs accounts)
 
-- Push to GitHub, green CI, reserve `@motionforge`, publish 0.2.0 (the animation slices justify the bump over the unpublished 0.1.0), tag.
+- Push to GitHub, green CI, reserve `@dojo-video-engine`, publish 0.2.0 (the animation slices justify the bump over the unpublished 0.1.0), tag.
 - Keep the playground locally runnable and document generated examples; hosted web-app deployment was later paused by maintainer choice.
 - README: embed the example frames/video.
 
-**Done when:** `npm install @motionforge/core` works from a clean machine and the README demo artifacts are easy to inspect locally.
+**Done when:** `npm install @dojo-video-engine/core` works from a clean machine and the README demo artifacts are easy to inspect locally.
 
 ## Done — week 4 prep (caption-grade text)
 
@@ -57,7 +59,7 @@ Slice 12 landed: `textStroke` and text-fitted per-line backgrounds, with exact g
 
 ## The 5-week plan (complete — open-source first)
 
-Ultimate goal: a user chats, uploads media, and gets a video — previewed and exported in the browser. motionforge is the open-source engine that makes that product _assemblable_: deterministic rendering, an agent-native scene contract, and in-browser export. Downstream products (commercial or otherwise) are consumers we learn requirements from, not work items here.
+Ultimate goal: a user chats, uploads media, and gets a video — previewed and exported in the browser. dojo-video-engine is the open-source engine that makes that product _assemblable_: deterministic rendering, an agent-native scene contract, and in-browser export. Downstream products (commercial or otherwise) are consumers we learn requirements from, not work items here.
 
 Workstreams: **A** engine, **B** player/perf, **D** agent layer, **E** launch/DX. Package publishing is owned by the maintainer and slots in when ready. Hosted web-app deployment is currently paused; local demos, docs, and generated artifacts remain the launch surface.
 
@@ -65,7 +67,7 @@ Workstreams: **A** engine, **B** player/perf, **D** agent layer, **E** launch/DX
 
 - ✅ **Slice 13 — the editor-adapter spike** (`docs/editor-adapter-spike.md`): two real templates convert 100% and render end-to-end; gap list classified engine/adapter/won't-support. Engine priorities reordered by measured frequency.
 - ✅ **Spike-prioritized engine slice**: `filter` chains (13/20 production video overlays use them), `zIndex` sibling paint order, `border`, `boxShadow`. (`shape` node deliberately dropped — zero occurrences in real templates.)
-- ✅ **`@motionforge/player`**: deterministic `FrameClock` + canvas render loop (play/pause/seek/loop, latest-frame-wins decode policy); playground now runs on it. Audio preview designed (package README), implementation week 2.
+- ✅ **`@dojo-video-engine/player`**: deterministic `FrameClock` + canvas render loop (play/pause/seek/loop, latest-frame-wins decode policy); playground now runs on it. Audio preview designed (package README), implementation week 2.
 - ✅ **RFC 0001 — scene patch ops** (`docs/rfcs/0001-scene-patch-ops.md`): id-addressed transactional patch vocabulary + mechanical eval harness design (generate/edit/repair suites).
 - ✅ **User-oriented docs**: `docs/guides/getting-started.md`.
 
@@ -100,22 +102,22 @@ Workstreams: **A** engine, **B** player/perf, **D** agent layer, **E** launch/DX
 - ✅ Determinism lint in `pnpm lint` (wall-clock/randomness banned in render packages, justified allowlist).
 - ✅ Lottie Sticker showcase (seventh scene) demos the headline feature in playground + README.
 - ✅ 0.3.0 release prep: changelog, six packages bumped (player joins the versioned set), badge, `npm pack` dry-runs clean.
-- ◻ Maintainer: GitHub push + CI, `@motionforge` npm scope + `pnpm publish -r`, tag `v0.3.0`, eared audio check.
+- ◻ Maintainer: GitHub push + CI, `@dojo-video-engine` npm scope + `pnpm publish -r`, tag `v0.3.0`, eared audio check.
 - Docs site: deferred by choice — the guides + README are launch-sufficient; pick a platform (VitePress et al) post-launch.
 
 ## Phase 2 — the agent loop (current — chat + edit coexistence)
 
 North-star demo: upload a clip → type "add TikTok-style subtitles and a title that pops in" → captions appear, preview plays with sound → the user hides chat and adjusts timing/position manually → Export MP4. No server anywhere.
 
-The reference app direction is recorded in [`docs/chat-edit-app-plan.md`](chat-edit-app-plan.md): chat creates and transforms, manual tools refine and finish, and both surfaces mutate the canonical scene through RFC 0001 patch ops.
+The reference app direction is recorded in [`docs/chat-edit-app-plan.md`](https://github.com/PansaLegrand/dojo-video-harness): chat creates and transforms, manual tools refine and finish, and both surfaces mutate the canonical scene through RFC 0001 patch ops.
 
-The next media-aware editor direction is recorded in [`docs/media-assets-chat-roadmap.md`](media-assets-chat-roadmap.md): uploaded videos/images/audio become first-class assets, chat can reference them with `@` mentions and stable aliases, and media instructions compile into visible patch-backed scene operations.
+The next media-aware editor direction is recorded in [`docs/media-assets-chat-roadmap.md`](https://github.com/PansaLegrand/dojo-video-harness): uploaded videos/images/audio become first-class assets, chat can reference them with `@` mentions and stable aliases, and media instructions compile into visible patch-backed scene operations.
 
-The next open-source developer experience direction is recorded in [`docs/dx-roadmap.md`](dx-roadmap.md): seconds-first authoring helpers, CLI validation/printing, a project starter, and a developer studio so programmers can write MotionForge videos with Remotion-level first-run clarity while keeping the data-first scene contract.
+The next open-source developer experience direction is recorded in [`docs/dx-roadmap.md`](https://github.com/PansaLegrand/dojo-video-harness): seconds-first authoring helpers, CLI validation/printing, a project starter, and a developer studio so programmers can write Dojo Video Engine videos with Remotion-level first-run clarity while keeping the data-first scene contract.
 
 The next preset/template direction is recorded in [`docs/preset-template-roadmap.md`](preset-template-roadmap.md): richer subtitle, text overlay, media-look, clip-layout, and transition presets so programmers and agents can express useful video style through stable names that compile to normal scene data.
 
-The next preset discovery direction is recorded in [`docs/preset-explorer-roadmap.md`](preset-explorer-roadmap.md): bring the visual preset catalog into the programmer loop through a playground explorer first, then shared gallery preview and Studio adoption.
+The next preset discovery direction is recorded in [`docs/preset-explorer-roadmap.md`](https://github.com/PansaLegrand/dojo-video-harness): bring the visual preset catalog into the programmer loop through a playground explorer first, then shared gallery preview and Studio adoption.
 
 The next text robustness direction is recorded in [`docs/text-overlay-robustness-roadmap.md`](text-overlay-robustness-roadmap.md): bounded lines, ellipsis, shrink-to-fit, authoring helpers, safe-area placement, preset upgrades, and stress goldens for production-safe text overlays.
 
@@ -137,7 +139,7 @@ Decisions recorded 2026-06-12:
 
 ### Week 1 — publish + baseline (gates everything public)
 
-- Maintainer publish steps: GitHub push + green CI, claim the `@motionforge` npm scope (note: unscoped `motionforge` is taken by an unrelated package — scoped names only, check it before announcing), `pnpm publish -r` 0.3.0, tag, eared audio check. Web-app publishing remains intentionally disabled until the maintainer opts back in.
+- Maintainer publish steps: GitHub push + green CI, claim the `@dojo-video-engine` npm scope (note: unscoped `dojo-video-engine` is taken by an unrelated package — scoped names only, check it before announcing), `pnpm publish -r` 0.3.0, tag, eared audio check. Web-app publishing remains intentionally disabled until the maintainer opts back in.
 - Clean-machine verification: `npm install` all six packages outside the monorepo, render a frame, export an MP4; fix install/docs gaps found.
 - **Eval baseline**: run `tools/agent-eval` generate + edit suites against 1–2 real models; commit the numbers. Add the designed repair suite (invalid scene + validator errors → fixing patch).
 - **Engine: intrinsic text auto-height** — metrics-provider abstraction so flex intrinsic sizing measures text with the same font metrics render uses (replaces the character-count heuristic, the sharpest documented edge for LLM-generated scenes).
@@ -146,7 +148,7 @@ Decisions recorded 2026-06-12:
 
 ### Week 2 — `apps/chat` skeleton (Next.js)
 
-- Scaffold the client-only Next.js app: chat pane beside a `@motionforge/player` preview; local-storage BYO key; `llms.txt`-derived system prompt.
+- Scaffold the client-only Next.js app: chat pane beside a `@dojo-video-engine/player` preview; local-storage BYO key; `llms.txt`-derived system prompt.
 - Conversation protocol: model emits a full scene on the first turn, **patch ops on every later turn** (dogfoods RFC 0001 as the edit vocabulary).
 - Auto-repair loop: validation errors are fed back to the model (bounded retries), surfaced in the UI as a visible "fixing…" step — the eval harness's repair suite, live.
 
@@ -196,7 +198,7 @@ Decisions recorded 2026-06-12:
 
 ### Week 6 — agent distribution + launch fallout
 
-- **motionforge Agent Skill**: SKILL.md + scripts — `validate-scene`, `render-frame` (PNG, so the agent _sees_ its work), `export-mp4` — installable in Claude Code. The self-correction GIF (render → notice clipped title → patch → re-render) is the second marketing wave.
+- **dojo-video-engine Agent Skill**: SKILL.md + scripts — `validate-scene`, `render-frame` (PNG, so the agent _sees_ its work), `export-mp4` — installable in Claude Code. The self-correction GIF (render → notice clipped title → patch → re-render) is the second marketing wave.
 - Thin MCP server wrapping the same scripts **only if demand shows** in launch feedback.
 - Launch fallout: issue triage, good-first-issues, docs gaps reported by real users.
 

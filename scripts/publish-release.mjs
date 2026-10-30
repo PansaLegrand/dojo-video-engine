@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const releaseManifestFile = "release-manifest.json";
 const checksumFile = "SHA256SUMS";
-const packageNamePattern = /^@motionforge\/[a-z0-9][a-z0-9._-]{0,190}$/;
+const packageNamePattern = /^@dojo-video-engine\/[a-z0-9][a-z0-9._-]{0,190}$/;
 const stableVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const sha256Pattern = /^[a-f0-9]{64}$/;
 const gitCommitPattern = /^[a-f0-9]{40}$/;
@@ -150,7 +150,7 @@ export async function loadAndVerifyReleaseBundle(options) {
   };
 }
 
-/** Strict structural validation for `motionforge.release-manifest` v2. */
+/** Strict structural validation for `dojo-video-engine.release-manifest` v2. */
 export function validateReleaseManifest(value, expectedPackageNames) {
   assertRecord(value, "Release manifest");
   assertExactKeys(
@@ -170,9 +170,9 @@ export function validateReleaseManifest(value, expectedPackageNames) {
     ],
     "Release manifest",
   );
-  if (value.format !== "motionforge.release-manifest" || value.version !== 2) {
+  if (value.format !== "dojo-video-engine.release-manifest" || value.version !== 2) {
     throw new Error(
-      "Release manifest must use motionforge.release-manifest v2.",
+      "Release manifest must use dojo-video-engine.release-manifest v2.",
     );
   }
   assertStableVersion(value.releaseVersion, "releaseVersion");
@@ -328,7 +328,7 @@ export function assertReleaseGitContext(options) {
 /** A deterministic npm dist-tag that cannot be parsed as a SemVer version. */
 export function temporaryReleaseTag(version) {
   assertStableVersion(version, "release version");
-  return `motionforge-${version.replaceAll(".", "-")}-candidate`;
+  return `dojo-video-engine-${version.replaceAll(".", "-")}-candidate`;
 }
 
 /**
@@ -636,7 +636,7 @@ function assertAuditAllowsRelease(value, manifest) {
   assertEvidenceIdentity(
     value,
     manifest,
-    "motionforge.release-audit",
+    "dojo-video-engine.release-audit",
     "Release audit",
   );
   const vulnerabilities = value.metadata?.vulnerabilities;
@@ -654,7 +654,7 @@ function assertLicenseEvidence(value, manifest) {
   assertEvidenceIdentity(
     value,
     manifest,
-    "motionforge.release-licenses",
+    "dojo-video-engine.release-licenses",
     "Release license evidence",
   );
   if (!Array.isArray(value.packages) || value.packages.length < 1) {
@@ -707,8 +707,8 @@ function assertSbomIdentity(value, manifest) {
       )
     : new Map();
   if (
-    properties.get("motionforge:gitCommit") !== manifest.gitCommit ||
-    properties.get("motionforge:pnpmLockSha256") !== manifest.lockfile.sha256
+    properties.get("dojo-video-engine:gitCommit") !== manifest.gitCommit ||
+    properties.get("dojo-video-engine:pnpmLockSha256") !== manifest.lockfile.sha256
   ) {
     throw new Error(
       "Release SBOM provenance does not match the release manifest.",
@@ -888,7 +888,7 @@ async function main() {
   });
   if (mode === "--verify-only") {
     console.log(
-      `Verified MotionForge ${bundle.manifest.releaseVersion} bundle (${bundle.packages.length} packages).`,
+      `Verified DojoVideoEngine ${bundle.manifest.releaseVersion} bundle (${bundle.packages.length} packages).`,
     );
     return;
   }
@@ -920,7 +920,7 @@ async function main() {
     createNpmRegistryAdapter(),
   );
   console.log(
-    `MotionForge ${bundle.manifest.releaseVersion} registry verified: ` +
+    `DojoVideoEngine ${bundle.manifest.releaseVersion} registry verified: ` +
       `${result.published.length} published, ${result.skipped.length} reused, ` +
       `${result.promoted.length} latest tag(s) promoted.`,
   );

@@ -1,4 +1,6 @@
-# MotionForge Post-1.0 Engine Platform Roadmap
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
+# Dojo Video Engine Post-1.0 Engine Platform Roadmap
 
 Date: 2026-08-25  
 Last reviewed: 2026-08-26
@@ -6,15 +8,15 @@ Status: implementation complete; MF0 through MF9 delivered as a tested source ca
 
 ## Purpose
 
-This roadmap defines the next MotionForge engine program after the completed
-Scene v1 / MotionForge 1.0 roadmap. It does not replace the historical delivery
+This roadmap defines the next Dojo Video Engine engine program after the completed
+Scene v1 / Dojo Video Engine 1.0 roadmap. It does not replace the historical delivery
 record in [`v1-roadmap.md`](v1-roadmap.md). It starts from the current 1.0 code
 and addresses the gaps exposed by building a real conversational editor on top
 of it.
 
 The strategic position is:
 
-> MotionForge is an independent, deterministic video document engine with a
+> Dojo Video Engine is an independent, deterministic video document engine with a
 > safe mutation surface, computed spatial inspection, and browser-first local
 > rendering.
 
@@ -28,7 +30,7 @@ separate commit in the downstream repository.
 
 ## Engine boundary
 
-MotionForge owns:
+Dojo Video Engine owns:
 
 - canonical Scene documents, schemas, migrations, and low-level patches;
 - deterministic evaluation, layout, display-list generation, and rendering;
@@ -39,7 +41,7 @@ MotionForge owns:
 - browser preview and browser/worker export orchestration;
 - framework-neutral adapters for CLIs and agent tool protocols.
 
-MotionForge does not own:
+Dojo Video Engine does not own:
 
 - LLM providers, prompts, conversation memory, autonomous planning, or token
   policy;
@@ -82,21 +84,21 @@ The target dependency direction is one-way. In this diagram, `A -> B` means
 **A may depend on B**; concrete edges land only with their owning milestone:
 
 ```text
-@motionforge/core       ──> schema
-@motionforge/extensions ──> schema
-@motionforge/presets    ──> schema
+@dojo-video-engine/core       ──> schema
+@dojo-video-engine/extensions ──> schema
+@dojo-video-engine/presets    ──> schema
 
-@motionforge/inspection ──> schema + core
-@motionforge/commands   ──> schema + presets
-@motionforge/runtime    ──> schema + core + inspection + extensions
+@dojo-video-engine/inspection ──> schema + core
+@dojo-video-engine/commands   ──> schema + presets
+@dojo-video-engine/runtime    ──> schema + core + inspection + extensions
 
-@motionforge/renderer-canvas2d ──> core/display list + extensions + media
-@motionforge/player            ──> runtime + audio
-@motionforge/export            ──> runtime + audio
+@dojo-video-engine/renderer-canvas2d ──> core/display list + extensions + media
+@dojo-video-engine/player            ──> runtime + audio
+@dojo-video-engine/export            ──> runtime + audio
 
-@motionforge/authoring   ──> schema + core + presets
-@motionforge/agent-tools ──> commands + inspection + runtime + export
-@motionforge/cli         ──> public facades above
+@dojo-video-engine/authoring   ──> schema + core + presets
+@dojo-video-engine/agent-tools ──> commands + inspection + runtime + export
+@dojo-video-engine/cli         ──> public facades above
 ```
 
 Media and audio lifecycle may become public packages only when the extraction
@@ -304,7 +306,7 @@ Deliver:
 - bounded font/audio-analysis/source caches;
 - injected host-owned `AssetPolicy` callbacks for schemes, origins,
   credentials, signed-URL refresh, MIME, bytes, cancellation, and derived
-  proxy resolution; MotionForge contains no provider-specific signing or proxy
+  proxy resolution; Dojo Video Engine contains no provider-specific signing or proxy
   generation;
 - embedded-video soundtrack included in audio capability preflight;
 - tested main-thread/worker capability negotiation;
@@ -313,7 +315,7 @@ Deliver:
 
 Non-goals:
 
-- MotionForge does not operate a cloud renderer;
+- Dojo Video Engine does not operate a cloud renderer;
 - no semantic media analysis.
 
 Exit gate:
@@ -343,7 +345,7 @@ feat: add renderer-neutral composition inspection
 
 Deliver:
 
-- `@motionforge/inspection`;
+- `@dojo-video-engine/inspection`;
 - tree, timeline, layout, hit-test, and sampled-composition APIs;
 - stable per-node parent/depth/type, local and absolute active windows, plus an
   optional semantic role only when supplied explicitly by authoring/host
@@ -383,7 +385,7 @@ feat: add typed scene commands and workspace
 
 Deliver:
 
-- `@motionforge/commands` with a discriminated, non-recursive JSON Schema;
+- `@dojo-video-engine/commands` with a discriminated, non-recursive JSON Schema;
 - text, style, placement, resize, align/distribute, timing, media trim/gain,
   add/remove/move/group, preset, macro, and layout-intent commands;
 - compilation to canonical ScenePatch;
@@ -416,7 +418,7 @@ feat(runtime): add reusable prepared scene sessions
 
 Deliver:
 
-- `@motionforge/runtime` prepared Scene session;
+- `@dojo-video-engine/runtime` prepared Scene session;
 - backend capability/preflight/session interface;
 - incremental `updateScene()` with unchanged resource reuse;
 - generic text/media intrinsic-metrics providers shared by layout and
@@ -571,7 +573,7 @@ Deliver:
 - clean-install ESM/browser/worker examples;
 - API reference and extension/macro starters;
 - compatibility, performance, browser, and evaluation reports;
-- MotionForge Agent Skill and optional thin MCP adapter over the same tools;
+- Dojo Video Engine Agent Skill and optional thin MCP adapter over the same tools;
 - documented import/export bridges for common timeline data and a clearly
   scoped Remotion/HTML interoperability path;
 - contribution, security-reporting, compatibility, extension-ABI, supply-chain,
@@ -584,7 +586,7 @@ Exit gate:
 - a clean external project can install, validate, inspect, preview, and export;
 - tag/package/schema/tool versions agree;
 - public examples demonstrate repair and evidence, not only finished videos;
-- MotionForge remains useful without DojoClip or any model provider.
+- Dojo Video Engine remains useful without DojoClip or any model provider.
 
 ## Test and release policy
 
@@ -640,16 +642,16 @@ The determinism report distinguishes:
 
 ## Downstream synchronization contract
 
-MotionForge is upstream. A downstream product must never become the hidden
+Dojo Video Engine is upstream. A downstream product must never become the hidden
 source of engine behavior.
 
 For every downstream upgrade:
 
-1. land and verify the MotionForge commit first;
+1. land and verify the Dojo Video Engine commit first;
 2. publish or record the exact upstream commit/package versions;
 3. synchronize in one downstream-only commit;
 4. record provenance in DojoClip's existing
-   `packages/motionforge/UPSTREAM.json` (or an explicitly versioned successor);
+   `packages/dojo-video-engine/UPSTREAM.json` (or an explicitly versioned successor);
 5. run the downstream engine-consumer matrix, not only the Video Agent tests;
 6. keep old Scene readers and runtime compatibility until stored projects are
    migrated safely;
@@ -661,7 +663,7 @@ Watermark, Music Visualizer, Music MV, and standalone subtitle workflows.
 
 ## Definition of completion
 
-This roadmap is complete only when MotionForge can truthfully demonstrate:
+This roadmap is complete only when Dojo Video Engine can truthfully demonstrate:
 
 ```text
 strict document
@@ -713,7 +715,7 @@ than the engine priority.
   generated starter outside the monorepo, and passed validate/migrate/inspect/
   lint/build against the packed artifacts.
 - 2026-08-26 — MF3 complete: added the public renderer-neutral
-  `@motionforge/inspection` package with tree, timeline, per-frame layout,
+  `@dojo-video-engine/inspection` package with tree, timeline, per-frame layout,
   topmost-first hit testing, bounded composition sampling, and unified check
   envelopes. Core now owns shared content, affine transform, rounded-corner,
   and object-fit geometry while the Canvas2D compatibility API and pixels stay
@@ -731,7 +733,7 @@ than the engine priority.
   at or below 5.96 ms/frame and 26 MiB heap. All 12 public packages, including
   inspection, passed dry-run packing; `pnpm verify:clean` packed them, installed
   a generated external starter, and passed validate/migrate/inspect/lint/build.
-- 2026-08-26 — MF4 complete: added `@motionforge/commands` with 16 strict,
+- 2026-08-26 — MF4 complete: added `@dojo-video-engine/commands` with 16 strict,
   bounded, non-recursive command kinds and Zod/draft-07/Ajv structural parity;
   canonical compilation covers text/style/placement/resize/align/distribute,
   timing, forward/reverse media trim, gain, flat add/remove/move/group, motion
@@ -740,7 +742,7 @@ than the engine priority.
   stale-write rejection, semantic diffs, affected IDs, undo/redo, and defensive
   history. Versioned motion/macro manifests include validated schemas/examples,
   required assets, and output roles; the agent registry exposes the identical
-  command schema through `motionforge.commands.apply`. Adversarial review covered
+  command schema through `dojo-video-engine.commands.apply`. Adversarial review covered
   rich text, source ordering/reparenting, repeat/yoyo preservation, layout-owned
   style clearing, absolute/center geometry, nested opaque-data and animation
   budgets, custom macro isolation, duplicate-ID semantic arrays, and all 13
@@ -752,8 +754,8 @@ than the engine priority.
   heap. All 13 policy-derived public packages passed dry-run packing, and the
   packed clean-install starter passed validate/migrate/inspect/lint/build.
 - 2026-08-26 — MF5 complete: added the renderer-neutral
-  `@motionforge/runtime` prepared-session package and the public
-  `@motionforge/renderer-canvas2d/runtime` backend. Revisioned latest-intent
+  `@dojo-video-engine/runtime` prepared-session package and the public
+  `@dojo-video-engine/renderer-canvas2d/runtime` backend. Revisioned latest-intent
   updates are transactional; stale preparation cannot publish; native and
   explicitly keyed extension resources retain final-owner leases across
   unrelated edits; replacement, rollback, cancellation, artifact-sink, and
@@ -796,13 +798,13 @@ than the engine priority.
   and the external packed starter passed runtime imports plus
   validate/migrate/inspect/lint/build.
 - 2026-08-26 — MF7 complete: accepted RFC 0012 and added the public
-  `@motionforge/layout` package with a
+  `@dojo-video-engine/layout` package with a
   flat, bounded Layout Contract v1 that compiles stack/row/column, wrapping,
   grid, overlay, fill/hug, grow/shrink, safe-area, aspect, and sibling
   constraints into ordinary Scene v1. Prepared media/text metrics, explicit
   fallback/font policies, deterministic text projection, strict JSON evidence,
   stable failures, and every solver budget are covered. The public
-  `@motionforge/presets/intents` entry point now exposes versioned manifests and
+  `@dojo-video-engine/presets/intents` entry point now exposes versioned manifests and
   nonthrowing compilation for place, safe-area, text-role, media-look, and
   clip-layout intent. The full gate passed 1,037 unit tests, 750 generated
   Scenes / 2,250 evaluated frames, 28 corpus Scenes, seven resource checks,

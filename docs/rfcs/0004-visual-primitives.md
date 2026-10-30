@@ -6,7 +6,7 @@
 
 ## Summary
 
-MotionForge adds a small vector vocabulary that composes into many design
+Dojo Video Engine adds a small vector vocabulary that composes into many design
 families without adding a named core effect for each look. Geometry, clipping,
 masking, paint, and compositing remain Scene v1 data and use the same timing,
 layout, animation, preview, and export path as other nodes.

@@ -23,11 +23,11 @@ if (outputIndex >= 0 && !argumentsList[outputIndex + 1])
 const outputDirectory = path.resolve(
   outputIndex >= 0
     ? argumentsList[outputIndex + 1]
-    : path.join(os.tmpdir(), "motionforge-text-proof"),
+    : path.join(os.tmpdir(), "dojo-video-engine-text-proof"),
 );
 await mkdir(outputDirectory, { recursive: true });
 const fixtureDirectory = await mkdtemp(
-  path.join(os.tmpdir(), "motionforge-text-"),
+  path.join(os.tmpdir(), "dojo-video-engine-text-"),
 );
 const config = JSON.parse(
   await readFile(path.join(repo, "tsconfig.base.json"), "utf8"),
@@ -47,8 +47,8 @@ const variableFont =
 await writeFile(
   path.join(fixtureDirectory, "main.ts"),
   `
-import { parseScene } from '@motionforge/schema';
-import { resolveAssets, disposeAssetsAsync, renderStill, compileCanvas2DDisplayList } from '@motionforge/renderer-canvas2d';
+import { parseScene } from '@dojo-video-engine/schema';
+import { resolveAssets, disposeAssetsAsync, renderStill, compileCanvas2DDisplayList } from '@dojo-video-engine/renderer-canvas2d';
 const variableFont = ${JSON.stringify(variableFont)};
 window.runTextProof = async () => {
   const canvas=document.querySelector('canvas');canvas.width=640;canvas.height=220;

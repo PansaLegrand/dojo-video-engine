@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SceneAnimation, SceneAsset } from "@motionforge/schema";
+import type { SceneAnimation, SceneAsset } from "@dojo-video-engine/schema";
 import {
   audio,
   composition,
@@ -181,7 +181,7 @@ describe("builder", () => {
         richText(
           [
             { text: "Hello ", style: { color: "#ffffff" } },
-            { text: "MotionForge", style: { color: "#22d3ee" } },
+            { text: "DojoVideoEngine", style: { color: "#22d3ee" } },
           ],
           { id: "headline" },
         ),
@@ -193,7 +193,7 @@ describe("builder", () => {
       type: "text",
       runs: [
         { text: "Hello ", style: { color: "#ffffff" } },
-        { text: "MotionForge", style: { color: "#22d3ee" } },
+        { text: "DojoVideoEngine", style: { color: "#22d3ee" } },
       ],
     });
     expect(scene.nodes[0]?.text).toBeUndefined();

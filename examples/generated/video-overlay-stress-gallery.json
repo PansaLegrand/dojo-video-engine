@@ -426,7 +426,7 @@
     {
       "id": "video-stress-footer",
       "type": "text",
-      "text": "Render examples/generated/video-overlay-stress-gallery.json with @motionforge/golden.",
+      "text": "Render examples/generated/video-overlay-stress-gallery.json with @dojo-video-engine/golden.",
       "from": 0,
       "style": {
         "height": 70,

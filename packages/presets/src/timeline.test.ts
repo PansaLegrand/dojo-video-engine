@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyScenePatch, validateScene } from "@motionforge/schema";
+import { applyScenePatch, validateScene } from "@dojo-video-engine/schema";
 import { fadeUp, popIn, slideIn } from "./index.js";
 import { timeline } from "./timeline.js";
 

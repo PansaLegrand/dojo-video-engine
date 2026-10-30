@@ -14,18 +14,18 @@ import {
   type Canvas2DStaticDisplayCache,
   type Canvas2DOpaqueExtensionRegistry,
   type TextMeasureCache,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 import {
   withCanvas2DResolvedAssets,
   type Canvas2DSceneRuntime,
-} from "@motionforge/renderer-canvas2d/runtime";
-import { evaluateKeyframes, type ResolvedScene } from "@motionforge/core";
+} from "@dojo-video-engine/renderer-canvas2d/runtime";
+import { evaluateKeyframes, type ResolvedScene } from "@dojo-video-engine/core";
 import type {
   Scene,
   SceneAudioBus,
   SceneNode,
   VolumeEnvelope,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   AudioSample,
   AudioSampleSource,
@@ -89,7 +89,7 @@ export type HostExportFallbackRequest = {
   preflight: ExportPreflightResult;
 };
 
-/** Host-owned fallback; MotionForge does not select or operate a cloud renderer. */
+/** Host-owned fallback; DojoVideoEngine does not select or operate a cloud renderer. */
 export type HostExportFallback = (
   request: HostExportFallbackRequest,
 ) => Promise<ExportVideoResult>;
@@ -195,7 +195,7 @@ export type ExportVideoStreamResult = Omit<ExportVideoResult, "blob"> & {
 export class ExportVerificationError extends Error {
   constructor(readonly verification: ExportVerificationResult) {
     super(
-      `MotionForge output verification failed: ${verification.issues
+      `DojoVideoEngine output verification failed: ${verification.issues
         .map((issue) => `[${issue.code}] ${issue.message}`)
         .join("; ")}`,
     );
@@ -636,7 +636,7 @@ export async function exportVideoWithFallback(
   }
   if (!fallback) {
     throw new Error(
-      `Local MotionForge export is unavailable and no host fallback was supplied:\n${preflight.issues
+      `Local DojoVideoEngine export is unavailable and no host fallback was supplied:\n${preflight.issues
         .filter((issue) => issue.severity === "error")
         .map((issue) => `- [${issue.code}] ${issue.message}`)
         .join("\n")}`,
@@ -909,7 +909,7 @@ async function runExportVideo(
 
   if (!preflight.ok) {
     throw new Error(
-      `MotionForge export preflight failed before encoding:\n${preflight.issues
+      `DojoVideoEngine export preflight failed before encoding:\n${preflight.issues
         .filter((issue) => issue.severity === "error")
         .map((issue) => `- [${issue.code}] ${issue.message}`)
         .join(
@@ -1114,7 +1114,7 @@ export async function withResolvedAssetOwnership<T>(
         if (operationError !== undefined) {
           throw new AggregateError(
             [operationError, cleanupError],
-            "MotionForge export failed and owned media cleanup also failed.",
+            "DojoVideoEngine export failed and owned media cleanup also failed.",
             { cause: operationError },
           );
         }

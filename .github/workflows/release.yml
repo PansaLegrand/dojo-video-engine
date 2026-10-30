@@ -19,7 +19,7 @@ permissions:
   attestations: write
 
 concurrency:
-  group: motionforge-release-${{ inputs.version }}
+  group: dojo-video-engine-release-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:
@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @motionforge/golden exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm --filter @dojo-video-engine/golden exec playwright install --with-deps chromium firefox webkit
       - run: pnpm release:full
       - run: pnpm audit --prod --audit-level high
       - run: node scripts/pack-release.mjs artifacts/release
@@ -62,7 +62,7 @@ jobs:
           subject-path: artifacts/release/*
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: motionforge-${{ inputs.version }}-candidate
+          name: dojo-video-engine-${{ inputs.version }}-candidate
           path: artifacts/release
           if-no-files-found: error
           retention-days: 30
@@ -81,7 +81,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: motionforge-${{ inputs.version }}-candidate
+          name: dojo-video-engine-${{ inputs.version }}-candidate
           path: artifacts/release
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -101,6 +101,6 @@ jobs:
         run: |
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
             gh release create "$RELEASE_TAG" --verify-tag \
-              --title "MotionForge ${{ inputs.version }}" \
-              --notes "Verified synchronized MotionForge ${{ inputs.version }} release artifacts."
+              --title "DojoVideoEngine ${{ inputs.version }}" \
+              --notes "Verified synchronized DojoVideoEngine ${{ inputs.version }} release artifacts."
           gh release upload "$RELEASE_TAG" artifacts/release/* --clobber

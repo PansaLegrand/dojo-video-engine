@@ -16,73 +16,73 @@ import {
 } from "./values.js";
 import { isFontWeightDescriptor } from "./font-assets.js";
 
-export const motionforgeJsonSchemaFormatNames = [
-  "motionforge-length",
-  "motionforge-aspect-ratio",
-  "motionforge-color",
-  "motionforge-paint",
-  "motionforge-transform",
-  "motionforge-transform-origin",
-  "motionforge-object-position",
-  "motionforge-filter",
-  "motionforge-font-family",
-  "motionforge-font-weight",
-  "motionforge-font-weight-descriptor",
-  "motionforge-border",
-  "motionforge-shadow-list",
-  "motionforge-single-shadow",
-  "motionforge-text-stroke",
-  "motionforge-easing",
+export const dojoVideoEngineJsonSchemaFormatNames = [
+  "dojo-video-engine-length",
+  "dojo-video-engine-aspect-ratio",
+  "dojo-video-engine-color",
+  "dojo-video-engine-paint",
+  "dojo-video-engine-transform",
+  "dojo-video-engine-transform-origin",
+  "dojo-video-engine-object-position",
+  "dojo-video-engine-filter",
+  "dojo-video-engine-font-family",
+  "dojo-video-engine-font-weight",
+  "dojo-video-engine-font-weight-descriptor",
+  "dojo-video-engine-border",
+  "dojo-video-engine-shadow-list",
+  "dojo-video-engine-single-shadow",
+  "dojo-video-engine-text-stroke",
+  "dojo-video-engine-easing",
 ] as const;
 
-export type MotionforgeJsonSchemaFormatName =
-  (typeof motionforgeJsonSchemaFormatNames)[number];
+export type DojoVideoEngineJsonSchemaFormatName =
+  (typeof dojoVideoEngineJsonSchemaFormatNames)[number];
 
-export type MotionforgeJsonSchemaFormatPredicate = (value: string) => boolean;
+export type DojoVideoEngineJsonSchemaFormatPredicate = (value: string) => boolean;
 
 /**
  * Custom draft-07 string formats used by `scene.schema.json` when a portable
  * value parser is more precise than a maintainable regular expression.
  */
-export const motionforgeJsonSchemaFormats: Readonly<
-  Record<MotionforgeJsonSchemaFormatName, MotionforgeJsonSchemaFormatPredicate>
+export const dojoVideoEngineJsonSchemaFormats: Readonly<
+  Record<DojoVideoEngineJsonSchemaFormatName, DojoVideoEngineJsonSchemaFormatPredicate>
 > = {
-  "motionforge-length": (value) => lengthStringSchema.safeParse(value).success,
-  "motionforge-aspect-ratio": isAspectRatioString,
-  "motionforge-color": isColorValue,
-  "motionforge-paint": isPaintValue,
-  "motionforge-transform": isTransformValue,
-  "motionforge-transform-origin": isTransformOriginValue,
-  "motionforge-object-position": isObjectPositionValue,
-  "motionforge-filter": isFilterValue,
-  "motionforge-font-family": isFontFamilyValue,
-  "motionforge-font-weight": isFontWeightString,
-  "motionforge-font-weight-descriptor": isFontWeightDescriptor,
-  "motionforge-border": isBorderValue,
-  "motionforge-shadow-list": isShadowValue,
-  "motionforge-single-shadow": (value) =>
+  "dojo-video-engine-length": (value) => lengthStringSchema.safeParse(value).success,
+  "dojo-video-engine-aspect-ratio": isAspectRatioString,
+  "dojo-video-engine-color": isColorValue,
+  "dojo-video-engine-paint": isPaintValue,
+  "dojo-video-engine-transform": isTransformValue,
+  "dojo-video-engine-transform-origin": isTransformOriginValue,
+  "dojo-video-engine-object-position": isObjectPositionValue,
+  "dojo-video-engine-filter": isFilterValue,
+  "dojo-video-engine-font-family": isFontFamilyValue,
+  "dojo-video-engine-font-weight": isFontWeightString,
+  "dojo-video-engine-font-weight-descriptor": isFontWeightDescriptor,
+  "dojo-video-engine-border": isBorderValue,
+  "dojo-video-engine-shadow-list": isShadowValue,
+  "dojo-video-engine-single-shadow": (value) =>
     value === "none" || parseShadowValue(value) !== null,
-  "motionforge-text-stroke": isTextStrokeValue,
-  "motionforge-easing": isEasingValue,
+  "dojo-video-engine-text-stroke": isTextStrokeValue,
+  "dojo-video-engine-easing": isEasingValue,
 };
 
 export type JsonSchemaFormatRegistrar = {
   addFormat(
     name: string,
     format:
-      | MotionforgeJsonSchemaFormatPredicate
+      | DojoVideoEngineJsonSchemaFormatPredicate
       | {
           type: "string";
-          validate: MotionforgeJsonSchemaFormatPredicate;
+          validate: DojoVideoEngineJsonSchemaFormatPredicate;
         },
   ): unknown;
 };
 
-/** Register every MotionForge format before compiling the generated schema. */
-export function registerMotionforgeJsonSchemaFormats<
+/** Register every DojoVideoEngine format before compiling the generated schema. */
+export function registerDojoVideoEngineJsonSchemaFormats<
   T extends JsonSchemaFormatRegistrar,
 >(validator: T): T {
-  for (const [name, validate] of Object.entries(motionforgeJsonSchemaFormats)) {
+  for (const [name, validate] of Object.entries(dojoVideoEngineJsonSchemaFormats)) {
     validator.addFormat(name, { type: "string", validate });
   }
   return validator;
@@ -97,15 +97,15 @@ export function decorateSceneJsonSchema(
   animationTargets: readonly string[],
 ): Record<string, unknown> {
   annotatePortableFormats(schema);
-  schema["x-motionforge-format-vocabulary"] = [
-    ...motionforgeJsonSchemaFormatNames,
+  schema["x-dojo-video-engine-format-vocabulary"] = [
+    ...dojoVideoEngineJsonSchemaFormatNames,
   ];
   schema.$comment =
-    "Register @motionforge/schema motionforgeJsonSchemaFormats before compiling this schema; unknown formats must not be ignored.";
+    "Register @dojo-video-engine/schema dojoVideoEngineJsonSchemaFormats before compiling this schema; unknown formats must not be ignored.";
 
   const definition = childRecord(
     childRecord(schema, "definitions"),
-    "MotionforgeScene",
+    "DojoVideoEngineScene",
   );
   const sceneProperties = childRecord(definition, "properties");
   const nodes = childRecord(sceneProperties, "nodes");
@@ -123,7 +123,7 @@ export function decorateSceneJsonSchema(
   for (const variant of aspectRatioVariants) {
     const candidate = asRecord(variant);
     if (candidate?.type === "string") {
-      candidate.format = "motionforge-aspect-ratio";
+      candidate.format = "dojo-video-engine-aspect-ratio";
     }
   }
 
@@ -187,52 +187,52 @@ function annotatePortableFormats(value: unknown): void {
 
 function formatForDescription(
   description: string,
-): MotionforgeJsonSchemaFormatName | null {
+): DojoVideoEngineJsonSchemaFormatName | null {
   if (description.startsWith("FontFace weight descriptor"))
-    return "motionforge-font-weight-descriptor";
+    return "dojo-video-engine-font-weight-descriptor";
   if (description.startsWith("Finite number string with optional px or %")) {
-    return "motionforge-length";
+    return "dojo-video-engine-length";
   }
   if (description.startsWith("Expected a supported hex")) {
-    return "motionforge-color";
+    return "dojo-video-engine-color";
   }
   if (description.startsWith("Expected a supported color or")) {
-    return "motionforge-paint";
+    return "dojo-video-engine-paint";
   }
   if (description.startsWith("Expected none or a translate")) {
-    return "motionforge-transform";
+    return "dojo-video-engine-transform";
   }
   if (description.startsWith("Expected horizontal left/center/right")) {
-    return "motionforge-transform-origin";
+    return "dojo-video-engine-transform-origin";
   }
   if (description.startsWith("Expected one or two left/center/right")) {
-    return "motionforge-object-position";
+    return "dojo-video-engine-object-position";
   }
   if (description.startsWith("Expected none or a supported Canvas2D filter")) {
-    return "motionforge-filter";
+    return "dojo-video-engine-filter";
   }
   if (
     description.startsWith("Expected a bounded comma-separated Canvas font")
   ) {
-    return "motionforge-font-family";
+    return "dojo-video-engine-font-family";
   }
   if (description.startsWith("Expected normal/bold/bolder/lighter")) {
-    return "motionforge-font-weight";
+    return "dojo-video-engine-font-weight";
   }
   if (description.startsWith("Expected a nonnegative px width")) {
-    return "motionforge-border";
+    return "dojo-video-engine-border";
   }
   if (description.startsWith("Expected comma-separated x/y")) {
-    return "motionforge-shadow-list";
+    return "dojo-video-engine-shadow-list";
   }
   if (description.startsWith("Expected one x/y")) {
-    return "motionforge-single-shadow";
+    return "dojo-video-engine-single-shadow";
   }
   if (description.startsWith("Expected a positive px width")) {
-    return "motionforge-text-stroke";
+    return "dojo-video-engine-text-stroke";
   }
   if (description.startsWith("Expected a named easing")) {
-    return "motionforge-easing";
+    return "dojo-video-engine-easing";
   }
   return null;
 }

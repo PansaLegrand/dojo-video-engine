@@ -8,15 +8,15 @@ import {
   type LayoutBox,
   type MeasurementQuality,
   type ResolvedMeasurementProvenance,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   validateScene,
   type Scene,
   type SceneAsset,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
-import { parseFontFamilyListValue } from "@motionforge/schema/values";
+} from "@dojo-video-engine/schema";
+import { parseFontFamilyListValue } from "@dojo-video-engine/schema/values";
 import {
   LAYOUT_ROOT,
   validateLayoutPlan,

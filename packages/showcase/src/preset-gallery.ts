@@ -12,12 +12,12 @@ import {
   type ClipLayoutKey,
   type TextOverlayTemplateKey,
   type TransitionTemplateKey,
-} from "@motionforge/presets";
+} from "@dojo-video-engine/presets";
 import {
   type Scene,
   type SceneNode,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export type PresetGalleryScene = {
   id: string;
@@ -146,14 +146,14 @@ function textOverlayGalleryScene(): PresetGalleryScene {
     titleCard: {
       title: "Launch Week",
       subtitle: "Built with scene data",
-      kicker: "MotionForge",
+      kicker: "DojoVideoEngine",
     },
     lowerThird: {
       title: "Ada Lovelace",
       subtitle: "Programmer",
       kicker: "Interview",
     },
-    quoteCard: { body: "The scene is data.", attribution: "MotionForge" },
+    quoteCard: { body: "The scene is data.", attribution: "DojoVideoEngine" },
     statCallout: { value: "4.8x", label: "faster", subtitle: "browser export" },
     announcementBanner: {
       title: "New Drop",

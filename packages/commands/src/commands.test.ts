@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Ajv } from "ajv";
-import { parseScene, type Scene } from "@motionforge/schema";
+import { parseScene, type Scene } from "@dojo-video-engine/schema";
 import {
   applySceneCommands,
   compileSceneCommands,
@@ -220,7 +220,7 @@ describe("Scene command schema", () => {
     expect(serialized).toContain("http://json-schema.org/draft-07/schema#");
     expect(serialized).toContain('"kind"');
     expect(serialized).not.toContain('"children":');
-    expect(serialized).not.toContain("MotionforgeSceneNode");
+    expect(serialized).not.toContain("DojoVideoEngineSceneNode");
 
     const strictBranches: boolean[] = [];
     const requiredDiscriminators: boolean[] = [];

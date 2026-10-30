@@ -9,11 +9,11 @@
 ## Decision
 
 Scene v1 visual strings are a bounded, renderer-owned language rather than an
-open-ended CSS escape hatch. A value is canonical only when MotionForge can
+open-ended CSS escape hatch. A value is canonical only when Dojo Video Engine can
 parse it into typed data, serialize it deterministically, evaluate it for an
 animation target, and give it the same paint meaning in preview and export.
 
-The public grammar and parsers live at `@motionforge/schema/values`. Scene
+The public grammar and parsers live at `@dojo-video-engine/schema/values`. Scene
 validation, animation validation, the evaluator, Canvas2D renderer, builders,
 patches, and authoring helpers consume that one implementation. Hosts must not
 pre-validate against a different CSS parser.
@@ -130,7 +130,7 @@ union and therefore are not animation targets.
 
 The generated JSON Schema carries the same target list and portable-value
 constraints. Where draft-07 cannot express parser semantics compactly,
-MotionForge publishes named `motionforge-*` string formats and a registry of
+Dojo Video Engine publishes named `dojo-video-engine-*` string formats and a registry of
 format predicates. A conforming validator registers that vocabulary before
 compiling `scene.schema.json`; unknown formats must not be ignored. A shared
 valid/invalid corpus runs through both Zod and the configured JSON-Schema
@@ -149,7 +149,7 @@ parser-safety ceilings applied before recursive canonical validation.
 
 ## Compatibility and migration
 
-MotionForge 1.0 described several style fields as arbitrary Canvas/CSS strings,
+Dojo Video Engine 1.0 described several style fields as arbitrary Canvas/CSS strings,
 but values outside the implemented portable subset could be ignored, depend on
 browser parsing, retain stale Canvas state, or fail only during export. That
 acceptance is classified as a Scene v1 validation defect because it never had

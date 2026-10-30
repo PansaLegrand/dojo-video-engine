@@ -1,13 +1,13 @@
 # Showcase
 
-These scenes are the public proof that motionforge's JSON-to-video pipeline is useful today. They live in `@motionforge/showcase`, feed the playground scene picker, and can be exported to JSON under `examples/generated`.
+These scenes are the public proof that dojo-video-engine's JSON-to-video pipeline is useful today. They live in `@dojo-video-engine/showcase`, feed the playground scene picker, and can be exported to JSON under `examples/generated`.
 
 ## Render Commands
 
 ```sh
 pnpm build
 pnpm showcase:generate
-pnpm --filter @motionforge/golden run example examples/generated/tiktok-captions.json out/tiktok-captions.mp4 60
+pnpm --filter @dojo-video-engine/golden run example examples/generated/tiktok-captions.json out/tiktok-captions.mp4 60
 ```
 
 The trailing frame numbers write poster PNGs next to the MP4.
@@ -30,13 +30,13 @@ The trailing frame numbers write poster PNGs next to the MP4.
 
 ## Prompt-Style Readiness
 
-motionforge can already render and export prompt-shaped results once the prompt has been compiled into scene JSON. `apps/chat` is the current reference product surface for that loop: chat generation creates or patches the canonical scene, the manual editor refines layers/timing/style through `applyScenePatch`, and export uses the same renderer. The playground remains the minimal engine surface: paste a generated scene or patch into the agent console, validate it, preview it, and export the MP4.
+dojo-video-engine can already render and export prompt-shaped results once the prompt has been compiled into scene JSON. `apps/chat` is the current reference product surface for that loop: chat generation creates or patches the canonical scene, the manual editor refines layers/timing/style through `applyScenePatch`, and export uses the same renderer. The playground remains the minimal engine surface: paste a generated scene or patch into the agent console, validate it, preview it, and export the MP4.
 
 ## Source
 
 - Shared scene definitions: [packages/showcase/src/index.ts](../packages/showcase/src/index.ts)
 - Generated JSON: [examples/generated](../examples/generated)
-- Playground: [apps/playground](../apps/playground)
+- Playground: [apps/playground](https://github.com/PansaLegrand/dojo-video-harness)
 
 ## Why This Matters
 

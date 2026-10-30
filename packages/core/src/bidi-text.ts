@@ -1,6 +1,6 @@
 /// <reference path="./bidi-js.d.ts" />
 import bidiFactory from "bidi-js";
-import type { SceneTextRun } from "@motionforge/schema";
+import type { SceneTextRun } from "@dojo-video-engine/schema";
 
 // bidi-js 1.0.3 is MIT-licensed, pure JavaScript Unicode UBA 13.0/UAX-C1.
 // It determines visual ordering only; the renderer shapes the complete line.

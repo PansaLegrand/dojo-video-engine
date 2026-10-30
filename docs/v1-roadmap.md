@@ -1,8 +1,10 @@
-# MotionForge base-engine v1 roadmap
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
+# Dojo Video Engine base-engine v1 roadmap
 
 ## North star
 
-MotionForge is the deterministic, serializable, agent-native video runtime:
+Dojo Video Engine is the deterministic, serializable, agent-native video runtime:
 scenes are portable data, every edit is validated, and preview/export consume
 the same renderer contract.
 
@@ -18,7 +20,7 @@ best foundation for generated, editable, template-driven 2D video.
 4. High-level presets demonstrate primitives; they do not substitute for
    missing engine architecture.
 5. Browser export is the default, not the only possible deployment target.
-6. Downstream applications consume MotionForge; they do not own engine forks.
+6. Downstream applications consume Dojo Video Engine; they do not own engine forks.
 
 ## Milestones
 
@@ -48,7 +50,7 @@ Delivered in the 0.4 working tree:
 - documented one-way downstream integration policy.
 
 Remaining downstream action is deliberately separate: upgrade DojoClip to a
-tagged/published MotionForge release or an exact commit after its own protected
+tagged/published Dojo Video Engine release or an exact commit after its own protected
 application QA. The reconciliation does not modify the SaaS repository.
 
 ## Milestone 1 — Scene v1
@@ -171,7 +173,7 @@ RFC 0007 defines the single-pipeline orchestration and output-target contract.
 
 ## Milestone 7 — agent tools
 
-Delivered in the 0.11 working tree through `@motionforge/agent-tools`:
+Delivered in the 0.11 working tree through `@dojo-video-engine/agent-tools`:
 
 - validation, migration, inspection, lint, and transactional patch tools;
 - stable id-aware semantic diffs with explicit order changes;
@@ -196,7 +198,7 @@ Delivered for 1.0:
 - pinned reproducible benchmark budgets and release evidence;
 - CI runs the full release plus clean-install gates.
 
-Scene v1 and all eleven public packages are stable in MotionForge 1.0.
+Scene v1 and all eleven public packages are stable in Dojo Video Engine 1.0.
 
 ## Near-term allocation
 

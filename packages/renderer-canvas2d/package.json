@@ -1,9 +1,9 @@
 {
-  "name": "@motionforge/renderer-canvas2d",
+  "name": "@dojo-video-engine/renderer-canvas2d",
   "version": "1.1.0",
-  "description": "Deterministic Canvas2D still-frame renderer for motionforge scenes.",
+  "description": "Deterministic Canvas2D still-frame renderer for dojo-video-engine scenes.",
   "keywords": [
-    "motionforge",
+    "dojo-video-engine",
     "video",
     "canvas",
     "canvas2d",
@@ -12,11 +12,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PansaLegrand/motionforge.git",
+    "url": "git+https://github.com/PansaLegrand/dojo-video-engine.git",
     "directory": "packages/renderer-canvas2d"
   },
-  "homepage": "https://github.com/PansaLegrand/motionforge#readme",
-  "bugs": "https://github.com/PansaLegrand/motionforge/issues",
+  "homepage": "https://github.com/PansaLegrand/dojo-video-engine#readme",
+  "bugs": "https://github.com/PansaLegrand/dojo-video-engine/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -44,21 +44,21 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/dist/**\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/core": "workspace:*",
-    "@motionforge/extensions": "workspace:*",
-    "@motionforge/runtime": "workspace:*",
-    "@motionforge/schema": "workspace:*",
+    "@dojo-video-engine/core": "workspace:*",
+    "@dojo-video-engine/extensions": "workspace:*",
+    "@dojo-video-engine/runtime": "workspace:*",
+    "@dojo-video-engine/schema": "workspace:*",
     "mediabunny": "^1.46.0"
   },
   "devDependencies": {
     "lottie-web": "^5.13.0",
-    "vitest": "^3.2.7",
-    "zod": "^3.25.67"
+    "vitest": "4.1.12",
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "lottie-web": "^5.12.0"

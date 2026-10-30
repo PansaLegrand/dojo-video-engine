@@ -103,7 +103,7 @@ disposes evicted canvases, rejects oversized entries without retaining them,
 and is revision/session owned under the same rules as scratch storage.
 
 The structural `TextMeasureCache = Map<string, number>` input remains 1.x
-compatible. MotionForge's player/export/runtime use a separate bounded LRU
+compatible. Dojo Video Engine's player/export/runtime use a separate bounded LRU
 implementation whose keys include font, direction, letter spacing, and text;
 oversized keys bypass retention.
 
@@ -124,9 +124,9 @@ oversized keys bypass retention.
 ## Verification commands
 
 ```sh
-pnpm --filter @motionforge/core test
-pnpm --filter @motionforge/extensions test
-pnpm --filter @motionforge/renderer-canvas2d test
+pnpm --filter @dojo-video-engine/core test
+pnpm --filter @dojo-video-engine/extensions test
+pnpm --filter @dojo-video-engine/renderer-canvas2d test
 pnpm golden:test
 pnpm performance:gate
 pnpm release:full

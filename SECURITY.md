@@ -1,6 +1,6 @@
 # Security policy
 
-MotionForge accepts untrusted Scene JSON and media references at its public
+Dojo Video Engine accepts untrusted Scene JSON and media references at its public
 validation boundaries, but it also executes host-installed extensions and uses
 browser media, Canvas, WebCodecs, and Web Audio APIs. Please report failures in
 those boundaries privately when they may affect confidentiality, integrity, or
@@ -11,7 +11,7 @@ availability.
 Do not open a public issue for a suspected vulnerability.
 
 1. Prefer a private GitHub security advisory at
-   <https://github.com/PansaLegrand/motionforge/security/advisories/new>.
+   <https://github.com/PansaLegrand/dojo-video-engine/security/advisories/new>.
 2. Include the affected package/version or commit, impact, prerequisites, a
    minimal reproduction, and any suggested mitigation.
 3. Remove credentials, private media, signed URLs, and personal data from the
@@ -21,7 +21,7 @@ Do not open a public issue for a suspected vulnerability.
    A public issue may ask only for a private contact channel; do not include the
    vulnerability details there.
 
-Reports about a dependency should explain how MotionForge reaches the affected
+Reports about a dependency should explain how Dojo Video Engine reaches the affected
 code. Scanner output without reachability or impact context is still useful,
 but it may be triaged differently from an exploitable report.
 
@@ -60,7 +60,7 @@ evidence of an externally supported release. See
 [`docs/release-process.md`](docs/release-process.md).
 
 The `engines` range in a package manifest describes technical compatibility,
-not upstream security maintenance. Run MotionForge on a Node.js and browser
+not upstream security maintenance. Run Dojo Video Engine on a Node.js and browser
 version that its vendor still supports.
 
 ## Security boundaries

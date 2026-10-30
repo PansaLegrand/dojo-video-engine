@@ -1,37 +1,17 @@
 # Preview And Export
 
-MotionForge uses one render path for preview and export. A frame in Studio and the same frame in an exported MP4 come from the same Canvas2D renderer.
+Dojo Video Engine uses one render path for preview and export. A frame in a host preview and the same frame in an exported MP4 come from the same Canvas2D renderer.
 
-## CLI Studio
+## Visual editor
 
-```sh
-motionforge dev src/video.ts
-```
-
-Studio provides:
-
-- Canvas preview
-- play/pause
-- frame scrubber
-- source reload
-- validation feedback
-- generated JSON inspector
-- browser MP4 export when WebCodecs is available
-
-Use validation, lint, and canonical printing in CI or scripts:
-
-```sh
-motionforge validate src/video.ts
-motionforge lint src/video.ts
-motionforge print src/video.ts > scene.json
-```
+Use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness) for the editor, chat, and local export UI. Engine consumers can embed the APIs below in their own host.
 
 ## Player API
 
-Use `@motionforge/player` when embedding preview in your own app:
+Use `@dojo-video-engine/player` when embedding preview in your own app:
 
 ```ts
-import { createPlayer } from "@motionforge/player";
+import { createPlayer } from "@dojo-video-engine/player";
 
 const canvas = document.querySelector("canvas")!;
 const context = canvas.getContext("2d")!;
@@ -54,7 +34,7 @@ Call `player.dispose()` when replacing the scene or unmounting the canvas.
 ## Export API
 
 ```ts
-import { detectExportCapability, exportVideo } from "@motionforge/export";
+import { detectExportCapability, exportVideo } from "@dojo-video-engine/export";
 
 const capability = detectExportCapability();
 
@@ -88,7 +68,7 @@ import {
   prepareFrame,
   renderStill,
   resolveAssets,
-} from "@motionforge/renderer-canvas2d";
+} from "@dojo-video-engine/renderer-canvas2d";
 
 const assets = await resolveAssets(scene);
 await prepareFrame(scene, frame, assets);

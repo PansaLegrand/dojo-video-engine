@@ -5,7 +5,7 @@ import {
   mixSceneAudioDataFromRuntime,
   renderFrameSequenceFromRuntime,
   type MixedAudioData,
-} from "@motionforge/export";
+} from "@dojo-video-engine/export";
 import {
   createAgentWorkflowToolRegistry,
   createCanvas2DEvidenceRenderer,
@@ -13,8 +13,8 @@ import {
   createWorkflowEvidenceAdapter,
   renderContactSheet,
   renderSceneStill,
-} from "@motionforge/agent-tools";
-import type { TextMetricsProvider } from "@motionforge/core";
+} from "@dojo-video-engine/agent-tools";
+import type { TextMetricsProvider } from "@dojo-video-engine/core";
 import {
   column,
   compileLayout,
@@ -24,8 +24,8 @@ import {
   segmentLayoutTextGraphemes,
   type LayoutCompileResult,
   type LayoutPlan,
-} from "@motionforge/layout";
-import { createPlayerFromRuntime } from "@motionforge/player";
+} from "@dojo-video-engine/layout";
+import { createPlayerFromRuntime } from "@dojo-video-engine/player";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
   Canvas2DStaticDisplayCache,
@@ -39,9 +39,9 @@ import {
   ScratchSurfacePool,
   type Canvas2DStaticDisplayCacheStats,
   type ScratchSurfacePoolStats,
-} from "@motionforge/renderer-canvas2d";
-import { createCanvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
-import { validateScene, type Scene, type SceneNode } from "@motionforge/schema";
+} from "@dojo-video-engine/renderer-canvas2d";
+import { createCanvas2DSceneRuntime } from "@dojo-video-engine/renderer-canvas2d/runtime";
+import { validateScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
 import {
   ALL_FORMATS,
   AudioBufferSink,
@@ -292,7 +292,7 @@ async function runGoldenWorkflowEvidenceChecks(): Promise<VideoCheck[]> {
   let artifactCount = 0;
   let handle = "";
   try {
-    const loaded = await registry.call("motionforge.workflow.load", {
+    const loaded = await registry.call("dojo-video-engine.workflow.load", {
       scene: {
         schemaVersion: 1,
         width: 160,
@@ -333,7 +333,7 @@ async function runGoldenWorkflowEvidenceChecks(): Promise<VideoCheck[]> {
       );
     }
     handle = loaded.handle;
-    const applied = await registry.call("motionforge.workflow.commands", {
+    const applied = await registry.call("dojo-video-engine.workflow.commands", {
       handle,
       expectedRevision: 0,
       commands: [
@@ -351,7 +351,7 @@ async function runGoldenWorkflowEvidenceChecks(): Promise<VideoCheck[]> {
           : applied.error.message,
       );
     }
-    const rendered = await registry.call("motionforge.workflow.evidence", {
+    const rendered = await registry.call("dojo-video-engine.workflow.evidence", {
       handle,
       expectedRevision: 1,
       operation: "proof.comparison.render",
@@ -959,10 +959,10 @@ async function renderLayoutEvidenceFrame(scene: Scene): Promise<RenderedFrame> {
 }
 
 const canvasDisplayListCapabilities = [
-  { id: "motionforge.effect", version: "1" },
-  { id: "motionforge.filter", version: "1" },
-  { id: "motionforge.mask.soft", version: "1" },
-  { id: "motionforge.paint.conic", version: "1" },
+  { id: "dojo-video-engine.effect", version: "1" },
+  { id: "dojo-video-engine.filter", version: "1" },
+  { id: "dojo-video-engine.mask.soft", version: "1" },
+  { id: "dojo-video-engine.paint.conic", version: "1" },
 ] as const;
 
 const canvasDisplayListConformanceAdapter: RendererConformanceBackendAdapter = {

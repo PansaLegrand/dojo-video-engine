@@ -14,7 +14,7 @@ import {
   type SceneTextRun,
   type VolumeEnvelope,
   parseScene,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   parseColorValue,
   parseEasingValue,
@@ -22,7 +22,7 @@ import {
   parseObjectPositionValue,
   parseTransformOriginValue,
   parseTransformValue,
-} from "@motionforge/schema/values";
+} from "@dojo-video-engine/schema/values";
 
 export * from "./display-list.js";
 
@@ -1042,7 +1042,7 @@ export function transformLayoutRect(
 
 /**
  * Resolves a node's transform into an absolute-coordinate affine matrix.
- * The operation order matches Canvas2D and MotionForge's CSS-like transform
+ * The operation order matches Canvas2D and DojoVideoEngine's CSS-like transform
  * list, so inspection and rendering can share the same geometry semantics.
  */
 export function resolveStyleTransformMatrix(
@@ -1157,7 +1157,7 @@ export function resolveObjectFitRect(
     parseObjectPositionValue("center");
   if (!parsed) {
     throw new Error(
-      "MotionForge internal error: center object position failed to parse.",
+      "DojoVideoEngine internal error: center object position failed to parse.",
     );
   }
   type PositionPart = typeof parsed.x;

@@ -2,7 +2,7 @@ import {
   resolveObjectFitRect,
   type DisplayExtensionCompilationInput,
   type DisplayExtensionOperation,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   compileExtensionDisplay,
   legacyExtensionRendererCapability,
@@ -15,13 +15,13 @@ import {
   type NormalizedExtensionAssetRequirement,
   type RegisteredExtensionDefinition,
   type ResolvedExtensionDisplayDecision,
-} from "@motionforge/extensions";
+} from "@dojo-video-engine/extensions";
 import {
   colorValueSchema,
   extensionDescriptorSchema,
   type Scene,
   type SceneJsonValue,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export type Canvas2DExtensionDisplayContext =
   | CanvasRenderingContext2D

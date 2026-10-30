@@ -1,12 +1,12 @@
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 
-export type CreateMotionforgeOptions = {
+export type CreateDojoVideoEngineOptions = {
   cwd?: string;
   force?: boolean;
 };
 
-export type CreateMotionforgeResult = {
+export type CreateDojoVideoEngineResult = {
   projectName: string;
   projectDir: string;
   files: string[];
@@ -20,16 +20,16 @@ async function readOwnPackageVersion(): Promise<string> {
   ) as { version?: unknown };
 
   if (typeof manifest.version !== "string" || !manifest.version) {
-    throw new Error("@motionforge/create package.json has no valid version.");
+    throw new Error("@dojo-video-engine/create package.json has no valid version.");
   }
 
   return manifest.version;
 }
 
-export async function createMotionforgeProject(
+export async function createDojoVideoEngineProject(
   targetDir: string,
-  options: CreateMotionforgeOptions = {},
-): Promise<CreateMotionforgeResult> {
+  options: CreateDojoVideoEngineOptions = {},
+): Promise<CreateDojoVideoEngineResult> {
   const cwd = options.cwd ?? process.cwd();
   const projectDir = resolve(cwd, targetDir);
   const projectName = sanitizePackageName(basename(projectDir));
@@ -52,18 +52,18 @@ export async function createMotionforgeProject(
 }
 
 export function helpText() {
-  return `@motionforge/create (bin: create-motionforge)
+  return `@dojo-video-engine/create (bin: create-dojo-video-engine)
 
 Usage:
-  pnpm dlx @motionforge/create <project-name>
-  npx @motionforge/create@latest <project-name>
+  pnpm dlx @dojo-video-engine/create <project-name>
+  npx @dojo-video-engine/create@latest <project-name>
 
 Options:
   --force    Write into a non-empty directory.
 `;
 }
 
-export async function runCreateMotionforgeCli(argv: string[]) {
+export async function runCreateDojoVideoEngineCli(argv: string[]) {
   const targetDir = argv.find((arg) => !arg.startsWith("-"));
   const force = argv.includes("--force");
 
@@ -75,7 +75,7 @@ export async function runCreateMotionforgeCli(argv: string[]) {
   }
 
   try {
-    const result = await createMotionforgeProject(targetDir, { force });
+    const result = await createDojoVideoEngineProject(targetDir, { force });
     process.stdout.write(formatSuccess(result));
     return 0;
   } catch (error) {
@@ -118,19 +118,20 @@ function sanitizePackageName(value: string) {
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "motionforge-video"
+      .replace(/^-+|-+$/g, "") || "dojo-video-engine-video"
   );
 }
 
-function formatSuccess(result: CreateMotionforgeResult) {
+function formatSuccess(result: CreateDojoVideoEngineResult) {
   return [
-    `Created MotionForge project in ${result.projectDir}`,
+    `Created DojoVideoEngine project in ${result.projectDir}`,
     "",
     "Next steps:",
     `  cd ${result.projectDir}`,
     "  pnpm install",
     "  pnpm validate",
-    "  pnpm dev",
+    "  pnpm inspect",
+    "Editor and chat: https://github.com/PansaLegrand/dojo-video-harness",
     "",
   ].join("\n");
 }
@@ -144,17 +145,16 @@ function packageJson(projectName: string) {
       type: "module",
       packageManager: "pnpm@10.34.5",
       scripts: {
-        dev: "motionforge dev src/video.ts",
-        validate: "motionforge validate src/video.ts",
-        print: "motionforge print src/video.ts",
-        migrate: "motionforge migrate src/video.ts",
-        inspect: "motionforge inspect src/video.ts",
-        lint: "motionforge lint src/video.ts",
-        build: "tsc -p tsconfig.json && motionforge validate src/video.ts",
+        validate: "dojo-video-engine validate src/video.ts",
+        print: "dojo-video-engine print src/video.ts",
+        migrate: "dojo-video-engine migrate src/video.ts",
+        inspect: "dojo-video-engine inspect src/video.ts",
+        lint: "dojo-video-engine lint src/video.ts",
+        build: "tsc -p tsconfig.json && dojo-video-engine validate src/video.ts",
       },
       dependencies: {
-        "@motionforge/authoring": `^${packageVersion}`,
-        "@motionforge/cli": `^${packageVersion}`,
+        "@dojo-video-engine/authoring": `^${packageVersion}`,
+        "@dojo-video-engine/cli": `^${packageVersion}`,
       },
       devDependencies: {
         typescript: "^5.8.3",
@@ -194,7 +194,7 @@ function videoTs() {
   seconds,
   textBlock,
   title,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const logo = imageAsset("logo", publicAsset("assets/logo.svg"));
 
@@ -217,7 +217,7 @@ export default makeScene({
       },
       enter: fadeUp({ durationInFrames: 10 }),
     }),
-    title("Hello MotionForge", {
+    title("Hello DojoVideoEngine", {
       at: seconds(0.8),
       duration: seconds(3.5),
       enter: fadeUp(),
@@ -233,7 +233,7 @@ export default makeScene({
 }
 
 function logoSvg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="MotionForge starter logo">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="DojoVideoEngine starter logo">
   <rect width="512" height="512" rx="96" fill="#f8fafc"/>
   <circle cx="256" cy="256" r="164" fill="#111827"/>
   <path d="M166 320 256 142l90 178h-58l-32-74-32 74h-58Z" fill="#14b8a6"/>

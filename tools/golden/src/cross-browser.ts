@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { chromium, firefox, webkit, type BrowserType } from "playwright";
 import { createServer } from "vite";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 
 const rootDir = resolve(import.meta.dirname, "../../..");
 const harnessDir = resolve(rootDir, "tools/golden");
@@ -10,19 +10,19 @@ const server = await createServer({
   logLevel: "error",
   resolve: {
     alias: {
-      "@motionforge/presets/macros": resolve(
+      "@dojo-video-engine/presets/macros": resolve(
         rootDir,
         "packages/presets/src/macros.ts",
       ),
-      "@motionforge/schema/values": resolve(
+      "@dojo-video-engine/schema/values": resolve(
         rootDir,
         "packages/schema/src/values.ts",
       ),
-      "@motionforge/renderer-canvas2d/runtime": resolve(
+      "@dojo-video-engine/renderer-canvas2d/runtime": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/runtime.ts",
       ),
-      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
+      "@dojo-video-engine/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
       ...Object.fromEntries(
         [
           "agent-tools",
@@ -35,7 +35,7 @@ const server = await createServer({
           "export",
           "player",
         ].map((name) => [
-          `@motionforge/${name}`,
+          `@dojo-video-engine/${name}`,
           resolve(rootDir, `packages/${name}/src/index.ts`),
         ]),
       ),

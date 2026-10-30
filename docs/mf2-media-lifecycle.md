@@ -51,7 +51,7 @@ range-backed media reads. Its callbacks cover:
 - one bounded signed-URL refresh after HTTP 401/403;
 - MIME/response validation and stable content identity;
 - declared, header, Content-Range, streamed, and cumulative range byte limits;
-- AbortSignal propagation without provider-specific code in MotionForge.
+- AbortSignal propagation without provider-specific code in Dojo Video Engine.
 
 Default policy preserves the 1.0 source behavior while the engine's
 `maxAssetBytes` budget still provides a finite buffered-asset ceiling. Agent-
@@ -85,7 +85,7 @@ host policy.
   `finally` path on setup failure, render failure, cancellation, verification,
   and success. Caller-supplied assets remain caller-owned.
 - `exportVideoWithFallback()` calls a host callback only when browser preflight
-  fails. MotionForge neither selects nor operates a remote renderer.
+  fails. Dojo Video Engine neither selects nor operates a remote renderer.
 
 Blob export defaults to `verification: "container"`. Verification rereads the
 finished MP4, validates tracks, dimensions, one-frame duration tolerance,

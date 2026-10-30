@@ -1,4 +1,4 @@
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   exportVideo,
   type ExportVideoOptions,
@@ -25,26 +25,26 @@ export type WorkerExportOptions = Omit<
 
 export type ExportWorkerRequest =
   | {
-      type: "motionforge.export.start";
+      type: "dojo-video-engine.export.start";
       id: string;
       scene: Scene;
       options?: WorkerExportOptions;
     }
-  | { type: "motionforge.export.cancel"; id: string };
+  | { type: "dojo-video-engine.export.cancel"; id: string };
 
 export type ExportWorkerEvent =
   | {
-      type: "motionforge.export.progress";
+      type: "dojo-video-engine.export.progress";
       id: string;
       progress: RenderFrameSequenceProgress;
     }
   | {
-      type: "motionforge.export.complete";
+      type: "dojo-video-engine.export.complete";
       id: string;
       result: ExportVideoResult;
     }
   | {
-      type: "motionforge.export.error";
+      type: "dojo-video-engine.export.error";
       id: string;
       error: { name: string; message: string };
     };
@@ -65,7 +65,7 @@ export function createExportWorkerHandler(
 ): (request: ExportWorkerRequest) => Promise<void> {
   const controllers = new Map<string, AbortController>();
   return async (request) => {
-    if (request.type === "motionforge.export.cancel") {
+    if (request.type === "dojo-video-engine.export.cancel") {
       controllers
         .get(request.id)
         ?.abort(new DOMException("Export cancelled.", "AbortError"));
@@ -73,7 +73,7 @@ export function createExportWorkerHandler(
     }
     if (controllers.has(request.id)) {
       options.postMessage({
-        type: "motionforge.export.error",
+        type: "dojo-video-engine.export.error",
         id: request.id,
         error: {
           name: "DuplicateExportRequestError",
@@ -109,19 +109,19 @@ export function createExportWorkerHandler(
         verificationSink: options.verificationSink,
         onProgress: (progress) =>
           options.postMessage({
-            type: "motionforge.export.progress",
+            type: "dojo-video-engine.export.progress",
             id: request.id,
             progress,
           }),
       });
       options.postMessage({
-        type: "motionforge.export.complete",
+        type: "dojo-video-engine.export.complete",
         id: request.id,
         result,
       });
     } catch (error) {
       options.postMessage({
-        type: "motionforge.export.error",
+        type: "dojo-video-engine.export.error",
         id: request.id,
         error: {
           name: error instanceof Error ? error.name : "Error",
@@ -176,13 +176,13 @@ export class ExportWorkerClient {
     const result = new Promise<ExportVideoResult>((resolve, reject) => {
       listener = (event) => {
         if (event.data.id !== id) return;
-        if (event.data.type === "motionforge.export.progress") {
+        if (event.data.type === "dojo-video-engine.export.progress") {
           onProgress?.(event.data.progress);
           return;
         }
         settled = true;
         this.worker.removeEventListener("message", listener);
-        if (event.data.type === "motionforge.export.complete") {
+        if (event.data.type === "dojo-video-engine.export.complete") {
           resolve(event.data.result);
         } else {
           const error = new Error(event.data.error.message);
@@ -192,7 +192,7 @@ export class ExportWorkerClient {
       };
       this.worker.addEventListener("message", listener);
       this.worker.postMessage({
-        type: "motionforge.export.start",
+        type: "dojo-video-engine.export.start",
         id,
         scene,
         options: serializableOptions,
@@ -203,7 +203,7 @@ export class ExportWorkerClient {
       result,
       cancel: () => {
         if (!settled) {
-          this.worker.postMessage({ type: "motionforge.export.cancel", id });
+          this.worker.postMessage({ type: "dojo-video-engine.export.cancel", id });
         }
       },
     };

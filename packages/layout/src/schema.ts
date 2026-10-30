@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 export const LAYOUT_CONTRACT_VERSION = 1 as const;
@@ -346,7 +346,7 @@ export function validateLayoutPlan(input: unknown): LayoutPlanValidationResult {
 const generatedLayoutPlanJsonSchema = Object.freeze(
   decorateLayoutPlanJsonSchema(
     zodToJsonSchema(layoutPlanSchema, {
-      name: "MotionForgeLayoutPlanV1",
+      name: "DojoVideoEngineLayoutPlanV1",
       target: "jsonSchema7",
       $refStrategy: "none",
     }) as Record<string, unknown>,
@@ -370,7 +370,7 @@ function decorateLayoutPlanJsonSchema(
   const definitions = schema.definitions as
     | Record<string, Record<string, unknown>>
     | undefined;
-  const root = definitions?.MotionForgeLayoutPlanV1;
+  const root = definitions?.DojoVideoEngineLayoutPlanV1;
   if (!root)
     throw new Error(
       "Generated LayoutPlan JSON Schema lost its root definition.",

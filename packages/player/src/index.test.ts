@@ -8,13 +8,13 @@ import {
   resolveAssets,
   type ResolvedAssets,
   ScratchSurfacePool,
-} from "@motionforge/renderer-canvas2d";
-import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
-import { evaluateScene } from "@motionforge/core";
+} from "@dojo-video-engine/renderer-canvas2d";
+import type { Canvas2DSceneRuntime } from "@dojo-video-engine/renderer-canvas2d/runtime";
+import { evaluateScene } from "@dojo-video-engine/core";
 
-vi.mock("@motionforge/renderer-canvas2d", async (importOriginal) => {
+vi.mock("@dojo-video-engine/renderer-canvas2d", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@motionforge/renderer-canvas2d")>();
+    await importOriginal<typeof import("@dojo-video-engine/renderer-canvas2d")>();
 
   return {
     ...actual,

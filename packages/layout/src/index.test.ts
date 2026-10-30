@@ -5,12 +5,12 @@ import {
   type Scene,
   type SceneAsset,
   type SceneNode,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import type {
   MediaMetricsProvider,
   TextMetricsProvider,
-} from "@motionforge/core";
-import { evaluateScene, layoutScene } from "@motionforge/core";
+} from "@dojo-video-engine/core";
+import { evaluateScene, layoutScene } from "@dojo-video-engine/core";
 import {
   LAYOUT_CONTRACT_VERSION,
   LayoutCompileError,

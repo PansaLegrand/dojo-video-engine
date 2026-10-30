@@ -1,6 +1,6 @@
 # Release process
 
-This is the maintainer runbook for synchronized MotionForge releases. It
+This is the maintainer runbook for synchronized Dojo Video Engine releases. It
 separates a source release candidate from a Git tag and an externally published
 npm release so repository documentation never treats one as proof of another.
 
@@ -11,7 +11,7 @@ the working tree is preparing synchronized 1.1.0 candidate manifests. The
 repository contains a pinned release workflow, pack-once bundle generator,
 lock-aware SBOM/license/audit evidence, exact-byte clean verifier, and staged
 publisher. There is still no Git tag, npm publication receipt for the
-`@motionforge/*` packages, protected-environment/scope-ownership proof,
+`@dojo-video-engine/*` packages, protected-environment/scope-ownership proof,
 provenance receipt, or durable GitHub release record that can be verified from
 this checkout.
 
@@ -20,9 +20,9 @@ they do not prove that 1.0.0 was externally published. The next planned
 package set is a **1.1.0 candidate** until every publication and verification
 step below succeeds.
 
-The unscoped name `create-motionforge` belongs to another npm project and must
-not be published by this repository. MotionForge 1.1 uses the scoped package
-identity `@motionforge/create` while retaining the `create-motionforge`
+The unscoped name `create-dojo-video-engine` belongs to another npm project and must
+not be published by this repository. Dojo Video Engine 1.1 uses the scoped package
+identity `@dojo-video-engine/create` while retaining the `create-dojo-video-engine`
 executable name. Contract baselines, starter documentation, clean-install
 tests, and trusted-publisher configuration must all use the scoped package.
 
@@ -32,8 +32,8 @@ Only an authorized release manager may create the release tag, approve the
 protected release environment, or change npm trusted-publisher/dist-tag state.
 Before the first external release, maintainers must:
 
-- prove control of the `@motionforge` npm scope and every package identity;
-- preserve the tested `@motionforge/create` identity and reject regressions to
+- prove control of the `@dojo-video-engine` npm scope and every package identity;
+- preserve the tested `@dojo-video-engine/create` identity and reject regressions to
   the unrelated unscoped package;
 - establish a maintainer tag-signing identity, publish its verification
   instructions, and protect release tags from force updates;
@@ -121,7 +121,7 @@ policy before proceeding.
 Use a clean release branch based on current `main`:
 
 1. Update all public package versions to `1.1.0`, including
-   `@motionforge/create`, and refresh `pnpm-lock.yaml`.
+   `@dojo-video-engine/create`, and refresh `pnpm-lock.yaml`.
 2. Move completed entries from `Unreleased` into the dated 1.1.0 changelog
    section. State compatibility and known limitations.
 3. Finalize the 1.0 → 1.1 migration note and release evidence.
@@ -216,7 +216,7 @@ full CI run, a release manager creates and verifies a signed tag:
 git switch main
 git pull --ff-only
 test -z "$(git status --porcelain)"
-git tag -s v1.1.0 -m "MotionForge 1.1.0"
+git tag -s v1.1.0 -m "Dojo Video Engine 1.1.0"
 git tag -v v1.1.0
 git push origin v1.1.0
 ```
@@ -253,7 +253,7 @@ requirements when the workflow is reviewed.
 
 npm package settings cannot be assumed to offer trusted-publisher configuration
 for a package identity that does not yet exist. For the first publication of
-each new `@motionforge/*` identity:
+each new `@dojo-video-engine/*` identity:
 
 1. confirm scope ownership and reserve/verify the intended identity;
 2. create a short-lived granular npm token limited to the new package set and

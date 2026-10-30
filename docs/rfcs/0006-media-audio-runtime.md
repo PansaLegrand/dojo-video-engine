@@ -6,7 +6,7 @@
 
 ## Summary
 
-MotionForge media resolution becomes reachable, streamable, proxy-aware, and
+Dojo Video Engine media resolution becomes reachable, streamable, proxy-aware, and
 budgeted. The audio path gains named buses, panning, ducking, crossfades,
 loudness measurement, limiting, waveform caching, and bounded preview chunks.
 

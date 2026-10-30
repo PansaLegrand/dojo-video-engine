@@ -1,7 +1,7 @@
 {
-  "$ref": "#/definitions/MotionforgeScene",
+  "$ref": "#/definitions/DojoVideoEngineScene",
   "definitions": {
-    "MotionforgeScene": {
+    "DojoVideoEngineScene": {
       "type": "object",
       "properties": {
         "schemaVersion": {
@@ -121,7 +121,7 @@
                         "type": "string",
                         "maxLength": 24,
                         "description": "FontFace weight descriptor: normal, bold, fixed 1-1000 or ascending variable range.",
-                        "format": "motionforge-font-weight-descriptor"
+                        "format": "dojo-video-engine-font-weight-descriptor"
                       }
                     ]
                   },
@@ -234,18 +234,18 @@
                           "type": "string",
                           "maxLength": 8192,
                           "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                          "format": "motionforge-color"
+                          "format": "dojo-video-engine-color"
                         },
                         "textStroke": {
                           "type": "string",
                           "maxLength": 8192,
                           "description": "Expected a positive px width followed by a supported color, or none.",
-                          "format": "motionforge-text-stroke"
+                          "format": "dojo-video-engine-text-stroke"
                         },
                         "textBackgroundColor": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
                           "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                          "format": "motionforge-color"
+                          "format": "dojo-video-engine-color"
                         },
                         "textBackgroundPadding": {
                           "anyOf": [
@@ -256,18 +256,18 @@
                               "type": "string",
                               "maxLength": 128,
                               "description": "Finite number string with optional px or % unit.",
-                              "format": "motionforge-length"
+                              "format": "dojo-video-engine-length"
                             }
                           ]
                         },
                         "textBackgroundPaddingX": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                         },
                         "textBackgroundPaddingY": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                         },
                         "textBackgroundRadius": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                         },
                         "opacity": {
                           "type": "number",
@@ -336,7 +336,7 @@
                   "colors": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color"
+                      "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color"
                     },
                     "minItems": 1,
                     "maxItems": 8
@@ -490,13 +490,13 @@
                         {
                           "type": "array",
                           "items": {
-                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
+                            "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
                           }
                         },
                         {
                           "type": "object",
                           "additionalProperties": {
-                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
+                            "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/extension/properties/params/additionalProperties"
                           }
                         }
                       ]
@@ -520,7 +520,7 @@
                         "const": "rect"
                       },
                       "radius": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       }
                     },
                     "required": [
@@ -574,7 +574,7 @@
                             "additionalProperties": false
                           },
                           {
-                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                            "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
                           }
                         ]
                       }
@@ -595,7 +595,7 @@
                       "points": {
                         "type": "array",
                         "items": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
                         },
                         "minItems": 2,
                         "maxItems": 256
@@ -617,7 +617,7 @@
                       "points": {
                         "type": "array",
                         "items": {
-                          "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
+                          "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/shape/anyOf/2/properties/points/items/0"
                         },
                         "minItems": 3,
                         "maxItems": 256
@@ -686,13 +686,13 @@
                 ]
               },
               "clip": {
-                "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/shape"
+                "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/shape"
               },
               "mask": {
                 "type": "object",
                 "properties": {
                   "shape": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/clip"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/clip"
                   },
                   "inverted": {
                     "type": "boolean"
@@ -749,7 +749,7 @@
                       "type": "string",
                       "maxLength": 8192,
                       "description": "Expected a named easing, cubic-bezier(), or spring().",
-                      "format": "motionforge-easing"
+                      "format": "dojo-video-engine-easing"
                     }
                   },
                   "required": [
@@ -851,25 +851,25 @@
                     ]
                   },
                   "gap": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "width": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "height": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "minWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "minHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "maxWidth": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "maxHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "aspectRatio": {
                     "anyOf": [
@@ -880,7 +880,7 @@
                       {
                         "type": "string",
                         "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$",
-                        "format": "motionforge-aspect-ratio"
+                        "format": "dojo-video-engine-aspect-ratio"
                       }
                     ]
                   },
@@ -888,49 +888,49 @@
                     "type": "object",
                     "properties": {
                       "top": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "right": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "bottom": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       },
                       "left": {
-                        "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                        "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                       }
                     },
                     "additionalProperties": false
                   },
                   "padding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingTop": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingRight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingBottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "paddingLeft": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "margin": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginTop": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginRight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginBottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "marginLeft": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "position": {
                     "type": "string",
@@ -940,40 +940,40 @@
                     ]
                   },
                   "left": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "right": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "top": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "bottom": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "inset": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "background": {
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected a supported color or linear/radial/conic gradient.",
-                    "format": "motionforge-paint"
+                    "format": "dojo-video-engine-paint"
                   },
                   "backgroundColor": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
                     "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                    "format": "motionforge-color"
+                    "format": "dojo-video-engine-color"
                   },
                   "fill": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/style/properties/background",
                     "description": "Expected a supported color or linear/radial/conic gradient.",
-                    "format": "motionforge-paint"
+                    "format": "dojo-video-engine-paint"
                   },
                   "stroke": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/style/properties/background",
                     "description": "Expected a supported color or linear/radial/conic gradient.",
-                    "format": "motionforge-paint"
+                    "format": "dojo-video-engine-paint"
                   },
                   "strokeWidth": {
                     "type": "number",
@@ -1008,28 +1008,28 @@
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected a nonnegative px width, optional solid keyword, and color.",
-                    "format": "motionforge-border"
+                    "format": "dojo-video-engine-border"
                   },
                   "borderRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderTopLeftRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderTopRightRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderBottomRightRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "borderBottomLeftRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "boxShadow": {
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected comma-separated x/y/optional-blur/color shadows without spread or inset.",
-                    "format": "motionforge-shadow-list"
+                    "format": "dojo-video-engine-shadow-list"
                   },
                   "overflow": {
                     "type": "string",
@@ -1072,7 +1072,7 @@
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected none or a supported Canvas2D filter chain.",
-                    "format": "motionforge-filter"
+                    "format": "dojo-video-engine-filter"
                   },
                   "zIndex": {
                     "type": "integer"
@@ -1081,22 +1081,22 @@
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected none or a translate()/scale()/rotate() transform list.",
-                    "format": "motionforge-transform"
+                    "format": "dojo-video-engine-transform"
                   },
                   "transformOrigin": {
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected horizontal left/center/right/px/% and optional vertical top/center/bottom/px/% origin components.",
-                    "format": "motionforge-transform-origin"
+                    "format": "dojo-video-engine-transform-origin"
                   },
                   "fontFamily": {
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected a bounded comma-separated Canvas font-family list.",
-                    "format": "motionforge-font-family"
+                    "format": "dojo-video-engine-font-family"
                   },
                   "fontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "fontWeight": {
                     "anyOf": [
@@ -1109,7 +1109,7 @@
                         "type": "string",
                         "maxLength": 8192,
                         "description": "Expected normal/bold/bolder/lighter or a font weight from 1 to 1000.",
-                        "format": "motionforge-font-weight"
+                        "format": "dojo-video-engine-font-weight"
                       }
                     ]
                   },
@@ -1121,15 +1121,15 @@
                     ]
                   },
                   "color": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
                     "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                    "format": "motionforge-color"
+                    "format": "dojo-video-engine-color"
                   },
                   "lineHeight": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "letterSpacing": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textAlign": {
                     "type": "string",
@@ -1151,19 +1151,19 @@
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected one x/y/optional-blur/color shadow without spread or inset, or none.",
-                    "format": "motionforge-single-shadow"
+                    "format": "dojo-video-engine-single-shadow"
                   },
                   "textStroke": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
                     "description": "Expected a positive px width followed by a supported color, or none.",
-                    "format": "motionforge-text-stroke"
+                    "format": "dojo-video-engine-text-stroke"
                   },
                   "maxLines": {
                     "type": "integer",
                     "exclusiveMinimum": 0
                   },
                   "minFontSize": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textFit": {
                     "type": "string",
@@ -1181,21 +1181,21 @@
                     ]
                   },
                   "textBackgroundColor": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
                     "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                    "format": "motionforge-color"
+                    "format": "dojo-video-engine-color"
                   },
                   "textBackgroundPadding": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundPaddingX": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundPaddingY": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "textBackgroundRadius": {
-                    "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                    "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                   },
                   "objectFit": {
                     "type": "string",
@@ -1211,7 +1211,7 @@
                     "type": "string",
                     "maxLength": 8192,
                     "description": "Expected one or two left/center/right/top/bottom/px/% object-position components.",
-                    "format": "motionforge-object-position"
+                    "format": "dojo-video-engine-object-position"
                   },
                   "imageRendering": {
                     "type": "string",
@@ -1335,9 +1335,9 @@
                             ]
                           },
                           "easing": {
-                            "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/volumeEnvelope/items/properties/easing",
+                            "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/volumeEnvelope/items/properties/easing",
                             "description": "Expected a named easing, cubic-bezier(), or spring().",
-                            "format": "motionforge-easing"
+                            "format": "dojo-video-engine-easing"
                           }
                         },
                         "required": [
@@ -1543,7 +1543,7 @@
                             "items": {
                               "properties": {
                                 "value": {
-                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
+                                  "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textBackgroundPadding"
                                 }
                               }
                             }
@@ -1576,7 +1576,7 @@
                                     {
                                       "type": "string",
                                       "pattern": "^\\s*\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?\\s*$",
-                                      "format": "motionforge-aspect-ratio"
+                                      "format": "dojo-video-engine-aspect-ratio"
                                     }
                                   ]
                                 }
@@ -1635,7 +1635,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected a supported color or linear/radial/conic gradient.",
-                                  "format": "motionforge-paint"
+                                  "format": "dojo-video-engine-paint"
                                 }
                               }
                             }
@@ -1664,9 +1664,9 @@
                             "items": {
                               "properties": {
                                 "value": {
-                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
+                                  "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/color",
                                   "description": "Expected a supported hex, legacy/modern rgb()/rgba()/hsl()/hsla(), transparent, or CSS named color.",
-                                  "format": "motionforge-color"
+                                  "format": "dojo-video-engine-color"
                                 }
                               }
                             }
@@ -1694,9 +1694,9 @@
                             "items": {
                               "properties": {
                                 "value": {
-                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/style/properties/background",
+                                  "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/style/properties/background",
                                   "description": "Expected a supported color or linear/radial/conic gradient.",
-                                  "format": "motionforge-paint"
+                                  "format": "dojo-video-engine-paint"
                                 }
                               }
                             }
@@ -1811,7 +1811,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected a nonnegative px width, optional solid keyword, and color.",
-                                  "format": "motionforge-border"
+                                  "format": "dojo-video-engine-border"
                                 }
                               }
                             }
@@ -1839,7 +1839,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected comma-separated x/y/optional-blur/color shadows without spread or inset.",
-                                  "format": "motionforge-shadow-list"
+                                  "format": "dojo-video-engine-shadow-list"
                                 }
                               }
                             }
@@ -1970,7 +1970,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected none or a supported Canvas2D filter chain.",
-                                  "format": "motionforge-filter"
+                                  "format": "dojo-video-engine-filter"
                                 }
                               }
                             }
@@ -2023,7 +2023,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected none or a translate()/scale()/rotate() transform list.",
-                                  "format": "motionforge-transform"
+                                  "format": "dojo-video-engine-transform"
                                 }
                               }
                             }
@@ -2051,7 +2051,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected horizontal left/center/right/px/% and optional vertical top/center/bottom/px/% origin components.",
-                                  "format": "motionforge-transform-origin"
+                                  "format": "dojo-video-engine-transform-origin"
                                 }
                               }
                             }
@@ -2079,7 +2079,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected a bounded comma-separated Canvas font-family list.",
-                                  "format": "motionforge-font-family"
+                                  "format": "dojo-video-engine-font-family"
                                 }
                               }
                             }
@@ -2114,7 +2114,7 @@
                                       "type": "string",
                                       "maxLength": 8192,
                                       "description": "Expected normal/bold/bolder/lighter or a font weight from 1 to 1000.",
-                                      "format": "motionforge-font-weight"
+                                      "format": "dojo-video-engine-font-weight"
                                     }
                                   ]
                                 }
@@ -2233,7 +2233,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected one x/y/optional-blur/color shadow without spread or inset, or none.",
-                                  "format": "motionforge-single-shadow"
+                                  "format": "dojo-video-engine-single-shadow"
                                 }
                               }
                             }
@@ -2258,9 +2258,9 @@
                             "items": {
                               "properties": {
                                 "value": {
-                                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
+                                  "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items/properties/runs/items/properties/style/properties/textStroke",
                                   "description": "Expected a positive px width followed by a supported color, or none.",
-                                  "format": "motionforge-text-stroke"
+                                  "format": "dojo-video-engine-text-stroke"
                                 }
                               }
                             }
@@ -2405,7 +2405,7 @@
                                   "type": "string",
                                   "maxLength": 8192,
                                   "description": "Expected one or two left/center/right/top/bottom/px/% object-position components.",
-                                  "format": "motionforge-object-position"
+                                  "format": "dojo-video-engine-object-position"
                                 }
                               }
                             }
@@ -2503,7 +2503,7 @@
               "children": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/definitions/MotionforgeScene/properties/nodes/items"
+                  "$ref": "#/definitions/DojoVideoEngineScene/properties/nodes/items"
                 },
                 "default": []
               }
@@ -2562,23 +2562,23 @@
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "x-motionforge-format-vocabulary": [
-    "motionforge-length",
-    "motionforge-aspect-ratio",
-    "motionforge-color",
-    "motionforge-paint",
-    "motionforge-transform",
-    "motionforge-transform-origin",
-    "motionforge-object-position",
-    "motionforge-filter",
-    "motionforge-font-family",
-    "motionforge-font-weight",
-    "motionforge-font-weight-descriptor",
-    "motionforge-border",
-    "motionforge-shadow-list",
-    "motionforge-single-shadow",
-    "motionforge-text-stroke",
-    "motionforge-easing"
+  "x-dojo-video-engine-format-vocabulary": [
+    "dojo-video-engine-length",
+    "dojo-video-engine-aspect-ratio",
+    "dojo-video-engine-color",
+    "dojo-video-engine-paint",
+    "dojo-video-engine-transform",
+    "dojo-video-engine-transform-origin",
+    "dojo-video-engine-object-position",
+    "dojo-video-engine-filter",
+    "dojo-video-engine-font-family",
+    "dojo-video-engine-font-weight",
+    "dojo-video-engine-font-weight-descriptor",
+    "dojo-video-engine-border",
+    "dojo-video-engine-shadow-list",
+    "dojo-video-engine-single-shadow",
+    "dojo-video-engine-text-stroke",
+    "dojo-video-engine-easing"
   ],
-  "$comment": "Register @motionforge/schema motionforgeJsonSchemaFormats before compiling this schema; unknown formats must not be ignored."
+  "$comment": "Register @dojo-video-engine/schema dojoVideoEngineJsonSchemaFormats before compiling this schema; unknown formats must not be ignored."
 }

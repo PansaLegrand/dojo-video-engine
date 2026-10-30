@@ -1,11 +1,11 @@
-import { evaluateScene, layoutScene } from "@motionforge/core";
+import { evaluateScene, layoutScene } from "@dojo-video-engine/core";
 import {
   audioChunkRanges,
   evaluateVolumeEnvelope,
   loopedSourceRanges,
-} from "@motionforge/export";
-import { estimateMediaResources } from "@motionforge/renderer-canvas2d";
-import type { Scene, SceneNode } from "@motionforge/schema";
+} from "@dojo-video-engine/export";
+import { estimateMediaResources } from "@dojo-video-engine/renderer-canvas2d";
+import type { Scene, SceneNode } from "@dojo-video-engine/schema";
 
 type Check = {
   label: string;

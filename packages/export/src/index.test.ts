@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   Canvas2DStaticDisplayCache,
   ScratchSurfacePool,
   type ResolvedAssets,
-} from "@motionforge/renderer-canvas2d";
-import type { Canvas2DSceneRuntime } from "@motionforge/renderer-canvas2d/runtime";
+} from "@dojo-video-engine/renderer-canvas2d";
+import type { Canvas2DSceneRuntime } from "@dojo-video-engine/renderer-canvas2d/runtime";
 import {
   audioChunkRanges,
   collectAudioPlacements,

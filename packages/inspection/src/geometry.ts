@@ -1,8 +1,8 @@
 import {
   normalizeLayoutCornerRadii,
   pointInRoundedLayoutRect,
-} from "@motionforge/core";
-import type { SceneShapeGeometry } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { SceneShapeGeometry } from "@dojo-video-engine/schema";
 import type { Point, Rect } from "./types.js";
 
 export function intersectRect(left: Rect, right: Rect): Rect {

@@ -1,6 +1,6 @@
 # Supply-chain policy
 
-This policy covers public MotionForge packages, private repository apps and
+This policy covers public Dojo Video Engine packages, private repository apps and
 tools, release artifacts, host-installed extensions, media/codec dependencies,
 and the infrastructure used to publish them.
 
@@ -61,7 +61,7 @@ license version matter. Unknown or missing licenses block release.
 Generate and review a production license inventory for every candidate:
 
 ```sh
-pnpm licenses list --prod --json > motionforge-licenses.json
+pnpm licenses list --prod --json > dojo-video-engine-licenses.json
 ```
 
 The inventory is release evidence, not a substitute for preserving required
@@ -165,7 +165,7 @@ retained bundle first, then the clean verifier installs, exercises, hashes,
 attests, and publishes those same bytes. Repacking after clean verification
 weakens the evidence chain even when source is unchanged.
 
-MotionForge currently claims functional reproducibility under those pinned
+Dojo Video Engine currently claims functional reproducibility under those pinned
 inputs, not byte-for-byte identical tarballs across arbitrary operating
 systems. Release evidence retains:
 
@@ -188,7 +188,7 @@ native binaries, and optional headless encoders each require separate license,
 export-control, and patent review for the jurisdictions and distribution model
 of the host application.
 
-MotionForge capability detection says whether an implementation is available;
+Dojo Video Engine capability detection says whether an implementation is available;
 it does not say that using or distributing it is legally permitted. Public
 packages must not silently download codec binaries. A host that supplies an
 encoder, decoder, or codec pack owns its installation, licensing, update, and

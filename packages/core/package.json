@@ -1,9 +1,9 @@
 {
-  "name": "@motionforge/core",
+  "name": "@dojo-video-engine/core",
   "version": "1.1.0",
-  "description": "Scene builder API, keyframe animation evaluator, and layout pass for motionforge.",
+  "description": "Scene builder API, keyframe animation evaluator, and layout pass for dojo-video-engine.",
   "keywords": [
-    "motionforge",
+    "dojo-video-engine",
     "video",
     "animation",
     "keyframes",
@@ -13,11 +13,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PansaLegrand/motionforge.git",
+    "url": "git+https://github.com/PansaLegrand/dojo-video-engine.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/PansaLegrand/motionforge#readme",
-  "bugs": "https://github.com/PansaLegrand/motionforge/issues",
+  "homepage": "https://github.com/PansaLegrand/dojo-video-engine#readme",
+  "bugs": "https://github.com/PansaLegrand/dojo-video-engine/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -42,15 +42,15 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/dist/**\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@motionforge/schema": "workspace:*",
+    "@dojo-video-engine/schema": "workspace:*",
     "bidi-js": "1.0.3"
   },
   "devDependencies": {
-    "vitest": "^3.2.7"
+    "vitest": "4.1.12"
   }
 }

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type {
   WorkflowEvidenceAdapter,
@@ -40,7 +40,7 @@ export const workflowProofComparisonParamsSchema = z
 
 export type WorkflowProofComparisonResult = {
   ok: true;
-  kind: "motionforge.workflow-proof-comparison";
+  kind: "dojo-video-engine.workflow-proof-comparison";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   selection: ProofFrameSelection;
   plan: Extract<ReturnType<typeof planComparisonSheet>, { ok: true }>;
@@ -48,7 +48,7 @@ export type WorkflowProofComparisonResult = {
 
 export type WorkflowProofRenderResult = {
   ok: true;
-  kind: "motionforge.workflow-proof-render";
+  kind: "dojo-video-engine.workflow-proof-render";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   selection: ProofFrameSelection;
   plan: Extract<ReturnType<typeof planComparisonSheet>, { ok: true }>;
@@ -183,7 +183,7 @@ export function createWorkflowEvidenceAdapter(
         if (request.operation === "proof.comparison.plan") {
           return portableClone({
             ok: true,
-            kind: "motionforge.workflow-proof-comparison",
+            kind: "dojo-video-engine.workflow-proof-comparison",
             version: EVIDENCE_CONTRACT_VERSION,
             selection,
             plan,
@@ -221,7 +221,7 @@ export function createWorkflowEvidenceAdapter(
           }
           return portableClone({
             ok: true,
-            kind: "motionforge.workflow-proof-render",
+            kind: "dojo-video-engine.workflow-proof-render",
             version: EVIDENCE_CONTRACT_VERSION,
             selection,
             plan,
@@ -301,7 +301,7 @@ function parseParams<T extends z.ZodTypeAny>(
     ok: false,
     failure: {
       ok: false,
-      kind: "motionforge.evidence.failure",
+      kind: "dojo-video-engine.evidence.failure",
       version: EVIDENCE_CONTRACT_VERSION,
       errors: parsed.error.issues.slice(0, 16).map((issue) => ({
         code: "invalid_request",
@@ -320,7 +320,7 @@ function adapterFailure(
 ): EvidenceFailure {
   return {
     ok: false,
-    kind: "motionforge.evidence.failure",
+    kind: "dojo-video-engine.evidence.failure",
     version: EVIDENCE_CONTRACT_VERSION,
     errors: [
       {

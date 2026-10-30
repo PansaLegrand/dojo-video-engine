@@ -19,13 +19,13 @@ import {
   type ResolvedMeasurementProvenance,
   type ResolvedTextLineMetrics,
   type TextMetricsProvider,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   parseScene,
   type Scene,
   type SceneAsset,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   intersectRect,
   plainRectCoversBox,
@@ -345,7 +345,7 @@ export function inspectLayout(
   attachFlexOverflow(working);
   const diagnostics = diagnosticsFor(scene, frame, working, options);
   return {
-    kind: "motionforge.layout",
+    kind: "dojo-video-engine.layout",
     version: 1,
     width: scene.width,
     height: scene.height,
@@ -1215,7 +1215,7 @@ export function hitTest(
     .filter((value): value is NonNullable<typeof value> => value !== null)
     .sort((left, right) => right.paintOrder - left.paintOrder);
   return {
-    kind: "motionforge.hit-test",
+    kind: "dojo-video-engine.hit-test",
     version: 1,
     frame: snapshot.frame,
     timeSeconds: snapshot.timeSeconds,

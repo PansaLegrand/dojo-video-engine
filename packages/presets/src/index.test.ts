@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateScene, type Scene, type SceneNode } from "@motionforge/schema";
+import { validateScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
 import {
   audioCrossfade,
   audioFadeEnvelope,
@@ -815,7 +815,7 @@ describe("text overlay template catalog", () => {
       template: "quoteCard",
       id: "quote",
       body: "The engine is data, not a screenshot.",
-      attribution: "MotionForge",
+      attribution: "DojoVideoEngine",
     },
     socialHook: {
       template: "socialHook",
@@ -833,7 +833,7 @@ describe("text overlay template catalog", () => {
     titleCard: {
       template: "titleCard",
       id: "intro",
-      title: "MotionForge",
+      title: "DojoVideoEngine",
       subtitle: "Programmatic video as scene data",
       kicker: "Open source",
     },
@@ -920,7 +920,7 @@ describe("text overlay template catalog", () => {
       template: "quoteCard",
       id: "robust-quote",
       body: "A generated quote can run much longer than the nice hand-authored sample and still stay bounded.",
-      attribution: "MotionForge",
+      attribution: "DojoVideoEngine",
     });
     const body = overlay.children?.find(
       (child) => child.id === "robust-quote-body",

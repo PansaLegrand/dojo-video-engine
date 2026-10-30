@@ -1,4 +1,4 @@
-# MotionForge, Remotion, and HyperFrames — equivalent-task comparison
+# Dojo Video Engine, Remotion, and HyperFrames — equivalent-task comparison
 
 Date reviewed: 2026-08-26
 
@@ -22,14 +22,14 @@ Primary sources reviewed:
 
 ## Corrected premise
 
-Browser rendering is not a unique MotionForge advantage. Remotion now exposes
+Browser rendering is not a unique Dojo Video Engine advantage. Remotion now exposes
 a client-side WebCodecs renderer with browser capability checks, progress,
 audio/video/container options, cancellation, browser filesystem or in-memory
 output, and an experimental native HTML-in-Canvas path. HyperFrames previews
 in the browser but its documented production renderer seeks an HTML page in
 headless Chrome through `beginFrame` and encodes with FFmpeg.
 
-MotionForge's differentiator is therefore narrower and more defensible:
+Dojo Video Engine's differentiator is therefore narrower and more defensible:
 
 > a strict portable video document plus typed reversible editing, computed
 > inspection, prepared browser runtime, proof artifacts, and in-browser export
@@ -37,7 +37,7 @@ MotionForge's differentiator is therefore narrower and more defensible:
 
 ## Artifact and trust model
 
-| Dimension            | MotionForge                                                                 | Remotion                                                                     | HyperFrames                                                      |
+| Dimension            | Dojo Video Engine                                                                 | Remotion                                                                     | HyperFrames                                                      |
 | -------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Primary artifact     | Strict Scene v1 JSON/data                                                   | React/TypeScript composition                                                 | HTML/CSS/data attributes plus optional JavaScript/frame adapters |
 | Layout power         | Curated Canvas styles plus opt-in semantic stack/grid compiler              | React and the browser layout/platform                                        | Browser HTML/CSS layout/platform                                 |
@@ -49,7 +49,7 @@ MotionForge's differentiator is therefore narrower and more defensible:
 
 Remotion and HyperFrames intentionally expose far more of the web platform.
 They are better choices when arbitrary DOM layout, React components, shaders,
-or existing web animation libraries are the core requirement. MotionForge is
+or existing web animation libraries are the core requirement. Dojo Video Engine is
 better suited to an untrusted or heavily validated editor where every stored
 operation must be inspectable, reversible, bounded, and renderable without
 executing generated code.
@@ -63,22 +63,22 @@ executing generated code.
 - **HyperFrames:** write timed `<video>`, text, and `<audio>` elements with
   `data-start`, `data-duration`, and track attributes; animate through a
   seekable adapter such as GSAP.
-- **MotionForge:** register three assets/nodes through `asset.set` and flat
+- **Dojo Video Engine:** register three assets/nodes through `asset.set` and flat
   node commands or author Scene data directly; audio/video placement and gain
   remain canonical fields.
 
-MotionForge uses more explicit data. The other two offer more layout/animation
+Dojo Video Engine uses more explicit data. The other two offer more layout/animation
 freedom.
 
 ### 2. User moves a title in the UI, then asks an agent to enlarge it
 
 - **Code-first frameworks:** the host/coding agent must reconcile source,
   editor state, and the current preview convention.
-- **MotionForge:** the host loads the latest UI Scene under a project
+- **Dojo Video Engine:** the host loads the latest UI Scene under a project
   epoch/revision; the agent reads the exact title, commits `resize.set` or
   `style.set`, and a stale response cannot overwrite a newer UI revision.
 
-This is MotionForge's strongest equivalent-task advantage: one mutation
+This is Dojo Video Engine's strongest equivalent-task advantage: one mutation
 contract is shared by manual UI, scripts, and agents.
 
 ### 3. Inspect a 120-node composition and repair a hidden media clip
@@ -87,11 +87,11 @@ contract is shared by manual UI, scripts, and agents.
   diagnostics/tests.
 - **HyperFrames:** an agent searches HTML and can use CLI `lint`, `inspect`,
   stable exit codes, and JSON output.
-- **MotionForge:** the initial flat read is bounded; an `observe` decision uses
+- **Dojo Video Engine:** the initial flat read is bounded; an `observe` decision uses
   exact node read/search, then commands, `check`, and proof evidence operate at
   one revision without returning the Scene.
 
-HyperFrames' agent-friendly CLI is a close analogue. MotionForge adds a safe
+HyperFrames' agent-friendly CLI is a close analogue. Dojo Video Engine adds a safe
 in-process edit transaction and artifact references; HyperFrames gives the
 agent the expressiveness and familiarity of HTML.
 
@@ -99,17 +99,17 @@ agent the expressiveness and familiarity of HTML.
 
 - **Remotion/HyperFrames:** hosts can render frames/screenshots and construct
   their own comparison harnesses.
-- **MotionForge:** proof frames are selected from changes/cuts/keyframes/text,
+- **Dojo Video Engine:** proof frames are selected from changes/cuts/keyframes/text,
   then prepared before/after runtimes emit scoped still/visual-diff/contact
   references through a transactional sink. Canvas and bytes remain host-only.
 
-This is a packaged MotionForge workflow, not an assertion that its visual
+This is a packaged Dojo Video Engine workflow, not an assertion that its visual
 judgment is stronger. It detects/communicates changed pixels; it does not
 understand aesthetics or media meaning.
 
 ## Interoperability boundary
 
-MotionForge does not attempt to import arbitrary React or executable HTML.
+Dojo Video Engine does not attempt to import arbitrary React or executable HTML.
 That would execute an untrusted program and cannot preserve semantics in Scene
 v1. The 1.1 interchange package instead provides:
 
@@ -130,5 +130,5 @@ strict data → reversible command → spatial/audio check
 ```
 
 Use Remotion or HyperFrames interoperability when trusted code/web layout is
-the right authoring environment. MotionForge shines when the video must remain
+the right authoring environment. Dojo Video Engine shines when the video must remain
 a portable, non-executable, agent-and-editor-owned document.

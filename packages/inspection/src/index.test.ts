@@ -3,7 +3,7 @@ import {
   createBoundedTextMetricsProvider,
   evaluateScene,
   layoutScene,
-} from "@motionforge/core";
+} from "@dojo-video-engine/core";
 import {
   analyzeComposition,
   checkScene,
@@ -917,7 +917,7 @@ describe("deterministic diagnostics and check envelope", () => {
       semanticRoles: { subtitle: "subtitle" },
     });
     expect(valid).toMatchObject({
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       version: 1,
       ok: true,
       validation: { ok: true, errors: [] },
@@ -925,7 +925,7 @@ describe("deterministic diagnostics and check envelope", () => {
     });
     const invalid = checkScene({ schemaVersion: 1 });
     expect(invalid).toMatchObject({
-      kind: "motionforge.check",
+      kind: "dojo-video-engine.check",
       version: 1,
       ok: false,
       validation: { ok: false },

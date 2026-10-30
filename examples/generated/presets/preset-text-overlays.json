@@ -88,7 +88,7 @@
             {
               "id": "overlay-titleCard-kicker",
               "type": "text",
-              "text": "MotionForge",
+              "text": "DojoVideoEngine",
               "style": {
                 "overflow": "hidden",
                 "textFit": "shrink",
@@ -347,7 +347,7 @@
             {
               "id": "overlay-quoteCard-attribution",
               "type": "text",
-              "text": "MotionForge",
+              "text": "DojoVideoEngine",
               "style": {
                 "overflow": "hidden",
                 "textFit": "shrink",

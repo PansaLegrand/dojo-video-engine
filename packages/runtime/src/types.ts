@@ -1,8 +1,8 @@
 import type {
   MediaMetricsProvider,
   TextMetricsProvider,
-} from "@motionforge/core";
-import type { Scene } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { Scene } from "@dojo-video-engine/schema";
 
 export type RuntimePhase =
   | "parse"

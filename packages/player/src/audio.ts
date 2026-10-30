@@ -1,6 +1,6 @@
-import { collectAudioPlacements, mixSceneAudio } from "@motionforge/export";
-import type { ResolvedAssets } from "@motionforge/renderer-canvas2d";
-import type { Scene } from "@motionforge/schema";
+import { collectAudioPlacements, mixSceneAudio } from "@dojo-video-engine/export";
+import type { ResolvedAssets } from "@dojo-video-engine/renderer-canvas2d";
+import type { Scene } from "@dojo-video-engine/schema";
 
 /**
  * Best-effort audio for preview playback. The export remains the audio

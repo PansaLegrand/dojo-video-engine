@@ -3,7 +3,7 @@ import {
   validateScene,
   type SceneAnimation,
   type SceneNode,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 import {
   isSpacelessScriptText,
   joinCaptionWords,

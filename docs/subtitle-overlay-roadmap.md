@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Subtitle Overlay Roadmap
 
 **Status:** implementation started 2026-06-18
 
-MotionForge already ships subtitle primitives: word-timed TikTok captions, karaoke captions, `styledCaptions()`, a subtitle template catalog, text stroke/background rendering, robust text fit semantics, and safe-area placement helpers. The next goal is production subtitle overlays: programmers and agents should be able to import real subtitle text, produce readable timed caption tracks, and preview stress cases without hand-authoring every node.
+Dojo Video Engine already ships subtitle primitives: word-timed TikTok captions, karaoke captions, `styledCaptions()`, a subtitle template catalog, text stroke/background rendering, robust text fit semantics, and safe-area placement helpers. The next goal is production subtitle overlays: programmers and agents should be able to import real subtitle text, produce readable timed caption tracks, and preview stress cases without hand-authoring every node.
 
 This theme stays base-layer first. Chat, Studio, and Playground should consume the same subtitle scene data and helper APIs rather than carrying app-specific subtitle logic.
 
@@ -43,7 +45,7 @@ Known gaps:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - docs/tests
 
 Done:
@@ -60,7 +62,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - docs/tests
 
 Done:
@@ -72,7 +74,7 @@ Done:
 
 ## Slice SX3 - Authoring And Docs Workflow ✅
 
-**Goal:** MotionForge developers can discover the simplest subtitle workflow from the authoring layer.
+**Goal:** Dojo Video Engine developers can discover the simplest subtitle workflow from the authoring layer.
 
 Targets:
 
@@ -85,7 +87,7 @@ Done:
 - authoring re-exports segment subtitle helpers
 - docs show paste-SRT, paste-VTT, manual segments, and word-timed ASR paths
 - examples explain where transcript/subtitle assets belong
-- generated nodes validate through `@motionforge/schema`
+- generated nodes validate through `@dojo-video-engine/schema`
 
 ## Slice SX4 - Template Robustness Upgrade ✅
 
@@ -93,7 +95,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - preset catalog/showcase docs
 
 Done:
@@ -109,7 +111,7 @@ Done:
 
 Targets:
 
-- `@motionforge/showcase`
+- `@dojo-video-engine/showcase`
 - examples
 - golden harness
 - docs assets

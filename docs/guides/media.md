@@ -1,10 +1,10 @@
 # Media Guide
 
-MotionForge supports images, video, audio, fonts, and self-contained vector Lottie documents. Assets are explicit scene entries with fetchable `src` strings.
+Dojo Video Engine supports images, video, audio, fonts, and self-contained vector Lottie documents. Assets are explicit scene entries with fetchable `src` strings.
 
 ## Local Files
 
-For CLI Studio and generated projects, put local files under `public/assets`:
+For your browser host and generated scene projects, put local files under `public/assets`:
 
 ```txt
 public/assets/poster.png
@@ -22,7 +22,7 @@ import {
   imageAsset,
   publicAsset,
   videoAsset,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 const poster = imageAsset("poster", publicAsset("assets/poster.png"));
 const clip = videoAsset("clip", publicAsset("assets/clip.mp4"));
@@ -40,8 +40,8 @@ const clip = videoAsset("clip", "https://cdn.example.com/clip.mp4");
 ## Images
 
 ```ts
-import { image, seconds } from "@motionforge/authoring";
-import { mediaLook } from "@motionforge/presets";
+import { image, seconds } from "@dojo-video-engine/authoring";
+import { mediaLook } from "@dojo-video-engine/presets";
 
 image(poster, {
   duration: seconds(5),
@@ -61,7 +61,7 @@ image(poster, {
 ## Video
 
 ```ts
-import { seconds, videoClip } from "@motionforge/authoring";
+import { seconds, videoClip } from "@dojo-video-engine/authoring";
 
 videoClip(clip, {
   at: seconds(0),
@@ -77,7 +77,7 @@ videoClip(clip, {
 ## Audio
 
 ```ts
-import { audioTrack, seconds } from "@motionforge/authoring";
+import { audioTrack, seconds } from "@dojo-video-engine/authoring";
 
 audioTrack(music, {
   at: seconds(0),
@@ -99,7 +99,7 @@ import {
   makeScene,
   publicAsset,
   seconds,
-} from "@motionforge/authoring";
+} from "@dojo-video-engine/authoring";
 
 export default makeScene({
   size: "portrait",
@@ -129,7 +129,7 @@ Lottie assets must be self-contained vector JSON. Expressions and external image
   and explicit `sourceMode: "buffer"` assets use a bounded whole Blob.
 - Resolution is transactional and cancellable. A failed sibling load rolls
   back already acquired images, fonts, media Inputs, Lottie players, and
-  extension resources; MotionForge never renders silent placeholders.
+  extension resources; Dojo Video Engine never renders silent placeholders.
 - Await `disposeAssetsAsync()` for deterministic decoder/resource teardown.
   The legacy `disposeAssets()` facade cannot report asynchronous cleanup
   errors.
@@ -144,7 +144,7 @@ Lottie assets must be self-contained vector JSON. Expressions and external image
 
 ## Named Looks
 
-`@motionforge/presets` ships named media looks that compile to plain style fragments:
+`@dojo-video-engine/presets` ships named media looks that compile to plain style fragments:
 
 ```ts
 mediaLook("punchySocial");
@@ -164,7 +164,7 @@ the look.
 Clip layouts are named style fragments for common media placement:
 
 ```ts
-import { clipLayout, mediaLook } from "@motionforge/presets";
+import { clipLayout, mediaLook } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {

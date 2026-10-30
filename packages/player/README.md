@@ -1,9 +1,9 @@
-# @motionforge/player
+# @dojo-video-engine/player
 
-Real-time playback for motionforge scenes: a deterministic frame clock plus a canvas render loop with play/pause/seek/loop.
+Real-time playback for dojo-video-engine scenes: a deterministic frame clock plus a canvas render loop with play/pause/seek/loop.
 
 ```ts
-import { createPlayer } from "@motionforge/player";
+import { createPlayer } from "@dojo-video-engine/player";
 
 const context = canvas.getContext("2d")!;
 const player = await createPlayer({ context, scene, loop: true });
@@ -19,7 +19,7 @@ When the Scene is already prepared by the Canvas2D runtime, borrow that exact
 revision instead of resolving a second media graph:
 
 ```ts
-import { createPlayerFromRuntime } from "@motionforge/player";
+import { createPlayerFromRuntime } from "@dojo-video-engine/player";
 
 const player = await createPlayerFromRuntime(runtime, { context, loop: true });
 // The runtime keeps this revision's media alive until player disposal.
@@ -83,7 +83,7 @@ Stable for 1.x integrations:
 
 Evolving additively in 1.x:
 
-- Scheduler/time injection options are stable enough for tests, but may gain a narrower helper API as Studio and third-party apps converge.
+- Scheduler/time injection options are stable enough for tests, but may gain a narrower helper API as downstream host integrations converge.
 - Chunk scheduling may gain lookahead/cross-chunk overlap tuning while keeping `AudioPreview` as the integration boundary.
 
 Internal/not public:

@@ -107,7 +107,7 @@ await writeJson(
 
 const licensesFile = "release-licenses.json";
 await writeJson(join(outputDir, licensesFile), {
-  format: "motionforge.release-licenses",
+  format: "dojo-video-engine.release-licenses",
   version: 1,
   releaseVersion,
   gitCommit,
@@ -125,7 +125,7 @@ await writeJson(join(outputDir, licensesFile), {
 
 const auditFile = "release-audit.json";
 await writeJson(join(outputDir, auditFile), {
-  format: "motionforge.release-audit",
+  format: "dojo-video-engine.release-audit",
   version: 1,
   releaseVersion,
   gitCommit,
@@ -147,7 +147,7 @@ for (const [key, file] of [
 }
 
 const manifest = {
-  format: "motionforge.release-manifest",
+  format: "dojo-video-engine.release-manifest",
   version: 2,
   releaseVersion,
   gitCommit,
@@ -176,7 +176,7 @@ await writeFile(
 );
 
 console.log(
-  `Packed and verified ${packages.length} MotionForge ${releaseVersion} packages in ${outputDir}`,
+  `Packed and verified ${packages.length} DojoVideoEngine ${releaseVersion} packages in ${outputDir}`,
 );
 
 async function collectLockedDependencyEvidence(packed, manifests) {
@@ -359,11 +359,11 @@ async function verifyTarballInstall(
   unavailableOnCurrentPlatform,
 ) {
   const temporary = await mkdtemp(
-    join(tmpdir(), "motionforge-release-verify-"),
+    join(tmpdir(), "dojo-video-engine-release-verify-"),
   );
   try {
     await writeJson(join(temporary, "package.json"), {
-      name: "motionforge-release-verifier",
+      name: "dojo-video-engine-release-verifier",
       version: "0.0.0",
       private: true,
       dependencies: Object.fromEntries(
@@ -464,7 +464,7 @@ function createReleaseSbom({
   dependencyEdges,
   roots,
 }) {
-  const releaseRef = `pkg:generic/motionforge-release-set@${version}`;
+  const releaseRef = `pkg:generic/dojo-video-engine-release-set@${version}`;
   const packageHashByRef = new Map(
     packed.map((item) => [packageRef(item.name, item.version), item.sha256]),
   );
@@ -478,19 +478,19 @@ function createReleaseSbom({
         components: [
           {
             type: "application",
-            name: "motionforge-release-bundler",
+            name: "dojo-video-engine-release-bundler",
             version: "1",
           },
         ],
       },
       component: {
         type: "application",
-        name: "motionforge-release-set",
+        name: "dojo-video-engine-release-set",
         version,
         "bom-ref": releaseRef,
         properties: [
-          { name: "motionforge:gitCommit", value: commit },
-          { name: "motionforge:pnpmLockSha256", value: lockHash },
+          { name: "dojo-video-engine:gitCommit", value: commit },
+          { name: "dojo-video-engine:pnpmLockSha256", value: lockHash },
         ],
       },
     },
@@ -516,11 +516,11 @@ function createReleaseSbom({
             : [{ expression: component.license }],
         properties: [
           {
-            name: "motionforge:publicReleaseRoot",
+            name: "dojo-video-engine:publicReleaseRoot",
             value: String(component.publicRoot),
           },
           {
-            name: "motionforge:currentPlatformCompatible",
+            name: "dojo-video-engine:currentPlatformCompatible",
             value: String(component.platformCompatible),
           },
         ],

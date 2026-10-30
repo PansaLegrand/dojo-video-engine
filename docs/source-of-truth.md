@@ -1,7 +1,7 @@
 # Source of truth and downstream integration
 
-The `motionforge` repository is the authoritative source for every public
-MotionForge package and scene contract.
+The `dojo-video-engine` repository is the authoritative source for every public
+Dojo Video Engine package and scene contract.
 
 Production applications are downstream consumers. They may contribute
 requirements, fixtures, benchmarks, and candidate patches, but they must not
@@ -11,8 +11,8 @@ become independent engine forks.
 
 Preferred, in order:
 
-1. Consume a published, exact MotionForge package version.
-2. Consume an exact MotionForge commit through a workspace or package-manager
+1. Consume a published, exact Dojo Video Engine package version.
+2. Consume an exact Dojo Video Engine commit through a workspace or package-manager
    override while a release is being prepared.
 3. If source vendoring is temporarily unavoidable, sync in one direction from
    this repository into the downstream application with recorded provenance.
@@ -25,23 +25,23 @@ under the same package version.
 
 The browser engine consists of:
 
-- `@motionforge/schema`
-- `@motionforge/core`
-- `@motionforge/inspection`
-- `@motionforge/interchange`
-- `@motionforge/layout`
-- `@motionforge/commands`
-- `@motionforge/runtime`
-- `@motionforge/extensions`
-- `@motionforge/renderer-canvas2d`
-- `@motionforge/export`
-- `@motionforge/player`
-- `@motionforge/presets`
-- `@motionforge/authoring`
-- `@motionforge/agent-tools`
+- `@dojo-video-engine/schema`
+- `@dojo-video-engine/core`
+- `@dojo-video-engine/inspection`
+- `@dojo-video-engine/interchange`
+- `@dojo-video-engine/layout`
+- `@dojo-video-engine/commands`
+- `@dojo-video-engine/runtime`
+- `@dojo-video-engine/extensions`
+- `@dojo-video-engine/renderer-canvas2d`
+- `@dojo-video-engine/export`
+- `@dojo-video-engine/player`
+- `@dojo-video-engine/presets`
+- `@dojo-video-engine/authoring`
+- `@dojo-video-engine/agent-tools`
 
-The public developer tooling is `@motionforge/cli` and
-`@motionforge/create`. Package and entry-point ownership is recorded in
+The public developer tooling is `@dojo-video-engine/cli` and
+`@dojo-video-engine/create`. Package and entry-point ownership is recorded in
 [`public-api-ownership.md`](public-api-ownership.md); the accepted post-1.0
 boundary is [RFC 0009](rfcs/0009-post-1.0-platform-architecture.md).
 
@@ -77,4 +77,4 @@ Release 0.4.0 reconciled the reusable engine changes that had accumulated in
 DojoClip's vendored copy: effect nodes, audio-reactive rendering, sequential
 video decoding, player/export lifecycle improvements, agent macros, layout
 intents, and their unit tests. Application-specific Video Agent code was not
-copied into MotionForge.
+copied into Dojo Video Engine.

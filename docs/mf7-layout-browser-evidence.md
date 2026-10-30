@@ -4,7 +4,7 @@ Status: passing in the Playwright-pinned Chromium golden gate
 Command: `pnpm golden:test`
 
 MF7 adds a browser-side `runGoldenLayoutV2Checks()` gate in
-`tools/golden/src/harness.ts`. It imports the public `@motionforge/layout`
+`tools/golden/src/harness.ts`. It imports the public `@dojo-video-engine/layout`
 package and reuses one coordinate-free semantic source plus three plans at
 portrait, square, and landscape sizes.
 

@@ -1,4 +1,4 @@
-# MotionForge 1.x compatibility contract
+# Dojo Video Engine 1.x compatibility contract
 
 This contract applies to the 1.x source/API line and to externally published
 1.x versions once their tag, registry package set, and provenance are verified.
@@ -29,12 +29,12 @@ receipt. See [the release process](release-process.md) and the
 - Public entry-point ownership, the MF0 export-map snapshot, and the 1.x
   deprecation/re-export policy are recorded in
   [public-api-ownership.md](public-api-ownership.md).
-- Public packages version together. Mixing MotionForge packages from different
+- Public packages version together. Mixing Dojo Video Engine packages from different
   minor lines in one runtime is unsupported unless a package explicitly
   documents that combination.
 - The starter generator package identity from 1.1 onward is
-  `@motionforge/create`; `create-motionforge` remains the executable name. The
-  unrelated unscoped npm package is not part of MotionForge.
+  `@dojo-video-engine/create`; `create-dojo-video-engine` remains the executable name. The
+  unrelated unscoped npm package is not part of Dojo Video Engine.
 
 ## Rendering
 

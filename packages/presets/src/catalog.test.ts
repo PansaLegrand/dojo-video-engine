@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyScenePatch, type Scene } from "@motionforge/schema";
+import { applyScenePatch, type Scene } from "@dojo-video-engine/schema";
 import { buildPresetPatchExample, presetCatalog } from "./catalog.js";
 
 function sceneWithMedia(): Scene {

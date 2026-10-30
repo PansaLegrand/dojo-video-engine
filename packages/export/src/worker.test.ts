@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Scene } from "@motionforge/schema";
+import type { Scene } from "@dojo-video-engine/schema";
 import {
   ExportWorkerClient,
   createExportWorkerHandler,
@@ -63,12 +63,12 @@ describe("ExportWorkerClient", () => {
       onProgress: (event) => progress.push(event.frame),
     });
     expect(worker.messages[0]).toMatchObject({
-      type: "motionforge.export.start",
+      type: "dojo-video-engine.export.start",
       id: task.id,
       options: expect.objectContaining({ requireAudibleAudio: true }),
     });
     worker.emit({
-      type: "motionforge.export.progress",
+      type: "dojo-video-engine.export.progress",
       id: task.id,
       progress: {
         frame: 1,
@@ -85,7 +85,7 @@ describe("ExportWorkerClient", () => {
       totalFrames: 2,
     };
     worker.emit({
-      type: "motionforge.export.complete",
+      type: "dojo-video-engine.export.complete",
       id: task.id,
       result: expected,
     });
@@ -98,7 +98,7 @@ describe("ExportWorkerClient", () => {
     const task = new ExportWorkerClient(worker).export(scene);
     task.cancel();
     expect(worker.messages.at(-1)).toEqual({
-      type: "motionforge.export.cancel",
+      type: "dojo-video-engine.export.cancel",
       id: task.id,
     });
   });
@@ -110,7 +110,7 @@ describe("ExportWorkerClient", () => {
       scratchSurfacePool: pool,
     } as never);
     expect(worker.messages[0]).toMatchObject({
-      type: "motionforge.export.start",
+      type: "dojo-video-engine.export.start",
       options: {},
     });
     expect(
@@ -126,7 +126,7 @@ describe("createExportWorkerHandler", () => {
       postMessage: (event) => events.push(event),
     });
     const request = {
-      type: "motionforge.export.start" as const,
+      type: "dojo-video-engine.export.start" as const,
       id: "same-id",
       scene,
     };
@@ -136,7 +136,7 @@ describe("createExportWorkerHandler", () => {
     await first;
 
     expect(events).toContainEqual({
-      type: "motionforge.export.error",
+      type: "dojo-video-engine.export.error",
       id: "same-id",
       error: {
         name: "DuplicateExportRequestError",

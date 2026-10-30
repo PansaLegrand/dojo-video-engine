@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { parseScene, type Scene, type SceneNode } from "@motionforge/schema";
-import type { SourcePath } from "@motionforge/inspection";
+import { parseScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
+import type { SourcePath } from "@dojo-video-engine/inspection";
 
 export const EVIDENCE_CONTRACT_VERSION = 1 as const;
 
@@ -26,7 +26,7 @@ export type EvidenceError = {
 
 export type EvidenceFailure = {
   ok: false;
-  kind: "motionforge.evidence.failure";
+  kind: "dojo-video-engine.evidence.failure";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   errors: EvidenceError[];
 };
@@ -89,7 +89,7 @@ const evidenceErrorSchema = z
 const evidenceFailureSchema = z
   .object({
     ok: z.literal(false),
-    kind: z.literal("motionforge.evidence.failure"),
+    kind: z.literal("dojo-video-engine.evidence.failure"),
     version: z.literal(EVIDENCE_CONTRACT_VERSION),
     errors: z.array(evidenceErrorSchema).min(1).max(16),
   })
@@ -161,7 +161,7 @@ export type SelectedProofFrame = {
 
 export type ProofFrameSelection = {
   ok: true;
-  kind: "motionforge.proof-frame-selection";
+  kind: "dojo-video-engine.proof-frame-selection";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   beforeDuration: number;
   afterDuration: number;
@@ -206,7 +206,7 @@ const selectedProofFrameSchema = z
 export const proofFrameSelectionSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.proof-frame-selection"),
+    kind: z.literal("dojo-video-engine.proof-frame-selection"),
     version: z.literal(EVIDENCE_CONTRACT_VERSION),
     beforeDuration: z.number().int().positive().max(100_000_000),
     afterDuration: z.number().int().positive().max(100_000_000),
@@ -542,7 +542,7 @@ function selectProofFramesInternal(
     .sort((left, right) => left.frame - right.frame);
   const result: ProofFrameSelection = {
     ok: true,
-    kind: "motionforge.proof-frame-selection",
+    kind: "dojo-video-engine.proof-frame-selection",
     version: EVIDENCE_CONTRACT_VERSION,
     beforeDuration: before.duration,
     afterDuration: after.duration,
@@ -591,7 +591,7 @@ export type ComparisonSheetRow = {
 
 export type ComparisonSheetPlan = {
   ok: true;
-  kind: "motionforge.comparison-sheet-plan";
+  kind: "dojo-video-engine.comparison-sheet-plan";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   id: string;
   title: string;
@@ -658,7 +658,7 @@ const comparisonRowSchema = z
 export const comparisonSheetPlanSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.comparison-sheet-plan"),
+    kind: z.literal("dojo-video-engine.comparison-sheet-plan"),
     version: z.literal(EVIDENCE_CONTRACT_VERSION),
     id: z.string().min(1).max(191),
     title: z.string().min(1).max(160),
@@ -778,7 +778,7 @@ function planComparisonSheetInternal(
   }
   const plan: ComparisonSheetPlan = {
     ok: true,
-    kind: "motionforge.comparison-sheet-plan",
+    kind: "dojo-video-engine.comparison-sheet-plan",
     version: EVIDENCE_CONTRACT_VERSION,
     id: planId.slice(0, 191),
     title: parsed.data.title ?? "Before / after proof",
@@ -922,7 +922,7 @@ export interface EvidenceArtifactSink {
 
 export type EvidenceArtifactResult = {
   ok: true;
-  kind: "motionforge.evidence-artifacts";
+  kind: "dojo-video-engine.evidence-artifacts";
   version: typeof EVIDENCE_CONTRACT_VERSION;
   planId: string;
   totalBytes: number;
@@ -934,7 +934,7 @@ export type EvidenceArtifactEnvelope = EvidenceArtifactResult | EvidenceFailure;
 const evidenceArtifactResultSchema = z
   .object({
     ok: z.literal(true),
-    kind: z.literal("motionforge.evidence-artifacts"),
+    kind: z.literal("dojo-video-engine.evidence-artifacts"),
     version: z.literal(EVIDENCE_CONTRACT_VERSION),
     planId: z.string().min(1).max(191),
     totalBytes: z
@@ -1117,7 +1117,7 @@ async function materializeEvidenceArtifactsInternal(
     }
     const pendingResult: EvidenceArtifactResult = {
       ok: true,
-      kind: "motionforge.evidence-artifacts",
+      kind: "dojo-video-engine.evidence-artifacts",
       version: EVIDENCE_CONTRACT_VERSION,
       planId: planResult.data.id,
       totalBytes,
@@ -1700,7 +1700,7 @@ function zodEvidenceFailure(
 ): EvidenceFailure {
   return {
     ok: false,
-    kind: "motionforge.evidence.failure",
+    kind: "dojo-video-engine.evidence.failure",
     version: EVIDENCE_CONTRACT_VERSION,
     errors: error.issues.slice(0, 16).map((issue) =>
       evidenceError(
@@ -1717,7 +1717,7 @@ function zodEvidenceFailure(
 function failure(...errors: EvidenceError[]): EvidenceFailure {
   return {
     ok: false,
-    kind: "motionforge.evidence.failure",
+    kind: "dojo-video-engine.evidence.failure",
     version: EVIDENCE_CONTRACT_VERSION,
     errors: errors.slice(0, 16).map((error) => structuredClone(error)),
   };

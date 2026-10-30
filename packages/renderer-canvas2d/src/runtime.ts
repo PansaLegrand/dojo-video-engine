@@ -2,18 +2,18 @@ import type {
   MediaMetrics,
   MediaMetricsProvider,
   TextMetricsProvider,
-} from "@motionforge/core";
-import type { Scene, SceneAsset } from "@motionforge/schema";
+} from "@dojo-video-engine/core";
+import type { Scene, SceneAsset } from "@dojo-video-engine/schema";
 import {
   createSceneRuntime,
   type PreparedSceneSession,
   type RuntimeEventListener,
-} from "@motionforge/runtime";
+} from "@dojo-video-engine/runtime";
 import type {
   BackendResourceUpdateSummary,
   BackendUpdateTransaction,
   PreparedSceneBackend,
-} from "@motionforge/runtime";
+} from "@dojo-video-engine/runtime";
 import {
   collectReachableAssetIds,
   BoundedTextMeasureCache,
@@ -27,7 +27,7 @@ import {
   type ResolveAssetsOptions,
   type TextMeasureCache,
 } from "./index.js";
-import type { ResolvedScene } from "@motionforge/core";
+import type { ResolvedScene } from "@dojo-video-engine/core";
 import {
   ScratchSurfacePool,
   checkedRgbaBytes,
@@ -74,7 +74,7 @@ export type Canvas2DRuntimeBackendOptions = {
   artifactMimeTypes?: string[];
   createArtifactCanvas?: (width: number, height: number) => CanvasSurface;
   createRenderCanvas?: (width: number, height: number) => CanvasSurface;
-  /** Host-owned pool shared by every prepared revision; MotionForge never disposes it. */
+  /** Host-owned pool shared by every prepared revision; DojoVideoEngine never disposes it. */
   scratchSurfacePool?: ScratchSurfacePool;
   /** Policy used to create one runtime-owned pool per prepared revision. */
   scratchSurfacePoolPolicy?: Readonly<{
@@ -83,7 +83,7 @@ export type Canvas2DRuntimeBackendOptions = {
     maxSurfaces?: number;
     maxDimension?: number;
   }>;
-  /** Host-owned cache shared across revisions; MotionForge never disposes it. */
+  /** Host-owned cache shared across revisions; DojoVideoEngine never disposes it. */
   staticDisplayCache?: Canvas2DStaticDisplayCache;
   /** Policy used to create one runtime-owned cache per prepared revision. */
   staticDisplayCachePolicy?: Readonly<{

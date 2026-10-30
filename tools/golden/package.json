@@ -1,5 +1,5 @@
 {
-  "name": "@motionforge/golden",
+  "name": "@dojo-video-engine/golden",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,27 +14,26 @@
     "benchmark": "tsx src/benchmark.ts",
     "performance:gate": "tsx src/performance-gate.ts",
     "cross-browser": "tsx src/cross-browser.ts",
-    "resource:smoke": "tsx src/resource-smoke.ts",
-    "e2e": "tsx src/e2e.ts"
+    "resource:smoke": "tsx src/resource-smoke.ts"
   },
   "dependencies": {
-    "@motionforge/agent-tools": "workspace:*",
-    "@motionforge/core": "workspace:*",
-    "@motionforge/export": "workspace:*",
-    "@motionforge/extensions": "workspace:*",
-    "@motionforge/layout": "workspace:*",
-    "@motionforge/player": "workspace:*",
-    "@motionforge/presets": "workspace:*",
-    "@motionforge/renderer-canvas2d": "workspace:*",
-    "@motionforge/runtime": "workspace:*",
-    "@motionforge/schema": "workspace:*",
-    "@motionforge/showcase": "workspace:*",
+    "@dojo-video-engine/agent-tools": "workspace:*",
+    "@dojo-video-engine/core": "workspace:*",
+    "@dojo-video-engine/export": "workspace:*",
+    "@dojo-video-engine/extensions": "workspace:*",
+    "@dojo-video-engine/layout": "workspace:*",
+    "@dojo-video-engine/player": "workspace:*",
+    "@dojo-video-engine/presets": "workspace:*",
+    "@dojo-video-engine/renderer-canvas2d": "workspace:*",
+    "@dojo-video-engine/runtime": "workspace:*",
+    "@dojo-video-engine/schema": "workspace:*",
+    "@dojo-video-engine/showcase": "workspace:*",
     "lottie-web": "^5.13.0",
     "mediabunny": "^1.46.0",
     "playwright": "^1.60.0",
     "tsx": "^4.23.12",
-    "vite": "^7.3.6",
-    "zod": "^3.25.67"
+    "vite": "7.3.7",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

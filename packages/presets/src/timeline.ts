@@ -1,4 +1,4 @@
-import type { SceneAnimation } from "@motionforge/schema";
+import type { SceneAnimation } from "@dojo-video-engine/schema";
 
 /**
  * Timeline choreography: sequences presets across multiple nodes without

@@ -1,8 +1,10 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Text Overlay Robustness Roadmap
 
 **Status:** implementation started 2026-06-18
 
-MotionForge already has a real text stack: schema-backed text styles, renderer-aligned measurement, grapheme-aware wrapping, CJK/emoji tests, auto-height text boxes, subtitle templates, and text overlay presets. The next goal is production robustness: normal long user text should remain readable, bounded, and predictable without every app inventing local fixes.
+Dojo Video Engine already has a real text stack: schema-backed text styles, renderer-aligned measurement, grapheme-aware wrapping, CJK/emoji tests, auto-height text boxes, subtitle templates, and text overlay presets. The next goal is production robustness: normal long user text should remain readable, bounded, and predictable without every app inventing local fixes.
 
 This theme targets the base layer first. Chat, Playground, and Studio should benefit by consuming the same scene/style semantics and authoring helpers.
 
@@ -86,7 +88,7 @@ Done:
 
 - `textBox()` or equivalent helper emits bounded text nodes with robust defaults
 - helper exposes fit, maxLines, minFontSize, placement, and safe-area options
-- generated nodes validate through `@motionforge/schema`
+- generated nodes validate through `@dojo-video-engine/schema`
 - docs show common title, lower-third, subtitle, and stat-callout cases
 
 ## Slice TX4 - Safe-Area Placement Primitives ✅
@@ -96,7 +98,7 @@ Done:
 Targets:
 
 - `packages/authoring`
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 
 Done:
 
@@ -110,7 +112,7 @@ Done:
 
 Targets:
 
-- `@motionforge/presets`
+- `@dojo-video-engine/presets`
 - preset gallery/showcase docs
 
 Done:

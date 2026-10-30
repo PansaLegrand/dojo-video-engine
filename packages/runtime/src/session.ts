@@ -1,4 +1,4 @@
-import { parseScene, type Scene } from "@motionforge/schema";
+import { parseScene, type Scene } from "@dojo-video-engine/schema";
 import {
   RuntimeError,
   sanitizeRuntimeDetails,
@@ -647,7 +647,7 @@ export class PreparedSceneSession<Session, PreparedFrame, Target> {
             return await writeFrameImageArtifact({
               image,
               descriptor: {
-                kind: "motionforge.frame-image",
+                kind: "dojo-video-engine.frame-image",
                 version: 1,
                 sessionId: this.sessionId,
                 revision,
@@ -966,7 +966,7 @@ export class PreparedSceneSession<Session, PreparedFrame, Target> {
     const abort = () => controller.abort(external?.reason);
     if (external?.aborted) abort();
     else external?.addEventListener("abort", abort, { once: true });
-    Object.defineProperty(controller, "__motionforgeCleanup", {
+    Object.defineProperty(controller, "__dojoVideoEngineCleanup", {
       value: () => external?.removeEventListener("abort", abort),
     });
     this.activeControllers.add(controller);
@@ -976,8 +976,8 @@ export class PreparedSceneSession<Session, PreparedFrame, Target> {
   private releaseController(controller: AbortController): void {
     this.activeControllers.delete(controller);
     const cleanup = (
-      controller as AbortController & { __motionforgeCleanup?: () => void }
-    ).__motionforgeCleanup;
+      controller as AbortController & { __dojoVideoEngineCleanup?: () => void }
+    ).__dojoVideoEngineCleanup;
     cleanup?.();
   }
 

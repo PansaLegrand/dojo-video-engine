@@ -23,11 +23,11 @@ if (outputIndex >= 0 && !argumentsList[outputIndex + 1])
 const outputDirectory = path.resolve(
   outputIndex >= 0
     ? argumentsList[outputIndex + 1]
-    : path.join(os.tmpdir(), "motionforge-audio-reactive-proof"),
+    : path.join(os.tmpdir(), "dojo-video-engine-audio-reactive-proof"),
 );
 await mkdir(outputDirectory, { recursive: true });
 const fixtureDirectory = await mkdtemp(
-  path.join(os.tmpdir(), "motionforge-audio-reactive-"),
+  path.join(os.tmpdir(), "dojo-video-engine-audio-reactive-"),
 );
 const config = JSON.parse(
   await readFile(path.join(repo, "tsconfig.base.json"), "utf8"),
@@ -42,9 +42,9 @@ await writeFile(
 await writeFile(
   path.join(fixtureDirectory, "main.ts"),
   `
-import { parseScene } from '@motionforge/schema';
-import { resolveAssets, disposeAssetsAsync, renderStill } from '@motionforge/renderer-canvas2d';
-import { exportVideo } from '@motionforge/export';
+import { parseScene } from '@dojo-video-engine/schema';
+import { resolveAssets, disposeAssetsAsync, renderStill } from '@dojo-video-engine/renderer-canvas2d';
+import { exportVideo } from '@dojo-video-engine/export';
 function sourceWav() {
   const rate=48000, buffer=new ArrayBuffer(44+rate*4*2), view=new DataView(buffer);
   const text=(offset,value)=>[...value].forEach((c,i)=>view.setUint8(offset+i,c.charCodeAt(0)));

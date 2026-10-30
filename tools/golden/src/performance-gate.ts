@@ -8,8 +8,8 @@ import type {
 
 const rootDir = resolve(import.meta.dirname, "../../..");
 const harnessDir = resolve(rootDir, "tools/golden");
-const maxMsPerFrame = Number(process.env.MOTIONFORGE_MAX_MS_PER_FRAME ?? 100);
-const maxHeapMiB = Number(process.env.MOTIONFORGE_MAX_HEAP_MIB ?? 256);
+const maxMsPerFrame = Number(process.env.DOJO_VIDEO_ENGINE_MAX_MS_PER_FRAME ?? 100);
+const maxHeapMiB = Number(process.env.DOJO_VIDEO_ENGINE_MAX_HEAP_MIB ?? 256);
 
 type PublishedCompositingBudget = CompositingBenchmarkOptions & {
   label: string;
@@ -71,19 +71,19 @@ const server = await createServer({
   logLevel: "error",
   resolve: {
     alias: {
-      "@motionforge/presets/macros": resolve(
+      "@dojo-video-engine/presets/macros": resolve(
         rootDir,
         "packages/presets/src/macros.ts",
       ),
-      "@motionforge/schema/values": resolve(
+      "@dojo-video-engine/schema/values": resolve(
         rootDir,
         "packages/schema/src/values.ts",
       ),
-      "@motionforge/renderer-canvas2d/runtime": resolve(
+      "@dojo-video-engine/renderer-canvas2d/runtime": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/runtime.ts",
       ),
-      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
+      "@dojo-video-engine/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
       ...Object.fromEntries(
         [
           "agent-tools",
@@ -96,7 +96,7 @@ const server = await createServer({
           "export",
           "player",
         ].map((name) => [
-          `@motionforge/${name}`,
+          `@dojo-video-engine/${name}`,
           resolve(rootDir, `packages/${name}/src/index.ts`),
         ]),
       ),

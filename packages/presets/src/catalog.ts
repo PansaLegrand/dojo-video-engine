@@ -32,7 +32,7 @@ import {
   type SceneNode,
   type ScenePatch,
   type SceneStyle,
-} from "@motionforge/schema";
+} from "@dojo-video-engine/schema";
 
 export type PresetFamily =
   | "subtitles"
@@ -91,7 +91,7 @@ export const presetCatalog: PresetCatalogItem[] = [
     name: preset.label,
     category: preset.category,
     description: preset.description,
-    snippet: `import { compileMotionPreset } from "@motionforge/presets";
+    snippet: `import { compileMotionPreset } from "@dojo-video-engine/presets";
 
 node.animations = compileMotionPreset("${preset.name}", {
   durationInFrames: 16,
@@ -103,7 +103,7 @@ node.animations = compileMotionPreset("${preset.name}", {
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { styledCaptions } from "@motionforge/presets";
+    snippet: `import { styledCaptions } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   styledCaptions(words, {
@@ -126,7 +126,7 @@ scene.nodes.push(
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { imageOverlay } from "@motionforge/presets";
+    snippet: `import { imageOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   imageOverlay({
@@ -142,7 +142,7 @@ scene.nodes.push(
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { videoOverlay } from "@motionforge/presets";
+    snippet: `import { videoOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   videoOverlay({
@@ -160,7 +160,7 @@ scene.nodes.push(
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { audioOverlay } from "@motionforge/presets";
+    snippet: `import { audioOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   audioOverlay({
@@ -177,7 +177,7 @@ scene.nodes.push(
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { mediaLook } from "@motionforge/presets";
+    snippet: `import { mediaLook } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {
@@ -191,7 +191,7 @@ videoClip(clip, {
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { clipLayout } from "@motionforge/presets";
+    snippet: `import { clipLayout } from "@dojo-video-engine/presets";
 
 videoClip(clip, {
   style: {
@@ -205,7 +205,7 @@ videoClip(clip, {
     name: preset.name,
     category: preset.category,
     description: preset.description,
-    snippet: `import { transitionOverlay } from "@motionforge/presets";
+    snippet: `import { transitionOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   transitionOverlay("${key}", {
@@ -226,10 +226,10 @@ function textOverlaySnippet(key: string, required: readonly string[]): string {
       return `    value: "4.8x",`;
     }
 
-    return `    ${slot}: "MotionForge",`;
+    return `    ${slot}: "DojoVideoEngine",`;
   });
 
-  return `import { textOverlay } from "@motionforge/presets";
+  return `import { textOverlay } from "@dojo-video-engine/presets";
 
 scene.nodes.push(
   textOverlay({
@@ -519,7 +519,7 @@ function sampleTextSlots(
     } else if (slot === "label") {
       slots.label = "faster iteration";
     } else {
-      slots[slot] = "MotionForge";
+      slots[slot] = "DojoVideoEngine";
     }
   }
 

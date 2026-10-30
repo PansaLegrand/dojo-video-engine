@@ -1,6 +1,6 @@
 # Preset Catalog
 
-MotionForge presets are stable names that compile to normal scene data. Use this page as the quick lookup table for programmers, apps, and agents.
+Dojo Video Engine presets are stable names that compile to normal scene data. Use this page as the quick lookup table for programmers, apps, and agents.
 
 ## Subtitle Templates
 

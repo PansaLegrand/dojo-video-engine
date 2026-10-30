@@ -1,6 +1,6 @@
-# @motionforge/interchange
+# @dojo-video-engine/interchange
 
-Data-only interoperability for MotionForge Scene v1. The package never runs
+Data-only interoperability for Dojo Video Engine Scene v1. The package never runs
 React, a DOM, HTML, CSS, scripts, or remote providers.
 
 - `importTimelineV1()` / `exportTimelineV1()` bridge a bounded flat timeline
@@ -23,7 +23,7 @@ second. Import chooses an integer Scene fps (or accepts `sceneFps`); export can
 target any bounded rational tick rate.
 
 ```ts
-import { exportTimelineV1, importTimelineV1 } from "@motionforge/interchange";
+import { exportTimelineV1, importTimelineV1 } from "@dojo-video-engine/interchange";
 
 const timeline = {
   interchangeVersion: 1,
@@ -81,7 +81,7 @@ stable diagnostics such as `hierarchy_flattened`, `style_reduced`, or
 
 `createRemotionHostDescriptor(scene)` returns canonical JSON data and a host
 composition contract. A React composition may use its own current frame to call
-the MotionForge Canvas2D runtime. `createRemotionFramePayload(descriptor, frame)`
+the Dojo Video Engine Canvas2D runtime. `createRemotionFramePayload(descriptor, frame)`
 creates the bounded frame payload. Neither API imports JSX, evaluates React, or
 claims to convert an arbitrary Remotion component tree.
 

@@ -7,126 +7,126 @@ import ts from "typescript";
  * here only when their milestone creates the package and its public boundary.
  */
 export const publicPackagePolicy = {
-  "@motionforge/agent-tools": {
+  "@dojo-video-engine/agent-tools": {
     owner: "Framework-neutral agent tool adapters",
-    allowedMotionforgeDependencies: [
-      "@motionforge/commands",
-      "@motionforge/export",
-      "@motionforge/inspection",
-      "@motionforge/extensions",
-      "@motionforge/presets",
-      "@motionforge/renderer-canvas2d",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/commands",
+      "@dojo-video-engine/export",
+      "@dojo-video-engine/inspection",
+      "@dojo-video-engine/extensions",
+      "@dojo-video-engine/presets",
+      "@dojo-video-engine/renderer-canvas2d",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/authoring": {
+  "@dojo-video-engine/authoring": {
     owner: "Programmer-facing Scene authoring compilers",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/presets",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/presets",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/cli": {
-    owner: "Command-line and local Studio facade",
-    allowedMotionforgeDependencies: [
-      "@motionforge/agent-tools",
-      "@motionforge/export",
-      "@motionforge/inspection",
-      "@motionforge/player",
-      "@motionforge/presets",
-      "@motionforge/schema",
+  "@dojo-video-engine/cli": {
+    owner: "Headless command-line validation and inspection",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/agent-tools",
+      "@dojo-video-engine/export",
+      "@dojo-video-engine/inspection",
+      "@dojo-video-engine/player",
+      "@dojo-video-engine/presets",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/commands": {
+  "@dojo-video-engine/commands": {
     owner: "Typed Scene commands and revisioned in-memory workspaces",
-    allowedMotionforgeDependencies: [
-      "@motionforge/presets",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/presets",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/core": {
+  "@dojo-video-engine/core": {
     owner: "Deterministic evaluation and layout",
-    allowedMotionforgeDependencies: ["@motionforge/schema"],
+    allowedDojoVideoEngineDependencies: ["@dojo-video-engine/schema"],
   },
-  "@motionforge/create": {
+  "@dojo-video-engine/create": {
     owner: "Starter project generation",
-    allowedMotionforgeDependencies: [],
+    allowedDojoVideoEngineDependencies: [],
   },
-  "@motionforge/export": {
+  "@dojo-video-engine/export": {
     owner: "Frame, audio, encoder, muxer, stream, and worker orchestration",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/renderer-canvas2d",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/renderer-canvas2d",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/extensions": {
+  "@dojo-video-engine/extensions": {
     owner: "Trusted versioned extension contracts",
-    allowedMotionforgeDependencies: ["@motionforge/schema"],
+    allowedDojoVideoEngineDependencies: ["@dojo-video-engine/schema"],
   },
-  "@motionforge/inspection": {
+  "@dojo-video-engine/inspection": {
     owner:
       "Renderer-neutral tree, timeline, layout, hit-test, and composition diagnostics",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/interchange": {
+  "@dojo-video-engine/interchange": {
     owner: "Bounded timeline and trusted-host interchange bridges",
-    allowedMotionforgeDependencies: ["@motionforge/schema"],
+    allowedDojoVideoEngineDependencies: ["@dojo-video-engine/schema"],
   },
-  "@motionforge/layout": {
+  "@dojo-video-engine/layout": {
     owner: "Bounded semantic layout authoring and Scene v1 compilation",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/player": {
+  "@dojo-video-engine/player": {
     owner: "Real-time preview and audio-synchronized playback",
-    allowedMotionforgeDependencies: [
-      "@motionforge/export",
-      "@motionforge/renderer-canvas2d",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/export",
+      "@dojo-video-engine/renderer-canvas2d",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/presets": {
+  "@dojo-video-engine/presets": {
     owner: "Pure preset, macro, intent, and choreography compilers",
-    allowedMotionforgeDependencies: ["@motionforge/schema"],
+    allowedDojoVideoEngineDependencies: ["@dojo-video-engine/schema"],
   },
-  "@motionforge/renderer-canvas2d": {
+  "@dojo-video-engine/renderer-canvas2d": {
     owner: "Canvas2D reference renderer and browser-media preparation",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/extensions",
-      "@motionforge/runtime",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/extensions",
+      "@dojo-video-engine/runtime",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/runtime": {
+  "@dojo-video-engine/runtime": {
     owner:
       "Prepared Scene sessions, backend lifecycle, events, and artifact sinks",
-    allowedMotionforgeDependencies: [
-      "@motionforge/core",
-      "@motionforge/extensions",
-      "@motionforge/inspection",
-      "@motionforge/schema",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
+      "@dojo-video-engine/extensions",
+      "@dojo-video-engine/inspection",
+      "@dojo-video-engine/schema",
     ],
   },
-  "@motionforge/schema": {
+  "@dojo-video-engine/schema": {
     owner: "Canonical Scene documents, migration, validation, and patches",
-    allowedMotionforgeDependencies: [],
+    allowedDojoVideoEngineDependencies: [],
   },
 };
 
 /** One source of truth for release/clean-install package coverage. */
 export const publicPackageDirectories = Object.keys(publicPackagePolicy)
   .map((name) =>
-    name === "@motionforge/create"
-      ? "packages/create-motionforge"
-      : `packages/${name.slice("@motionforge/".length)}`,
+    name === "@dojo-video-engine/create"
+      ? "packages/create-dojo-video-engine"
+      : `packages/${name.slice("@dojo-video-engine/".length)}`,
   )
   .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 
@@ -202,7 +202,7 @@ export function validateWorkspaceGraph(packages) {
   const graph = new Map();
   for (const { manifest } of publicPackages) {
     const policy = publicPackagePolicy[manifest.name];
-    const allowed = new Set(policy?.allowedMotionforgeDependencies ?? []);
+    const allowed = new Set(policy?.allowedDojoVideoEngineDependencies ?? []);
     const internal = new Set();
 
     for (const field of allDependencyFields) {
@@ -308,7 +308,7 @@ export function validateSourceContract({
     if (!dependencyName) continue;
 
     if (dependencyName === manifest.name) {
-      const exportKey = motionforgeExportKey(specifier, dependencyName);
+      const exportKey = dojoVideoEngineExportKey(specifier, dependencyName);
       if (!Object.hasOwn(manifest.exports ?? {}, exportKey)) {
         errors.push(
           `${displayPath} imports non-public self entry point ${JSON.stringify(specifier)}; ${manifest.name} does not export ${JSON.stringify(exportKey)}.`,
@@ -326,7 +326,7 @@ export function validateSourceContract({
 
     const targetManifest = packageManifests.get(dependencyName);
     if (!targetManifest) continue;
-    const exportKey = motionforgeExportKey(specifier, dependencyName);
+    const exportKey = dojoVideoEngineExportKey(specifier, dependencyName);
     if (!Object.hasOwn(targetManifest.exports ?? {}, exportKey)) {
       errors.push(
         `${displayPath} imports non-public entry point ${JSON.stringify(specifier)}; ${dependencyName} does not export ${JSON.stringify(exportKey)}.`,
@@ -490,7 +490,7 @@ function packageNameForSpecifier(specifier, packageManifests) {
   );
 }
 
-function motionforgeExportKey(specifier, packageName) {
+function dojoVideoEngineExportKey(specifier, packageName) {
   const suffix = specifier.slice(packageName.length);
   return suffix === "" ? "." : `.${suffix}`;
 }
@@ -504,6 +504,6 @@ function isInternalPackageName(name, packageManifests, policyNames) {
   return (
     packageManifests.has(name) ||
     policyNames.has(name) ||
-    name.startsWith("@motionforge/")
+    name.startsWith("@dojo-video-engine/")
   );
 }

@@ -1,17 +1,10 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { afterEach, describe, expect, it } from "vitest";
-import type { StudioServerResult } from "./studio.js";
+import { describe, expect, it } from "vitest";
 import { executeCli } from "./index.js";
 
-const openServers: StudioServerResult[] = [];
-
-afterEach(async () => {
-  await Promise.all(openServers.splice(0).map((server) => server.close()));
-});
-
-describe("@motionforge/cli", () => {
+describe("@dojo-video-engine/cli", () => {
   it("validates a JSON scene file", async () => {
     const dir = await tempDir();
 
@@ -21,7 +14,7 @@ describe("@motionforge/cli", () => {
 
       await expect(executeCli(["validate", scenePath])).resolves.toEqual({
         exitCode: 0,
-        stdout: `Valid MotionForge scene: ${scenePath}\n`,
+        stdout: `Valid DojoVideoEngine scene: ${scenePath}\n`,
         stderr: "",
       });
     } finally {
@@ -248,7 +241,7 @@ describe("@motionforge/cli", () => {
       expect(result.exitCode).toBe(1);
       expect(result.stdout).toBe("");
       expect(result.stderr).toContain(
-        `Invalid MotionForge scene: ${scenePath}`,
+        `Invalid DojoVideoEngine scene: ${scenePath}`,
       );
       expect(result.stderr).toContain(
         "Text nodes require a `text` string or non-empty `runs`.",
@@ -352,7 +345,7 @@ describe("@motionforge/cli", () => {
       ]);
       expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
       expect(JSON.parse(result.stdout)).toMatchObject({
-        kind: "motionforge.layout",
+        kind: "dojo-video-engine.layout",
         version: 1,
         frame: 12,
         nodes: [
@@ -388,7 +381,7 @@ describe("@motionforge/cli", () => {
       ]);
       expect(result, result.stderr).toMatchObject({ exitCode: 0, stderr: "" });
       expect(JSON.parse(result.stdout)).toMatchObject({
-        kind: "motionforge.check",
+        kind: "dojo-video-engine.check",
         version: 1,
         validation: { ok: true, errors: [] },
         structural: { width: 1080, durationFrames: 30 },
@@ -416,7 +409,7 @@ describe("@motionforge/cli", () => {
 
       expect(result).toMatchObject({ exitCode: 1, stderr: "" });
       expect(JSON.parse(result.stdout)).toMatchObject({
-        kind: "motionforge.check",
+        kind: "dojo-video-engine.check",
         version: 1,
         ok: false,
         validation: { ok: false, errors: expect.any(Array) },
@@ -468,62 +461,7 @@ describe("@motionforge/cli", () => {
     });
   });
 
-  it("starts a studio server for a scene module", async () => {
-    const dir = await tempDir();
 
-    try {
-      const scenePath = join(dir, "scene.json");
-      await writeFile(scenePath, JSON.stringify(validScene()));
-
-      const result = await executeCli([
-        "dev",
-        scenePath,
-        "--host",
-        "127.0.0.1",
-        "--port",
-        "0",
-      ]);
-
-      expect(result, result.stderr).toMatchObject({ exitCode: 0 });
-      expect(result.stdout).toContain("MotionForge Studio running at");
-      expect(result.stdout).toContain(scenePath);
-      expect(result.close).toBeTypeOf("function");
-
-      const match = result.stdout.match(/(http:\/\/127\.0\.0\.1:\d+\/)/);
-      expect(match?.[1]).toBeTruthy();
-      openServers.push({
-        close: result.close ?? (async () => {}),
-        sceneModulePath: scenePath,
-        url: match?.[1] ?? "",
-      });
-
-      const response = await fetch(`${match?.[1]}__motionforge/scene`);
-      const payload = (await response.json()) as {
-        ok: boolean;
-        scene?: { width?: number };
-      };
-
-      expect(payload).toMatchObject({ ok: true, scene: { width: 1080 } });
-
-      const html = await (await fetch(match?.[1] ?? "")).text();
-      expect(html).toContain("/@id/__x00__virtual:motionforge-studio-client");
-      expect(html).toContain("preset-family-tabs");
-
-      const clientResponse = await fetch(
-        `${match?.[1]}@id/__x00__virtual:motionforge-studio-client`,
-      );
-      const client = await clientResponse.text();
-
-      expect(clientResponse.status, client).toBe(200);
-      expect(client).toContain("createPlayer");
-      expect(client).toContain("presetCatalog");
-      expect(client).toContain("buildPresetPatchExample");
-      expect(client).not.toContain('from "@motionforge/player"');
-      expect(client).not.toContain('from "@motionforge/presets/catalog"');
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
-  });
 });
 
 function validScene() {
@@ -538,5 +476,5 @@ function validScene() {
 }
 
 async function tempDir() {
-  return await mkdtemp(join(tmpdir(), "motionforge-cli-"));
+  return await mkdtemp(join(tmpdir(), "dojo-video-engine-cli-"));
 }

@@ -30,7 +30,7 @@ data we have not inspected. It does not authorize a downstream migration.
 ## Dojo repository evidence
 
 A read-only source audit scanned 250 TypeScript/TSX files covering Video Agent,
-vendored MotionForge, Watermark, Music Visualizer, Music MV, subtitle flows,
+vendored Dojo Video Engine, Watermark, Music Visualizer, Music MV, subtitle flows,
 and scripts:
 
 - 68 `parseScene()` and 118 `validateScene()` call sites were identified;
@@ -61,8 +61,8 @@ row is rewritten until a separately reviewed migration/quarantine plan exists.
 ## Other downstream gate
 
 Scene Command v1 currently belongs to Dojo's vendored schema/tool adapter and
-is not part of upstream MotionForge. An exact downstream package sync must
-either wait for MotionForge MF4 command reconciliation or retain that patch as
+is not part of upstream Dojo Video Engine. An exact downstream package sync must
+either wait for Dojo Video Engine MF4 command reconciliation or retain that patch as
 an explicitly owned downstream adapter. MF1 must never be described as an
 exact vendor sync while this delta exists.
 

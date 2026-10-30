@@ -1,3 +1,5 @@
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
 # Progress
 
 ## 2026-08-26 (MF9 open-source release candidate)
@@ -8,12 +10,12 @@
   SHA-256 manifesting, a combined CycloneDX SBOM, pinned release automation,
   migration/release policy, governance, security, supply-chain, and extension
   ABI contracts.
-- Added `@motionforge/interchange` for common timelines, trusted Remotion host
+- Added `@dojo-video-engine/interchange` for common timelines, trusted Remotion host
   descriptors, and sanitized static snapshots with explicit loss reports.
-- Added the MotionForge Agent Skill, a thin provider-neutral MCP adapter, public
+- Added the Dojo Video Engine Agent Skill, a thin provider-neutral MCP adapter, public
   API/reference reports, and repair/macro/extension starter examples.
-- Corrected the starter identity to `@motionforge/create` while retaining the
-  `create-motionforge` command.
+- Corrected the starter identity to `@dojo-video-engine/create` while retaining the
+  `create-dojo-video-engine` command.
 
 ### Tested
 
@@ -64,12 +66,12 @@
 
 ### Changed
 
-- Added public `@motionforge/layout` with a flat, bounded Layout Contract v1
+- Added public `@dojo-video-engine/layout` with a flat, bounded Layout Contract v1
   for stack/row/column, wrapping, grid, overlay, safe areas, intrinsic sizing,
   grow/shrink, aspect ratios, and sibling constraints compiled to Scene v1.
 - Added deterministic prepared text/media planning, strict font/fallback
   policies, finite provenance evidence, and stable solver/text budgets.
-- Added versioned `@motionforge/presets/intents` manifests and compatibility
+- Added versioned `@dojo-video-engine/presets/intents` manifests and compatibility
   compilers for place, safe-area, text-role, media-look, and clip-layout
   intent.
 - Accepted RFC 0012 and documented source Scene + LayoutPlan retention versus
@@ -118,7 +120,7 @@
 
 ### Changed
 
-- Accepted RFC 0008 and added the public `@motionforge/agent-tools` package.
+- Accepted RFC 0008 and added the public `@dojo-video-engine/agent-tools` package.
 - Added stable validate/migrate/inspect/lint/patch/diff/discovery APIs and
   generated JSON Schema function-calling descriptors.
 - Added browser still/contact-sheet rendering plus export plan/preflight/MP4
@@ -148,7 +150,7 @@
 - Accepted RFC 0007 and refactored export around one pipeline with buffered and
   positional-stream targets.
 - Added export estimates and capability/resource preflight.
-- Added the `@motionforge/export/worker` start/cancel/progress/result protocol,
+- Added the `@dojo-video-engine/export/worker` start/cancel/progress/result protocol,
   typed client, worker installer, and reusable headless message handler.
 - Browser export smoke now reconstructs a streamed MP4 under backpressure and
   validates its container header.
@@ -268,7 +270,7 @@
 
 ### Changed
 
-- Accepted RFC 0003 and added `@motionforge/extensions` with trusted
+- Accepted RFC 0003 and added `@dojo-video-engine/extensions` with trusted
   definitions, exact-version registries, explicit compatibility aliases,
   parameter JSON Schema manifests, and typed preflight issues.
 - Added JSON-only Scene v1 `extension` nodes, core and seconds-first authoring
@@ -313,10 +315,10 @@
   compatible, while `sceneSchema` and the shipped JSON Schema are strict v1.
 - Added early typed reference validation for image, video, audio, Lottie,
   audio-reactive, and cover-image asset references.
-- Moved stable scene inspection into `@motionforge/schema`, added `lintScene()`
+- Moved stable scene inspection into `@dojo-video-engine/schema`, added `lintScene()`
   editorial warnings, and added Canvas2D runtime preflight for Canvas, decoder,
   font, and current DOM-Lottie requirements.
-- Added `motionforge migrate` / `motionforge lint`, exposed both in generated
+- Added `dojo-video-engine migrate` / `dojo-video-engine lint`, exposed both in generated
   starters, and removed the starter generator's hard-coded package version.
 - Added paired v0/v1 migration fixtures plus generated-schema and migration
   parity checks to the normal lint/release gate.
@@ -344,7 +346,7 @@
 
 ### Changed
 
-- Reconciled the reusable MotionForge changes proven in DojoClip's production
+- Reconciled the reusable Dojo Video Engine changes proven in DojoClip's production
   consumer back into the standalone open-source packages: effect nodes, 24
   procedural/audio-reactive effects, agent macros and intents, shared effect
   normalization, sequential video decoding, player audio/lifecycle hardening,
@@ -402,7 +404,7 @@ This is the living project log. Every meaningful implementation slice should rec
 - `pnpm exec prettier --write package.json tools/golden/package.json scripts/release-gate.mjs tools/golden/src/resource-smoke.ts README.md docs/benchmarks.md docs/testing-strategy.md docs/core-engine-rc-roadmap.md docs/progress.md packages/player/README.md packages/export/README.md`
 - `git diff --check`
 - `pnpm resource:smoke`
-- `pnpm --filter @motionforge/golden typecheck`
+- `pnpm --filter @dojo-video-engine/golden typecheck`
 
 ### Notes
 
@@ -434,20 +436,20 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added `scripts/release-gate.mjs` with `fast` and `full` modes.
 - Added root `pnpm release:fast` and `pnpm release:full` scripts.
-- Added built CLI smokes for `motionforge validate` and `motionforge inspect`.
-- Added a built `create-motionforge` smoke that verifies generated starter scripts.
+- Added built CLI smokes for `dojo-video-engine validate` and `dojo-video-engine inspect`.
+- Added a built `create-dojo-video-engine` smoke that verifies generated starter scripts.
 - Added `inspect` to the generated starter project scripts so docs and generator output match.
 - Documented release gates in the README, testing strategy, and core RC roadmap.
 
 ### Tested
 
-- `pnpm exec prettier --write package.json scripts/release-gate.mjs README.md docs/testing-strategy.md docs/core-engine-rc-roadmap.md docs/progress.md docs/guides/getting-started.md packages/create-motionforge/src/index.ts packages/create-motionforge/src/index.test.ts`
-- `pnpm --filter create-motionforge test`
-- `pnpm --filter @motionforge/cli build`
-- `pnpm --filter create-motionforge build`
+- `pnpm exec prettier --write package.json scripts/release-gate.mjs README.md docs/testing-strategy.md docs/core-engine-rc-roadmap.md docs/progress.md docs/guides/getting-started.md packages/create-dojo-video-engine/src/index.ts packages/create-dojo-video-engine/src/index.test.ts`
+- `pnpm --filter create-dojo-video-engine test`
+- `pnpm --filter @dojo-video-engine/cli build`
+- `pnpm --filter create-dojo-video-engine build`
 - `node scripts/release-gate.mjs smoke`
 - `node scripts/release-gate.mjs pack`
-- `pnpm --filter @motionforge/playground build`
+- `pnpm --filter @dojo-video-engine/playground build`
 - `pnpm release:fast`
 
 ### Notes
@@ -468,8 +470,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - `pnpm exec prettier --write tools/golden/src/harness.ts docs/testing-strategy.md docs/core-engine-rc-roadmap.md docs/progress.md`
 - `git diff --check`
-- `pnpm --filter @motionforge/golden typecheck`
-- `pnpm --filter @motionforge/golden run golden:test`
+- `pnpm --filter @dojo-video-engine/golden typecheck`
+- `pnpm --filter @dojo-video-engine/golden run golden:test`
 
 ### Notes
 
@@ -481,12 +483,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added API Stability sections to the schema, core, renderer, export, player, presets, authoring, CLI, and create-project package READMEs.
 - Classified package surfaces as stable for 0.x integrations, experimental before 1.0, or internal/not public.
-- Marked `@motionforge/showcase` as private workspace infrastructure rather than a public API package.
+- Marked `@dojo-video-engine/showcase` as private workspace infrastructure rather than a public API package.
 - Clarified browser export, audio helper, preset catalog, Studio, and generated-template boundaries so app internals do not look like engine contracts.
 
 ### Tested
 
-- `pnpm exec prettier --write docs/core-engine-rc-roadmap.md docs/progress.md docs/scene-format.md docs/audio-overlay-roadmap.md packages/schema/README.md packages/core/README.md packages/renderer-canvas2d/README.md packages/export/README.md packages/player/README.md packages/presets/README.md packages/authoring/README.md packages/cli/README.md packages/create-motionforge/README.md packages/showcase/README.md`
+- `pnpm exec prettier --write docs/core-engine-rc-roadmap.md docs/progress.md docs/scene-format.md docs/audio-overlay-roadmap.md packages/schema/README.md packages/core/README.md packages/renderer-canvas2d/README.md packages/export/README.md packages/player/README.md packages/presets/README.md packages/authoring/README.md packages/cli/README.md packages/create-dojo-video-engine/README.md packages/showcase/README.md`
 - `git diff --check`
 
 ### Notes
@@ -499,15 +501,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added `docs/core-engine-rc-roadmap.md` for the release-candidate hardening track.
 - Linked the RC track from the main roadmap.
-- Added `motionforge inspect <scene-module>` to validate a scene and print machine-readable metadata.
+- Added `dojo-video-engine inspect <scene-module>` to validate a scene and print machine-readable metadata.
 - Inspection output summarizes dimensions, duration, asset counts, node counts, and capability flags for visuals, audio, video, Lottie, animations, volume automation, and looped audio.
 - Updated the CLI README with `inspect` usage.
 
 ### Tested
 
-- `pnpm --filter @motionforge/cli typecheck`
-- `pnpm --filter @motionforge/cli test`
-- `pnpm --filter @motionforge/cli build`
+- `pnpm --filter @dojo-video-engine/cli typecheck`
+- `pnpm --filter @dojo-video-engine/cli test`
+- `pnpm --filter @dojo-video-engine/cli build`
 
 ### Notes
 
@@ -525,24 +527,24 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema typecheck`
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/schema build`
-- `pnpm --filter @motionforge/core typecheck`
-- `pnpm --filter @motionforge/core test`
-- `pnpm --filter @motionforge/core build`
-- `pnpm --filter @motionforge/export typecheck`
-- `pnpm --filter @motionforge/export test`
-- `pnpm --filter @motionforge/export build`
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test -- index.test.ts`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat test -- local-agent.test.ts`
-- `pnpm --filter @motionforge/chat test -- examples.test.ts`
+- `pnpm --filter @dojo-video-engine/schema typecheck`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/schema build`
+- `pnpm --filter @dojo-video-engine/core typecheck`
+- `pnpm --filter @dojo-video-engine/core test`
+- `pnpm --filter @dojo-video-engine/core build`
+- `pnpm --filter @dojo-video-engine/export typecheck`
+- `pnpm --filter @dojo-video-engine/export test`
+- `pnpm --filter @dojo-video-engine/export build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- index.test.ts`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test -- local-agent.test.ts`
+- `pnpm --filter @dojo-video-engine/chat test -- examples.test.ts`
 
 ### Notes
 
@@ -558,9 +560,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat test -- local-agent.test.ts`
-- `pnpm --filter @motionforge/chat test -- examples.test.ts`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test -- local-agent.test.ts`
+- `pnpm --filter @dojo-video-engine/chat test -- examples.test.ts`
 
 ### Notes
 
@@ -570,7 +572,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `audioFadeEnvelope()` to `@motionforge/presets` for deterministic gain curves.
+- Added `audioFadeEnvelope()` to `@dojo-video-engine/presets` for deterministic gain curves.
 - Added `fadeInDuration` and `fadeOutDuration` options to preset-level `audioOverlay()`.
 - Added seconds-friendly `fadeIn` and `fadeOut` options to authoring `audioOverlay()` and `audioTrack()`.
 - Preserved explicit `volumeEnvelope` values when adapting preset nodes through the authoring API.
@@ -578,12 +580,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test -- index.test.ts`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- index.test.ts`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -594,22 +596,22 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Added `volumeEnvelope` to the scene contract for audio and video nodes.
-- Carried volume envelopes through `@motionforge/core` builders and validated them through `setNodeProps`.
+- Carried volume envelopes through `@dojo-video-engine/core` builders and validated them through `setNodeProps`.
 - Made the export mixer multiply static `volume` by node-local envelope samples, including ancestor-clipped chunks.
 - Reused the existing keyframe easing evaluator so envelope points can use the same easing vocabulary as visual animations.
 - Updated scene-format docs, LLM prompt context, and the audio roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema typecheck`
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/schema build`
-- `pnpm --filter @motionforge/core typecheck`
-- `pnpm --filter @motionforge/core test`
-- `pnpm --filter @motionforge/core build`
-- `pnpm --filter @motionforge/export typecheck`
-- `pnpm --filter @motionforge/export test`
-- `pnpm --filter @motionforge/export build`
+- `pnpm --filter @dojo-video-engine/schema typecheck`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/schema build`
+- `pnpm --filter @dojo-video-engine/core typecheck`
+- `pnpm --filter @dojo-video-engine/core test`
+- `pnpm --filter @dojo-video-engine/core build`
+- `pnpm --filter @dojo-video-engine/export typecheck`
+- `pnpm --filter @dojo-video-engine/export test`
+- `pnpm --filter @dojo-video-engine/export build`
 
 ### Notes
 
@@ -627,9 +629,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat test -- local-agent.test.ts`
-- `pnpm --filter @motionforge/chat test -- examples.test.ts`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test -- local-agent.test.ts`
+- `pnpm --filter @dojo-video-engine/chat test -- examples.test.ts`
 
 ### Notes
 
@@ -647,10 +649,10 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test -- catalog.test.ts`
-- `pnpm --filter @motionforge/playground test -- preset-catalog.test.ts`
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/playground typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/playground test -- preset-catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
 
 ### Notes
 
@@ -662,15 +664,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added authoring-level `audioOverlay(asset, options)` that accepts an audio asset object or existing asset id.
 - Passing an audio asset object now auto-adds it to `scene.assets`, matching `audioTrack()`, image overlays, and video overlays.
-- Re-exported audio overlay template metadata and template-key types from `@motionforge/authoring`.
+- Re-exported audio overlay template metadata and template-key types from `@dojo-video-engine/authoring`.
 - Documented background music, voiceover, ambience, notification cue, and existing-asset workflows in the authoring guide and package README.
 - Marked AX3 complete in the audio overlay roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -680,7 +682,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `audioOverlay()` to `@motionforge/presets`.
+- Added `audioOverlay()` to `@dojo-video-engine/presets`.
 - Added audio overlay template metadata for `backgroundMusic`, `voiceover`, `soundEffect`, `beatAccent`, `ambientBed`, and `notificationPing`.
 - Added role defaults for conservative volumes and short cue durations where appropriate.
 - Documented audio overlay presets in the preset catalog guide.
@@ -688,9 +690,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test -- index.test.ts`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- index.test.ts`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -717,7 +719,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added a self-contained video overlay stress gallery to `@motionforge/showcase`.
+- Added a self-contained video overlay stress gallery to `@dojo-video-engine/showcase`.
 - Embedded a tiny deterministic MP4 data URL so generated JSON can render without external media files.
 - Covered picture-in-picture, reaction cam, screen demo, muted background loop, b-roll strip, and video badge overlay presets in one scene.
 - Added showcase tests for trim start, playback rate, clip volume, object-fit contain, object position, and muted defaults.
@@ -726,11 +728,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm showcase:generate`
-- `pnpm --filter @motionforge/golden run example examples/generated/video-overlay-stress-gallery.json docs/assets/showcase/video-overlay-stress-gallery.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/video-overlay-stress-gallery.json docs/assets/showcase/video-overlay-stress-gallery.mp4 45`
 
 ### Notes
 
@@ -748,9 +750,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat test -- local-agent.test.ts`
-- `pnpm --filter @motionforge/chat test -- examples.test.ts`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test -- local-agent.test.ts`
+- `pnpm --filter @dojo-video-engine/chat test -- examples.test.ts`
 
 ### Notes
 
@@ -770,13 +772,13 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test -- catalog.test.ts`
-- `pnpm --filter @motionforge/playground test -- preset-catalog.test.ts`
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase build`
-- `pnpm --filter @motionforge/playground typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/playground test -- preset-catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
 
 ### Notes
 
@@ -788,16 +790,16 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added authoring-level `videoOverlay(asset, options)` that accepts a video asset object or existing asset id.
 - Passing a video asset object now auto-adds it to `scene.assets`, matching `videoClip()` and `imageOverlay()`.
-- Re-exported video overlay template metadata and types from `@motionforge/authoring`.
+- Re-exported video overlay template metadata and types from `@dojo-video-engine/authoring`.
 - Preserved `volume` when adapting preset-generated video nodes through authoring builders.
 - Documented picture-in-picture, reaction cam, and screen demo overlay workflows in the authoring guide and package README.
 - Marked VX2 complete in the video overlay roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -807,7 +809,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `videoOverlay()` to `@motionforge/presets`.
+- Added `videoOverlay()` to `@dojo-video-engine/presets`.
 - Added video overlay template metadata for `pictureInPicture`, `reactionCam`, `screenDemo`, `backgroundLoop`, `brollStrip`, and `videoBadge`.
 - Added options for composition-aware safe-area placement, object fit, object position, opacity, border radius, shadows, source trim, playback rate, volume, muted defaults, timing, and entrance motion.
 - Documented video overlay templates in the preset catalog guide.
@@ -815,9 +817,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -844,7 +846,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added a self-contained image overlay stress gallery to `@motionforge/showcase`.
+- Added a self-contained image overlay stress gallery to `@dojo-video-engine/showcase`.
 - Covered square logo bugs, wide watermarks, transparent stickers, wide product shots, tall portraits, and oversized badge assets through shared `imageOverlay()` presets.
 - Added showcase tests for stable scene id, six image assets, six overlay nodes, SVG data URLs, and watermark opacity.
 - Documented the generated image overlay stress example and render command.
@@ -852,11 +854,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm showcase:generate`
-- `pnpm --filter @motionforge/golden run example examples/generated/image-overlay-stress-gallery.json docs/assets/showcase/image-overlay-stress-gallery.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/image-overlay-stress-gallery.json docs/assets/showcase/image-overlay-stress-gallery.mp4 45`
 
 ### Notes
 
@@ -875,9 +877,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat test -- local-agent.test.ts`
-- `pnpm --filter @motionforge/chat test -- examples.test.ts`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test -- local-agent.test.ts`
+- `pnpm --filter @dojo-video-engine/chat test -- examples.test.ts`
 
 ### Notes
 
@@ -896,11 +898,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test -- catalog.test.ts`
-- `pnpm --filter @motionforge/playground test -- preset-catalog.test.ts`
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/playground typecheck`
+- `pnpm --filter @dojo-video-engine/presets test -- catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/playground test -- preset-catalog.test.ts`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
 
 ### Notes
 
@@ -912,16 +914,16 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added authoring-level `imageOverlay(asset, options)` that accepts an image asset object or existing asset id.
 - Passing an image asset object now auto-adds it to `scene.assets`, matching existing `image()` and `videoClip()` behavior.
-- Re-exported image overlay template metadata and types from `@motionforge/authoring`.
+- Re-exported image overlay template metadata and types from `@dojo-video-engine/authoring`.
 - Added authoring tests for safe-area placement, timing conversion, asset registration, string asset ids, and manual overrides.
 - Documented logo/product/avatar overlay workflows in the authoring guide and package README.
 - Marked IX2 complete in the image overlay roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -931,7 +933,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `imageOverlay()` to `@motionforge/presets`.
+- Added `imageOverlay()` to `@dojo-video-engine/presets`.
 - Added image overlay template metadata for `logoBug`, `watermark`, `sticker`, `productShot`, `cornerBadge`, and `avatarBadge`.
 - Added image-specific placement names such as `topRight` and `bottomLeft`, mapped onto the existing safe-area anchors and alignment options.
 - Added options for composition-aware safe-area placement, object fit, object position, opacity, border radius, shadows, image style overrides, timing, and entrance motion.
@@ -941,9 +943,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -970,7 +972,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `subtitleStressGalleryScene()` to `@motionforge/showcase`.
+- Added `subtitleStressGalleryScene()` to `@dojo-video-engine/showcase`.
 - Added the generated scene JSON at `examples/generated/subtitle-stress-gallery.json`.
 - Added a docs poster at `docs/assets/showcase/subtitle-stress-gallery.png`.
 - Covered parsed SRT multiline cues, parsed WebVTT cue settings/notes, long Latin, URLs, CJK, emoji, and fast cue changes in one deterministic showcase scene.
@@ -979,11 +981,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm showcase:generate`
-- `pnpm --filter @motionforge/golden run example examples/generated/subtitle-stress-gallery.json docs/assets/showcase/subtitle-stress-gallery.mp4 90`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/subtitle-stress-gallery.json docs/assets/showcase/subtitle-stress-gallery.mp4 90`
 
 ### Notes
 
@@ -1001,9 +1003,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -1015,7 +1017,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added authoring-level `subtitleTrack()` and `subtitles()` helpers that compile SRT/VTT-style segments into validated scene nodes with scene-aware safe-area placement.
 - Added authoring-level `captionTrack()` and `captions()` helpers for word-timed ASR caption templates.
-- Re-exported `parseSrt()`, `parseVtt()`, `subtitleTemplates`, and subtitle/caption types from `@motionforge/authoring`.
+- Re-exported `parseSrt()`, `parseVtt()`, `subtitleTemplates`, and subtitle/caption types from `@dojo-video-engine/authoring`.
 - Added authoring tests for parsed SRT, parsed WebVTT, and word-timed caption tracks.
 - Documented paste-SRT, paste-VTT, manual segment, and ASR word-timing workflows in the authoring guide and package README.
 - Documented where transcript/subtitle assets belong in example projects.
@@ -1023,21 +1025,21 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
 - The authoring helpers wrap the preset subtitle engine and still emit ordinary scene nodes, so Studio, Playground, chat, validators, and renderers all see the same data shape.
-- The internal adapter intentionally rejects preset `lottie` nodes until `@motionforge/core` exposes a matching builder; subtitle and caption presets currently emit `div`/`text` trees.
+- The internal adapter intentionally rejects preset `lottie` nodes until `@dojo-video-engine/core` exposes a matching builder; subtitle and caption presets currently emit `div`/`text` trees.
 
 ## 2026-06-18 (subtitle overlay SX2: SRT and VTT parsing)
 
 ### Changed
 
-- Added `parseSrt()` to `@motionforge/presets`.
-- Added `parseVtt()` to `@motionforge/presets`.
+- Added `parseSrt()` to `@dojo-video-engine/presets`.
+- Added `parseVtt()` to `@dojo-video-engine/presets`.
 - SRT parsing supports cue indexes, comma millisecond separators, multiline cue text, and whitespace normalization.
 - WebVTT parsing supports `WEBVTT`, cue ids, cue settings, notes, dot millisecond separators, and multiline cue text.
 - Parser output feeds directly into `subtitleTrack()`.
@@ -1045,9 +1047,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -1057,7 +1059,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `SubtitleSegment` and `subtitleTrack()` to `@motionforge/presets` for SRT/VTT-style cue workflows without ASR word timing.
+- Added `SubtitleSegment` and `subtitleTrack()` to `@dojo-video-engine/presets` for SRT/VTT-style cue workflows without ASR word timing.
 - Added robust subtitle text defaults: shrink fit, ellipsis, hidden overflow, `maxLines`, and `minFontSize`.
 - Added composition-aware safe-area subtitle placement through the shared `safeAreaBox()` primitive.
 - Kept `area`, style, fit, line-count, minimum font-size, and entrance-motion overrides available.
@@ -1066,9 +1068,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
 
 ### Notes
 
@@ -1095,7 +1097,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `textStressGalleryScene()` to `@motionforge/showcase`.
+- Added `textStressGalleryScene()` to `@dojo-video-engine/showcase`.
 - Covered long Latin, long URLs/paths, CJK text, emoji clusters, long single-token text, and multiline captions in bounded overlay cards.
 - Added the generated scene JSON at `examples/generated/text-stress-gallery.json`.
 - Added a docs poster at `docs/assets/showcase/text-stress-gallery.png`.
@@ -1104,11 +1106,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm showcase:generate`
-- `pnpm --filter @motionforge/golden run example examples/generated/text-stress-gallery.json /tmp/text-stress-gallery.mp4 30`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/text-stress-gallery.json /tmp/text-stress-gallery.mp4 30`
 
 ### Notes
 
@@ -1126,12 +1128,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm presets:generate`
 
 ### Notes
@@ -1142,7 +1144,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added named safe-area profiles in `@motionforge/presets` for vertical, square, and landscape compositions.
+- Added named safe-area profiles in `@dojo-video-engine/presets` for vertical, square, and landscape compositions.
 - Added `inferSafeAreaProfile()`, `resolveSafeArea()`, and `safeAreaBox()` as reusable style primitives.
 - Rewired authoring `textBox()` to consume the shared safe-area primitive and re-export the helper API.
 - Added `composition` and `safeArea` options to `textOverlay()` so preset templates can opt into safe-area anchors while preserving legacy fixed placement by default.
@@ -1151,12 +1153,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -1166,7 +1168,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `textBox()` to `@motionforge/authoring` for bounded, production-safe text overlays.
+- Added `textBox()` to `@dojo-video-engine/authoring` for bounded, production-safe text overlays.
 - Added typed placement options for center, top, bottom, title, subtitle, lower-third, and stat-callout overlays.
 - Added safe-area options with default scene-relative insets, equal padding, axis padding, edge-specific padding, and full-frame opt-out.
 - Wired helper options to scene style data: `textFit`, `maxLines`, `minFontSize`, `textOverflow`, and hidden overflow.
@@ -1175,9 +1177,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring build`
 
 ### Notes
 
@@ -1188,7 +1190,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Added `textFit: "wrap" | "shrink" | "truncate"` and `minFontSize` to scene styles.
-- Added `prepareTextLayout()` in `@motionforge/core` to resolve fitted font size, visible lines, and line height together.
+- Added `prepareTextLayout()` in `@dojo-video-engine/core` to resolve fitted font size, visible lines, and line height together.
 - Updated Canvas2D text drawing to use the same fitted text layout helper as core layout.
 - Added deterministic tests for truncate, shrink-to-fit, min font-size clamping, and renderer font selection.
 - Regenerated `packages/schema/scene.schema.json`.
@@ -1196,15 +1198,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema typecheck`
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/schema build`
-- `pnpm --filter @motionforge/core typecheck`
-- `pnpm --filter @motionforge/core test`
-- `pnpm --filter @motionforge/core build`
-- `pnpm --filter @motionforge/renderer-canvas2d typecheck`
-- `pnpm --filter @motionforge/renderer-canvas2d test`
-- `pnpm --filter @motionforge/renderer-canvas2d build`
+- `pnpm --filter @dojo-video-engine/schema typecheck`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/schema build`
+- `pnpm --filter @dojo-video-engine/core typecheck`
+- `pnpm --filter @dojo-video-engine/core test`
+- `pnpm --filter @dojo-video-engine/core build`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d typecheck`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d test`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d build`
 
 ### Notes
 
@@ -1215,7 +1217,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Added `maxLines` and `textOverflow: "clip" | "ellipsis"` to the scene style schema.
-- Added `prepareTextLines()` in `@motionforge/core` so layout and renderers share clamping/ellipsis semantics.
+- Added `prepareTextLines()` in `@dojo-video-engine/core` so layout and renderers share clamping/ellipsis semantics.
 - Updated intrinsic text auto-height to respect bounded visible lines.
 - Updated Canvas2D text rendering to draw only the prepared visible lines.
 - Regenerated `packages/schema/scene.schema.json`.
@@ -1223,15 +1225,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema typecheck`
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/schema build`
-- `pnpm --filter @motionforge/core typecheck`
-- `pnpm --filter @motionforge/core test`
-- `pnpm --filter @motionforge/core build`
-- `pnpm --filter @motionforge/renderer-canvas2d typecheck`
-- `pnpm --filter @motionforge/renderer-canvas2d test`
-- `pnpm --filter @motionforge/renderer-canvas2d build`
+- `pnpm --filter @dojo-video-engine/schema typecheck`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/schema build`
+- `pnpm --filter @dojo-video-engine/core typecheck`
+- `pnpm --filter @dojo-video-engine/core test`
+- `pnpm --filter @dojo-video-engine/core build`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d typecheck`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d test`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d build`
 
 ### Notes
 
@@ -1258,24 +1260,24 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Moved the preset catalog/snippet/patch-example builder into `@motionforge/presets/catalog`.
+- Moved the preset catalog/snippet/patch-example builder into `@dojo-video-engine/presets/catalog`.
 - Kept the playground on the shared catalog through a local re-export and Vite alias.
-- Added a compact preset panel to MotionForge Studio with family filters, preset cards, snippet copy, patch copy, and patch apply.
+- Added a compact preset panel to Dojo Video Engine Studio with family filters, preset cards, snippet copy, patch copy, and patch apply.
 - Studio preset patches run through `applyScenePatch` and update the in-memory preview scene/JSON inspector.
 - Studio now exposes validated scene JSON before preview player creation finishes, so preset inspection remains usable even if media preview setup fails.
 - Marked PX4 complete in the preset explorer roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/cli typecheck`
-- `pnpm --filter @motionforge/cli test`
-- `pnpm --filter @motionforge/cli build`
-- `pnpm --filter @motionforge/playground typecheck`
-- `pnpm --filter @motionforge/playground test`
-- `pnpm --filter @motionforge/playground build`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/cli typecheck`
+- `pnpm --filter @dojo-video-engine/cli test`
+- `pnpm --filter @dojo-video-engine/cli build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
+- `pnpm --filter @dojo-video-engine/playground test`
+- `pnpm --filter @dojo-video-engine/playground build`
 - Browser smoke at `http://127.0.0.1:5173/`: opened Studio for a temp scene, selected Text, confirmed an `insertNode` patch, applied it, confirmed unique-id refresh and JSON update, selected Media Looks, confirmed a `setStyle` patch targeted the image node, and checked console error logs were empty.
 
 ### Notes
@@ -1295,9 +1297,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/playground typecheck`
-- `pnpm --filter @motionforge/playground test`
-- `pnpm --filter @motionforge/playground build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
+- `pnpm --filter @dojo-video-engine/playground test`
+- `pnpm --filter @dojo-video-engine/playground build`
 - Browser smoke at `http://localhost:5173/`: selected Text, confirmed an `insertNode` patch, applied it, confirmed the next patch refreshed to a unique id, selected Media Looks, confirmed a `setStyle` patch, and checked console error logs were empty.
 
 ### Notes
@@ -1308,19 +1310,19 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Moved preset gallery scene construction into `@motionforge/showcase` as `presetGalleryScenes` plus `findPresetGalleryScene()`.
+- Moved preset gallery scene construction into `@dojo-video-engine/showcase` as `presetGalleryScenes` plus `findPresetGalleryScene()`.
 - Slimmed `examples/generate-preset-gallery.mjs` so docs JSON is serialized from the shared showcase gallery source.
 - Added playground Preset Explorer "Preview gallery" action that loads the selected preset family's gallery scene into the canvas.
 - Marked PX1 and PX2 complete in the preset explorer roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/showcase test`
-- `pnpm --filter @motionforge/showcase typecheck`
-- `pnpm --filter @motionforge/showcase build`
+- `pnpm --filter @dojo-video-engine/showcase test`
+- `pnpm --filter @dojo-video-engine/showcase typecheck`
+- `pnpm --filter @dojo-video-engine/showcase build`
 - `pnpm presets:generate`
-- `pnpm --filter @motionforge/playground typecheck`
-- `pnpm --filter @motionforge/playground build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
+- `pnpm --filter @dojo-video-engine/playground build`
 - Browser smoke at `http://localhost:5173/`: selected Text in the explorer, clicked Preview gallery, confirmed the canvas switched to the 1600x900 text overlay gallery at frame 45, scene metadata updated, and console error logs were empty.
 
 ### Notes
@@ -1333,17 +1335,17 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added `docs/preset-explorer-roadmap.md` for the next preset discovery theme.
 - Added exported transition metadata through `transitionTemplates` and `transitionTemplateEntries`.
-- Added a playground Preset Explorer driven by `@motionforge/presets` metadata.
+- Added a playground Preset Explorer driven by `@dojo-video-engine/presets` metadata.
 - The explorer filters by preset family and shows key, category, description, and copyable TypeScript snippets.
 - Linked the preset explorer roadmap from the main roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets typecheck`
-- `pnpm --filter @motionforge/presets build`
-- `pnpm --filter @motionforge/playground typecheck`
-- `pnpm --filter @motionforge/playground build`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets build`
+- `pnpm --filter @dojo-video-engine/playground typecheck`
+- `pnpm --filter @dojo-video-engine/playground build`
 - Browser smoke at `http://localhost:5173/`: explorer rendered, transition family filter updated the list/snippet, copy fallback placed the snippet in the agent console, and console error logs were empty.
 
 ### Notes
@@ -1364,11 +1366,11 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Tested
 
 - `pnpm presets:generate`
-- `pnpm --filter @motionforge/golden run example examples/generated/presets/preset-subtitles.json docs/assets/presets/preset-subtitles.mp4 45`
-- `pnpm --filter @motionforge/golden run example examples/generated/presets/preset-text-overlays.json docs/assets/presets/preset-text-overlays.mp4 45`
-- `pnpm --filter @motionforge/golden run example examples/generated/presets/preset-media-looks.json docs/assets/presets/preset-media-looks.mp4 45`
-- `pnpm --filter @motionforge/golden run example examples/generated/presets/preset-clip-layouts.json docs/assets/presets/preset-clip-layouts.mp4 45`
-- `pnpm --filter @motionforge/golden run example examples/generated/presets/preset-transitions.json docs/assets/presets/preset-transitions.mp4 30`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-subtitles.json docs/assets/presets/preset-subtitles.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-text-overlays.json docs/assets/presets/preset-text-overlays.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-media-looks.json docs/assets/presets/preset-media-looks.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-clip-layouts.json docs/assets/presets/preset-clip-layouts.mp4 45`
+- `pnpm --filter @dojo-video-engine/golden run example examples/generated/presets/preset-transitions.json docs/assets/presets/preset-transitions.mp4 30`
 
 ### Notes
 
@@ -1395,7 +1397,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `clipLayout()` to `@motionforge/presets`.
+- Added `clipLayout()` to `@dojo-video-engine/presets`.
 - Added stable clip layout catalog metadata through `clipLayouts` and `clipLayoutEntries`.
 - Shipped eleven layout presets: fullscreen, contain, picture-in-picture, split screen, 2x2 grid cells, blurred background, and phone-safe vertical.
 - Added `transitionOverlay()` for full-frame transition nodes.
@@ -1405,8 +1407,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
 
 ### Notes
 
@@ -1416,7 +1418,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `mediaLook()` to `@motionforge/presets`.
+- Added `mediaLook()` to `@dojo-video-engine/presets`.
 - Added stable media look catalog metadata through `mediaLooks` and `mediaLookEntries`.
 - Shipped seven named filter/style presets:
   - `cleanProduct`
@@ -1431,8 +1433,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
 
 ### Notes
 
@@ -1442,7 +1444,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `textOverlay()` to `@motionforge/presets`.
+- Added `textOverlay()` to `@dojo-video-engine/presets`.
 - Added stable text overlay catalog metadata through `textOverlayTemplates` and `textOverlayTemplateEntries`.
 - Shipped seven overlay templates that compile to ordinary scene nodes:
   - `titleCard`
@@ -1458,8 +1460,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/presets test`
-- `pnpm --filter @motionforge/presets typecheck`
+- `pnpm --filter @dojo-video-engine/presets test`
+- `pnpm --filter @dojo-video-engine/presets typecheck`
 
 ### Notes
 
@@ -1486,13 +1488,13 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Reworked `docs/guides/getting-started.md` around the new `pnpm create motionforge` -> `motionforge dev src/video.ts` flow.
+- Reworked `docs/guides/getting-started.md` around the new `pnpm create dojo-video-engine` -> `dojo-video-engine dev src/video.ts` flow.
 - Added focused programmer guides for:
   - authoring API
   - animation and presets
   - media assets
   - preview/export APIs
-  - MotionForge vs Remotion positioning
+  - Dojo Video Engine vs Remotion positioning
   - agent-generated scenes and patch loops
 - Added `docs/guides/README.md` as the guide index.
 - Linked the guide path from the root README.
@@ -1500,8 +1502,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/cli test`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/cli test`
 - Markdown link/path sanity review with `rg` across README, DX roadmap, and `docs/guides`.
 
 ### Notes
@@ -1512,29 +1514,29 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `publicAsset()` to `@motionforge/authoring` for the supported local asset convention: files under `public/assets` are referenced as `/assets/...` in emitted scene JSON.
+- Added `publicAsset()` to `@dojo-video-engine/authoring` for the supported local asset convention: files under `public/assets` are referenced as `/assets/...` in emitted scene JSON.
 - Added typed authoring asset helpers: `imageAsset()`, `videoAsset()`, `audioAsset()`, and `defineAssets()`.
 - Updated `image()`, `videoClip()`, and `audioTrack()` so callers can pass either an existing asset id or a typed asset object; typed asset objects are auto-collected into `scene.assets`.
-- Updated `create-motionforge` to generate `public/assets/logo.svg` and a starter scene that uses `imageAsset()` plus `publicAsset()`.
+- Updated `create-dojo-video-engine` to generate `public/assets/logo.svg` and a starter scene that uses `imageAsset()` plus `publicAsset()`.
 - Documented where programmers put asset files and how those paths map to browser-fetchable scene asset URLs.
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring build`
-- `pnpm --filter create-motionforge test`
-- `pnpm --filter create-motionforge typecheck`
-- `pnpm --filter create-motionforge build`
-- Generated-project smoke in `/tmp/motionforge-dx5-smoke`, confirming:
-  - `create-motionforge` emits `public/assets/logo.svg` and `src/video.ts`
-  - `motionforge validate src/video.ts` passes when the local package link is available
-  - `motionforge print src/video.ts` emits `assets.logo.src` as `/assets/logo.svg`
-  - `motionforge dev src/video.ts --host 127.0.0.1 --port 5189` serves `/assets/logo.svg` and `/__motionforge/scene`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring build`
+- `pnpm --filter create-dojo-video-engine test`
+- `pnpm --filter create-dojo-video-engine typecheck`
+- `pnpm --filter create-dojo-video-engine build`
+- Generated-project smoke in `/tmp/dojo-video-engine-dx5-smoke`, confirming:
+  - `create-dojo-video-engine` emits `public/assets/logo.svg` and `src/video.ts`
+  - `dojo-video-engine validate src/video.ts` passes when the local package link is available
+  - `dojo-video-engine print src/video.ts` emits `assets.logo.src` as `/assets/logo.svg`
+  - `dojo-video-engine dev src/video.ts --host 127.0.0.1 --port 5189` serves `/assets/logo.svg` and `/__dojoVideoEngine/scene`
 
 ### Notes
 
-- The runtime remains intentionally explicit: MotionForge scene JSON stores asset ids and fetchable `src` strings. There is no hidden resolver attached to a project directory.
+- The runtime remains intentionally explicit: Dojo Video Engine scene JSON stores asset ids and fetchable `src` strings. There is no hidden resolver attached to a project directory.
 - Outside-the-monorepo `file:` installs of unpublished workspace packages still fail on internal `workspace:*` dependencies. This is the same pre-publish limitation recorded in DX3; smoke validation used local symlinks to simulate installed packages.
 - Large video/audio files still load as whole blobs through the existing renderer/export path. Streaming sources remain a future runtime improvement.
 
@@ -1542,37 +1544,37 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `motionforge dev <scene-module>` to `@motionforge/cli`.
-- Implemented a CLI-hosted MotionForge Studio using Vite middleware and a virtual browser client module.
-- The Studio loads a local scene module through the existing CLI loader, validates it through `@motionforge/schema`, renders via `@motionforge/player`, and exposes play/pause, frame scrubbing, reload, JSON inspection, and browser MP4 export through `@motionforge/export`.
+- Added `dojo-video-engine dev <scene-module>` to `@dojo-video-engine/cli`.
+- Implemented a CLI-hosted Dojo Video Engine Studio using Vite middleware and a virtual browser client module.
+- The Studio loads a local scene module through the existing CLI loader, validates it through `@dojo-video-engine/schema`, renders via `@dojo-video-engine/player`, and exposes play/pause, frame scrubbing, reload, JSON inspection, and browser MP4 export through `@dojo-video-engine/export`.
 - Split scene-module loading into `packages/cli/src/loader.ts` so CLI commands and Studio share the loader without an import cycle.
-- Added runtime aliasing so the Studio client resolves MotionForge player/export/schema/renderer packages from the CLI package graph rather than requiring generated projects to depend on every runtime package directly.
-- Simplified the `create-motionforge` starter so projects contain only `src/video.ts`, `package.json`, and `tsconfig.json`; `pnpm dev` now runs `motionforge dev src/video.ts`.
+- Added runtime aliasing so the Studio client resolves Dojo Video Engine player/export/schema/renderer packages from the CLI package graph rather than requiring generated projects to depend on every runtime package directly.
+- Simplified the `create-dojo-video-engine` starter so projects contain only `src/video.ts`, `package.json`, and `tsconfig.json`; `pnpm dev` now runs `dojo-video-engine dev src/video.ts`.
 - Updated package docs, the root README, and the DX roadmap for the new first-run path.
 
 ### Tested
 
-- `pnpm --filter @motionforge/cli test`
-- `pnpm --filter @motionforge/cli typecheck`
-- `pnpm --filter @motionforge/cli build`
-- `pnpm --filter create-motionforge test`
-- `pnpm --filter create-motionforge typecheck`
-- `pnpm --filter create-motionforge build`
-- Built-command smoke with `node packages/cli/dist/bin/motionforge.js dev examples/generated/intro.json --host 127.0.0.1 --port 5188`, confirming the Studio HTML, `/__motionforge/scene`, and transformed virtual client load successfully.
+- `pnpm --filter @dojo-video-engine/cli test`
+- `pnpm --filter @dojo-video-engine/cli typecheck`
+- `pnpm --filter @dojo-video-engine/cli build`
+- `pnpm --filter create-dojo-video-engine test`
+- `pnpm --filter create-dojo-video-engine typecheck`
+- `pnpm --filter create-dojo-video-engine build`
+- Built-command smoke with `node packages/cli/dist/bin/dojo-video-engine.js dev examples/generated/intro.json --host 127.0.0.1 --port 5188`, confirming the Studio HTML, `/__dojoVideoEngine/scene`, and transformed virtual client load successfully.
 
 ### Notes
 
 - Hot module reload for arbitrary scene module edits is not automatic yet; the Studio ships a reliable `Reload scene` button. File-watcher-driven reload can be added after the asset-path slice if it proves useful.
 - Browser visual smoke through the in-app browser could not be completed because the browser helper in this session did not expose the expected tab/documentation methods. The Studio server and transformed client were verified directly with HTTP checks.
 
-## 2026-06-17 (DX slice DX3: create-motionforge starter)
+## 2026-06-17 (DX slice DX3: create-dojo-video-engine starter)
 
 ### Changed
 
-- Added `create-motionforge`, a publishable starter generator with a `create-motionforge` bin.
-- The generator creates a minimal Vite + TypeScript MotionForge project with:
-  - `src/video.ts` authored through `@motionforge/authoring`
-  - `src/main.ts` preview/export bootstrap using `@motionforge/player` and `@motionforge/export`
+- Added `create-dojo-video-engine`, a publishable starter generator with a `create-dojo-video-engine` bin.
+- The generator creates a minimal Vite + TypeScript Dojo Video Engine project with:
+  - `src/video.ts` authored through `@dojo-video-engine/authoring`
+  - `src/main.ts` preview/export bootstrap using `@dojo-video-engine/player` and `@dojo-video-engine/export`
   - `index.html`
   - `src/style.css`
   - scripts for `dev`, `validate`, `print`, and `build`
@@ -1581,23 +1583,23 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter create-motionforge test`
-- `pnpm --filter create-motionforge typecheck`
-- `pnpm --filter create-motionforge build`
-- Manual generator smoke with `/tmp/motionforge-create-smoke`, confirming project files and package scripts/dependencies.
+- `pnpm --filter create-dojo-video-engine test`
+- `pnpm --filter create-dojo-video-engine typecheck`
+- `pnpm --filter create-dojo-video-engine build`
+- Manual generator smoke with `/tmp/dojo-video-engine-create-smoke`, confirming project files and package scripts/dependencies.
 
 ### Notes
 
-- The generated project uses public semver dependency ranges such as `@motionforge/authoring@^0.3.0`. Full outside-the-monorepo install/preview validation should be repeated after packages are published or packed, because local `file:` installs of unpublished workspace packages still expose their internal `workspace:*` dependencies.
+- The generated project uses public semver dependency ranges such as `@dojo-video-engine/authoring@^0.3.0`. Full outside-the-monorepo install/preview validation should be repeated after packages are published or packed, because local `file:` installs of unpublished workspace packages still expose their internal `workspace:*` dependencies.
 - The starter is intentionally text-only. Local asset path resolution belongs to DX5.
 
 ## 2026-06-17 (DX slice DX2: minimal CLI)
 
 ### Changed
 
-- Added `@motionforge/cli` with a `motionforge` bin entry.
-- Implemented `motionforge validate <scene-module>` for `.json`, JavaScript, and TypeScript scene modules.
-- Implemented `motionforge print <scene-module>` to validate then print normalized scene JSON.
+- Added `@dojo-video-engine/cli` with a `dojo-video-engine` bin entry.
+- Implemented `dojo-video-engine validate <scene-module>` for `.json`, JavaScript, and TypeScript scene modules.
+- Implemented `dojo-video-engine print <scene-module>` to validate then print normalized scene JSON.
 - Supported default exports, named `scene` exports, functions returning scenes, and promises resolving to scenes.
 - Added CLI tests for valid JSON scenes, JavaScript module printing, invalid-scene diagnostics, TypeScript module loading, and usage errors.
 - Updated the root README with the CLI validation/printing commands.
@@ -1605,16 +1607,16 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/cli test`
-- `pnpm --filter @motionforge/cli typecheck`
-- `pnpm --filter @motionforge/cli build`
-- `pnpm --filter @motionforge/authoring test`
+- `pnpm --filter @dojo-video-engine/cli test`
+- `pnpm --filter @dojo-video-engine/cli typecheck`
+- `pnpm --filter @dojo-video-engine/cli build`
+- `pnpm --filter @dojo-video-engine/authoring test`
 - `pnpm typecheck`
 - `pnpm build`
 
 ### Notes
 
-- `motionforge still` and `motionforge render` are intentionally not shipped in this slice. The first CLI release is validation/inspection only so the dependency and runtime behavior stay reliable.
+- `dojo-video-engine still` and `dojo-video-engine render` are intentionally not shipped in this slice. The first CLI release is validation/inspection only so the dependency and runtime behavior stay reliable.
 - The CLI TypeScript loader uses `tsx/esm`, so source-level CLI tests require workspace dependency links from `pnpm install`. The packaged CLI includes `tsx` as a dependency.
 - The first full `pnpm typecheck` attempt ran before Next regenerated `apps/chat/.next/types`; after `pnpm build`, the same command passed.
 - `pnpm build` still reports the existing playground warnings from `lottie-web` eval usage and large chunks; the build exits successfully.
@@ -1623,19 +1625,19 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added `docs/dx-roadmap.md`, an executable roadmap for making MotionForge easier for programmers to author with: authoring helpers, CLI, starter, studio, asset path, and docs.
-- Added `@motionforge/authoring`, a seconds-first TypeScript authoring package that compiles friendly scene helpers into normal validated MotionForge `Scene` JSON.
+- Added `docs/dx-roadmap.md`, an executable roadmap for making Dojo Video Engine easier for programmers to author with: authoring helpers, CLI, starter, studio, asset path, and docs.
+- Added `@dojo-video-engine/authoring`, a seconds-first TypeScript authoring package that compiles friendly scene helpers into normal validated Dojo Video Engine `Scene` JSON.
 - Added timing helpers: `seconds()`, `frames()`, `time()`, `toFrames()`, and `toSeconds()`.
 - Added scene/node helpers: `makeScene()`, `bg()`, `box()`, `title()`, `textBlock()`, `textNode()`, `image()`, `videoClip()`, and `audioTrack()`.
-- Re-exported safe motion presets from `@motionforge/presets` so beginner examples can use one import.
-- Updated the root README package table and quickstart to lead with `@motionforge/authoring` before the lower-level builder API.
+- Re-exported safe motion presets from `@dojo-video-engine/presets` so beginner examples can use one import.
+- Updated the root README package table and quickstart to lead with `@dojo-video-engine/authoring` before the lower-level builder API.
 - Linked the DX roadmap from the main roadmap.
 
 ### Tested
 
-- `pnpm --filter @motionforge/authoring test`
-- `pnpm --filter @motionforge/authoring typecheck`
-- `pnpm --filter @motionforge/authoring build`
+- `pnpm --filter @dojo-video-engine/authoring test`
+- `pnpm --filter @dojo-video-engine/authoring typecheck`
+- `pnpm --filter @dojo-video-engine/authoring build`
 - `pnpm typecheck`
 - `pnpm build`
 
@@ -1659,9 +1661,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat build`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat build`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 - Chrome smoke against a clean dev server on `http://127.0.0.1:5198`, confirming the editor, Assets panel, generated PNG upload, `ready` badge, file metadata, and Add action render.
 
 ### Notes
@@ -1684,9 +1686,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Chrome smoke against a clean dev server on `http://127.0.0.1:5197`, confirming the editor and timeline scrub area render with no page errors.
 
 ### Notes
@@ -1712,11 +1714,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/agent-eval test`
-- `pnpm --filter @motionforge/agent-eval typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/agent-eval test`
+- `pnpm --filter @dojo-video-engine/agent-eval typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Live `/api/chat` smoke on `http://127.0.0.1:5196` for the north-star two-video prompt, confirming the local fallback still returns a 3-step `mediaPlan` and 510-frame scene.
 
 ### Notes
@@ -1738,12 +1740,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/schema typecheck`
-- `pnpm --filter @motionforge/schema build`
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/schema typecheck`
+- `pnpm --filter @dojo-video-engine/schema build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Chrome smoke against a clean dev server on `http://127.0.0.1:5195`, confirming the editor renders with the Inspector rail and no page errors.
 
 ### Notes
@@ -1764,9 +1766,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Chrome smoke against a clean dev server on `http://127.0.0.1:5194`, confirming the editor renders with the Assets rail and no page errors.
 - Live `/api/chat` smoke on `http://127.0.0.1:5194` for the north-star two-video prompt, confirming a 3-step `mediaPlan` and 510-frame scene.
 
@@ -1788,8 +1790,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 
 ### Notes
 
@@ -1801,7 +1803,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added a typed chat media manifest that carries uploaded asset ids, renderable `sceneAssetId`s, object URL `src`s, labels, aliases, filenames, dimensions, durations, and scene usage state into `/api/chat`.
 - Added server-side manifest sanitization before prompt construction.
-- Expanded the MotionForge system prompt with uploaded-media rules: use only manifest assets, emit `setAsset` before `insertNode` for unused assets, choose the correct node type, and map source trims/timing through `videoStartTime`, `audioStartTime`, `from`, and `duration`.
+- Expanded the Dojo Video Engine system prompt with uploaded-media rules: use only manifest assets, emit `setAsset` before `insertNode` for unused assets, choose the correct node type, and map source trims/timing through `videoStartTime`, `audioStartTime`, `from`, and `duration`.
 - Included the media manifest in the user prompt for easier model debugging.
 - Added `@` mention and alias helpers for parsing `@Video 1[00:05-00:10]`, resolving natural aliases like `video one`, and generating mention tokens.
 - Added composer asset chips that append `@Video 1`-style mentions so users can reference files without guessing exact names.
@@ -1809,8 +1811,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 
 ### Notes
 
@@ -1829,8 +1831,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 
 ### Notes
 
@@ -1848,9 +1850,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5190`: opened the new Assets rail panel, confirmed the empty upload state rendered, and verified no browser console errors.
 
 ### Notes
@@ -1888,9 +1890,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5188`: loaded **Animated Chart**, selected the title layer, dragged its preview outline, confirmed the last patch was `{"op":"setStyle","id":"title","style":{"left":174,"top":97}}`, confirmed Undo restored the original outline position, and verified no current-tab browser console errors.
 
 ### Notes
@@ -1910,9 +1912,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5187`: loaded **Animated Chart**, selected the title layer and confirmed a canvas-space outline/label, selected the later footnote layer and confirmed `hidden at playhead` feedback, and verified no browser console errors.
 
 ### Notes
@@ -1931,9 +1933,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5186`: loaded **Animated Chart**, selected the title layer at playhead frame `36`, split it into `title-a` and `title-b`, confirmed the last patch used `insertNode`/`insertNode`/`removeNode`, and verified no browser console errors.
 
 ### Notes
@@ -1952,9 +1954,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5185`: loaded **Animated Chart**, dragged the title block's right-edge handle shorter, confirmed the last patch was `{"op":"retime","id":"title","duration":117}`, and verified no browser console errors.
 
 ### Notes
@@ -1973,9 +1975,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5184`: loaded **Animated Chart**, shortened the title layer through the Inspector to create a visible short block, dragged that title block from frame `0` to frame `20`, confirmed the last patch was `{"op":"retime","id":"title","from":20}`, and verified no browser console errors.
 
 ### Notes
@@ -1994,9 +1996,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5183`: loaded **Product Launch**, clicked the timeline scrub gutter near the end, confirmed the range value moved from frame `36` to `143` and the displayed time changed to `00:04`, with no browser console errors reported.
 
 ### Notes
@@ -2016,9 +2018,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5182` desktop `1280x720`: confirmed rail/sidebar/editor stayed in desktop columns, empty copy rendered, and no horizontal overflow or browser console errors appeared.
 - Browser smoke test on `http://localhost:5182` mobile `390x844`: confirmed stacked rail/panel/editor layout, no horizontal overflow, loaded **Product Launch**, saw a `1080x1920` scene with `6 layers`, populated timeline tracks, and no browser console errors.
 
@@ -2038,9 +2040,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5181`: confirmed the empty preview shows **No scene loaded** with Assistant/Examples guidance, the disabled Export button explains the no-scene blocker, loading **Product Launch** shows a `1080x1920` scene with `6 layers`, the timeline reports export readiness/fallback copy, and no browser console errors were reported.
 
 ### Notes
@@ -2060,9 +2062,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5180`: opened Examples, loaded **Product Launch** from Starter templates, confirmed the dialog closed into a `1080x1920` scene with `6 layers` and populated timeline tracks, and verified no browser console errors were reported.
 
 ### Notes
@@ -2074,16 +2076,16 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Refactored the local first-scene generator to use `@motionforge/presets` `timeline()` choreography with `fadeUp`, `popIn`, and `slideIn`.
+- Refactored the local first-scene generator to use `@dojo-video-engine/presets` `timeline()` choreography with `fadeUp`, `popIn`, and `slideIn`.
 - First drafts now share the same preset vocabulary as engine examples, giving the empty/local fallback path designed entrance motion instead of hand-built one-off keyframes.
 - Subtitle and caption nodes now start with the scene and let timeline keyframe holds control their entrance timing, which keeps layer timing simple while preserving staggered visual motion.
 - Updated the roadmap to mark the Week 5 first-touch quality foundation complete while leaving richer template/suggestion-chip expansion as follow-up polish.
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat build`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat build`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 - Browser smoke test on `http://localhost:5179`: submitted **Create a kinetic typography scene saying SHIP THE DEMO.**, confirmed the local fallback created a `1080x1920` scene with `6 layers`, and verified no browser console errors were reported.
 
 ### Notes
@@ -2102,9 +2104,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5178`: loaded README scene **Animated Chart**, selected the title text layer, edited Color to `#14b8a6`, changed Align to `right`, confirmed both emitted `setStyle` patches, and verified no browser console errors were reported.
 
 ### Notes
@@ -2121,9 +2123,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat build`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat build`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 - Browser smoke test on `http://localhost:5177`: loaded README scene **Animated Chart**, edited Inspector `Left` to `99`, confirmed Undo restored the prior value, Redo reapplied `99`, and verified no browser console errors were reported.
 
 ### Notes
@@ -2135,14 +2137,14 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Added a small inspector patch helper that maps text, local timing, geometry, and opacity edits to RFC 0001 scene patches (`setText`, `retime`, `setStyle`).
-- The Inspector panel now exposes editable controls for text nodes, start/duration, left/top/width/height, and opacity; commits flow through `applyScenePatch` against the canonical MotionForge scene.
+- The Inspector panel now exposes editable controls for text nodes, start/duration, left/top/width/height, and opacity; commits flow through `applyScenePatch` against the canonical Dojo Video Engine scene.
 - Layer projection now carries text and opacity so the inspector can show real editable values, and the editor displays the latest applied patch or a validation error for developer feedback.
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat build`
-- `pnpm --filter @motionforge/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat build`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
 - Browser smoke test on `http://localhost:5176`: opened Examples, loaded README scene **Animated Chart**, switched to Inspector, edited `Left` to `99`, confirmed the app emitted a `setStyle` patch with `left: 99`, and verified no browser console errors were reported.
 
 ### Notes
@@ -2160,9 +2162,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5175`: opened Examples, selected README scene **Animated Chart**, confirmed the modal closed, the canvas resized to `1280x720`, layers/tracks populated, and no browser console errors were reported.
 
 ### Notes
@@ -2180,9 +2182,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Tested
 
-- `pnpm --filter @motionforge/chat test`
-- `pnpm --filter @motionforge/chat typecheck`
-- `pnpm --filter @motionforge/chat build`
+- `pnpm --filter @dojo-video-engine/chat test`
+- `pnpm --filter @dojo-video-engine/chat typecheck`
+- `pnpm --filter @dojo-video-engine/chat build`
 - Browser smoke test on `http://localhost:5175`: editor workspace, preview canvas, Assistant panel, and Tracks area rendered with no browser console errors.
 
 ### Notes
@@ -2195,7 +2197,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Added a pure editor projection module for the chat app: `deriveEditorLayers(scene)` flattens scene nodes into document-order layers with parent/depth metadata, absolute visible timing, labels, z-index, and numeric bounds where they can be derived safely.
 - Added a collapsible chat panel to the reference app so the preview/edit area can stand on its own while preserving the session.
-- Added the first read-only manual edit surface: a Layers panel and Inspector panel driven from the canonical MotionForge `Scene`. Selection is UI-only in this slice; no manual mutation yet.
+- Added the first read-only manual edit surface: a Layers panel and Inspector panel driven from the canonical Dojo Video Engine `Scene`. Selection is UI-only in this slice; no manual mutation yet.
 
 ### Tested
 
@@ -2219,15 +2221,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Notes
 
-- Core architectural decision: MotionForge `Scene` remains the canonical document. Chat edits and manual UI edits both apply RFC 0001 scene patches.
-- Dojo remains a product-design and selective-code reference, not the rendering core or canonical data model for MotionForge.
+- Core architectural decision: Dojo Video Engine `Scene` remains the canonical document. Chat edits and manual UI edits both apply RFC 0001 scene patches.
+- Dojo remains a product-design and selective-code reference, not the rendering core or canonical data model for Dojo Video Engine.
 
 ## 2026-06-12 (phase 2 week 1: intrinsic text auto-height + launch surface)
 
 ### Changed
 
 - **Intrinsic text auto-height** (the sharpest documented edge for LLM-generated scenes, phase-2 week-1 slice): a text node without an explicit `height` is now exactly as tall as its wrapped line count × `lineHeight` instead of filling its parent. Top-anchored absolute text starts at `top`; bottom-anchored text sits its own height above `bottom`; absolute nodes with both `top` and `bottom` keep the inset-constrained height; flex parents' size assignments are respected (`sizedByParent`).
-- **Layout and render now share one text measurement**: `wrapTextLines` (+ grapheme breaking) moved from the renderer into `@motionforge/core` (renderer re-exports it); `layoutScene(scene, { measureTextLine })` accepts a measurer, and `renderStill` passes one backed by its canvas context (same font string + `letterSpacing` as `drawText`), so intrinsic boxes wrap exactly like painted text. Without a measurer (plain Node), the 0.58 × fontSize character heuristic stands in — now wrap-aware for flex height estimates too (one slot per rendered line, not per `\n`).
+- **Layout and render now share one text measurement**: `wrapTextLines` (+ grapheme breaking) moved from the renderer into `@dojo-video-engine/core` (renderer re-exports it); `layoutScene(scene, { measureTextLine })` accepts a measurer, and `renderStill` passes one backed by its canvas context (same font string + `letterSpacing` as `drawText`), so intrinsic boxes wrap exactly like painted text. Without a measurer (plain Node), the 0.58 × fontSize character heuristic stands in — now wrap-aware for flex height estimates too (one slot per rendered line, not per `\n`).
 - Golden harness: probes gained an `absent` option (pass only when _no_ pixel matches) so fixtures can assert text does **not** paint somewhere; new `text-auto-height` probe fixture covers top-anchored wrap, bottom-anchored subtitle placement, and no-pixels-below-the-intrinsic-box.
 - Launch surface: GitHub Pages deploy workflow for the playground (`.github/workflows/deploy-playground.yml`) + `base: "./"` Vite config (with `passWithNoTests` to keep `pnpm -r test` green); getting-started guide fixed (`tiktokCaptions` returns one container node — `push(captionTrack)`, not spread); `docs/roadmap.md` gained the phase-2 plan; scene-format and llms.txt rewritten for the new auto-height contract (the "give absolute text an explicit height" hard rule is gone).
 
@@ -2280,7 +2282,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Remaining manual steps (maintainer credentials)
 
 1. Push to GitHub; confirm CI green and badge URLs.
-2. Reserve/confirm the `@motionforge` npm scope; `pnpm publish -r --access public` from a clean checkout; tag `v0.3.0`.
+2. Reserve/confirm the `@dojo-video-engine` npm scope; `pnpm publish -r --access public` from a clean checkout; tag `v0.3.0`.
 3. Deploy the playground (GitHub Pages or similar) and link it from the README.
 4. Eared check of the Audio Sync Pulse scene in a real browser tab.
 5. Optional first eval baseline: run `tools/agent-eval` against a real endpoint.
@@ -2289,8 +2291,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: new asset type `"lottie"` and node type `lottie` (requires `assetId`; `playbackRate` now validates on video **and** lottie nodes with an updated message; `videoStartTime` stays video-only).
-- `@motionforge/renderer-canvas2d`: lottie assets load through `resolveAssets()` (fetch JSON → determinism guards → lottie-web canvas player with `autoplay: false`); `prepareFrame()` seeks each active lottie node via `goToAndStop(lottieSourceFrame(...), true)` and stages a per-node canvas copy (two nodes can share one asset at different frames); `renderStill()` draws staged frames through the shared objectFit path with the same stale-frame errors video has; `disposeAssets()` destroys players.
+- `@dojo-video-engine/schema`: new asset type `"lottie"` and node type `lottie` (requires `assetId`; `playbackRate` now validates on video **and** lottie nodes with an updated message; `videoStartTime` stays video-only).
+- `@dojo-video-engine/renderer-canvas2d`: lottie assets load through `resolveAssets()` (fetch JSON → determinism guards → lottie-web canvas player with `autoplay: false`); `prepareFrame()` seeks each active lottie node via `goToAndStop(lottieSourceFrame(...), true)` and stages a per-node canvas copy (two nodes can share one asset at different frames); `renderStill()` draws staged frames through the shared objectFit path with the same stale-frame errors video has; `disposeAssets()` destroys players.
 - Determinism guards per the spike: `validateLottieDocument()` (exported, pure) rejects documents with JS expressions (string-valued `"x"` — may call `Date`/`random`) or image layers/external images; `lottieSourceFrame()` (exported, pure) clamps to `op − ip − 1` because lottie-web does not clamp out-of-range seeks.
 - **lottie-web is an optional peer dependency** of the renderer, dynamically imported only when a scene actually contains a lottie asset; missing install produces an actionable error. Scenes without Lottie pay zero bytes.
 - Docs: scene-format Lottie section, llms.txt node-type entry, spike doc flipped to implemented.
@@ -2327,7 +2329,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- New repeatable benchmark: `pnpm --filter @motionforge/golden run benchmark [width height fps seconds]` — `window.runGoldenBenchmark` in the harness synthesizes full-motion footage at the target size (stage 1: pure render+encode), then exports composites decoding it through one and two video nodes (stages 2–3), reporting ms/frame, output size, and JS heap per stage. Results table in `docs/benchmarks.md`.
+- New repeatable benchmark: `pnpm --filter @dojo-video-engine/golden run benchmark [width height fps seconds]` — `window.runGoldenBenchmark` in the harness synthesizes full-motion footage at the target size (stage 1: pure render+encode), then exports composites decoding it through one and two video nodes (stages 2–3), reporting ms/frame, output size, and JS heap per stage. Results table in `docs/benchmarks.md`.
 - Measured (Apple Silicon, headless Chromium, AVC): 1080p 30 fps two-decoder export at **29 ms/frame — a 30 s scene exports in 26 s, faster than realtime**; vertical 1080×1920 has the same profile; heap flat (≤ 46 MiB) from 300 to 900 frames.
 
 ### Tested
@@ -2344,7 +2346,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/presets` gains `timeline()` — the GSAP extraction without GSAP (license + runtime philosophy ruled the library out; the timeline/stagger/position vocabulary is the part worth having). Pure builder: `.add(id, preset, { at | after: id, overlap, gap })`, `.stagger(ids, preset | (index) => preset, { every })`, `.compile()` → per-node keyframe lists, `.compileToPatch()` → ready-to-apply RFC 0001 `setAnimations` ops, `.durationInFrames`.
+- `@dojo-video-engine/presets` gains `timeline()` — the GSAP extraction without GSAP (license + runtime philosophy ruled the library out; the timeline/stagger/position vocabulary is the part worth having). Pure builder: `.add(id, preset, { at | after: id, overlap, gap })`, `.stagger(ids, preset | (index) => preset, { every })`, `.compile()` → per-node keyframe lists, `.compileToPatch()` → ready-to-apply RFC 0001 `setAnimations` ops, `.durationInFrames`.
 - Semantics: entries default to starting when the previous one ends; offsets compile to frame-0 holds of each preset's first value, so an entrance's held `opacity: 0` keeps the node invisible until its slot — choreography never retimes nodes. Negative computed starts clamp to 0 (GSAP behavior); duplicate ids, unknown `after` targets, and negative nudges throw actionable errors.
 - `llms.txt` hard rule added: never hand-compute cross-node frame offsets — use `timeline()`. Presets README documents the API.
 
@@ -2403,14 +2405,14 @@ This is the living project log. Every meaningful implementation slice should rec
 - Week 3 is now complete: the golden harness writes visual artifacts for exact-fixture failures.
 - `pnpm golden:update` now emits a committed PNG baseline beside each exact snapshot JSON in `fixtures/goldens/`.
 - `pnpm golden:test` still compares exact frames by hash, but on mismatch it writes ignored artifacts under `fixtures/goldens/__diffs__/`: `<fixture>.received.png` and, when a baseline PNG exists, `<fixture>.diff.png` with changed pixels highlighted red.
-- Roadmap wording tightened so motionforge remains explicitly independent/open-source first; downstream consumers are reference inputs, not roadmap owners.
-- Two new prompt-shaped showcase scenes in `@motionforge/showcase` (now five total): **Launch Info Display** (animated panels, scan lines, countdown text, progress motion) and **Timed Text Overlay** (a written timing prompt mapped to frame-accurate text nodes). README/showcase/examples docs updated with their posters.
-- Review fixes before commit: commercial branding scrubbed from the new showcase scene/docs (`motionforge.dev` instead; node id renamed; posters and generated JSON re-rendered and visually verified), and `examples/generated/*.mp4` added to `.gitignore` per the documented rendered-MP4 convention.
+- Roadmap wording tightened so dojo-video-engine remains explicitly independent/open-source first; downstream consumers are reference inputs, not roadmap owners.
+- Two new prompt-shaped showcase scenes in `@dojo-video-engine/showcase` (now five total): **Launch Info Display** (animated panels, scan lines, countdown text, progress motion) and **Timed Text Overlay** (a written timing prompt mapped to frame-accurate text nodes). README/showcase/examples docs updated with their posters.
+- Review fixes before commit: commercial branding scrubbed from the new showcase scene/docs (`dojo-video-engine.dev` instead; node id renamed; posters and generated JSON re-rendered and visually verified), and `examples/generated/*.mp4` added to `.gitignore` per the documented rendered-MP4 convention.
 
 ### Tested
 
-- `pnpm --filter @motionforge/golden typecheck`
-- `pnpm --filter @motionforge/golden build`
+- `pnpm --filter @dojo-video-engine/golden typecheck`
+- `pnpm --filter @dojo-video-engine/golden build`
 - `pnpm golden:update`
 - `pnpm golden:test` (34 checks green post-review)
 - Deliberately changed one snapshot hash and verified the failure message included the received/diff artifact paths, then restored the snapshot and removed the ignored artifacts. Re-verified independently during review: `__diffs__/opacity-keyframe.received.png` + `.diff.png` written, paths in the failure output.
@@ -2425,7 +2427,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - New private tool `tools/agent-eval` (RFC 0001's harness): generate and edit suites scored **mechanically** — `validateScene`/`applyScenePatch` are the judge, plus per-case structural assertions including the don't-break-the-rest check (untouched nodes must stay byte-identical). No LLM judging.
-- Runner (`pnpm --filter @motionforge/agent-eval run eval`) talks to any OpenAI-compatible chat endpoint via `EVAL_BASE_URL`/`EVAL_API_KEY`/`EVAL_MODEL`, with `llms.txt` as the system prompt at temperature 0; `--suite`/`--case` filters. Exits non-zero on failures so it can gate prompt changes.
+- Runner (`pnpm --filter @dojo-video-engine/agent-eval run eval`) talks to any OpenAI-compatible chat endpoint via `EVAL_BASE_URL`/`EVAL_API_KEY`/`EVAL_MODEL`, with `llms.txt` as the system prompt at temperature 0; `--suite`/`--case` filters. Exits non-zero on failures so it can gate prompt changes.
 - `extractJson()` tolerates fenced/prose-wrapped replies (what models actually emit); `scoreReply()` is pure.
 - Seven seed cases: three generate (minimal title, sequenced sections, caption styling) and four edit (resize with collateral-damage check, retime, pop-in animation, guarded removal).
 
@@ -2443,7 +2445,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- **Plan re-scope:** downstream-editor integration dropped from the roadmap (the maintainer's products consume motionforge on their own schedule); weeks 3–5 now target the open-source project itself — agent loop tangibility, capabilities, robustness, launch surface.
+- **Plan re-scope:** downstream-editor integration dropped from the roadmap (the maintainer's products consume dojo-video-engine on their own schedule); weeks 3–5 now target the open-source project itself — agent loop tangibility, capabilities, robustness, launch surface.
 - Playground gains an **agent console**: paste a scene document or a patch op list, apply it through the exact public APIs an agent uses (`validateScene` / `applyScenePatch`), watch the preview update, read the same errors an agent reads. Plus one-click "Copy scene JSON" for the copy → prompt → paste loop. This is the chat loop minus the LLM.
 - Playground refactor: scene loading split into `loadScene(showcaseEntry)` and `loadSceneDoc(anySceneDoc)`, so patched/custom documents share the full asset/player/export lifecycle. Export now exports the _current_ (possibly patched) document.
 - Patch error display no longer double-prefixes op indexes (messages already carry them).
@@ -2463,15 +2465,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/export`: the internal mixed-track builder is now public as `mixSceneAudio(scene, assets, startFrame, endFrame)` so preview plays the exact mix the export muxes.
-- `@motionforge/player`: scenes with audible nodes get sound during preview.
+- `@dojo-video-engine/export`: the internal mixed-track builder is now public as `mixSceneAudio(scene, assets, startFrame, endFrame)` so preview plays the exact mix the export muxes.
+- `@dojo-video-engine/player`: scenes with audible nodes get sound during preview.
   - `AudioPreview` interface + `WebAudioPreview` implementation: the scene mixes once into a cached `AudioBuffer`; play/seek restart one `AudioBufferSourceNode` at an offset (no re-mixing). `AudioContext` is created lazily inside `play()` (user gesture → autoplay-safe); capability-gated, silent fallback.
   - Audio is the master clock: ticks re-anchor the frame clock to the audio position past one frame of drift. Loop wraps restart the source; `ended` stops it; `dispose()` closes the context.
   - `audio` option: omit for the default, pass an `AudioPreview` to substitute (how tests drive it), or `false` to disable.
 
 ### Tested
 
-- `pnpm --filter @motionforge/player test` (15 tests; 4 new with a recording fake: start-at-scene-time/stop-on-pause/no-start-while-paused-seek, mid-playback seek restarts at the new offset, drift re-anchor snaps the frame clock to the audio frame, inaudible scenes never attach audio)
+- `pnpm --filter @dojo-video-engine/player test` (15 tests; 4 new with a recording fake: start-at-scene-time/stop-on-pause/no-start-while-paused-seek, mid-playback seek restarts at the new offset, drift re-anchor snaps the frame clock to the audio frame, inaudible scenes never attach audio)
 - Playwright playground smoke re-run green (silent scenes unaffected).
 - `pnpm build`, `pnpm typecheck`, full `pnpm test` (126 unit tests).
 
@@ -2484,9 +2486,9 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: `volume` now validates on video nodes too (still rejected elsewhere); `audioStartTime` stays audio-only — video trims picture and sound together via `videoStartTime`, and the rejection message says so.
-- `@motionforge/renderer-canvas2d`: `openVideoClip()` probes the clip's audio track on the same input and exposes it as `VideoClip.audio` (`duration`/`sampleRate`/`numberOfChannels`/`AudioBufferSink`). Silent clips simply have no `audio`; `disposeAssets()` is unchanged because the sink shares the clip's input.
-- `@motionforge/export`: `collectAudioPlacements()` now returns video nodes as well, plus a new `framesIntoNode` field (head clipping by ancestor windows). The mix maps a video window to source time exactly like the renderer's `videoSourceTime` (`videoStartTime + (localFrame / fps) × playbackRate`), so exported sound stays aligned with previewed picture; `playbackRate` retimes audio by declaring the segment at rate × native sample rate — varispeed semantics (pitch shifts; no time-stretch), documented.
+- `@dojo-video-engine/schema`: `volume` now validates on video nodes too (still rejected elsewhere); `audioStartTime` stays audio-only — video trims picture and sound together via `videoStartTime`, and the rejection message says so.
+- `@dojo-video-engine/renderer-canvas2d`: `openVideoClip()` probes the clip's audio track on the same input and exposes it as `VideoClip.audio` (`duration`/`sampleRate`/`numberOfChannels`/`AudioBufferSink`). Silent clips simply have no `audio`; `disposeAssets()` is unchanged because the sink shares the clip's input.
+- `@dojo-video-engine/export`: `collectAudioPlacements()` now returns video nodes as well, plus a new `framesIntoNode` field (head clipping by ancestor windows). The mix maps a video window to source time exactly like the renderer's `videoSourceTime` (`videoStartTime + (localFrame / fps) × playbackRate`), so exported sound stays aligned with previewed picture; `playbackRate` retimes audio by declaring the segment at rate × native sample rate — varispeed semantics (pitch shifts; no time-stretch), documented.
 - Alignment fix that fell out of `framesIntoNode`: audio nodes whose _head_ is clipped by an ancestor window now start that many frames into their source instead of restarting from 0 — matching the evaluator's `localFrame = absoluteFrame − from` everywhere.
 
 ### Tested
@@ -2504,13 +2506,13 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema` gains `src/patch.ts`: `applyScenePatch(scene, patch)`, `scenePatchSchema`/`sceneOpSchema` (zod), and `closestIds()`. All ten RFC ops implemented with the RFC's semantics: id-addressed, transactional (any failing op rejects the whole patch), pure/copy-on-write (input never mutated), `setStyle` merges with null-deletes, `setAnimations` replaces as a unit, `insertNode` requires caller-supplied unique ids, `removeAsset` is guarded by reference checks, `moveNode` refuses own-subtree cycles, and the final document fully revalidates so cross-field invariants hold after every patch.
+- `@dojo-video-engine/schema` gains `src/patch.ts`: `applyScenePatch(scene, patch)`, `scenePatchSchema`/`sceneOpSchema` (zod), and `closestIds()`. All ten RFC ops implemented with the RFC's semantics: id-addressed, transactional (any failing op rejects the whole patch), pure/copy-on-write (input never mutated), `setStyle` merges with null-deletes, `setAnimations` replaces as a unit, `insertNode` requires caller-supplied unique ids, `removeAsset` is guarded by reference checks, `moveNode` refuses own-subtree cycles, and the final document fully revalidates so cross-field invariants hold after every patch.
 - Error model per RFC: `{opIndex, message}` with path/problem/fix phrasing; missing node ids get closest-id suggestions via edit distance (`closestIds` exported for reuse by future tooling).
 - `llms.txt` now tells agents to patch rather than re-emit documents, with the full op vocabulary inline. RFC 0001 status flipped to implemented.
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema test` (28 tests; 17 new: merge/null-delete, input immutability, transactionality, closest-id hints, per-op type guards, style/keyframe validation through patches, insert positioning, duplicate-id rejection, subtree removal, move-into-own-subtree rejection, guarded asset removal, meta updates, malformed-patch op indexes, cross-field revalidation, edit-distance ranking)
+- `pnpm --filter @dojo-video-engine/schema test` (28 tests; 17 new: merge/null-delete, input immutability, transactionality, closest-id hints, per-op type guards, style/keyframe validation through patches, insert positioning, duplicate-id rejection, subtree removal, move-into-own-subtree rejection, guarded asset removal, meta updates, malformed-patch op indexes, cross-field revalidation, edit-distance ranking)
 - `pnpm build`, `pnpm typecheck`
 
 ### Notes
@@ -2534,11 +2536,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Week-1 scope intentionally shipped without npm/GitHub publishing (maintainer will publish when ready); nothing downstream blocks on it.
 
-## 2026-06-11 (@motionforge/player — playback skeleton)
+## 2026-06-11 (@dojo-video-engine/player — playback skeleton)
 
 ### Changed
 
-- New publishable package `@motionforge/player`:
+- New publishable package `@dojo-video-engine/player`:
   - `FrameClock` — the only place wall-clock time exists in the playback path. Maps injected timestamps to integer frames (anchored at play/seek), pauses by re-anchoring, loops by modulo, clamps + reports `ended` otherwise. Pure given timestamps; replaying from the final frame restarts at 0.
   - `Player`/`createPlayer()` — canvas render loop on top of the clock: `play`/`pause`/`seek`/`dispose`, `loop`, `currentFrame`, events (`frame`/`play`/`pause`/`ended`). Awaits `prepareFrame()` per displayed frame with a latest-frame-wins policy (slow video decode skips ahead, never queues stale frames). Asset ownership explicit: pass `assets` and the caller owns them; omit and the player resolves/disposes.
   - `now`/`requestFrame`/`cancelFrame` injectable, so playback behavior is fully unit-tested in Node with a fake driver.
@@ -2548,7 +2550,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Tested
 
 - `pnpm build`, `pnpm typecheck`
-- `pnpm --filter @motionforge/player test` (11 tests: clock time→frame mapping incl. frame-boundary rounding, pause/anchor, end clamp + ended flag, loop wrap, seek clamping with play-state preservation, replay-from-end; player frame advancement, latest-frame-wins skip, pause freeze + no leaked rAF, seek, ended event, loop, dispose inertness)
+- `pnpm --filter @dojo-video-engine/player test` (11 tests: clock time→frame mapping incl. frame-boundary rounding, pause/anchor, end clamp + ended flag, loop wrap, seek clamping with play-state preservation, replay-from-end; player frame advancement, latest-frame-wins skip, pause freeze + no leaked rAF, seek, ended event, loop, dispose inertness)
 - Playwright smoke against the real playground: poster frame renders, play advances ~22 frames in 700 ms (wall-clock 30 fps), pause freezes, slider seeks, scene switching works, no console errors.
 
 ### Notes
@@ -2560,12 +2562,12 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: four new style properties, prioritized by measured frequency in real editor templates (see `docs/editor-adapter-spike.md`):
+- `@dojo-video-engine/schema`: four new style properties, prioritized by measured frequency in real editor templates (see `docs/editor-adapter-spike.md`):
   - `filter` — validated chain of `brightness`/`contrast`/`saturate`/`grayscale`/`sepia`/`invert`/`opacity` (number or `%`), `hue-rotate(<deg>)`, `blur(<px>)`, or `none`. `isFilterExpression()` exported. Used by 13/20 video overlays in production templates.
   - `zIndex` — integer; paint order only, never layout.
   - `border` — `<width> [solid] <color>` string.
   - `boxShadow` — `<x> <y> [blur] <color>` string.
-- `@motionforge/renderer-canvas2d`:
+- `@dojo-video-engine/renderer-canvas2d`:
   - `filter` sets `context.filter` for the node's own draws; children inherit unless they set their own (per-draw application, not subtree compositing — identical to CSS for leaf media/text nodes, the dominant case). Safari silently ignores it.
   - Siblings paint in ascending `zIndex` (stable; document order breaks ties) at every tree level. A negative `zIndex` paints behind _all_ siblings, including a full-canvas background sibling — CSS sibling semantics, verified visually.
   - `border` strokes inside the border box following `borderRadius` (solid only; other line styles are loud nulls). `parseBorder()` exported.
@@ -2605,7 +2607,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Added private workspace package `@motionforge/showcase`: three shared, schema-valid demo scenes (`intro`, `tiktok-captions`, `karaoke-captions`) used by the playground and generated examples.
+- Added private workspace package `@dojo-video-engine/showcase`: three shared, schema-valid demo scenes (`intro`, `tiktok-captions`, `karaoke-captions`) used by the playground and generated examples.
 - Playground now has a scene picker with per-scene descriptions/proof tags; each selected scene can be scrubbed, played, and exported to MP4.
 - Added `pnpm showcase:generate`, which writes the shared showcase scenes to `examples/generated/*.json` for people who want to inspect or render raw scene documents.
 - Added README showcase gallery, `docs/showcase.md`, and poster images for the three demos.
@@ -2633,17 +2635,17 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: added the caption text style contract and regenerated `scene.schema.json`: `textStroke`, `textBackgroundColor`, `textBackgroundPadding`, `textBackgroundPaddingX`, `textBackgroundPaddingY`, and `textBackgroundRadius`.
-- `@motionforge/renderer-canvas2d`: text nodes now parse `textStroke` as a compact `<width> <color>` shorthand, resolve numeric/`px`/`%` widths against `fontSize`, and paint the outline before fill.
-- `@motionforge/renderer-canvas2d`: `textBackgroundColor` draws one measured, rounded background per rendered line after wrapping and before stroke/fill. Padding and radius resolve against `fontSize`; negative values clamp to zero.
-- `@motionforge/presets`: caption generators now apply `textStroke` by default. `tiktokCaptions()` no longer hand-sizes highlight wrapper boxes; highlighted words carry measured background styles directly on their `text` nodes.
+- `@dojo-video-engine/schema`: added the caption text style contract and regenerated `scene.schema.json`: `textStroke`, `textBackgroundColor`, `textBackgroundPadding`, `textBackgroundPaddingX`, `textBackgroundPaddingY`, and `textBackgroundRadius`.
+- `@dojo-video-engine/renderer-canvas2d`: text nodes now parse `textStroke` as a compact `<width> <color>` shorthand, resolve numeric/`px`/`%` widths against `fontSize`, and paint the outline before fill.
+- `@dojo-video-engine/renderer-canvas2d`: `textBackgroundColor` draws one measured, rounded background per rendered line after wrapping and before stroke/fill. Padding and radius resolve against `fontSize`; negative values clamp to zero.
+- `@dojo-video-engine/presets`: caption generators now apply `textStroke` by default. `tiktokCaptions()` no longer hand-sizes highlight wrapper boxes; highlighted words carry measured background styles directly on their `text` nodes.
 - Added exact embedded-font goldens: `text-stroke-embedded-font` for the outline path and `caption-fitted-text-background` for stroked text over fitted per-line pills.
 - Updated the scene-format support matrix, presets docs, examples notes, and `llms.txt` so the public contract and agent-facing crib sheet match the implementation.
 
 ### Tested
 
-- `pnpm --filter @motionforge/schema test`
-- `pnpm --filter @motionforge/renderer-canvas2d test`
+- `pnpm --filter @dojo-video-engine/schema test`
+- `pnpm --filter @dojo-video-engine/renderer-canvas2d test`
 - `pnpm build`
 - `pnpm typecheck`
 - `pnpm test` (88 unit tests)
@@ -2651,14 +2653,14 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Notes
 
-- Slice 12 is complete. The next planned step is the editor-adapter spike: one real `CompositionData` converted into a motionforge scene, then a classified gap list.
+- Slice 12 is complete. The next planned step is the editor-adapter spike: one real `CompositionData` converted into a dojo-video-engine scene, then a classified gap list.
 
 ## 2026-06-11 (0.2.0 publish prep — roadmap slice 11, credential steps pending)
 
 ### Changed
 
 - Added the `0.2.0` changelog entry covering animation maturity since the unpublished `0.1.0` package set.
-- Bumped all publishable packages to `0.2.0`: `@motionforge/schema`, `@motionforge/core`, `@motionforge/renderer-canvas2d`, `@motionforge/export`, and `@motionforge/presets`.
+- Bumped all publishable packages to `0.2.0`: `@dojo-video-engine/schema`, `@dojo-video-engine/core`, `@dojo-video-engine/renderer-canvas2d`, `@dojo-video-engine/export`, and `@dojo-video-engine/presets`.
 - Updated the README version badge to `0.2.0`.
 
 ### Tested
@@ -2672,16 +2674,16 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Remaining manual steps (need account credentials)
 
 1. Push to GitHub and confirm CI is green.
-2. Reserve or confirm access to the `@motionforge` npm scope.
+2. Reserve or confirm access to the `@dojo-video-engine` npm scope.
 3. Publish from a clean checkout with `pnpm publish -r --access public`.
 4. Tag `v0.2.0`.
 5. Deploy the playground to GitHub Pages and link it from the README.
 
-## 2026-06-11 (@motionforge/presets — roadmap slice 10)
+## 2026-06-11 (@dojo-video-engine/presets — roadmap slice 10)
 
 ### Changed
 
-- New package `@motionforge/presets`: pure functions that compile animation intent into scene data (depends only on `@motionforge/schema`; no runtime, no rendering).
+- New package `@dojo-video-engine/presets`: pure functions that compile animation intent into scene data (depends only on `@dojo-video-engine/schema`; no runtime, no rendering).
   - Motion presets: `popIn`, `fadeUp`, `slideIn(direction)`, `pulse` — each takes `durationInFrames`/`delay`/`easing`, returns keyframe arrays using real transform tweens (`scale(0.8) → scale(1)`) and the new spring/bezier easings. `delay` holds the start value from frame 0 so keyframes stay strictly increasing.
   - Caption generators from ASR-style word timestamps (`{ word, startMs, endMs }[]`): `tiktokCaptions` (one word at a time, pop entrance, optional highlight pills, words hold until the next starts) and `karaokeCaptions` (whole line visible, per-word color ramps to the highlight during its spoken span).
 - `examples/generate-tiktok.mjs`: regenerates the TikTok example's caption track from one `tiktokCaptions()` call — the roadmap acceptance criterion ("~10 lines of preset calls") met and visually verified by rendering the generated scene.
@@ -2702,8 +2704,8 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/core`: transform keyframes now **tween**. `parseTransform()` normalizes `translate`/`scale`/`rotate` lists (translate → two length args, unitless = px; scale → two unitless args, sy defaults to sx; rotate → one deg arg); when two keyframes have matching function sequences and matching units per slot, every argument interpolates and the result serializes back to a transform string the renderer already parses. Mismatched sequences or unit conflicts step, like CSS. This removes the `fontSize`-pop workaround and the last ⚠️ row in the support matrix.
-- `@motionforge/schema` + `@motionforge/core`: easing widens from four names to expressions — `cubic-bezier(x1, y1, x2, y2)` (x1/x2 validated into [0, 1]; deterministic Newton + fixed-iteration bisection solver) and `spring`/`spring(bounce)` (bounce in [0, 1); 0 is critically damped with no overshoot, larger bounces overshoot and settle). `isEasingExpression()` exported from schema; `cubicBezierEasing()`/`springEasing()` exported from core.
+- `@dojo-video-engine/core`: transform keyframes now **tween**. `parseTransform()` normalizes `translate`/`scale`/`rotate` lists (translate → two length args, unitless = px; scale → two unitless args, sy defaults to sx; rotate → one deg arg); when two keyframes have matching function sequences and matching units per slot, every argument interpolates and the result serializes back to a transform string the renderer already parses. Mismatched sequences or unit conflicts step, like CSS. This removes the `fontSize`-pop workaround and the last ⚠️ row in the support matrix.
+- `@dojo-video-engine/schema` + `@dojo-video-engine/core`: easing widens from four names to expressions — `cubic-bezier(x1, y1, x2, y2)` (x1/x2 validated into [0, 1]; deterministic Newton + fixed-iteration bisection solver) and `spring`/`spring(bounce)` (bounce in [0, 1); 0 is critically damped with no overshoot, larger bounces overshoot and settle). `isEasingExpression()` exported from schema; `cubicBezierEasing()`/`springEasing()` exported from core.
 
 ### Tested
 
@@ -2721,7 +2723,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Added `examples/tiktok-captions.json`: a hand-written 1080×1920 scene producing the one-word-at-a-time caption style — word-timed text nodes, `fontSize` pop with `easeOut` (the current substitute for transform scale tweens), opacity fades, highlight pills, a white→gold color keyframe, an animated progress bar, and an SVG image asset. Pure JSON, no code.
-- Added `tools/golden/src/render-example.ts` (`pnpm --filter @motionforge/golden run example <scene.json> <out.mp4> [frame ...]`): renders any scene JSON to MP4 plus optional PNG frames through the harness browser. Harness gained `renderGoldenExportFile` (base64 MP4) and `renderGoldenFramePng`.
+- Added `tools/golden/src/render-example.ts` (`pnpm --filter @dojo-video-engine/golden run example <scene.json> <out.mp4> [frame ...]`): renders any scene JSON to MP4 plus optional PNG frames through the harness browser. Harness gained `renderGoldenExportFile` (base64 MP4) and `renderGoldenFramePng`.
 - `examples/README.md` documents the workflow with frame thumbnails; rendered MP4s are gitignored.
 
 ### Tested
@@ -2737,10 +2739,10 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: new `audio` node type. Placement uses the standard `from`/`duration` frame semantics; fields are `audioStartTime` (source trim, seconds) and `volume` (0–1). Audio nodes are not visual, so `style`, `children`, and `animations` are rejected with actionable messages (volume keyframes can lift the animations restriction later). The audio-only fields reject on other node types.
-- `@motionforge/core`: `audio()` builder.
-- `@motionforge/renderer-canvas2d`: audio assets open through mediabunny (`Input` + `AudioBufferSink`) in `resolveAssets()`; `disposeAssets()` releases them.
-- `@motionforge/export`: `exportVideo()` mixes every audible node into one stereo 48 kHz track and muxes it into the MP4, negotiating the audio codec per browser (AAC in Chromium). The mix is **pure and unit-tested**: `collectAudioPlacements()` mirrors the evaluator's timing semantics to compute absolute audible windows (ancestor-clipped), and `mixAudioSegments()` does linear resampling, mono fan-out, volume, overlap summing, and final clamping — chosen over OfflineAudioContext so the math is deterministic and node-testable. Trimming past the clip end yields silence, not an error. `ExportVideoResult` gains `audioCodec`.
+- `@dojo-video-engine/schema`: new `audio` node type. Placement uses the standard `from`/`duration` frame semantics; fields are `audioStartTime` (source trim, seconds) and `volume` (0–1). Audio nodes are not visual, so `style`, `children`, and `animations` are rejected with actionable messages (volume keyframes can lift the animations restriction later). The audio-only fields reject on other node types.
+- `@dojo-video-engine/core`: `audio()` builder.
+- `@dojo-video-engine/renderer-canvas2d`: audio assets open through mediabunny (`Input` + `AudioBufferSink`) in `resolveAssets()`; `disposeAssets()` releases them.
+- `@dojo-video-engine/export`: `exportVideo()` mixes every audible node into one stereo 48 kHz track and muxes it into the MP4, negotiating the audio codec per browser (AAC in Chromium). The mix is **pure and unit-tested**: `collectAudioPlacements()` mirrors the evaluator's timing semantics to compute absolute audible windows (ancestor-clipped), and `mixAudioSegments()` does linear resampling, mono fan-out, volume, overlap summing, and final clamping — chosen over OfflineAudioContext so the math is deterministic and node-testable. Trimming past the clip end yields silence, not an error. `ExportVideoResult` gains `audioCodec`.
 
 ### Tested
 
@@ -2758,10 +2760,10 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: video nodes gain `videoStartTime` (source trim, **seconds** — source footage has its own timebase, independent of scene fps) and `playbackRate` (multiplier). Both reject on non-video nodes with actionable messages.
-- `@motionforge/core`: `ResolvedNode` exposes `localFrame` (frames since the node became active), the basis for video time mapping. Builder `video()` accepts the new fields.
-- `@motionforge/renderer-canvas2d`: video assets open through mediabunny (`Input` + `CanvasSink`) for frame-accurate decoding — no `<video>` element seeking. The async/sync boundary is explicit: `prepareFrame(scene, frame, assets)` decodes the source frame every active video node needs (`sourceTime = videoStartTime + (localFrame / fps) * playbackRate`, clamped so scenes outlasting the clip hold the last frame) and stages it per node id; `renderStill` then draws synchronously through the shared objectFit path. Drawing an unstaged or stale-staged video node throws. `videoSourceTime()` exported pure; `disposeAssets()` releases decoders.
-- `@motionforge/export`: `renderFrameSequence` awaits `prepareFrame` per frame when assets are provided, so `exportVideo` handles video scenes with no API change.
+- `@dojo-video-engine/schema`: video nodes gain `videoStartTime` (source trim, **seconds** — source footage has its own timebase, independent of scene fps) and `playbackRate` (multiplier). Both reject on non-video nodes with actionable messages.
+- `@dojo-video-engine/core`: `ResolvedNode` exposes `localFrame` (frames since the node became active), the basis for video time mapping. Builder `video()` accepts the new fields.
+- `@dojo-video-engine/renderer-canvas2d`: video assets open through mediabunny (`Input` + `CanvasSink`) for frame-accurate decoding — no `<video>` element seeking. The async/sync boundary is explicit: `prepareFrame(scene, frame, assets)` decodes the source frame every active video node needs (`sourceTime = videoStartTime + (localFrame / fps) * playbackRate`, clamped so scenes outlasting the clip hold the last frame) and stages it per node id; `renderStill` then draws synchronously through the shared objectFit path. Drawing an unstaged or stale-staged video node throws. `videoSourceTime()` exported pure; `disposeAssets()` releases decoders.
+- `@dojo-video-engine/export`: `renderFrameSequence` awaits `prepareFrame` per frame when assets are provided, so `exportVideo` handles video scenes with no API change.
 - Golden harness: end-to-end in-browser video checks — synthesize a source clip with `exportVideo` (red 1s / blue 1s), composite it through two video nodes (trim 1.5s; trim 0.5s + rate 2), verify previewed pixels at two scene frames, then export the composite and decode the file to verify exported pixels match preview. No committed binary fixtures; the engine bootstraps its own.
 
 ### Tested
@@ -2783,7 +2785,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 - Closed M0 in `docs/m0-roadmap.md` after re-verifying every acceptance criterion.
 - Added `CHANGELOG.md` with the 0.1.0 entry covering all four packages.
-- Bumped `@motionforge/schema`, `core`, `renderer-canvas2d`, and `export` to 0.1.0 (they version together).
+- Bumped `@dojo-video-engine/schema`, `core`, `renderer-canvas2d`, and `export` to 0.1.0 (they version together).
 - Verified `npm pack --dry-run` for each package: dist + README + LICENSE only (plus `scene.schema.json` for the schema package); no compiled tests, no tsbuildinfo.
 - README badges: status → M0 complete, version → 0.1.0.
 
@@ -2795,7 +2797,7 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Remaining manual steps (need account credentials)
 
 1. Create the GitHub repository and push (`git remote add origin … && git push -u origin main`); confirm CI is green and badge URLs match the repo slug.
-2. Reserve the `@motionforge` npm scope (npm org).
+2. Reserve the `@dojo-video-engine` npm scope (npm org).
 3. `pnpm publish -r --access public` from a clean checkout, then tag `v0.1.0`.
 4. Optional: deploy the playground to GitHub Pages and link it from the README.
 
@@ -2803,7 +2805,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/renderer-canvas2d`: rewrote the `linear-gradient` parser. Any number of stops; direction as `<deg>` angles (CSS gradient-line math through the box center) or `to top/right/bottom/left`; rgba colors with embedded commas (paren-aware splitting); omitted `%` positions distribute evenly between neighbors; out-of-order positions clamp non-decreasing like CSS. `parseLinearGradient()` exported as a pure helper. The pre-existing `paint-gradient` exact golden hash is unchanged — the rewrite is pixel-compatible with the old two-stop format.
+- `@dojo-video-engine/renderer-canvas2d`: rewrote the `linear-gradient` parser. Any number of stops; direction as `<deg>` angles (CSS gradient-line math through the box center) or `to top/right/bottom/left`; rgba colors with embedded commas (paren-aware splitting); omitted `%` positions distribute evenly between neighbors; out-of-order positions clamp non-decreasing like CSS. `parseLinearGradient()` exported as a pure helper. The pre-existing `paint-gradient` exact golden hash is unchanged — the rewrite is pixel-compatible with the old two-stop format.
 - New style property `overflow: "visible" | "hidden"` (schema + renderer): `hidden` clips the node's own content and its subtree to the border box, following `borderRadius` — CSS semantics, so `borderRadius` alone correctly does not clip children.
 - Support matrix: `background`, `borderRadius` move to ✅; new `overflow` row. The only remaining ⚠️ is `transform` (translate/scale/rotate subset), and the only schema-only feature is `video` node drawing.
 
@@ -2822,7 +2824,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/renderer-canvas2d`: `resolveAssets()` now loads `font` assets through the same pipeline as images. Each font registers with the environment's FontFaceSet (`document.fonts` in windows, `self.fonts` in workers) under its **asset id**, so styles reference it as `fontFamily: "<asset id>"`. Registration is idempotent per (id, src) pair, and `ResolvedAssets` gained a `fonts` map.
+- `@dojo-video-engine/renderer-canvas2d`: `resolveAssets()` now loads `font` assets through the same pipeline as images. Each font registers with the environment's FontFaceSet (`document.fonts` in windows, `self.fonts` in workers) under its **asset id**, so styles reference it as `fontFamily: "<asset id>"`. Registration is idempotent per (id, src) pair, and `ResolvedAssets` gained a `fonts` map.
 - Faces register with default descriptors: name font assets per family+weight (e.g. `Inter-Bold`) and reference them without `fontWeight` instead of relying on synthetic bolding.
 - Committed `tools/golden/public/fonts/inter-700-latin.woff2` (Inter Bold latin subset, OFL 1.1, 24 KB, provenance in the fonts README) as a fixture-only font — not shipped in any package.
 - New **exact-hash** golden `text-embedded-font`: the first text fixture hashed exactly rather than probed, because the embedded font removes system-font platform variance. Hash reproduces across runs.
@@ -2842,11 +2844,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/renderer-canvas2d`: added `resolveAssets(scene)` — the engine's only async phase. Fetches and decodes every `image` asset to an `ImageBitmap`; rejects with the asset id and src on any failure. Rendering stays pure given `(scene, frame, resolvedAssets)`.
+- `@dojo-video-engine/renderer-canvas2d`: added `resolveAssets(scene)` — the engine's only async phase. Fetches and decodes every `image` asset to an `ImageBitmap`; rejects with the asset id and src on any failure. Rendering stays pure given `(scene, frame, resolvedAssets)`.
 - `renderStill()` accepts `options.assets`; `img` nodes now draw with `objectFit` (`fill` default, `contain`, `cover`, `none`, `scale-down`), `objectPosition` (keywords, `%` with CSS alignment semantics, `px`), and `borderRadius` clipping. Image smoothing is set explicitly so scaled pixels are deliberate. `computeObjectFit()` is exported as a pure, unit-tested helper.
 - Drawing an `img` node without resolved assets throws an actionable error naming the asset and the fix — never a silently partial frame.
-- `@motionforge/schema`: widened `objectFit` to the full CSS set (`none`, `scale-down` added).
-- `@motionforge/export`: `renderFrameSequence` forwards `assets` to the default renderer; `exportVideo` resolves assets internally when not given pre-resolved ones.
+- `@dojo-video-engine/schema`: widened `objectFit` to the full CSS set (`none`, `scale-down` added).
+- `@dojo-video-engine/export`: `renderFrameSequence` forwards `assets` to the default renderer; `exportVideo` resolves assets internally when not given pre-resolved ones.
 - Sample scene gains an inline-SVG badge image (data URL, no network dependency); playground and golden harness resolve assets before rendering.
 - New exact golden `image-object-fit`: contain letterbox, cover crop with `objectPosition: left top`, and fill under a rounded clip, using a committed 16x16 quadrant PNG data URL.
 
@@ -2865,15 +2867,15 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/schema`: `parseScene`/`validateScene` remember their results in a WeakSet, so re-parsing an already-parsed scene is an identity no-op. This removes the full Zod validation that previously ran on **every frame** of preview and export (a 120-frame export validated the scene 120 times). Parsed scenes are documented as immutable.
-- `@motionforge/schema`: keyframe frames must now be strictly increasing, with an actionable validation message. This makes evaluation order a contract instead of a per-call sort.
-- `@motionforge/core`: `evaluateKeyframes` no longer sorts on every call (the schema guarantees order) and now **interpolates colors**: when both keyframe values parse as `#hex`/`rgb()`/`rgba()`, the value lerps per-channel in RGBA space with easing applied; other strings still step. `parseColor` is exported.
-- `@motionforge/core` layout completion — every remaining layout row in the support matrix is now implemented:
+- `@dojo-video-engine/schema`: `parseScene`/`validateScene` remember their results in a WeakSet, so re-parsing an already-parsed scene is an identity no-op. This removes the full Zod validation that previously ran on **every frame** of preview and export (a 120-frame export validated the scene 120 times). Parsed scenes are documented as immutable.
+- `@dojo-video-engine/schema`: keyframe frames must now be strictly increasing, with an actionable validation message. This makes evaluation order a contract instead of a per-call sort.
+- `@dojo-video-engine/core`: `evaluateKeyframes` no longer sorts on every call (the schema guarantees order) and now **interpolates colors**: when both keyframe values parse as `#hex`/`rgb()`/`rgba()`, the value lerps per-channel in RGBA space with easing applied; other strings still step. `parseColor` is exported.
+- `@dojo-video-engine/core` layout completion — every remaining layout row in the support matrix is now implemented:
   - `margin` (single value): outer spacing that shifts the box away from its anchor edge (including right/bottom-anchored absolute boxes) and shrinks auto-sized dimensions.
   - `minWidth`/`minHeight`/`maxWidth`/`maxHeight`: clamp resolved sizes; min wins over max (CSS semantics).
   - `justifyContent: "space-between"`: distributes leftover main-axis space on top of `gap`.
   - `alignItems: "stretch"`: fills the cross axis for flex children without an explicit cross size.
-- `@motionforge/renderer-canvas2d`: `transformOrigin` implemented (`left`/`center`/`right`, `top`/`center`/`bottom`, `px`, `%`; default remains center).
+- `@dojo-video-engine/renderer-canvas2d`: `transformOrigin` implemented (`left`/`center`/`right`, `top`/`center`/`bottom`, `px`, `%`; default remains center).
 - Support matrix, scene-format animation docs, and `llms.txt` updated; no validated-but-ignored style properties remain except `objectFit`/`objectPosition` (blocked on asset drawing).
 
 ### Tested
@@ -2892,7 +2894,7 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/export`: implemented `exportVideo()` — renders the scene through the shared Canvas2D renderer via `renderFrameSequence()` and encodes to MP4 in the browser with WebCodecs, using mediabunny for encoding orchestration and muxing. Returns `{ blob, codec, totalFrames }`.
+- `@dojo-video-engine/export`: implemented `exportVideo()` — renders the scene through the shared Canvas2D renderer via `renderFrameSequence()` and encodes to MP4 in the browser with WebCodecs, using mediabunny for encoding orchestration and muxing. Returns `{ blob, codec, totalFrames }`.
 - Codec negotiation via `getFirstEncodableVideoCodec()` over all MP4-compatible codecs, so Chromium-only builds without H.264 encode fall back to VP9/AV1. Options: `startFrame`/`endFrame` sub-range export, `signal` (cancels the muxer cleanly), `bitrate` (bits/s or Quality preset), `codecs` override.
 - Renders into an `OffscreenCanvas` when available, falling back to a DOM canvas. Awaits `CanvasSource.add()` per frame to respect encoder backpressure.
 - Playground: added an "Export MP4" button with frame-by-frame progress, capability gating, and automatic download.
@@ -2905,7 +2907,7 @@ This is the living project log. Every meaningful implementation slice should rec
 - `pnpm typecheck`
 - `pnpm test` (27 unit tests; new test covers the actionable no-WebCodecs error in Node)
 - `pnpm golden:test` (7 fixtures + export smoke: 6697 bytes, avc, 31 frames, video/mp4)
-- Playwright-driven playground check: clicking "Export MP4" downloaded `motionforge.mp4` (406 KiB, avc, 120 frames).
+- Playwright-driven playground check: clicking "Export MP4" downloaded `dojo-video-engine.mp4` (406 KiB, avc, 120 frames).
 
 ### Notes
 
@@ -2917,10 +2919,10 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- `@motionforge/renderer-canvas2d`: text nodes now render multi-line. Explicit `\n` always breaks; words wrap to the box width using `measureText` with the resolved font; the line block is centered vertically, matching previous single-line placement exactly (existing exact-hash goldens unchanged).
+- `@dojo-video-engine/renderer-canvas2d`: text nodes now render multi-line. Explicit `\n` always breaks; words wrap to the box width using `measureText` with the resolved font; the line block is centered vertically, matching previous single-line placement exactly (existing exact-hash goldens unchanged).
 - Implemented `fontStyle` (italic), `lineHeight` (unitless multiplier or `px`/`%`, default 1.25), and `letterSpacing` (number/`px`, via the Canvas2D `letterSpacing` API) — three of the validated-but-ignored properties from the support matrix.
 - Exported `wrapTextLines(text, maxWidth, measure)` as a pure, unit-testable helper.
-- `@motionforge/core`: intrinsic text estimates for flex layout now account for explicit newlines and `lineHeight`.
+- `@dojo-video-engine/core`: intrinsic text estimates for flex layout now account for explicit newlines and `lineHeight`.
 - Golden harness: probes can scan a row segment (`toX`) and pass if any pixel matches, making text-presence assertions robust without exact glyph hashing. Verified the probe fails on a background-only row before trusting it.
 - New golden fixtures: `multiline-explicit-newline` (newlines, lineHeight pitch, italic, letterSpacing) and `multiline-word-wrap` (measured wrapping).
 - Updated the style support matrix, text-behavior docs, and `llms.txt`.
@@ -2942,10 +2944,10 @@ This is the living project log. Every meaningful implementation slice should rec
 ### Changed
 
 - Rewrote `docs/scene-format.md` into the canonical contract: full type shapes, timing model, length values, animation semantics, validation invariants, a complete example scene, and a property-by-property style support matrix (validated / layout / render, with partial-support notes).
-- Added `sceneJsonSchema()` to `@motionforge/schema` (via `zod-to-json-schema`) and a committed `scene.schema.json` artifact regenerated on every build, so agents and editors can validate scenes without executing code.
+- Added `sceneJsonSchema()` to `@dojo-video-engine/schema` (via `zod-to-json-schema`) and a committed `scene.schema.json` artifact regenerated on every build, so agents and editors can validate scenes without executing code.
 - Rewrote `llms.txt` as a working agent contract: mental model, hard rules, a complete valid scene in JSON, the implemented-today style list, example validation errors, and API index.
 - Rewrote the README: CI/license/status badges, playground hero screenshot, Mermaid render-pipeline and architecture diagrams, package status table, "Why not Remotion?" positioning, agent documentation section, and a builder code example.
-- Added `tools/golden/src/screenshot.ts` (`pnpm --filter @motionforge/golden run screenshot`) to regenerate the README hero image deterministically from the playground at frame 40.
+- Added `tools/golden/src/screenshot.ts` (`pnpm --filter @dojo-video-engine/golden run screenshot`) to regenerate the README hero image deterministically from the playground at frame 40.
 
 ### Tested
 
@@ -2969,7 +2971,7 @@ This is the living project log. Every meaningful implementation slice should rec
 - Added duplicate node id validation so agent patches have stable node handles.
 - Prepared package metadata for future public npm publishing.
 - Cleaned up test command semantics so `pnpm test` is unit tests only and `pnpm golden:test` is the explicit browser pixel test.
-- Added `renderFrameSequence()` in `@motionforge/export` as the deterministic bridge from still rendering to video export.
+- Added `renderFrameSequence()` in `@dojo-video-engine/export` as the deterministic bridge from still rendering to video export.
 - Added export-relative and scene-relative timestamp conversion, progress callbacks, range validation, and abort handling for the export frame loop.
 
 ### Tested
@@ -2978,8 +2980,8 @@ This is the living project log. Every meaningful implementation slice should rec
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm golden:test`
-- `pnpm --filter @motionforge/export typecheck`
-- `pnpm --filter @motionforge/export test`
+- `pnpm --filter @dojo-video-engine/export typecheck`
+- `pnpm --filter @dojo-video-engine/export test`
 
 ### Notes
 
@@ -2990,11 +2992,11 @@ This is the living project log. Every meaningful implementation slice should rec
 
 ### Changed
 
-- Created the `motionforge` pnpm monorepo.
-- Added `@motionforge/schema` with Zod validation for the first scene format.
-- Added `@motionforge/core` with the builder API, keyframe evaluator, sample scene, and simple layout pass.
-- Added `@motionforge/renderer-canvas2d` with the first still-frame renderer.
-- Added `@motionforge/export` with capability detection and the planned export API surface.
+- Created the `dojo-video-engine` pnpm monorepo.
+- Added `@dojo-video-engine/schema` with Zod validation for the first scene format.
+- Added `@dojo-video-engine/core` with the builder API, keyframe evaluator, sample scene, and simple layout pass.
+- Added `@dojo-video-engine/renderer-canvas2d` with the first still-frame renderer.
+- Added `@dojo-video-engine/export` with capability detection and the planned export API surface.
 - Added a Vite playground that previews the same scene through the Canvas2D renderer.
 - Added README, `llms.txt`, M0 roadmap, scene-format docs, fixture scene, and CI.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateScene } from "@motionforge/schema";
+import { validateScene } from "@dojo-video-engine/schema";
 import {
   compileMotionPreset,
   maskReveal,

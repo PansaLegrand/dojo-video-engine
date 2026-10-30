@@ -1,7 +1,7 @@
 // Production-size export benchmark. Boots the golden harness browser and
 // runs render/decode/encode stages at the requested size.
 //
-// Usage: pnpm --filter @motionforge/golden run benchmark [width height fps seconds]
+// Usage: pnpm --filter @dojo-video-engine/golden run benchmark [width height fps seconds]
 // Defaults: 1920 1080 30 10
 
 import { dirname, resolve } from "node:path";
@@ -25,19 +25,19 @@ const server = await createServer({
   logLevel: "error",
   resolve: {
     alias: {
-      "@motionforge/presets/macros": resolve(
+      "@dojo-video-engine/presets/macros": resolve(
         rootDir,
         "packages/presets/src/macros.ts",
       ),
-      "@motionforge/schema/values": resolve(
+      "@dojo-video-engine/schema/values": resolve(
         rootDir,
         "packages/schema/src/values.ts",
       ),
-      "@motionforge/renderer-canvas2d/runtime": resolve(
+      "@dojo-video-engine/renderer-canvas2d/runtime": resolve(
         rootDir,
         "packages/renderer-canvas2d/src/runtime.ts",
       ),
-      "@motionforge/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
+      "@dojo-video-engine/runtime": resolve(rootDir, "packages/runtime/src/index.ts"),
       ...Object.fromEntries(
         [
           "agent-tools",
@@ -50,7 +50,7 @@ const server = await createServer({
           "export",
           "player",
         ].map((name) => [
-          `@motionforge/${name}`,
+          `@dojo-video-engine/${name}`,
           resolve(rootDir, `packages/${name}/src/index.ts`),
         ]),
       ),

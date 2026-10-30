@@ -283,7 +283,7 @@ scenes["edgy-cinematic-title"] = {
           { frame: 0, value: 60 }, { frame: 60, value: 14, easing: "easeOut" } ] },
         { kind: "keyframes", property: "opacity", frames: [
           { frame: 0, value: 0 }, { frame: 36, value: 1, easing: "easeIn" } ] } ] },
-    { id: "subtitle", type: "text", text: "a motionforge picture", from: 84, duration: 84,
+    { id: "subtitle", type: "text", text: "a dojo-video-engine picture", from: 84, duration: 84,
       style: { position: "absolute", left: 0, width: "100%", top: 610, height: 40, fontSize: 28, color: "#bdb4a3", textAlign: "center", letterSpacing: 10 },
       animations: [{ kind: "keyframes", property: "opacity", frames: [{ frame: 0, value: 0 }, { frame: 30, value: 0.9, easing: "easeIn" }] }] },
   ],
