@@ -22,3 +22,7 @@ No engine gate requires paid LLM/ASR credentials. Exact pixels depend on the pin
 browser/font/color environment; other browsers are checked through semantic probes.
 Inspect actual differences before changing a golden. Do not equate these local
 checks with production, physical-mobile, or universal-device acceptance.
+
+## Canonical pixel environment
+
+The exact PNG/hash baselines use macOS 26 arm64 and the Playwright-pinned Chromium. CI runs the full gate on `macos-26`. Linux independently runs the full source/contract/CLI gate, three browser capability probes, and the external package-consumer check. OS text rasterization is not assumed byte-identical; exact pixel assertions are not disabled or made tolerant.

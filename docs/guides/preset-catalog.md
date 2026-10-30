@@ -6,7 +6,7 @@ Dojo Video Engine presets are stable names that compile to normal scene data. Us
 
 Use `styledCaptions(words, { fps, template })` for ASR word timings, or `subtitleTrack(segments, { fps, template })` for SRT/VTT-style subtitle cues.
 
-![Subtitle template gallery](../assets/presets/preset-subtitles-f45.png)
+Subtitle template gallery (historical render; see scene source)
 
 | Key           | Best For                                                |
 | ------------- | ------------------------------------------------------- |
@@ -55,7 +55,7 @@ Segment subtitle tracks use the same template names as word-timed captions, but 
 
 Use with `textOverlay({ template })`.
 
-![Text overlay template gallery](../assets/presets/preset-text-overlays-f45.png)
+Text overlay template gallery (historical render; see scene source)
 
 | Key                  | Required Text | Best For                       |
 | -------------------- | ------------- | ------------------------------ |
@@ -172,7 +172,7 @@ Fades compile to mixer-visible `volumeEnvelope` points, so preview and export us
 
 Use with `mediaLook(key)` inside an image or video style.
 
-![Media look gallery](../assets/presets/preset-media-looks-f45.png)
+Media look gallery (historical render; see scene source)
 
 | Key               | Best For                                |
 | ----------------- | --------------------------------------- |
@@ -197,7 +197,7 @@ videoClip(clip, {
 
 Use with `clipLayout(key)` inside an image or video style.
 
-![Clip layout gallery](../assets/presets/preset-clip-layouts-f45.png)
+Clip layout gallery (historical render; see scene source)
 
 | Key                 | Best For                         |
 | ------------------- | -------------------------------- |
@@ -217,7 +217,7 @@ Use with `clipLayout(key)` inside an image or video style.
 
 Use with `transitionOverlay(template, options)`.
 
-![Transition overlay gallery](../assets/presets/preset-transitions-f30.png)
+Transition overlay gallery (historical render; see scene source)
 
 | Key          | Best For                   |
 | ------------ | -------------------------- |

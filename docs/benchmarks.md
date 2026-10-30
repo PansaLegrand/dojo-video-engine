@@ -37,7 +37,7 @@ The chat app now treats large uploaded files as a product readiness state, not a
 
 Current local-media path:
 
-- Upload/probe uses browser object URLs and media elements (`<img>`, `<video>`, `<audio>`) to read dimensions, durations, and thumbnails.
+- Upload/probe uses browser object URLs and media elements (`Scene source linked below`, `<video>`, `<audio>`) to read dimensions, durations, and thumbnails.
 - Preview/export resolves renderable scene assets through `resolveAssets()`.
 - HTTP(S) video/audio uses bounded range-backed `UrlSource`; local `blob:`/data sources remain buffer-backed. Declared proxies and source modes let hosts choose explicitly.
 

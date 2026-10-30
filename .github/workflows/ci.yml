@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -22,4 +22,21 @@ jobs:
       # Build first: package tsconfigs use project references, so typecheck
       # needs the referenced declaration outputs to exist.
       - run: pnpm release:full
+      - run: pnpm verify:clean
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm release:fast
+      - run: pnpm --filter @dojo-video-engine/golden exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm cross-browser
       - run: pnpm verify:clean

@@ -112,7 +112,7 @@ asset — all from one JSON document, no code.
 
 | frame 30                             | frame 60                             | frame 135                              |
 | ------------------------------------ | ------------------------------------ | -------------------------------------- |
-| ![frame 30](tiktok-captions-f30.png) | ![frame 60](tiktok-captions-f60.png) | ![frame 135](tiktok-captions-f135.png) |
+| frame 30 (historical render; see scene source) | frame 60 (historical render; see scene source) | frame 135 (historical render; see scene source) |
 
 ## generate-tiktok.mjs
 
