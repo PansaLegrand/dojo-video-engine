@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -11,9 +18,11 @@ const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const keep = process.argv.includes("--keep");
 const suppliedPackDir = readOption("--pack-dir");
 
-const tempDir = await mkdtemp(join(tmpdir(), "dojo-video-engine-clean-machine-"));
+const tempDir = await realpath(
+  await mkdtemp(join(tmpdir(), "dojo-video-engine-clean-machine-")),
+);
 const packDir = suppliedPackDir
-  ? resolve(rootDir, suppliedPackDir)
+  ? await realpath(resolve(rootDir, suppliedPackDir))
   : join(tempDir, "packs");
 const projectDir = join(tempDir, "starter");
 const launcherDir = join(tempDir, "launcher");
@@ -194,7 +203,9 @@ async function rewriteStarterDependencies(packed) {
     "@dojo-video-engine/commands": spec("@dojo-video-engine/commands"),
     "@dojo-video-engine/export": spec("@dojo-video-engine/export"),
     "@dojo-video-engine/interchange": spec("@dojo-video-engine/interchange"),
-    "@dojo-video-engine/renderer-canvas2d": spec("@dojo-video-engine/renderer-canvas2d"),
+    "@dojo-video-engine/renderer-canvas2d": spec(
+      "@dojo-video-engine/renderer-canvas2d",
+    ),
     "@dojo-video-engine/runtime": spec("@dojo-video-engine/runtime"),
     "@dojo-video-engine/schema": spec("@dojo-video-engine/schema"),
   };
