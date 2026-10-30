@@ -1,4 +1,8 @@
-import { inspectScene, parseScene, type Scene } from "@dojo-video-engine/schema";
+import {
+  inspectScene,
+  parseScene,
+  type Scene,
+} from "@dojo-video-engine/schema";
 import {
   BoundedTextMeasureCache,
   disposeAssetsAsync,
@@ -166,6 +170,9 @@ export type PlayerOptions = {
   /** A 2D context sized to the scene; the player draws into it. */
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
   scene: unknown;
+  /** Host-owned frame renderer (for example a worker). Requires audio:false;
+   * the host owns media resolution and renderer disposal. */
+  renderFrame?: (frame: number, signal: AbortSignal) => Promise<void>;
   /**
    * Pre-resolved assets. When omitted, createPlayer() resolves them and
    * dispose() releases them; when provided, the caller owns their lifetime.
@@ -245,6 +252,7 @@ export class Player {
 
   private readonly clock: FrameClock;
   private readonly context: PlayerOptions["context"];
+  private readonly externalRenderFrame: PlayerOptions["renderFrame"];
   private readonly assets: ResolvedAssets | undefined;
   private readonly ownsAssets: boolean;
   private readonly now: () => number;
@@ -284,6 +292,7 @@ export class Player {
   ) {
     this.scene = scene;
     this.context = options.context;
+    this.externalRenderFrame = options.renderFrame;
     this.assets = assets;
     this.ownsAssets = ownsAssets;
     this.scratchSurfacePool = options.scratchSurfacePool;
@@ -556,6 +565,16 @@ export class Player {
     this.rendering = true;
 
     try {
+      if (this.externalRenderFrame) {
+        await waitForPlayerOperation(
+          this.externalRenderFrame(frame, this.signal!),
+          this.signal,
+        );
+        if (this.disposed) return;
+        this.renderedFrame = frame;
+        this.emit("frame", frame);
+        return;
+      }
       const resolvedScene = this.assets
         ? await waitForPlayerOperation(
             prepareFrame(this.scene, frame, this.assets, {
@@ -652,11 +671,17 @@ async function createPlayerInternal(
   options: PlayerOptions,
   lifecycle: PlayerLifecycle = {},
 ): Promise<Player> {
+  if (options.renderFrame && options.audio !== false) {
+    throw new Error(
+      "A host-owned frame renderer requires audio:false; audio ownership must be explicit.",
+    );
+  }
   const scene = parseScene(options.scene);
   const inspection = inspectScene(scene);
   const needsAssets =
-    Object.keys(scene.assets).length > 0 ||
-    inspection.capabilities.hasExtensions;
+    !options.renderFrame &&
+    (Object.keys(scene.assets).length > 0 ||
+      inspection.capabilities.hasExtensions);
   const ownsAssets = options.assets === undefined && needsAssets;
   const assets =
     options.assets ??

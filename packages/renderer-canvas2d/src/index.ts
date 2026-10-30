@@ -1,4 +1,7 @@
-import { fontAssetIdsForFamily, fontFamilyNames } from "@dojo-video-engine/schema";
+import {
+  fontAssetIdsForFamily,
+  fontFamilyNames,
+} from "@dojo-video-engine/schema";
 import {
   audioReactiveSourceTime,
   collectAudioReactiveSourceRanges,
@@ -76,6 +79,7 @@ import {
   type ResolvedExtensionNode,
 } from "@dojo-video-engine/extensions";
 import {
+  AssetPolicyError,
   AudioAnalysisCache as BoundedAudioAnalysisCache,
   FontAssetCache,
   assetDeclarationKey,
@@ -99,7 +103,10 @@ import {
   type StaticDisplayResourceReference,
 } from "./display-cache.js";
 import { ScratchSurfacePool, checkedRgbaBytes } from "./surface-pool.js";
-import type { TextMeasureCache } from "./text-measure-cache.js";
+import {
+  BoundedTextMeasureCache,
+  type TextMeasureCache,
+} from "./text-measure-cache.js";
 
 export {
   Canvas2DStaticDisplayCache,
@@ -215,6 +222,9 @@ export type ResolveAssetsOptions = {
   signal?: AbortSignal;
   /** Use declared proxy sources (normally true for preview, false for export). */
   preferProxy?: boolean;
+  /** Opt-in picture proxies may omit audio. Resolve their soundtrack from the
+   * primary asset without opening a primary video decoder. Default: proxy. */
+  videoProxyAudio?: "proxy" | "original";
   budget?: Partial<MediaResourceBudget>;
   analysisCache?: AudioAnalysisCache;
   /** Host-owned URL, credential, proxy, MIME, and byte policy. */
@@ -754,6 +764,8 @@ export type VideoClip = {
   track: InputVideoTrack;
   /** Underlying input; closed by disposeAssets(). */
   input: Input;
+  /** Separately owned primary soundtrack input when videoProxyAudio is original. */
+  audioInput?: Input;
   /** The clip's own audio track, when it has one (mixed into exports). */
   audio?: {
     duration: number;
@@ -1091,6 +1103,7 @@ function resolvedAssetResourceKey(
     assetPolicy?: AssetPolicy;
     fontCache?: FontAssetCache<FontFace>;
     maxSourceCacheBytes: number;
+    proxyAudio?: VideoProxyAudioRequest;
   },
 ): string {
   const policyIdentity = options.assetPolicy?.reuseKey
@@ -1111,6 +1124,19 @@ function resolvedAssetResourceKey(
     policyIdentity,
     fontCacheIdentity,
     asset.type === "font" ? fontDescriptors(asset) : null,
+    options.proxyAudio?.kind === "primary"
+      ? [
+          "primary-audio",
+          request.source,
+          request.declarationKey,
+          options.proxyAudio.request.source,
+          options.proxyAudio.request.contentKey,
+          options.proxyAudio.request.declarationKey,
+          options.proxyAudio.request.maxBytes ?? null,
+        ]
+      : options.proxyAudio?.kind
+        ? [options.proxyAudio.kind, request.source, request.declarationKey]
+        : null,
   ]);
 }
 
@@ -1129,7 +1155,9 @@ function createSharedAssetResource(
     value,
     retain() {
       if (references <= 0 || disposal) {
-        throw new Error("Cannot retain a disposed DojoVideoEngine asset resource.");
+        throw new Error(
+          "Cannot retain a disposed DojoVideoEngine asset resource.",
+        );
       }
       references += 1;
     },
@@ -1669,6 +1697,7 @@ export async function resolveAssets(
     lifecycle.controller.signal,
   ]);
   const signal = combined.signal;
+  const preparation = new AssetPreparationQueue(signal);
   const assetPolicy = withAssetByteBudget(
     options.assetPolicy,
     budget.maxAssetBytes ??
@@ -1690,10 +1719,27 @@ export async function resolveAssets(
             preferProxy: preferAssetProxy,
           });
           const src = request.source;
+          const proxyAudio: VideoProxyAudioRequest | undefined =
+            asset.type === "video" &&
+            options.videoProxyAudio === "original" &&
+            (request.sourceKind === "declared-proxy" ||
+              request.sourceKind === "derived-proxy")
+              ? asset.metadata?.hasAudio === false
+                ? { kind: "silent" }
+                : {
+                    kind: "primary",
+                    request: await prepareAssetRequest(asset, {
+                      policy: assetPolicy,
+                      signal,
+                      preferProxy: false,
+                    }),
+                  }
+              : undefined;
           const resourceKey = resolvedAssetResourceKey(asset, request, {
             assetPolicy: options.assetPolicy,
             fontCache: options.fontCache,
             maxSourceCacheBytes: budget.maxSourceCacheBytes,
+            proxyAudio,
           });
           const declaredSource =
             request.sourceKind === "declared-proxy"
@@ -1740,20 +1786,23 @@ export async function resolveAssets(
               return;
             }
             if (asset.type === "image") {
-              const image = await decodeImageBlob(
-                await readPreparedAssetBlob(asset, request, signal),
-              );
-              if (signal.aborted) {
-                image.close();
-                assertNotAborted(signal);
-              }
-              decodedImageBytes += image.width * image.height * 4;
-              if (decodedImageBytes > budget.maxDecodedImageBytes) {
-                image.close();
-                throw new Error(
-                  `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
+              const image = await preparation.run(async () => {
+                const image = await decodeImageBlob(
+                  await readPreparedAssetBlob(asset, request, signal),
                 );
-              }
+                if (signal.aborted) {
+                  image.close();
+                  assertNotAborted(signal);
+                }
+                decodedImageBytes += image.width * image.height * 4;
+                if (decodedImageBytes > budget.maxDecodedImageBytes) {
+                  image.close();
+                  throw new Error(
+                    `Decoded image budget exceeded (${decodedImageBytes} > ${budget.maxDecodedImageBytes} bytes). Use proxy assets or raise resolveAssets().budget.maxDecodedImageBytes.`,
+                  );
+                }
+                return image;
+              });
               bindSharedAssetResource(
                 resolvedAssets,
                 lifecycle,
@@ -1769,6 +1818,7 @@ export async function resolveAssets(
                 request,
                 options.fontCache,
                 signal,
+                preparation,
               );
               bindSharedAssetResource(
                 resolvedAssets,
@@ -1779,30 +1829,35 @@ export async function resolveAssets(
                 ),
               );
             } else if (asset.type === "video") {
-              const clip = await openVideoClip(
-                asset,
-                request,
-                asset.sourceMode ?? "auto",
-                budget,
-                signal,
-                lifecycle.abortCleanups,
+              const clip = await preparation.run(() =>
+                openVideoClip(
+                  asset,
+                  request,
+                  asset.sourceMode ?? "auto",
+                  budget,
+                  signal,
+                  lifecycle.abortCleanups,
+                  proxyAudio,
+                ),
               );
               bindSharedAssetResource(
                 resolvedAssets,
                 lifecycle,
                 asset.id,
                 createSharedAssetResource("video", resourceKey, clip, () =>
-                  disposeMediaInputSafely(clip.input),
+                  disposeVideoClipInputs(clip),
                 ),
               );
             } else if (asset.type === "audio") {
-              const clip = await openAudioClip(
-                asset,
-                request,
-                asset.sourceMode ?? "auto",
-                budget,
-                signal,
-                lifecycle.abortCleanups,
+              const clip = await preparation.run(() =>
+                openAudioClip(
+                  asset,
+                  request,
+                  asset.sourceMode ?? "auto",
+                  budget,
+                  signal,
+                  lifecycle.abortCleanups,
+                ),
               );
               bindSharedAssetResource(
                 resolvedAssets,
@@ -1813,13 +1868,15 @@ export async function resolveAssets(
                 ),
               );
             } else if (asset.type === "lottie") {
-              const clip = await openLottieClip(
-                asset,
-                request,
-                signal,
-                budget.maxLottieWaitMs ??
-                  defaultMediaResourceBudget.maxLottieWaitMs ??
-                  15_000,
+              const clip = await preparation.run(() =>
+                openLottieClip(
+                  asset,
+                  request,
+                  signal,
+                  budget.maxLottieWaitMs ??
+                    defaultMediaResourceBudget.maxLottieWaitMs ??
+                    15_000,
+                ),
               );
               bindSharedAssetResource(
                 resolvedAssets,
@@ -1886,17 +1943,19 @@ export async function resolveAssets(
         const extensionAssets = reused
           ? reused.value
           : resolvedNode.definition.resolveAssets
-            ? await Promise.resolve(
-                resolvedNode.definition.resolveAssets({
-                  ...reuseContext,
-                  signal,
+            ? await preparation.run(() =>
+                Promise.resolve(
+                  resolvedNode.definition.resolveAssets!({
+                    ...reuseContext,
+                    signal,
+                  }),
+                ).catch((cause: unknown) => {
+                  throw new Error(
+                    `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
+                    { cause },
+                  );
                 }),
-              ).catch((cause: unknown) => {
-                throw new Error(
-                  `Failed to resolve extension ${resolvedNode.node.extension.name}@${resolvedNode.definition.version} for node "${resolvedNode.node.id}": ${cause instanceof Error ? cause.message : String(cause)}`,
-                  { cause },
-                );
-              })
+              )
             : undefined;
         const shared =
           reused ??
@@ -2052,7 +2111,70 @@ export async function resolveAssets(
     }
     throw cause;
   } finally {
+    preparation.dispose();
     combined.dispose();
+  }
+}
+
+/** Bound actual creators; cache-hit/alias waiters must not occupy a slot. */
+class AssetPreparationQueue {
+  private active = 0;
+  private failed = false;
+  private pending: Array<{ start(): void; reject(reason: unknown): void }> = [];
+
+  constructor(private readonly signal: AbortSignal) {
+    signal.addEventListener("abort", this.abort, { once: true });
+  }
+
+  private abort = () => {
+    for (const entry of this.pending.splice(0))
+      entry.reject(this.signal.reason);
+  };
+
+  dispose(): void {
+    this.signal.removeEventListener("abort", this.abort);
+  }
+
+  run<T>(operation: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      if (this.signal.aborted) {
+        reject(this.signal.reason);
+        return;
+      }
+      const entry = {
+        reject,
+        start: () => {
+          this.active += 1;
+          void Promise.resolve()
+            .then(() => {
+              assertNotAborted(this.signal);
+              return operation();
+            })
+            .then(resolve, (error) => {
+              // Let the caller add asset-specific context before the shared
+              // failure controller rejects waiting work. Start no more creators.
+              this.failed = true;
+              reject(error);
+            })
+            .finally(() => {
+              this.active -= 1;
+              this.pump();
+            });
+        },
+      };
+      this.pending.push(entry);
+      this.pump();
+    });
+  }
+
+  private pump(): void {
+    while (
+      !this.failed &&
+      !this.signal.aborted &&
+      this.active < 4 &&
+      this.pending.length
+    )
+      this.pending.shift()!.start();
   }
 }
 
@@ -2450,16 +2572,21 @@ async function readPreparedAssetBlob(
   signal?: AbortSignal,
 ): Promise<Blob> {
   const response = await fetchPreparedAssetResponse(asset, request, signal);
-  const bytes = await readResponseBytes(response, {
-    maxBytes: request.maxBytes,
-    signal,
-  });
-  return new Blob([ownedArrayBuffer(bytes)], {
-    type:
-      asset.metadata?.mimeType ??
-      response.headers.get("content-type")?.split(";", 1)[0] ??
-      "",
-  });
+  // fetchAssetBounded enforces headers, streamed bytes, redirects, MIME and
+  // cancellation. Native Blob consumption avoids joining all bytes into a
+  // JS Uint8Array and copying that entire array again for Blob ownership.
+  const blob = await response.blob();
+  assertNotAborted(signal);
+  if (request.maxBytes !== undefined && blob.size > request.maxBytes) {
+    throw new AssetPolicyError(
+      `Response exceeds the ${request.maxBytes}-byte media limit.`,
+    );
+  }
+  const type =
+    asset.metadata?.mimeType ??
+    response.headers.get("content-type")?.split(";", 1)[0] ??
+    "";
+  return blob.type === type ? blob : blob.slice(0, blob.size, type);
 }
 
 function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -2735,6 +2862,21 @@ async function openAudioClip(
   }
 }
 
+type VideoProxyAudioRequest =
+  | { kind: "primary"; request: PreparedAssetRequest }
+  | { kind: "silent" };
+
+function disposeVideoClipInputs(
+  clip: Pick<VideoClip, "input" | "audioInput">,
+): void {
+  try {
+    disposeMediaInputSafely(clip.input);
+  } finally {
+    if (clip.audioInput && clip.audioInput !== clip.input)
+      disposeMediaInputSafely(clip.audioInput);
+  }
+}
+
 async function openVideoClip(
   asset: SceneAsset,
   request: PreparedAssetRequest,
@@ -2742,12 +2884,15 @@ async function openVideoClip(
   budget: MediaResourceBudget,
   signal?: AbortSignal,
   abortCleanups?: Set<() => void>,
+  proxyAudio?: VideoProxyAudioRequest,
 ): Promise<VideoClip> {
   const input = new Input({
     formats: ALL_FORMATS,
     source: await createMediaSource(asset, request, sourceMode, budget, signal),
   });
   const unlinkAbort = disposeInputOnAbort(input, signal);
+  let audioInput: Input | undefined;
+  let unlinkAudioAbort: (() => void) | undefined;
   try {
     const track = await input.getPrimaryVideoTrack();
     assertNotAborted(signal);
@@ -2757,32 +2902,61 @@ async function openVideoClip(
 
     const duration = await input.computeDuration([track]);
 
-    // Silent clips are normal; only wire audio when a track exists. The audio
-    // sink shares the clip's input, so disposal releases both at once.
-    const audioTrack = await input.getPrimaryAudioTrack();
+    // Original audio keeps codec priming and its source clock; the primary
+    // Input is only queried for sound and never opens a video decoder.
+    if (proxyAudio?.kind === "primary") {
+      audioInput = new Input({
+        formats: ALL_FORMATS,
+        source: await createMediaSource(
+          asset,
+          proxyAudio.request,
+          sourceMode,
+          budget,
+          signal,
+        ),
+      });
+      unlinkAudioAbort = disposeInputOnAbort(audioInput, signal);
+    }
+    const soundInput = audioInput ?? input;
+    const audioTrack =
+      proxyAudio?.kind === "silent"
+        ? null
+        : await soundInput.getPrimaryAudioTrack();
     assertNotAborted(signal);
     const audio = audioTrack
       ? {
-          duration: await input.computeDuration([audioTrack]),
+          duration: await soundInput.computeDuration([audioTrack]),
           sampleRate: audioTrack.sampleRate,
           numberOfChannels: audioTrack.numberOfChannels,
           sink: new AudioSampleSink(audioTrack),
         }
       : undefined;
     assertNotAborted(signal);
+    if (!audioTrack && audioInput) {
+      unlinkAudioAbort?.();
+      disposeMediaInputSafely(audioInput);
+      audioInput = undefined;
+      unlinkAudioAbort = undefined;
+    }
     if (abortCleanups) abortCleanups.add(unlinkAbort);
     else unlinkAbort();
+    if (unlinkAudioAbort) {
+      if (abortCleanups) abortCleanups.add(unlinkAudioAbort);
+      else unlinkAudioAbort();
+    }
     return {
       duration,
       width: track.displayWidth,
       height: track.displayHeight,
       track,
       input,
+      ...(audioInput ? { audioInput } : {}),
       ...(audio ? { audio } : {}),
     };
   } catch (error) {
     unlinkAbort();
-    disposeMediaInputSafely(input);
+    unlinkAudioAbort?.();
+    disposeVideoClipInputs({ input, audioInput });
     throw error;
   }
 }
@@ -2900,6 +3074,7 @@ async function prepareFrameExclusive(
   const parsed = parseScene(scene);
   assertResolvedAssetsCompatible(parsed, assets);
   const resolved = evaluateScene(parsed, frame);
+  preparedSceneOwners.set(resolved, parsed);
 
   if (
     assets.videos.size === 0 &&
@@ -3374,6 +3549,7 @@ async function loadFont(
   request: PreparedAssetRequest,
   configuredCache: FontAssetCache<FontFace> | undefined,
   signal?: AbortSignal,
+  preparation?: AssetPreparationQueue,
 ): Promise<{ readonly face: FontFace; release(): void }> {
   // Windows expose the set as document.fonts, workers as self.fonts.
   const fontSet =
@@ -3391,15 +3567,18 @@ async function loadFont(
   const lease = await cache.acquire(
     `${id}\u0000${request.contentKey}\u0000${JSON.stringify(fontDescriptors(asset))}`,
     async () => {
-      const bytes = await readPreparedAssetBytes(asset, request, signal);
-      const descriptor = fontDescriptors(asset);
-      const face = new FontFace(descriptor.family, ownedArrayBuffer(bytes), {
-        weight: descriptor.weight,
-        style: descriptor.style,
-      });
-      await face.load();
-      assertNotAborted(signal);
-      return face;
+      const create = async () => {
+        const bytes = await readPreparedAssetBytes(asset, request, signal);
+        const descriptor = fontDescriptors(asset);
+        const face = new FontFace(descriptor.family, ownedArrayBuffer(bytes), {
+          weight: descriptor.weight,
+          style: descriptor.style,
+        });
+        await face.load();
+        assertNotAborted(signal);
+        return face;
+      };
+      return preparation ? preparation.run(create) : create();
     },
     asset.metadata?.byteLength,
   );
@@ -3468,6 +3647,18 @@ export type CompileCanvas2DDisplayListOptions = Pick<
   budgets?: Partial<DisplayListCompilerBudgets>;
 };
 
+// Prepared frames share the immutable Scene contract. Only results created by
+// this renderer may bypass authoritative re-evaluation in the private facade.
+const preparedSceneOwners = new WeakMap<ResolvedScene, Scene>();
+
+type CompiledCanvasFrame = {
+  scene: Scene;
+  resolved: ResolvedScene;
+  displayList: DisplayList;
+  trusted: boolean;
+  textMeasureCache?: TextMeasureCache;
+};
+
 /**
  * Evaluates, lays out, and compiles one frame with one exact Canvas measurer.
  * Prepared/native resources are consulted only by the extension compilation
@@ -3479,6 +3670,15 @@ export function compileCanvas2DDisplayList(
   frame: number,
   options: CompileCanvas2DDisplayListOptions = {},
 ): DisplayList {
+  return compileCanvasFrame(context, sceneInput, frame, options).displayList;
+}
+
+function compileCanvasFrame(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  sceneInput: Scene,
+  frame: number,
+  options: CompileCanvas2DDisplayListOptions,
+): CompiledCanvasFrame {
   const scene = parseScene(sceneInput);
   if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
   const resolved = options.resolvedScene ?? evaluateScene(scene, frame);
@@ -3488,27 +3688,43 @@ export function compileCanvas2DDisplayList(
       `Resolved scene targets frame ${resolved.frame}, but Canvas2D display compilation requested evaluated frame ${evaluatedFrame}.`,
     );
   }
-  const measureTextLine = createContextTextMeasurer(
-    context,
-    options.textMeasureCache,
-  );
-  const textMetrics = createCanvasTextMetricsProvider(context);
-  const layout = layoutScene(resolved, { measureTextLine });
+  let text: ReturnType<typeof canvasFrameTextResources> | undefined;
+  const textResources = () =>
+    (text ??= canvasFrameTextResources(
+      context,
+      scene,
+      options.assets,
+      options.textMeasureCache,
+    ));
+  // Graphics-only frames do not need to enumerate fonts or allocate text caches.
+  const measureLine: MeasureTextLine = (line, style, fontSize) =>
+    measureTextLine(context, line, style, fontSize, textResources().widths);
+  const layout = layoutScene(resolved, { measureTextLine: measureLine });
   const extensionCompilations = compileCanvas2DExtensions(
     scene,
     layout.boxes,
     layout.frame,
     options.assets,
   );
-  return compileDisplayList(layout, {
-    measureTextLine,
-    textMetrics,
+  const displayList = compileDisplayList(layout, {
+    measureTextLine: measureLine,
+    textMetrics: {
+      measureLine: (input) => textResources().metrics.measureLine(input),
+    },
     mediaMetrics: options.assets
       ? createDisplayMediaMetricsProvider(options.assets)
       : undefined,
     extensionCompilations,
     budgets: options.budgets,
   });
+  return {
+    scene,
+    resolved,
+    displayList,
+    trusted:
+      !options.resolvedScene || preparedSceneOwners.get(resolved) === scene,
+    textMeasureCache: text?.widths ?? options.textMeasureCache,
+  };
 }
 
 function createDisplayMediaMetricsProvider(
@@ -3596,6 +3812,29 @@ export function executeCanvas2DDisplayList(
   if (options.assets) assertResolvedAssetsCompatible(scene, options.assets);
   assertCanvas2DDisplayComposition(displayList, scene);
   const evaluated = evaluateScene(scene, displayList.composition.frame);
+  const text = canvasFrameTextResources(
+    context,
+    scene,
+    options.assets,
+    options.textMeasureCache,
+  );
+  executeCanvasFrame(
+    context,
+    displayList,
+    { ...options, textMeasureCache: text.widths },
+    scene,
+    evaluated,
+  );
+}
+
+/** Internal-only: the resolved nodes came from this exact compilation. */
+function executeCanvasFrame(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  displayList: DisplayList,
+  options: ExecuteCanvas2DDisplayListOptions,
+  scene: Scene,
+  evaluated: ResolvedScene,
+): void {
   const reconstructed = reconstructDisplayGroups(
     displayList.groups,
     evaluated.nodes,
@@ -3608,7 +3847,10 @@ export function executeCanvas2DDisplayList(
     displayGroups: reconstructed.displayGroups,
     opaqueExtensionRegistry,
     staticDisplayCache: options.staticDisplayCache,
-    staticResourceIdentity: createStaticDisplayResourceIdentity(options.assets),
+    staticResourceIdentity: createStaticDisplayResourceIdentity(
+      options.assets,
+      context,
+    ),
   };
   assertCanvas2DDisplayCapabilities(
     context,
@@ -3657,20 +3899,31 @@ export function renderStill(
   frame: number,
   options: RenderOptions = {},
 ): void {
-  const displayList = compileCanvas2DDisplayList(context, scene, frame, {
+  const compiled = compileCanvasFrame(context, scene, frame, {
     assets: options.assets,
     resolvedScene: options.resolvedScene,
     textMeasureCache: options.textMeasureCache,
   });
-  executeCanvas2DDisplayList(context, displayList, {
-    scene,
+  const executionOptions: ExecuteCanvas2DDisplayListOptions = {
+    scene: compiled.scene,
     clear: options.clear,
     assets: options.assets,
-    textMeasureCache: options.textMeasureCache,
+    textMeasureCache: compiled.textMeasureCache,
     scratchSurfacePool: options.scratchSurfacePool,
     opaqueExtensionRegistry: options.opaqueExtensionRegistry,
     staticDisplayCache: options.staticDisplayCache,
-  });
+  };
+  if (compiled.trusted) {
+    executeCanvasFrame(
+      context,
+      compiled.displayList,
+      executionOptions,
+      compiled.scene,
+      compiled.resolved,
+    );
+  } else {
+    executeCanvas2DDisplayList(context, compiled.displayList, executionOptions);
+  }
 }
 
 function compileCanvas2DExtensions(
@@ -4098,7 +4351,9 @@ let nextPreparedStaticResourceIdentity = 1;
 
 function createStaticDisplayResourceIdentity(
   assets: ResolvedAssets | undefined,
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 ): (reference: StaticDisplayResourceReference) => string {
+  let fontGeneration: string | undefined;
   return (reference) => {
     if (reference.kind === "image") {
       const image = assets?.images?.get(reference.assetId);
@@ -4120,14 +4375,15 @@ function createStaticDisplayResourceIdentity(
           families.has(family),
         ),
     );
+    fontGeneration ??= canvasFontGeneration(context, assets);
     if (!fonts.length)
-      return `system-font:${reference.family}:${reference.weight}:${reference.style}`;
-    return fonts
+      return `${fontGeneration}\u0000system-font:${reference.family}:${reference.weight}:${reference.style}`;
+    return `${fontGeneration}\u0000${fonts
       .map(([id, font]) =>
         staticPreparedResourceIdentity(font, assets?.resolvedSources?.get(id)),
       )
       .sort()
-      .join("\u0000");
+      .join("\u0000")}`;
   };
 }
 
@@ -4255,20 +4511,6 @@ function createTransientScratchSurfacePool(scene: Scene): ScratchSurfacePool {
 }
 
 /**
- * Layout-side text measurement backed by the render context, so intrinsic
- * text boxes wrap exactly like drawText paints. Mutates the context's font
- * state; every draw routine sets its own font before drawing, and
- * letterSpacing is reset after each measurement because nothing else does.
- */
-function createContextTextMeasurer(
-  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  textMeasureCache?: TextMeasureCache,
-): MeasureTextLine {
-  return (line, style, fontSize) =>
-    measureTextLine(context, line, style, fontSize, textMeasureCache);
-}
-
-/**
  * Canvas keeps drawing state on an implicit stack. Every internal save must
  * be paired even when a browser API, extension, or test double throws midway
  * through a draw; otherwise the caller's next frame inherits poisoned state.
@@ -4290,6 +4532,117 @@ export type CanvasTextMetricsProviderOptions = {
   /** Include prepared font/content identity so replacements cannot hit old metrics. */
   generationKey?: string;
 };
+
+type CanvasFrameTextResources = {
+  scene: Scene;
+  assets: ResolvedAssets | undefined;
+  fonts: string;
+  measure: CanvasRenderingContext2D["measureText"];
+  metrics: TextMetricsProvider;
+  widths: TextMeasureCache;
+  generation: number;
+  callerWidths: WeakMap<TextMeasureCache, TextMeasureCache>;
+};
+const canvasTextResources = new WeakMap<object, CanvasFrameTextResources>();
+let nextCanvasTextGeneration = 1;
+
+/** Namespacing preserves caller-owned Maps and their existing LRU ceilings. */
+class GenerationTextMeasureCache extends Map<string, number> {
+  constructor(
+    private readonly source: TextMeasureCache,
+    private readonly generation: number,
+  ) {
+    super();
+  }
+  override get(key: string): number | undefined {
+    return this.source.get(`${this.generation}\u0000${key}`);
+  }
+  override set(key: string, value: number): this {
+    this.source.set(`${this.generation}\u0000${key}`, value);
+    return this;
+  }
+}
+
+function canvasFrameTextResources(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  scene: Scene,
+  assets: ResolvedAssets | undefined,
+  callerWidths?: TextMeasureCache,
+): { metrics: TextMetricsProvider; widths: TextMeasureCache } {
+  const fonts = canvasFontGeneration(context, assets);
+  let entry = canvasTextResources.get(context);
+  if (
+    !entry ||
+    entry.scene !== scene ||
+    entry.assets !== assets ||
+    entry.fonts !== fonts ||
+    entry.measure !== context.measureText
+  ) {
+    entry = {
+      scene,
+      assets,
+      fonts,
+      measure: context.measureText,
+      metrics: createCanvasTextMetricsProvider(context),
+      widths: new BoundedTextMeasureCache(),
+      generation: nextCanvasTextGeneration++,
+      callerWidths: new WeakMap(),
+    };
+    canvasTextResources.set(context, entry);
+  }
+  if (!callerWidths) return { metrics: entry.metrics, widths: entry.widths };
+  let widths = entry.callerWidths.get(callerWidths);
+  if (!widths) {
+    widths = new GenerationTextMeasureCache(callerWidths, entry.generation);
+    entry.callerWidths.set(callerWidths, widths);
+  }
+  return { metrics: entry.metrics, widths };
+}
+
+function canvasFontGeneration(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  assets: ResolvedAssets | undefined,
+): string {
+  const fontSet =
+    (context.canvas as HTMLCanvasElement | undefined)?.ownerDocument?.fonts ??
+    (typeof document !== "undefined"
+      ? document.fonts
+      : (globalThis as { fonts?: FontFaceSet }).fonts);
+  const fontIdentity = (font: FontFace, source?: ResolvedAssetSource) => {
+    const descriptor = font as unknown as Record<string, unknown>;
+    return [
+      staticPreparedResourceIdentity(font, source),
+      ...[
+        "family",
+        "style",
+        "weight",
+        "stretch",
+        "unicodeRange",
+        "featureSettings",
+        "variationSettings",
+        "ascentOverride",
+        "descentOverride",
+        "lineGapOverride",
+        "status",
+      ].map((key) => descriptor[key] ?? null),
+    ];
+  };
+  // Checking membership as well as load status covers replacing an already
+  // loaded face with another face of the same family (no loading event).
+  const nativeFonts =
+    fontSet && typeof fontSet[Symbol.iterator] === "function"
+      ? Array.from(fontSet, (font) => fontIdentity(font))
+      : [];
+  return JSON.stringify([
+    fontSet ? staticPreparedResourceIdentity(fontSet, undefined) : null,
+    fontSet?.status ?? null,
+    nativeFonts,
+    [...(assets?.fonts ?? [])].map(([id, font]) => [
+      id,
+      fontIdentity(font, assets?.resolvedSources?.get(id)),
+    ]),
+  ]);
+}
 
 /** Exact synchronous metrics over an already-prepared Canvas/font context. */
 export function createCanvasTextMetricsProvider(

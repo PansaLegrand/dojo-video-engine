@@ -14,7 +14,9 @@ import { evaluateScene } from "@dojo-video-engine/core";
 
 vi.mock("@dojo-video-engine/renderer-canvas2d", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@dojo-video-engine/renderer-canvas2d")>();
+    await importOriginal<
+      typeof import("@dojo-video-engine/renderer-canvas2d")
+    >();
 
   return {
     ...actual,
@@ -823,5 +825,68 @@ describe("Player audio preview", () => {
 
     await player.disposeAsync();
     expect(calls).toContain("dispose");
+  });
+});
+
+describe("host-owned preview rendering", () => {
+  it("uses the host renderer without resolving or painting duplicate local media", async () => {
+    const calls: number[] = [];
+    const beforeResolve = vi.mocked(resolveAssets).mock.calls.length;
+    const beforePaint = vi.mocked(renderStill).mock.calls.length;
+    const player = await createPlayer({
+      scene: {
+        ...testScene,
+        assets: {
+          clip: { id: "clip", type: "video", src: "blob:owned-only-by-worker" },
+        },
+      },
+      context: fakeContext(),
+      audio: false,
+      renderFrame: async (frame) => {
+        calls.push(frame);
+      },
+    });
+    await player.seek(7);
+    expect(calls).toEqual([0, 7]);
+    expect(player.currentFrame).toBe(7);
+    expect(vi.mocked(resolveAssets).mock.calls.length).toBe(beforeResolve);
+    expect(vi.mocked(renderStill).mock.calls.length).toBe(beforePaint);
+    await player.disposeAsync();
+  });
+  it("requires explicit audio ownership instead of silently dropping sound", async () => {
+    await expect(
+      createPlayer({
+        scene: testScene,
+        context: fakeContext(),
+        renderFrame: async () => {},
+      }),
+    ).rejects.toThrow("audio:false");
+  });
+  it("aborts host work and does not publish a late frame after disposal", async () => {
+    let release!: () => void;
+    let activeSignal: AbortSignal | undefined;
+    const player = await createPlayer({
+      scene: testScene,
+      context: fakeContext(),
+      audio: false,
+      renderFrame: async (frame, signal) => {
+        if (frame === 5) {
+          activeSignal = signal;
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+      },
+    });
+    const frames: number[] = [];
+    player.on("frame", (frame) => frames.push(frame));
+    const seek = player.seek(5);
+    await vi.waitFor(() => expect(activeSignal).toBeDefined());
+    await player.disposeAsync();
+    expect(activeSignal!.aborted).toBe(true);
+    release();
+    await seek;
+    expect(frames).toEqual([]);
+    expect(player.currentFrame).toBe(0);
   });
 });

@@ -8,9 +8,11 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
-## Unreleased
+## 1.1.0 — 2026-10-31
 
-### 2026-10-31 — Engine naming and application split
+Repository release candidate; npm publication is recorded separately.
+
+### Engine naming and application split
 
 - Renamed the repository, package namespace, executables, schema/tool identities,
   source paths, and exported identifiers to Dojo Video Engine.
@@ -25,7 +27,17 @@ requires the receipts and provenance in
 
 This changes source/API names. It does not claim npm publication under the new scope.
 
-## 1.1.0 — 2026-08-26
+### Runtime patches reconciled from DojoClip
+
+- Preserved original audio when preview uses picture-only proxies.
+- Added bounded export render-cache reuse, preparation concurrency, text-resource
+  reuse, audio lookahead/pipelining, and cancellable host-owned preview rendering.
+- Added bounded audio decoder preroll, exact envelope boundaries, and measured AAC
+  priming/padding correction for Blob and streamed MP4 export.
+- Moved the corresponding regression tests into the engine. The legacy Scene
+  Command v1 facade remains a host compatibility concern.
+
+### Earlier 1.1 source baseline — 2026-08-26
 
 Repository release candidate. This heading records the tested source/API
 baseline; npm publication and the Git tag remain external maintainer steps

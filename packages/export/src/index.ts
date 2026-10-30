@@ -1,5 +1,8 @@
 import {
   BoundedTextMeasureCache,
+  Canvas2DStaticDisplayCache,
+  ScratchSurfacePool,
+  checkedRgbaBytes,
   prepareFrame,
   disposeAssetsAsync,
   estimateMediaResources,
@@ -10,8 +13,6 @@ import {
   type ResolvedAssets,
   type ResolveAssetsOptions,
   type MediaResourceEstimate,
-  type ScratchSurfacePool,
-  type Canvas2DStaticDisplayCache,
   type Canvas2DOpaqueExtensionRegistry,
   type TextMeasureCache,
 } from "@dojo-video-engine/renderer-canvas2d";
@@ -55,6 +56,14 @@ import {
 } from "./verification.js";
 
 export * from "./verification.js";
+import {
+  measureAacEncoderTiming,
+  audioEncoderConfigKey,
+  type AacEncoderTiming,
+} from "./aac-encoder-timing.js";
+import { repairAacBlob, createAacTimingStream } from "./mp4-aac-target.js";
+import type { AacMoovTiming } from "./mp4-aac-timing.js";
+import { AacTimingError } from "./aac-timing-error.js";
 
 export type ExportCapability = {
   webCodecs: boolean;
@@ -140,9 +149,9 @@ export type ExportVideoOptions = {
   assetPolicy?: ResolveAssetsOptions["assetPolicy"];
   analysisCache?: ResolveAssetsOptions["analysisCache"];
   fontCache?: ResolveAssetsOptions["fontCache"];
-  /** Shared by every encoded frame; caller-owned and never disposed here. */
+  /** Shared by every encoded frame; an owned bounded pool is created when omitted. */
   scratchSurfacePool?: ScratchSurfacePool;
-  /** Caller-owned bounded static raster cache; export never disposes it. */
+  /** Caller-owned when supplied; otherwise export creates and disposes a bounded cache. */
   staticDisplayCache?: Canvas2DStaticDisplayCache;
   /**
    * Audio is mixed and fed to the encoder in windows of this many seconds
@@ -326,6 +335,8 @@ export function mixAudioSegments(
       if (!target || !source) {
         continue;
       }
+      const volume = segment.volume;
+      const balance = panGain(segment.pan ?? 0, channel, channelCount);
 
       for (let index = 0; index < outSamples; index += 1) {
         const outIndex = startIndex + index;
@@ -343,9 +354,9 @@ export function mixAudioSegments(
         target[outIndex] =
           (target[outIndex] ?? 0) +
           (lowerValue + (upperValue - lowerValue) * t) *
-            segment.volume *
+            volume *
             (gains ? (gains[index] ?? 1) : 1) *
-            panGain(segment.pan ?? 0, channel, channelCount);
+            balance;
       }
     }
   }
@@ -410,8 +421,24 @@ function segmentEnvelopeGains(
   const startTime = segment.envelopeStartTime ?? 0;
   const gains = new Float32Array(outSamples);
 
-  for (let block = 0; block < outSamples; block += ENVELOPE_BLOCK_SAMPLES) {
-    const end = Math.min(outSamples, block + ENVELOPE_BLOCK_SAMPLES);
+  let nextKeyframe = 0;
+  for (let block = 0; block < outSamples; ) {
+    // Never interpolate one block across two different envelope segments. The
+    // first sample on/after a knot starts a new block, including fractional
+    // sample positions and export chunks beginning inside an existing ramp.
+    let boundary = outSamples;
+    while (nextKeyframe < envelope.length) {
+      const sample = Math.ceil(
+        (envelope[nextKeyframe]!.frame / fps - startTime) * sampleRate,
+      );
+      if (sample <= block) {
+        nextKeyframe++;
+        continue;
+      }
+      boundary = sample;
+      break;
+    }
+    const end = Math.min(outSamples, block + ENVELOPE_BLOCK_SAMPLES, boundary);
     const first = evaluateVolumeEnvelope(
       envelope,
       (startTime + block / sampleRate) * fps,
@@ -426,6 +453,7 @@ function segmentEnvelopeGains(
       gains[index] =
         span === 0 ? first : first + ((last - first) * (index - block)) / span;
     }
+    block = end;
   }
 
   return gains;
@@ -454,9 +482,9 @@ export type RenderFrameSequenceOptions = {
   signal?: AbortSignal;
   /** Resolved assets forwarded to the default renderStill renderer. */
   assets?: ResolvedAssets;
-  /** Shared across the sequence; caller-owned and never disposed here. */
+  /** Shared across the sequence; supplied pools remain caller-owned. */
   scratchSurfacePool?: ScratchSurfacePool;
-  /** Caller-owned and never disposed by the frame loop. */
+  /** Supplied caches remain caller-owned; otherwise a bounded sequence cache is used. */
   staticDisplayCache?: Canvas2DStaticDisplayCache;
   renderFrame?: (
     context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
@@ -652,11 +680,61 @@ export async function exportVideoWithFallback(
 export async function renderFrameSequence(
   options: RenderFrameSequenceOptions,
 ): Promise<RenderFrameSequenceResult> {
+  validateFrameRange(
+    options.scene,
+    options.startFrame ?? 0,
+    options.endFrame ?? options.scene.duration - 1,
+  );
+  throwIfAborted(options.signal);
+
+  // Blob, stream, and worker export all share this loop. Keep intermediate
+  // surfaces and static rasters for the sequence, rather than allocating and
+  // discarding the renderer's transient pool for every encoded frame.
+  const ownedScratch = options.scratchSurfacePool
+    ? undefined
+    : new ScratchSurfacePool({
+        createCanvas: (width, height) =>
+          createExportCanvas(width, height).canvas,
+        // Match the renderer's bounded transient policy, including oversized
+        // shadows and object-fit:none surfaces outside the composition.
+        maxBytes: Math.min(
+          512 * 1024 * 1024,
+          Math.max(
+            64 * 1024 * 1024,
+            checkedRgbaBytes(options.scene.width, options.scene.height) * 4,
+          ),
+        ),
+        maxSurfaces: 32,
+        maxDimension: Number.MAX_SAFE_INTEGER,
+      });
+  const ownedStatic = options.staticDisplayCache
+    ? undefined
+    : new Canvas2DStaticDisplayCache({
+        maxBytes: 128 * 1024 * 1024,
+        maxEntries: 256,
+        maxKeyBytes: 1024 * 1024,
+        maxDimension: 16_384,
+      });
+  try {
+    return await renderFrameSequenceWithCaches({
+      ...options,
+      scratchSurfacePool: options.scratchSurfacePool ?? ownedScratch,
+      staticDisplayCache: options.staticDisplayCache ?? ownedStatic,
+    });
+  } finally {
+    try {
+      ownedStatic?.dispose();
+    } finally {
+      ownedScratch?.dispose();
+    }
+  }
+}
+
+async function renderFrameSequenceWithCaches(
+  options: RenderFrameSequenceOptions,
+): Promise<RenderFrameSequenceResult> {
   const startFrame = options.startFrame ?? 0;
   const endFrame = options.endFrame ?? options.scene.duration - 1;
-
-  validateFrameRange(options.scene, startFrame, endFrame);
-  throwIfAborted(options.signal);
 
   const totalFrames = endFrame - startFrame + 1;
   const renderFrame =
@@ -779,8 +857,11 @@ export async function exportVideo(
   if (!target.buffer) {
     throw new Error("MP4 muxing finished without producing an output buffer.");
   }
-  const { mimeType, ...metadata } = result;
-  const blob = new Blob([target.buffer], { type: mimeType });
+  const { mimeType, aacTiming, ...metadata } = result;
+  const original = new Blob([target.buffer], { type: mimeType });
+  const blob = aacTiming
+    ? await repairAacBlob(original, aacTiming, options.signal)
+    : original;
   const verification = await verifyExportBlob(
     blob,
     exportVerificationExpectation(options, result),
@@ -822,10 +903,18 @@ export async function exportVideoToStream(
   writable: WritableStream<StreamTargetChunk>,
   streamOptions: StreamTargetOptions = {},
 ): Promise<ExportVideoStreamResult> {
-  const result = await runExportVideo(
-    options,
-    new StreamTarget(writable, streamOptions),
-  );
+  const relay = createAacTimingStream(writable, options.signal);
+  let result: InternalExportResult;
+  try {
+    result = await runExportVideo(
+      options,
+      new StreamTarget(relay.writable, streamOptions),
+      { onTiming: relay.setTiming, onMoov: relay.onMoov },
+    );
+  } catch (cause) {
+    await relay.abort(cause);
+    throw cause;
+  }
   const expectation = exportVerificationExpectation(options, result);
   const mode = options.verification ?? "container";
   const request = {
@@ -845,7 +934,8 @@ export async function exportVideoToStream(
   if (verification.status === "failed") {
     throw new ExportVerificationError(verification);
   }
-  return { ...result, verification };
+  const { aacTiming: _aacTiming, ...metadata } = result;
+  return { ...metadata, verification };
 }
 
 /** Streams an MP4 from the runtime's current prepared revision. */
@@ -889,11 +979,17 @@ function exportVerificationExpectation(
   };
 }
 
-type InternalExportResult = ExportVideoStreamResult;
+type InternalExportResult = ExportVideoStreamResult & {
+  aacTiming?: AacMoovTiming;
+};
 
 async function runExportVideo(
   options: ExportVideoOptions,
   target: Target,
+  timingSink: {
+    onTiming?: (timing: AacMoovTiming) => void;
+    onMoov?: (data: Uint8Array, position: number) => void;
+  } = {},
 ): Promise<InternalExportResult> {
   const { scene } = options;
   const preflight = preflightExport(scene, globalThis, {
@@ -954,26 +1050,26 @@ async function runExportVideo(
       );
     }
     const { canvas, context } = createExportCanvas(scene.width, scene.height);
-    const output = new Output({ format, target });
-    const source = new CanvasSource(canvas, {
-      codec,
-      bitrate: options.bitrate ?? QUALITY_HIGH,
-    });
-    output.addVideoTrack(source, { frameRate: scene.fps });
 
     // Tracks can only be added while the output is pending, so probe for
-    // audible content up front (no decoding); the actual mix happens in
-    // chunks after the frame loop so audio memory stays flat.
+    // audible content up front (no decoding). Reuse this immutable placement
+    // and ducking plan for every chunk in this pinned scene revision.
     const startFrame = options.startFrame ?? 0;
     const endFrame = options.endFrame ?? scene.duration - 1;
+    const audioPlan = createAudioMixPlan(scene);
     const hasAudio = sceneHasAudibleContent(
       scene,
       assets,
       startFrame,
       endFrame,
+      audioPlan.placements,
     );
     let audioSource: AudioSampleSource | null = null;
     let audioCodec: AudioCodec | null = null;
+    let aacProfile: AacEncoderTiming | undefined,
+      aacTiming: AacMoovTiming | undefined;
+    let encodedTimingError: AacTimingError | undefined,
+      checkedFirstPacket = false;
 
     if (hasAudio) {
       audioCodec = await getFirstEncodableAudioCodec(
@@ -990,21 +1086,154 @@ async function runExportVideo(
         );
       }
 
-      // AudioSampleSource over AudioBufferSource: samples are built from raw
-      // Float32Arrays, so the whole export runs in workers, where AudioBuffer
-      // does not exist.
+      if (audioCodec === "aac") {
+        aacProfile = await measureAacEncoderTiming({
+          sampleRate: MIX_SAMPLE_RATE,
+          numberOfChannels: MIX_CHANNELS,
+          bitrate: QUALITY_HIGH,
+          signal: options.signal,
+        });
+        aacTiming = {
+          sampleRate: MIX_SAMPLE_RATE,
+          sampleCount: Math.round(
+            ((endFrame - startFrame + 1) / scene.fps) * MIX_SAMPLE_RATE,
+          ),
+          primingSamples: aacProfile.primingSamples,
+        };
+        timingSink.onTiming?.(aacTiming);
+      }
+    }
+    const outputFormat =
+      aacTiming && timingSink.onMoov
+        ? new Mp4OutputFormat({
+            fastStart: false,
+            onMoov: (data, position) => {
+              if (encodedTimingError) throw encodedTimingError;
+              timingSink.onMoov!(data, position);
+            },
+          })
+        : format;
+    const output = new Output({ format: outputFormat, target });
+    const source = new CanvasSource(canvas, {
+      codec,
+      bitrate: options.bitrate ?? QUALITY_HIGH,
+    });
+    output.addVideoTrack(source, { frameRate: scene.fps });
+    if (audioCodec) {
+      // Raw PCM keeps the worker path independent of AudioBuffer.
       audioSource = new AudioSampleSource({
         codec: audioCodec,
         bitrate: QUALITY_HIGH,
+        ...(aacProfile
+          ? {
+              onEncoderConfig: (config: AudioEncoderConfig) => {
+                if (
+                  audioEncoderConfigKey(config) !==
+                  audioEncoderConfigKey(aacProfile!.encoderConfig)
+                )
+                  encodedTimingError = new AacTimingError(
+                    "AAC_TIMING_UNVERIFIED",
+                    "The AAC encoder profile changed after its timing check.",
+                  );
+              },
+              onEncodedPacket: (packet: { timestamp: number }) => {
+                if (checkedFirstPacket) return;
+                checkedFirstPacket = true;
+                if (Math.abs(packet.timestamp * MIX_SAMPLE_RATE) > 0.5)
+                  encodedTimingError = new AacTimingError(
+                    "AAC_TIMING_UNVERIFIED",
+                    "The AAC encoder timestamps differ from its timing check.",
+                  );
+              },
+            }
+          : {}),
       });
       output.addAudioTrack(audioSource);
     }
 
     const frameDuration = 1 / scene.fps;
     let result: RenderFrameSequenceResult;
+    const work = new AbortController();
+    const forwardAbort = () => work.abort(options.signal?.reason);
+    if (options.signal?.aborted) forwardAbort();
+    else
+      options.signal?.addEventListener("abort", forwardAbort, { once: true });
+    const ranges = audioSource
+      ? audioChunkRanges(
+          startFrame,
+          endFrame,
+          scene.fps,
+          options.audioChunkSeconds ?? 10,
+        )
+      : [];
+    const overlapAudio =
+      Boolean(audioSource) && audioPlanCanOverlapVideo(audioPlan, assets);
+    type PreparedAudioChunk =
+      | { ok: true; mixed: MixedAudioData | null }
+      | { ok: false; error: unknown };
+    let pendingAudio: Promise<PreparedAudioChunk> | null = null;
+    let audioIndex = 0;
+    const prepareNextAudio = () => {
+      if (pendingAudio || audioIndex >= ranges.length || work.signal.aborted)
+        return;
+      const [chunkStart, chunkEnd] = ranges[audioIndex]!;
+      // Store one handled promise, including failed preparation. A video error
+      // can then abort/drain it without an unhandled rejection or stale PCM.
+      pendingAudio = mixSceneAudioDataWithPlan(
+        scene,
+        assets,
+        chunkStart,
+        chunkEnd,
+        audioPlan,
+        work.signal,
+      ).then(
+        (mixed) => ({ ok: true, mixed }),
+        (error) => {
+          work.abort(error);
+          return { ok: false, error };
+        },
+      );
+    };
+    const appendNextAudio = async () => {
+      throwIfAborted(work.signal);
+      prepareNextAudio();
+      const prepared = await pendingAudio!;
+      pendingAudio = null;
+      if (!prepared.ok) throw prepared.error;
+      throwIfAborted(work.signal);
+      const [chunkStart, chunkEnd] = ranges[audioIndex]!;
+      const sampleCount = Math.max(
+        1,
+        Math.round(((chunkEnd - chunkStart + 1) / scene.fps) * MIX_SAMPLE_RATE),
+      );
+      // Every range is appended, including explicit silence. Keep the exact
+      // old chunk boundaries and PCM layout so limiting and A/V timing match.
+      const data = new Float32Array(sampleCount * MIX_CHANNELS);
+      prepared.mixed?.channels.forEach((channel, index) => {
+        data.set(channel.subarray(0, sampleCount), index * sampleCount);
+      });
+      const sample = new AudioSample({
+        data,
+        format: "f32-planar",
+        numberOfChannels: MIX_CHANNELS,
+        sampleRate: MIX_SAMPLE_RATE,
+        timestamp:
+          (chunkStart - startFrame) / scene.fps +
+          (aacProfile?.timestampLeadSamples ?? 0) / MIX_SAMPLE_RATE,
+      });
+      try {
+        throwIfAborted(work.signal);
+        await audioSource!.add(sample);
+        if (encodedTimingError) throw encodedTimingError;
+      } finally {
+        sample.close();
+      }
+      audioIndex += 1;
+    };
 
     try {
       await output.start();
+      if (overlapAudio) prepareNextAudio();
       result = await renderFrameSequence({
         scene,
         context,
@@ -1013,76 +1242,46 @@ async function runExportVideo(
         staticDisplayCache: options.staticDisplayCache,
         startFrame: options.startFrame,
         endFrame: options.endFrame,
-        signal: options.signal,
+        signal: work.signal,
         // Awaiting add() respects encoder backpressure before the next frame
         // is drawn over the shared canvas.
-        onFrame: async ({ timestampUs }) => {
+        onFrame: async ({ frame, timestampUs }) => {
           await source.add(timestampUs / 1_000_000, frameDuration);
+          if (
+            overlapAudio &&
+            audioIndex < ranges.length &&
+            frame >= ranges[audioIndex]![1]
+          ) {
+            await appendNextAudio();
+            // Do not retain a successor until the previous AudioSample has
+            // been encoded and closed. At most one pending PCM chunk exists.
+            prepareNextAudio();
+          }
         },
         onProgress: options.onProgress,
         progressIntervalMs: options.progressIntervalMs,
       });
 
-      if (audioSource) {
-        // Sequential appends: every chunk must be added, so silent windows
-        // become explicit silence rather than skipped (skipping would shift
-        // everything after them earlier).
-        const ranges = audioChunkRanges(
-          startFrame,
-          endFrame,
-          scene.fps,
-          options.audioChunkSeconds ?? 10,
-        );
+      // Embedded soundtracks share a video Input; keep their decoding after
+      // all video reads. Independent audio was already appended at boundaries.
+      while (audioIndex < ranges.length) await appendNextAudio();
 
-        for (const [chunkStart, chunkEnd] of ranges) {
-          const mixed = await mixSceneAudioData(
-            scene,
-            assets,
-            chunkStart,
-            chunkEnd,
-            options.signal,
-          );
-          const sampleCount = Math.max(
-            1,
-            Math.round(
-              ((chunkEnd - chunkStart + 1) / scene.fps) * MIX_SAMPLE_RATE,
-            ),
-          );
-          // Planar f32 layout: all of channel 0, then all of channel 1. An
-          // absent mix leaves the zero-filled buffer — explicit silence.
-          const data = new Float32Array(sampleCount * MIX_CHANNELS);
-
-          if (mixed) {
-            mixed.channels.forEach((channel, index) => {
-              data.set(channel.subarray(0, sampleCount), index * sampleCount);
-            });
-          }
-
-          const sample = new AudioSample({
-            data,
-            format: "f32-planar",
-            numberOfChannels: MIX_CHANNELS,
-            sampleRate: MIX_SAMPLE_RATE,
-            timestamp: (chunkStart - startFrame) / scene.fps,
-          });
-          try {
-            throwIfAborted(options.signal);
-            await audioSource.add(sample);
-          } finally {
-            sample.close();
-          }
-        }
-      }
-
+      throwIfAborted(work.signal);
       await output.finalize();
+      throwIfAborted(work.signal);
+      if (encodedTimingError) throw encodedTimingError;
     } catch (error) {
+      work.abort(error);
       try {
         await output.cancel();
       } catch {
         // The render/encode error is the one worth surfacing.
       }
-
+      await pendingAudio;
+      pendingAudio = null;
       throw error;
+    } finally {
+      options.signal?.removeEventListener("abort", forwardAbort);
     }
 
     return {
@@ -1090,6 +1289,7 @@ async function runExportVideo(
       codec,
       audioCodec,
       totalFrames: result.totalFrames,
+      ...(aacTiming ? { aacTiming } : {}),
     };
   });
 }
@@ -1158,8 +1358,9 @@ function sceneHasAudibleContent(
   assets: ResolvedAssets,
   startFrame: number,
   endFrame: number,
+  placements: AudioPlacement[],
 ): boolean {
-  for (const placement of collectAudioPlacements(scene)) {
+  for (const placement of placements) {
     const assetId = placement.node.assetId ?? "";
     const isVideo = placement.node.type === "video";
     const clip = isVideo
@@ -1204,6 +1405,49 @@ export type MixedAudioData = {
   sampleRate: number;
 };
 
+type AudioMixPlan = {
+  placements: AudioPlacement[];
+  duckingByBus: Map<string, DuckingWindow[]>;
+};
+
+function createAudioMixPlan(scene: Scene): AudioMixPlan {
+  const placements = collectAudioPlacements(scene);
+  const duckingByBus = new Map<string, DuckingWindow[]>();
+  for (const placement of placements) {
+    if (!placement.node.ducks) continue;
+    const window = {
+      ...placement.node.ducks,
+      startFrame: placement.startFrame,
+      endFrame: placement.endFrame,
+    };
+    const windows = duckingByBus.get(window.bus);
+    if (windows) windows.push(window);
+    else duckingByBus.set(window.bus, [window]);
+  }
+  return { placements, duckingByBus };
+}
+
+function audioPlanCanOverlapVideo(
+  plan: AudioMixPlan,
+  assets: ResolvedAssets,
+): boolean {
+  // Trusted extensions may read shared media during prepareFrame; do not infer
+  // that their Input access is independent from audio preparation.
+  if (assets.extensionNodes?.size) return false;
+  const videoInputs = new Set(
+    [...assets.videos.values()].map((clip) => clip.input),
+  );
+  for (const { node } of plan.placements) {
+    if (node.type === "video" && assets.videos.get(node.assetId ?? "")?.audio)
+      return false;
+    if (node.type === "audio") {
+      const clip = assets.audio.get(node.assetId ?? "");
+      if (clip && videoInputs.has(clip.input)) return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Decodes and mixes every audible node (audio nodes and video-node
  * soundtracks) into raw per-channel PCM covering the frame range, or null
@@ -1219,7 +1463,26 @@ export async function mixSceneAudioData(
   signal?: AbortSignal,
 ): Promise<MixedAudioData | null> {
   throwIfAborted(signal);
-  const placements = collectAudioPlacements(scene);
+  return mixSceneAudioDataWithPlan(
+    scene,
+    assets,
+    startFrame,
+    endFrame,
+    createAudioMixPlan(scene),
+    signal,
+  );
+}
+
+async function mixSceneAudioDataWithPlan(
+  scene: Scene,
+  assets: ResolvedAssets,
+  startFrame: number,
+  endFrame: number,
+  plan: AudioMixPlan,
+  signal?: AbortSignal,
+): Promise<MixedAudioData | null> {
+  throwIfAborted(signal);
+  const { placements } = plan;
 
   if (placements.length === 0) {
     return null;
@@ -1335,22 +1598,11 @@ export async function mixSceneAudioData(
     busMixes.set(name, channels);
   }
 
-  const duckingWindows = placements.flatMap((placement) =>
-    placement.node.ducks
-      ? [
-          {
-            ...placement.node.ducks,
-            startFrame: placement.startFrame,
-            endFrame: placement.endFrame,
-          },
-        ]
-      : [],
-  );
   for (const [name, channels] of busMixes) {
     throwIfAborted(signal);
     applyDucking(
       channels,
-      duckingWindows.filter((window) => window.bus === name),
+      plan.duckingByBus.get(name) ?? [],
       startFrame,
       scene.fps,
       MIX_SAMPLE_RATE,
@@ -1543,6 +1795,14 @@ export async function mixSceneAudio(
  * Decodes a source range into per-channel PCM at the clip's sample rate,
  * positioning decoded packets at exact sample offsets relative to `start`.
  */
+// Compressed audio decoders need preceding packets to restore overlap state.
+// Bound warm-up work to 100 ms; allocation and all copied samples still use the
+// exact requested source window below. This also applies to preview chunks.
+// Keep negative presentation-time priming packets: clamping the query to zero
+// loses AAC decoder history at the very first visible sample. The sink supports
+// negative query times and naturally starts at the track's first packet.
+const AUDIO_DECODE_PREROLL_SECONDS = 0.1;
+
 async function decodeAudioRange(
   clip: Pick<AudioClip, "sampleRate" | "numberOfChannels" | "sink">,
   start: number,
@@ -1556,7 +1816,10 @@ async function decodeAudioRange(
     () => new Float32Array(totalSamples),
   );
 
-  for await (const sample of clip.sink.samples(start, end)) {
+  for await (const sample of clip.sink.samples(
+    start - AUDIO_DECODE_PREROLL_SECONDS,
+    end,
+  )) {
     try {
       throwIfAborted(signal);
       const offsetSamples = Math.round(
@@ -1575,14 +1838,14 @@ async function decodeAudioRange(
           format: "f32-planar",
         });
 
-        for (let index = 0; index < data.length; index += 1) {
-          if (index % 4096 === 0) throwIfAborted(signal);
-          const targetIndex = offsetSamples + index;
-
-          if (targetIndex >= 0 && targetIndex < totalSamples) {
-            target[targetIndex] = data[index] ?? 0;
-          }
-        }
+        throwIfAborted(signal);
+        const sourceStart = Math.max(0, -offsetSamples);
+        const sourceEnd = Math.min(data.length, totalSamples - offsetSamples);
+        if (sourceEnd > sourceStart)
+          target.set(
+            data.subarray(sourceStart, sourceEnd),
+            Math.max(0, offsetSamples),
+          );
       }
     } finally {
       sample.close();

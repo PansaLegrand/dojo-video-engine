@@ -6,25 +6,18 @@ npm release so repository documentation never treats one as proof of another.
 
 ## Current publication status
 
-As of 2026-08-26, repository history documents a 1.0.0 source/API baseline and
-the working tree is preparing synchronized 1.1.0 candidate manifests. The
-repository contains a pinned release workflow, pack-once bundle generator,
-lock-aware SBOM/license/audit evidence, exact-byte clean verifier, and staged
-publisher. There is still no Git tag, npm publication receipt for the
-`@dojo-video-engine/*` packages, protected-environment/scope-ownership proof,
-provenance receipt, or durable GitHub release record that can be verified from
-this checkout.
+The first `@dojo-video-engine/*` publication is prepared as synchronized **1.1.0**.
+The 2026-10-31 candidate includes the repository split and the runtime patches used
+by the harness. Public registry checks returned 404 for all 16 package identities
+before this candidate was prepared. Source checks and tarball checks do not prove
+registry publication; retain publication receipts and verify an actual registry install.
 
-The 1.0.0 files therefore define the repository's stable source/API baseline;
-they do not prove that 1.0.0 was externally published. The next planned
-package set is a **1.1.0 candidate** until every publication and verification
-step below succeeds.
+The root is a private workspace. Publish the coordinated public package set through
+the checked-in workflow, including `@dojo-video-engine/create`; its executable is
+`create-dojo-video-engine`. Do not publish an unscoped starter from this repository.
 
-The unscoped name `create-dojo-video-engine` belongs to another npm project and must
-not be published by this repository. Dojo Video Engine 1.1 uses the scoped package
-identity `@dojo-video-engine/create` while retaining the `create-dojo-video-engine`
-executable name. Contract baselines, starter documentation, clean-install
-tests, and trusted-publisher configuration must all use the scoped package.
+See [runtime reconciliation](runtime-reconciliation-2026-10-31.md) for the changes
+and verification boundary. npm login/scope access remains an external prerequisite.
 
 ## Authority and prerequisites
 
