@@ -90,4 +90,3 @@ jobs:
             ${{ runner.temp }}/release-tag.bundle
             ${{ runner.temp }}/tag-info.json
           if-no-files-found: error
-

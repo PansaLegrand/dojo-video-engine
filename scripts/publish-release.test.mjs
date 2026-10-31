@@ -16,6 +16,7 @@ import {
   loadAndVerifyReleaseBundle,
   publishVerifiedRelease,
   verifyTrustedPublishers,
+  createNpmRegistryAdapter,
   sha256,
   sha512Integrity,
   temporaryReleaseTag,
@@ -534,5 +535,56 @@ it("verifies trusted publication access without publishing or changing latest", 
   for (const entry of bundle.packages)
     expect(registry.records.get(entry.name).tags).toEqual({
       latest: entry.version,
+    });
+});
+
+it("reads immutable integrity from registry objects, not npm 12 singleton arrays", async () => {
+  const integrity = sha512Integrity(Buffer.from("published"));
+  const registry = createNpmRegistryAdapter({
+    readJson: async (url) =>
+      url.endsWith("/dist-tags")
+        ? { latest: "1.1.0" }
+        : {
+            name: "@dojo-video-engine/core",
+            version: "1.1.0",
+            dist: { integrity },
+          },
+  });
+  expect(await registry.getIntegrity("@dojo-video-engine/core", "1.1.0")).toBe(
+    integrity,
+  );
+  expect(await registry.getTags("@dojo-video-engine/core")).toEqual({
+    latest: "1.1.0",
+  });
+  const missing = createNpmRegistryAdapter({ readJson: async () => null });
+  expect(
+    await missing.getIntegrity("@dojo-video-engine/core", "1.1.0"),
+  ).toBeNull();
+});
+
+it("cleans old candidate tags without changing unrelated or future tags", async () => {
+  const bundle = publicationBundle();
+  const registry = new FakeRegistry(
+    Object.fromEntries(
+      bundle.packages.map((entry) => [
+        entry.name,
+        {
+          integrity: entry.integrity,
+          tags: {
+            latest: entry.version,
+            "dojo-video-engine-1-0-0-candidate": "1.0.0",
+            "dojo-video-engine-2-0-0-candidate": "2.0.0",
+            beta: "1.0.0",
+          },
+        },
+      ]),
+    ),
+  );
+  await publishVerifiedRelease(bundle, registry);
+  for (const entry of bundle.packages)
+    expect(registry.records.get(entry.name).tags).toEqual({
+      latest: entry.version,
+      "dojo-video-engine-2-0-0-candidate": "2.0.0",
+      beta: "1.0.0",
     });
 });

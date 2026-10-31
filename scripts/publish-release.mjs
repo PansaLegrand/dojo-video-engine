@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFile, execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -445,13 +445,18 @@ export async function verifyTrustedPublishers(bundle, registry, tag) {
 }
 
 /** npm CLI adapter used only by the protected release workflow. */
-export function createNpmRegistryAdapter() {
+export function createNpmRegistryAdapter({
+  readJson = readPublicRegistryJson,
+} = {}) {
   return {
     async getIntegrity(name, version) {
-      const result = await runNpmJson(
-        ["view", `${name}@${version}`, "dist.integrity", "--json"],
-        { allowNotFound: true },
+      const metadata = await readJson(
+        `/${name.replace("/", "%2f")}/${version}`,
       );
+      if (metadata === null) return null;
+      if (metadata.name !== name || metadata.version !== version)
+        throw new Error("Registry package identity mismatch.");
+      const result = metadata.dist?.integrity;
       if (result === null) return null;
       if (typeof result !== "string" || !sha512IntegrityPattern.test(result)) {
         throw new Error(
@@ -461,9 +466,9 @@ export function createNpmRegistryAdapter() {
       return result;
     },
     async getTags(name) {
-      const result = await runNpmJson(["dist-tag", "ls", name, "--json"], {
-        allowNotFound: true,
-      });
+      const result = await readJson(
+        `/-/package/${name.replace("/", "%2f")}/dist-tags`,
+      );
       if (result === null) return {};
       assertRecord(result, `${name} registry tags`);
       const tags = {};
@@ -519,7 +524,11 @@ export function compareStableVersions(left, right) {
 
 async function verifyRegistryIntegrity(entries, registry) {
   for (const entry of entries) {
-    const integrity = await registry.getIntegrity(entry.name, entry.version);
+    let integrity = await registry.getIntegrity(entry.name, entry.version);
+    for (let attempt = 0; integrity === null && attempt < 30; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      integrity = await registry.getIntegrity(entry.name, entry.version);
+    }
     if (integrity !== entry.integrity) {
       throw new Error(
         `${entry.name}@${entry.version} did not verify after staged publication.`,
@@ -540,18 +549,29 @@ async function verifyRegistryTags(entries, registry, tag) {
 }
 
 async function removeTemporaryTags(entries, registry, tag) {
+  const removed = [];
   for (const entry of entries) {
     const tags = await registry.getTags(entry.name);
-    if (tags[tag] === entry.version) {
-      await registry.removeTag(entry.name, tag);
+    for (const [candidate, version] of Object.entries(tags)) {
+      const match = candidate.match(
+        /^dojo-video-engine-(\d+)-(\d+)-(\d+)-candidate$/,
+      );
+      if (
+        !match ||
+        match.slice(1).join(".") !== version ||
+        compareStableVersions(version, entry.version) > 0
+      )
+        continue;
+      await registry.removeTag(entry.name, candidate);
+      removed.push({ name: entry.name, tag: candidate });
     }
   }
-  for (const entry of entries) {
-    const tags = await registry.getTags(entry.name);
-    if (Object.hasOwn(tags, tag)) {
+  for (const entry of entries)
+    if (Object.hasOwn(await registry.getTags(entry.name), tag))
       throw new Error(`${entry.name} retained temporary tag ${tag}.`);
-    }
-  }
+  for (const item of removed)
+    if (Object.hasOwn(await registry.getTags(item.name), item.tag))
+      throw new Error(`${item.name} retained temporary tag ${item.tag}.`);
 }
 
 function validatePackedPackageManifest(value, entry, expectedPackageNames) {
@@ -861,22 +881,32 @@ function sameStrings(left, right) {
   );
 }
 
-async function runNpmJson(args, options = {}) {
-  try {
-    const { stdout } = await execFileAsync("npm", args, {
-      cwd: rootDir,
-      encoding: "utf8",
-      maxBuffer: 4 * 1024 * 1024,
-      env: process.env,
-    });
-    return JSON.parse(stdout);
-  } catch (error) {
-    const detail = `${error?.stdout ?? ""}\n${error?.stderr ?? ""}`;
-    if (options.allowNotFound && /(?:E404|404 Not Found)/.test(detail)) {
-      return null;
-    }
-    throw new Error(`npm ${args.join(" ")} failed.`, { cause: error });
+/** Public registry API, independent of npm CLI JSON presentation and negative caches. */
+async function readPublicRegistryJson(path) {
+  const url = new URL(path, "https://registry.npmjs.org");
+  url.searchParams.set("release-verification", randomUUID());
+  const response = await fetch(url, {
+    headers: { Accept: "application/json", "Cache-Control": "no-cache" },
+    redirect: "error",
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (response.status === 404) {
+    await response.body?.cancel();
+    return null;
   }
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`Registry verification returned HTTP ${response.status}.`);
+  }
+  const chunks = [];
+  let length = 0;
+  for await (const chunk of response.body) {
+    length += chunk.length;
+    if (length > 8_000_000)
+      throw new Error("Registry verification response is too large.");
+    chunks.push(chunk);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
 async function runNpmMutation(args) {

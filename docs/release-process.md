@@ -6,11 +6,12 @@ npm release so repository documentation never treats one as proof of another.
 
 ## Current publication status
 
-The first `@dojo-video-engine/*` publication is prepared as synchronized **1.1.0**.
-The 2026-10-31 candidate includes the repository split and the runtime patches used
-by the harness. Public registry checks returned 404 for all 16 package identities
-before this candidate was prepared. Source checks and tarball checks do not prove
-registry publication; retain publication receipts and verify an actual registry install.
+The 1.1.0 package set was published with MIT licenses and GitHub provenance.
+The first publication exposed npm 12's changed JSON output shape and registry
+cache delays during read-back verification. The synchronized **1.1.1** patch
+candidate fixes the release controller; renderer APIs and behavior are unchanged.
+It reads anonymous public registry endpoints directly, uses bounded read-only
+propagation checks, and retains exact-byte verification before tag promotion.
 
 The root is a private workspace. Publish the coordinated public package set through
 the checked-in workflow, including `@dojo-video-engine/create`; its executable is

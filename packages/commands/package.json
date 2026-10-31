@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/commands",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Typed, reversible editing commands and revisioned in-memory workspaces for DojoVideoEngine scenes.",
   "keywords": [
     "dojo-video-engine",

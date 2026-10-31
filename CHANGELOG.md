@@ -8,6 +8,13 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.1.1 — 2026-10-31
+
+- Correct release verification for npm 12 by reading public registry JSON directly.
+- Reconcile short propagation delays with bounded read-only checks; never repeat a publish automatically.
+- Clean superseded release-candidate dist-tags after the full release is verified.
+- Keep renderer APIs and behavior unchanged from 1.1.0.
+
 ## 1.1.0 — 2026-10-31
 
 Repository release candidate; npm publication is recorded separately.
