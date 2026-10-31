@@ -339,7 +339,7 @@ never force-updates a tag. The expected signer identity is:
 
 `https://github.com/PansaLegrand/dojo-video-engine/.github/workflows/tag-release.yml@refs/heads/main`
 
-Verify with `gitsign verify --certificate-identity=<identity-above>
+Verify with `gitsign verify-tag --certificate-identity=<identity-above>
 --certificate-oidc-issuer=https://token.actions.githubusercontent.com v1.1.0`.
 GitHub may not display its native Verified badge for Sigstore X.509 tags; the
 identity-constrained Gitsign verification and Rekor record are authoritative.

@@ -76,5 +76,5 @@ jobs:
             git tag -s "$RELEASE_TAG" "$RELEASE_COMMIT" -m "Dojo Video Engine ${RELEASE_TAG#v}; verified candidate run $CANDIDATE_RUN"
           fi
           test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
-          "$RUNNER_TEMP/gitsign" verify --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/tag-release.yml@refs/heads/main" --certificate-oidc-issuer=https://token.actions.githubusercontent.com "$RELEASE_TAG"
+          "$RUNNER_TEMP/gitsign" verify-tag --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/tag-release.yml@refs/heads/main" --certificate-oidc-issuer=https://token.actions.githubusercontent.com "$RELEASE_TAG"
           git push origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
