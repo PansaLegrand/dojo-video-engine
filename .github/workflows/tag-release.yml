@@ -77,4 +77,17 @@ jobs:
           fi
           test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
           "$RUNNER_TEMP/gitsign" verify-tag --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/tag-release.yml@refs/heads/main" --certificate-oidc-issuer=https://token.actions.githubusercontent.com "$RELEASE_TAG"
-          git push origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          git bundle create "$RUNNER_TEMP/release-tag.bundle" "refs/tags/$RELEASE_TAG" "^$RELEASE_COMMIT^"
+          git bundle verify "$RUNNER_TEMP/release-tag.bundle"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs'; import { execFileSync } from 'node:child_process';
+          fs.writeFileSync(process.env.RUNNER_TEMP + '/tag-info.json', JSON.stringify({ tag: process.env.RELEASE_TAG, commit: process.env.RELEASE_COMMIT, tagObject: execFileSync('git', ['rev-parse', `refs/tags/${process.env.RELEASE_TAG}`], { encoding: 'utf8' }).trim(), candidateRun: process.env.CANDIDATE_RUN }, null, 2));
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dojo-video-engine-v${{ inputs.version }}-signed-tag
+          path: |
+            ${{ runner.temp }}/release-tag.bundle
+            ${{ runner.temp }}/tag-info.json
+          if-no-files-found: error
+

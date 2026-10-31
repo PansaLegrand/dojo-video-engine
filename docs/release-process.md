@@ -343,7 +343,12 @@ Verify with `gitsign verify-tag --certificate-identity=<identity-above>
 --certificate-oidc-issuer=https://token.actions.githubusercontent.com v1.1.0`.
 GitHub may not display its native Verified badge for Sigstore X.509 tags; the
 identity-constrained Gitsign verification and Rekor record are authoritative.
-After tagging, dispatch the existing release workflow against that exact tag.
+The workflow retains a signed Git bundle rather than pushing with `GITHUB_TOKEN`,
+which cannot introduce workflow files through a tag. A maintainer downloads the
+bundle, runs `git bundle verify`, fetches its tag into the local repository,
+verifies it with the identity-constrained command above, and pushes the unchanged
+tag with their existing GitHub credentials. Never force-update the tag. Then
+dispatch the release workflow against that exact tag.
 
 
 ### Verify trusted publishing before removing the bootstrap secret
