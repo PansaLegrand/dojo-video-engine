@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { publicPackageDirectories } from "./package-contracts.mjs";
+import { publicPackageDirectories } from "./public-package-policy.mjs";
 
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const cliBin = join(rootDir, "packages/cli/dist/bin/dojo-video-engine.js");

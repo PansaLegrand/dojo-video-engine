@@ -6,7 +6,7 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { publicPackagePolicy } from "./package-contracts.mjs";
+import { publicPackagePolicy } from "./public-package-policy.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));

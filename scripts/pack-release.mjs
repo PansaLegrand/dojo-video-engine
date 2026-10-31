@@ -14,7 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { publicPackageDirectories } from "./package-contracts.mjs";
+import { publicPackageDirectories } from "./public-package-policy.mjs";
 
 const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const outputArg = process.argv[2];

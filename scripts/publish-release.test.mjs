@@ -1,7 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+  copyFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   assertReleaseGitContext,
@@ -85,7 +93,10 @@ describe("release bundle validation", () => {
       /keys must be exactly/,
     );
 
-    const entry = packageEvidence("@dojo-video-engine/alpha", Buffer.from("alpha"));
+    const entry = packageEvidence(
+      "@dojo-video-engine/alpha",
+      Buffer.from("alpha"),
+    );
     const withPackage = baseManifest([entry]);
     expect(() =>
       validateReleaseManifest(withPackage, ["@dojo-video-engine/beta"]),
@@ -270,7 +281,9 @@ describe("staged registry publication", () => {
   });
 
   it("uses a deterministic non-SemVer temporary tag", () => {
-    expect(temporaryReleaseTag("1.1.0")).toBe("dojo-video-engine-1-1-0-candidate");
+    expect(temporaryReleaseTag("1.1.0")).toBe(
+      "dojo-video-engine-1-1-0-candidate",
+    );
     expect(() => temporaryReleaseTag("1.1.0-beta.1")).toThrow(
       /stable canonical/,
     );
@@ -332,7 +345,9 @@ function publicationBundle() {
 }
 
 async function releaseFixture(options = {}) {
-  const directory = await mkdtemp(join(tmpdir(), "dojo-video-engine-publish-test-"));
+  const directory = await mkdtemp(
+    join(tmpdir(), "dojo-video-engine-publish-test-"),
+  );
   temporaryPaths.push(directory);
   const names = ["@dojo-video-engine/alpha", "@dojo-video-engine/beta"];
   const packagePaths = [];
@@ -462,7 +477,9 @@ function packageEvidence(name, bytes) {
 }
 
 async function createTarball(directory, releaseName, manifest) {
-  const source = await mkdtemp(join(tmpdir(), "dojo-video-engine-package-test-"));
+  const source = await mkdtemp(
+    join(tmpdir(), "dojo-video-engine-package-test-"),
+  );
   temporaryPaths.push(source);
   const packageDirectory = join(source, "package");
   await mkdir(packageDirectory);
@@ -475,3 +492,26 @@ async function createTarball(directory, releaseName, manifest) {
   execFileSync("tar", ["-czf", path, "-C", source, "package"]);
   return path;
 }
+
+it("loads the publisher without workspace dependencies on a clean release runner", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "dojo-publisher-standalone-"));
+  temporaryPaths.push(directory);
+  const scripts = join(directory, "scripts");
+  await mkdir(scripts);
+  for (const name of ["publish-release.mjs", "public-package-policy.mjs"])
+    await copyFile(
+      fileURLToPath(new URL(name, import.meta.url)),
+      join(scripts, name),
+    );
+  const url = pathToFileURL(join(scripts, "publish-release.mjs")).href;
+  const output = execFileSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `const m = await import(${JSON.stringify(url)}); console.log(typeof m.loadAndVerifyReleaseBundle)`,
+    ],
+    { cwd: directory, encoding: "utf8" },
+  );
+  expect(output.trim()).toBe("function");
+});
