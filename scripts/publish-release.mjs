@@ -170,7 +170,10 @@ export function validateReleaseManifest(value, expectedPackageNames) {
     ],
     "Release manifest",
   );
-  if (value.format !== "dojo-video-engine.release-manifest" || value.version !== 2) {
+  if (
+    value.format !== "dojo-video-engine.release-manifest" ||
+    value.version !== 2
+  ) {
     throw new Error(
       "Release manifest must use dojo-video-engine.release-manifest v2.",
     );
@@ -417,6 +420,28 @@ export async function publishVerifiedRelease(bundle, registry) {
   await removeTemporaryTags(bundle.packages, registry, temporaryTag);
 
   return { temporaryTag, published, skipped, promoted };
+}
+
+/** Test only temporary dist-tags; never publish a version or move latest. */
+export async function verifyTrustedPublishers(bundle, registry, tag) {
+  if (!/^dojo-oidc-[0-9]+$/.test(tag))
+    throw new Error("Invalid OIDC probe tag.");
+  await verifyRegistryIntegrity(bundle.packages, registry);
+  const touched = [];
+  try {
+    for (const entry of bundle.packages) {
+      const existing = (await registry.getTags(entry.name))[tag];
+      if (existing !== undefined && existing !== entry.version)
+        throw new Error("OIDC probe tag points at a different version.");
+      touched.push(entry);
+      if (existing === undefined)
+        await registry.setTag(entry.name, entry.version, tag);
+    }
+    await verifyRegistryTags(bundle.packages, registry, tag);
+  } finally {
+    for (const entry of touched) await registry.removeTag(entry.name, tag);
+  }
+  return touched.length;
 }
 
 /** npm CLI adapter used only by the protected release workflow. */
@@ -708,7 +733,8 @@ function assertSbomIdentity(value, manifest) {
     : new Map();
   if (
     properties.get("dojo-video-engine:gitCommit") !== manifest.gitCommit ||
-    properties.get("dojo-video-engine:pnpmLockSha256") !== manifest.lockfile.sha256
+    properties.get("dojo-video-engine:pnpmLockSha256") !==
+      manifest.lockfile.sha256
   ) {
     throw new Error(
       "Release SBOM provenance does not match the release manifest.",
@@ -892,7 +918,8 @@ async function main() {
     );
     return;
   }
-  const expectedTag = mode;
+  const expectedTag =
+    mode === "--verify-oidc" ? `v${bundle.manifest.releaseVersion}` : mode;
   if (process.env.GITHUB_ACTIONS !== "true") {
     throw new Error("Registry publication is restricted to GitHub Actions.");
   }
@@ -915,6 +942,19 @@ async function main() {
     githubRef: process.env.GITHUB_REF,
   });
 
+  if (mode === "--verify-oidc") {
+    if (process.env.NODE_AUTH_TOKEN || process.env.NPM_TOKEN)
+      throw new Error("OIDC verification must not receive a bootstrap token.");
+    const count = await verifyTrustedPublishers(
+      bundle,
+      createNpmRegistryAdapter(),
+      `dojo-oidc-${process.env.GITHUB_RUN_ID}`,
+    );
+    console.log(
+      `Verified OIDC dist-tag access for ${count} packages; temporary tags removed.`,
+    );
+    return;
+  }
   const result = await publishVerifiedRelease(
     bundle,
     createNpmRegistryAdapter(),

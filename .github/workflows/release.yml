@@ -13,6 +13,12 @@ on:
         default: false
         type: boolean
 
+      verify_trusted_publishers:
+        description: Verify OIDC access against an already published release (no new versions)
+        required: true
+        default: false
+        type: boolean
+
 permissions:
   contents: read
   id-token: write
@@ -24,6 +30,7 @@ concurrency:
 
 jobs:
   candidate:
+    if: ${{ !inputs.verify_trusted_publishers }}
     runs-on: macos-26
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -68,7 +75,7 @@ jobs:
           retention-days: 30
 
   publish:
-    if: ${{ inputs.publish }}
+    if: ${{ inputs.publish && !inputs.verify_trusted_publishers }}
     needs: candidate
     runs-on: ubuntu-latest
     environment: npm-release
@@ -87,6 +94,7 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@12.2.1
       - name: Publish the exact tested tarballs
         env:
           # Needed only for the one-time scoped-package bootstrap. Revoke it
@@ -104,3 +112,29 @@ jobs:
               --title "DojoVideoEngine ${{ inputs.version }}" \
               --notes "Verified synchronized DojoVideoEngine ${{ inputs.version }} release artifacts."
           gh release upload "$RELEASE_TAG" artifacts/release/* --clobber
+
+  verify-trusted-publishers:
+    if: ${{ inputs.verify_trusted_publishers }}
+    runs-on: ubuntu-latest
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@12.2.1
+      - name: Verify OIDC without a bootstrap token
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          NODE_AUTH_TOKEN: ""
+        run: |
+          node -e 'if(!/^\d+\.\d+\.\d+$/.test(process.env.RELEASE_VERSION)||process.env.GITHUB_REF!==`refs/tags/v${process.env.RELEASE_VERSION}`)throw new Error("Use the exact published release tag")'
+          gh release download "v$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" --dir artifacts/release
+          node scripts/publish-release.mjs artifacts/release --verify-oidc

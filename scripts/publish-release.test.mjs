@@ -15,6 +15,7 @@ import {
   assertReleaseGitContext,
   loadAndVerifyReleaseBundle,
   publishVerifiedRelease,
+  verifyTrustedPublishers,
   sha256,
   sha512Integrity,
   temporaryReleaseTag,
@@ -514,4 +515,24 @@ it("loads the publisher without workspace dependencies on a clean release runner
     { cwd: directory, encoding: "utf8" },
   );
   expect(output.trim()).toBe("function");
+});
+
+it("verifies trusted publication access without publishing or changing latest", async () => {
+  const bundle = publicationBundle();
+  const registry = new FakeRegistry(
+    Object.fromEntries(
+      bundle.packages.map((entry) => [
+        entry.name,
+        { integrity: entry.integrity, tags: { latest: entry.version } },
+      ]),
+    ),
+  );
+  expect(await verifyTrustedPublishers(bundle, registry, "dojo-oidc-123")).toBe(
+    bundle.packages.length,
+  );
+  expect(registry.calls.some((call) => call.kind === "publish")).toBe(false);
+  for (const entry of bundle.packages)
+    expect(registry.records.get(entry.name).tags).toEqual({
+      latest: entry.version,
+    });
 });

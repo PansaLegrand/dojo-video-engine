@@ -344,3 +344,14 @@ Verify with `gitsign verify --certificate-identity=<identity-above>
 GitHub may not display its native Verified badge for Sigstore X.509 tags; the
 identity-constrained Gitsign verification and Rekor record are authoritative.
 After tagging, dispatch the existing release workflow against that exact tag.
+
+
+### Verify trusted publishing before removing the bootstrap secret
+
+The publish job pins npm 12.2.1 for OIDC-aware dist-tag operations. After every
+package has its trusted publisher configured, dispatch `release.yml` on the
+published version tag with `verify_trusted_publishers=true` and `publish=false`.
+This job receives no npm token, verifies the retained release against the registry,
+adds and removes a run-specific temporary dist-tag on each package, and never
+publishes a new version or changes `latest`. Remove the bootstrap secret only
+after this check succeeds.
