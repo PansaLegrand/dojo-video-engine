@@ -1,0 +1,80 @@
+name: Sign verified release tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version
+        required: true
+        type: string
+      candidate_run:
+        description: Successful Release candidate workflow run ID
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+  id-token: write
+
+concurrency:
+  group: dojo-video-engine-tag-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Validate candidate identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN: ${{ inputs.candidate_run }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          node -e 'if(!/^\d+$/.test(process.env.CANDIDATE_RUN)||!/^\d+\.\d+\.\d+$/.test(process.env.RELEASE_VERSION))throw new Error("Invalid release input")'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN" > "$RUNNER_TEMP/candidate-run.json"
+          gh run download "$CANDIDATE_RUN" --repo "$GITHUB_REPOSITORY" --name "dojo-video-engine-$RELEASE_VERSION-candidate" --dir "$RUNNER_TEMP/release"
+          node scripts/publish-release.mjs "$RUNNER_TEMP/release" --verify-only
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const run = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/candidate-run.json'));
+          const manifest = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/release/release-manifest.json'));
+          if (run.conclusion !== 'success' || run.event !== 'workflow_dispatch' || run.path !== '.github/workflows/release.yml' || run.head_branch !== 'main' || run.head_sha !== manifest.gitCommit) throw new Error('Not a successful main-branch release candidate');
+          execFileSync('git', ['merge-base', '--is-ancestor', manifest.gitCommit, 'origin/main']);
+          fs.appendFileSync(process.env.GITHUB_ENV, `RELEASE_COMMIT=${manifest.gitCommit}\nRELEASE_TAG=v${manifest.releaseVersion}\n`);
+          JS
+      - name: Install pinned keyless signer
+        run: |
+          curl --fail --location --silent --show-error https://github.com/sigstore/gitsign/releases/download/v0.18.0/gitsign_0.18.0_linux_amd64 --output "$RUNNER_TEMP/gitsign"
+          GITSIGN_PATH="$RUNNER_TEMP/gitsign" node --input-type=module <<'JS'
+          import fs from 'node:fs'; import { createHash } from 'node:crypto';
+          const file=process.env.GITSIGN_PATH;
+          if(createHash('sha256').update(fs.readFileSync(file)).digest('hex')!=='2bc625472a08fea3bb6a57982c7d8b4978d1032251d305ceef3bf2ded0ca4483')throw new Error('Signer checksum mismatch');
+          fs.chmodSync(file, 0o755);
+          JS
+      - name: Sign and verify the immutable tag
+        env:
+          CANDIDATE_RUN: ${{ inputs.candidate_run }}
+          GITSIGN_TOKEN_PROVIDER: github-actions
+          GITSIGN_LOG: /tmp/gitsign-release.log
+        run: |
+          git config --local user.name "dojo-video-engine release workflow"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local gpg.format x509
+          git config --local gpg.x509.program "$RUNNER_TEMP/gitsign"
+          if git ls-remote --exit-code origin "refs/tags/$RELEASE_TAG" >/dev/null; then
+            git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          else
+            git tag -s "$RELEASE_TAG" "$RELEASE_COMMIT" -m "Dojo Video Engine ${RELEASE_TAG#v}; verified candidate run $CANDIDATE_RUN"
+          fi
+          test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
+          "$RUNNER_TEMP/gitsign" verify --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/tag-release.yml@refs/heads/main" --certificate-oidc-issuer=https://token.actions.githubusercontent.com "$RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"

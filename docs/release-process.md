@@ -328,3 +328,19 @@ The final record includes:
 
 Source version files, a changelog entry, or a local successful gate remain
 candidate evidence until this record is complete.
+
+### Keyless release-tag signing
+
+Maintainers can dispatch `.github/workflows/tag-release.yml` on `main` with the
+exact version and a successful `Release candidate` run ID. It verifies the retained
+bundle and candidate source commit, then signs the tag using the GitHub Actions
+OIDC identity and pinned Gitsign 0.18.0. It uses no persistent signing key and
+never force-updates a tag. The expected signer identity is:
+
+`https://github.com/PansaLegrand/dojo-video-engine/.github/workflows/tag-release.yml@refs/heads/main`
+
+Verify with `gitsign verify --certificate-identity=<identity-above>
+--certificate-oidc-issuer=https://token.actions.githubusercontent.com v1.1.0`.
+GitHub may not display its native Verified badge for Sigstore X.509 tags; the
+identity-constrained Gitsign verification and Rekor record are authoritative.
+After tagging, dispatch the existing release workflow against that exact tag.
