@@ -76,7 +76,22 @@ jobs:
             git tag -s "$RELEASE_TAG" "$RELEASE_COMMIT" -m "Dojo Video Engine ${RELEASE_TAG#v}; verified candidate run $CANDIDATE_RUN"
           fi
           test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
-          "$RUNNER_TEMP/gitsign" verify-tag --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/tag-release.yml@refs/heads/main" --certificate-oidc-issuer=https://token.actions.githubusercontent.com "$RELEASE_TAG"
+          # Rekor's lookup index can lag the accepted signature upload. Retry
+          # verification of the same immutable object, never signing or pushing.
+          node --input-type=module <<'JS'
+          import { spawnSync } from 'node:child_process';
+          import { setTimeout } from 'node:timers/promises';
+          const args = ['verify-tag', `--certificate-identity=https://github.com/${process.env.GITHUB_REPOSITORY}/.github/workflows/tag-release.yml@refs/heads/main`, '--certificate-oidc-issuer=https://token.actions.githubusercontent.com', process.env.RELEASE_TAG];
+          for (let attempt = 1; attempt <= 12; attempt++) {
+            const result = spawnSync(process.env.RUNNER_TEMP + '/gitsign', args, { encoding: 'utf8' });
+            process.stdout.write(result.stdout ?? '');
+            process.stderr.write(result.stderr ?? '');
+            if (result.status === 0) break;
+            if (attempt === 12 || !result.stderr?.includes('could not find matching tlog entry')) process.exit(result.status || 1);
+            console.log(`Waiting for Rekor lookup propagation (${attempt}/12)`);
+            await setTimeout(5000);
+          }
+          JS
           git bundle create "$RUNNER_TEMP/release-tag.bundle" "refs/tags/$RELEASE_TAG" "^$RELEASE_COMMIT^"
           git bundle verify "$RUNNER_TEMP/release-tag.bundle"
           node --input-type=module <<'JS'
