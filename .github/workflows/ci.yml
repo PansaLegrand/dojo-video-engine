@@ -18,11 +18,18 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Ensure independent media tools
+        run: command -v ffmpeg && command -v ffprobe || brew install ffmpeg
       - run: pnpm --filter @dojo-video-engine/golden exec playwright install --with-deps chromium firefox webkit
       # Build first: package tsconfigs use project references, so typecheck
       # needs the referenced declaration outputs to exist.
       - run: pnpm release:full
       - run: pnpm verify:clean
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: independent-media-evidence
+          path: test-results/media
 
   linux-contracts:
     runs-on: ubuntu-latest

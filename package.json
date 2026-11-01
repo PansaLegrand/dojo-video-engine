@@ -24,12 +24,14 @@
     "check:schema": "pnpm --filter @dojo-video-engine/schema check:schema",
     "check:migrations": "node scripts/check-scene-migrations.mjs",
     "check:release": "vitest run scripts/publish-release.test.mjs",
-    "lint": "pnpm check:contracts && node scripts/check-determinism.mjs && pnpm check:schema && pnpm check:migrations && pnpm check:release && pnpm -r lint",
+    "check:media-oracle": "vitest run scripts/media-content-oracle.test.mjs",
+    "lint": "pnpm check:contracts && node scripts/check-determinism.mjs && pnpm check:schema && pnpm check:migrations && pnpm check:release && pnpm check:media-oracle && pnpm -r lint",
     "format": "prettier --write .",
     "release:fast": "node scripts/release-gate.mjs fast",
     "release:full": "node scripts/release-gate.mjs full",
     "release:pack": "node scripts/pack-release.mjs",
-    "verify:clean": "node scripts/verify-clean-machine.mjs"
+    "verify:clean": "node scripts/verify-clean-machine.mjs",
+    "verify:media": "pnpm build && node scripts/verify-media-content.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.5",

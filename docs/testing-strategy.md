@@ -17,6 +17,11 @@ Build first: package typechecks rely on generated project-reference declarations
 - `pnpm release:fast` / `pnpm release:full`: aggregate release gates and package smoke tests.
 - `pnpm verify:clean`: all public tarballs installed into an external headless consumer,
   including Node, browser, worker, CLI, and TypeScript builds.
+- `pnpm verify:media`: build, then independently generate source media with FFmpeg,
+  trim/split/retime through the browser engine and decode every output frame with
+  FFmpeg. Requires `ffmpeg`/`ffprobe`; retains source hashes, Scenes, exports and
+  measured tone/color results under ignored `test-results/media/`. The full gate
+  includes this check. `pnpm check:media-oracle` fault-tests the independent grader.
 
 The browser harness is engine test infrastructure, not a second editor application.
 UI interaction, provider contracts, and editing-agent acceptance live in

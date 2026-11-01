@@ -4,6 +4,7 @@ dist
 .turbo
 .DS_Store
 coverage
+test-results/
 *.log
 *.tsbuildinfo
 apps/playground/.vite
