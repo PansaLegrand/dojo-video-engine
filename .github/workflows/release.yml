@@ -97,9 +97,9 @@ jobs:
       - run: npm install --global npm@12.2.1
       - name: Publish the exact tested tarballs
         env:
-          # Needed only for the one-time scoped-package bootstrap. Revoke it
-          # after configuring npm trusted publishers; later runs use OIDC.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # All package identities now trust this workflow/environment.
+          # Publishing must use OIDC, with no persistent-token fallback.
+          NODE_AUTH_TOKEN: ""
           RELEASE_VERSION: ${{ inputs.version }}
         run: node scripts/publish-release.mjs artifacts/release "v$RELEASE_VERSION"
       - name: Attach durable release evidence

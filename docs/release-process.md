@@ -6,12 +6,13 @@ npm release so repository documentation never treats one as proof of another.
 
 ## Current publication status
 
-The 1.1.0 package set was published with MIT licenses and GitHub provenance.
-The first publication exposed npm 12's changed JSON output shape and registry
-cache delays during read-back verification. The synchronized **1.1.1** patch
-candidate fixes the release controller; renderer APIs and behavior are unchanged.
-It reads anonymous public registry endpoints directly, uses bounded read-only
-propagation checks, and retains exact-byte verification before tag promotion.
+The synchronized **1.1.1** package set is published with MIT licenses and GitHub
+provenance. All 16 public packages resolve `latest` to 1.1.1. See the
+[release record](releases/1.1.1.md) and its exact artifacts and workflow receipts.
+The earlier 1.1.0 publication exposed npm 12's changed JSON output shape and
+registry processing delays. The release controller now reads anonymous public
+registry endpoints, waits for propagation without retrying uploads, and checks
+exact bytes before promoting tags. Renderer APIs and behavior are unchanged.
 
 The root is a private workspace. Publish the coordinated public package set through
 the checked-in workflow, including `@dojo-video-engine/create`; its executable is
@@ -341,7 +342,7 @@ never force-updates a tag. The expected signer identity is:
 `https://github.com/PansaLegrand/dojo-video-engine/.github/workflows/tag-release.yml@refs/heads/main`
 
 Verify with `gitsign verify-tag --certificate-identity=<identity-above>
---certificate-oidc-issuer=https://token.actions.githubusercontent.com v1.1.0`.
+--certificate-oidc-issuer=https://token.actions.githubusercontent.com v1.1.1`.
 GitHub may not display its native Verified badge for Sigstore X.509 tags; the
 identity-constrained Gitsign verification and Rekor record are authoritative.
 The workflow retains a signed Git bundle rather than pushing with `GITHUB_TOKEN`,
@@ -361,3 +362,11 @@ This job receives no npm token, verifies the retained release against the regist
 adds and removes a run-specific temporary dist-tag on each package, and never
 publishes a new version or changes `latest`. Remove the bootstrap secret only
 after this check succeeds.
+
+Each package must trust only `PansaLegrand/dojo-video-engine`, workflow
+`release.yml`, and environment `npm-release`, with `createPackage`,
+`createStagedPackage`, and `manageDistTags` permissions. Dist-tag permission is
+independent of publish permission. npm 12.2.1's `trust github` command does not
+expose that last permission; use package settings or npm's documented
+[trust API](https://api-docs.npmjs.com/#tag/Trust) with interactive authentication.
+Do not use a bypass-2FA token to configure trust.

@@ -26,6 +26,20 @@ fixtures under `tools/golden` remain internal engine verification infrastructure
 `agent-tools` remains a provider-neutral SDK for inspection, commands, and proof
 artifacts; it contains no model loop, credentials, or application UI.
 
+## Use the published engine
+
+The synchronized **1.1.1** packages are public on npm under the MIT license.
+For example, add scene authoring, playback, and export to an existing project:
+
+```sh
+npm install @dojo-video-engine/authoring@1.1.1 @dojo-video-engine/player@1.1.1 @dojo-video-engine/export@1.1.1
+```
+
+See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.1)
+for exact package checksums, provenance, dependency inventory, and audit evidence.
+For a ready-to-run editor with chat, clone [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness)
+and run `npm run launch`.
+
 ## Develop from source
 
 Use Node 20.19+ and the repository's pinned pnpm version.
@@ -45,9 +59,8 @@ node packages/cli/dist/bin/dojo-video-engine.js inspect examples/dojoclip-launch
 node packages/cli/dist/bin/dojo-video-engine.js check examples/dojoclip-launch.json --sample-count 3
 ```
 
-Package imports use `@dojo-video-engine/*`. Registry publication under the new
-namespace is a separate release step; GitHub publication does not establish npm
-availability. To verify actual consumable tarballs without relying on npm:
+Package imports use `@dojo-video-engine/*`. To verify a local engine change as
+consumable tarballs without publishing it:
 
 ```sh
 pnpm verify:clean -- --keep
