@@ -27,6 +27,44 @@ export function verifyColorFrames(
       throw new Error(`Wrong source color at output frame ${frame}: ${values}`);
   }
 }
+
+export function readFrameMarker(
+  pixels,
+  { width = 160, height = 90, channels = 3, frame = 0 } = {},
+) {
+  let marker = 0;
+  for (let bit = 0; bit < 7; bit++) {
+    const at =
+      frame * width * height * channels +
+      (8 * width + 15 + 20 * bit) * channels;
+    const value = (pixels[at] + pixels[at + 1] + pixels[at + 2]) / 3;
+    if (value > 200) marker |= 1 << bit;
+    else if (!(value < 50)) throw new Error("Frame marker is unreadable");
+  }
+  return marker;
+}
+export function verifyFrameMarkers(
+  pixels,
+  { frames, fps = 30, sourceOffset = 0, rate = 1, sourcePts },
+) {
+  const expected = (time) =>
+    sourcePts
+      ? Math.round((sourcePts.findLast((t) => t <= time + 1e-5) ?? 0) * 30)
+      : Math.floor(time * 30 + 1e-5);
+  for (let frame = 0; frame < frames; frame++) {
+    const actual = readFrameMarker(pixels, { frame });
+    const allowed = [-1, 0, 1].map((delta) =>
+      expected(
+        sourceOffset +
+          (Math.max(0, Math.min(frames - 1, frame + delta)) / fps) * rate,
+      ),
+    );
+    if (!allowed.includes(actual))
+      throw new Error(
+        `Source frame marker mismatch at ${frame}: ${actual}, expected one of ${allowed}`,
+      );
+  }
+}
 export function measureTone(pcm, sampleRate, start, end, frequency) {
   const low = Math.round(start * sampleRate),
     high = Math.round(end * sampleRate);

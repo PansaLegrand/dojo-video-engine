@@ -3,8 +3,25 @@ import {
   verifyColorFrames,
   verifyTone,
   verifyAudioTimeline,
+  verifyFrameMarkers,
 } from "./media-content-oracle.mjs";
 describe("independent decoded media oracle", () => {
+  it("catches an incorrect individual source frame even within the same color segment", () => {
+    const frames = 10,
+      data = Buffer.alloc(160 * 90 * 3 * frames);
+    const mark = (frame, id) => {
+      for (let bit = 0; bit < 7; bit++) {
+        const at = (frame * 160 * 90 + 8 * 160 + 15 + 20 * bit) * 3;
+        data.fill(id & (1 << bit) ? 255 : 0, at, at + 3);
+      }
+    };
+    for (let i = 0; i < frames; i++) mark(i, i);
+    expect(() => verifyFrameMarkers(data, { frames })).not.toThrow();
+    mark(5, 25);
+    expect(() => verifyFrameMarkers(data, { frames })).toThrow(
+      /Source frame marker/,
+    );
+  });
   it("detects audio shifted relative to the declared video clock", () => {
     const pcm = Float32Array.from({ length: 96000 }, (_, i) => {
       const source = 0.5 + i / 48000,
