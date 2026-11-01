@@ -1,8 +1,11 @@
 # Engine readiness plan for user-reviewed video editing
 
-Date: 2026-11-01  
-Last reviewed: 2026-11-01  
-Status: planned; this document does not record execution or acceptance
+Date: 2026-11-01
+
+Last reviewed: 2026-11-02
+
+Status: executing; see [the execution ledger](readiness-progress.md) and
+[2026-11-02 evidence](readiness-report-2026-11-02.md). Unchecked work remains open.
 
 ## 1. Objective and boundary
 
@@ -137,7 +140,7 @@ expected failure class before the checker is used as release evidence.
 
 ## 6. Ordered work packages
 
-All boxes start unchecked. Completion requires a linked commit/test/report, not
+Checkboxes track execution. Completion requires a linked commit/test/report, not
 only an implementation claim. Owners are functional responsibilities, not named
 staffing assignments.
 
@@ -150,7 +153,7 @@ staffing assignments.
 | E-05      | Release maintainer + harness maintainer | Exact-byte bundle and clean-consumer results, followed by harness integration evidence on the same package set | E-03, E-04 |
 | E-06      | Engine maintainer + reviewer            | Per-capability acceptance report, known limits and handoff; all mandatory rows resolved                        | E-05       |
 
-- [ ] E-01 complete
+- [x] E-01 complete — initial capability/coverage inventory; see execution ledger
 - [ ] E-02 complete
 - [ ] E-03 complete
 - [ ] E-04 complete

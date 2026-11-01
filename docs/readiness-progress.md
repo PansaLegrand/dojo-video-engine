@@ -1,6 +1,6 @@
 # Readiness execution ledger
 
-Date: 2026-11-01. The engine plan remains the acceptance contract.
+Started: 2026-11-01. Last updated: 2026-11-02. The engine plan remains the acceptance contract.
 
 | Increment   | Change                                                                                                                                    | Proof                                                                                                                       | Status                                  |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -12,3 +12,5 @@ Date: 2026-11-01. The engine plan remains the acceptance contract.
 
 Keep focused tests and evidence with each subsequent increment. Do not mark the
 entire engine qualified until the planned gates and their actual evidence exist.
+
+Current evidence and remaining limits: [execution report](readiness-report-2026-11-02.md).

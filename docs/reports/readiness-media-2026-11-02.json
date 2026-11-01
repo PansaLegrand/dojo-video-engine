@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "commit": "c60a1fa3c85e75e1ec8684fa33c483a990589400",
+  "node": "v20.19.5",
+  "platform": "darwin",
+  "arch": "arm64",
+  "dirty": false,
+  "ffmpeg": "ffmpeg version 8.0 Copyright (c) 2000-2025 the FFmpeg developers",
+  "passed": true,
+  "checks": [
+    {
+      "kind": "trim",
+      "sourceKind": "cfr",
+      "frames": 60,
+      "previewFrames": [59, 0, 1, 30],
+      "previewMarkers": [
+        {
+          "frame": 59,
+          "sourceFrame": 74
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 15
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 16
+        },
+        {
+          "frame": 30,
+          "sourceFrame": 45
+        }
+      ],
+      "audioWindows": 54,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 440,
+          "amplitude": 0.125,
+          "rms": 0.08849035335150628,
+          "frequencyRatio": 0.9999771907722647,
+          "gainErrorDb": 0.010018282286766388
+        },
+        {
+          "start": 0.7,
+          "end": 0.9,
+          "frequency": 880,
+          "amplitude": 0.25,
+          "rms": 0.17667117511181907,
+          "frequencyRatio": 0.9999867982518282,
+          "gainErrorDb": -0.005186262438568314
+        },
+        {
+          "start": 1.7,
+          "end": 1.9,
+          "frequency": 220,
+          "amplitude": 0.0625,
+          "rms": 0.04417315296031382,
+          "frequencyRatio": 0.9999934636676772,
+          "gainErrorDb": -0.004132407611405604
+        }
+      ],
+      "sceneSha256": "c7672d232db12d4c2631ba9f320bea37aeaccdc21064a81481afdf48105b03ed",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "cfr-trim.mp4",
+      "sha256": "8563efa87b2d7890e817c95e73c45b737089eb0a3e19d5bf49c3f28a6abbcd92",
+      "passed": true
+    },
+    {
+      "kind": "split",
+      "sourceKind": "cfr",
+      "frames": 60,
+      "previewFrames": [59, 0, 1, 30],
+      "previewMarkers": [
+        {
+          "frame": 59,
+          "sourceFrame": 74
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 15
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 16
+        },
+        {
+          "frame": 30,
+          "sourceFrame": 45
+        }
+      ],
+      "audioWindows": 54,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 440,
+          "amplitude": 0.125,
+          "rms": 0.08849035335150628,
+          "frequencyRatio": 0.9999771907722647,
+          "gainErrorDb": 0.010018282286766388
+        },
+        {
+          "start": 0.7,
+          "end": 0.9,
+          "frequency": 880,
+          "amplitude": 0.25,
+          "rms": 0.17667117511181907,
+          "frequencyRatio": 0.9999867982518282,
+          "gainErrorDb": -0.005186262438568314
+        },
+        {
+          "start": 1.7,
+          "end": 1.9,
+          "frequency": 220,
+          "amplitude": 0.0625,
+          "rms": 0.04417315296031382,
+          "frequencyRatio": 0.9999934636676772,
+          "gainErrorDb": -0.004132407611405604
+        }
+      ],
+      "sceneSha256": "f74b7196c461d77e715e053d788932e2019af5187ef16a5b8290e7310780f1b2",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "cfr-split.mp4",
+      "sha256": "cedba7f4f43db81d8b5609e4f102585982c5fb7cb5b8e6b360bbea1fe92b81f9",
+      "passed": true
+    },
+    {
+      "kind": "rate",
+      "sourceKind": "cfr",
+      "frames": 45,
+      "previewFrames": [44, 0, 1, 22],
+      "previewMarkers": [
+        {
+          "frame": 44,
+          "sourceFrame": 88
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 0
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 2
+        },
+        {
+          "frame": 22,
+          "sourceFrame": 44
+        }
+      ],
+      "audioWindows": 39,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 880,
+          "amplitude": 0.125,
+          "rms": 0.08837380539747673,
+          "frequencyRatio": 0.9999569847468137,
+          "gainErrorDb": -0.0014291790862303551
+        },
+        {
+          "start": 0.6,
+          "end": 0.8,
+          "frequency": 1760,
+          "amplitude": 0.25,
+          "rms": 0.17663602124441252,
+          "frequencyRatio": 0.99997238980744,
+          "gainErrorDb": -0.006914744715754402
+        },
+        {
+          "start": 1.1,
+          "end": 1.3,
+          "frequency": 440,
+          "amplitude": 0.0625,
+          "rms": 0.04417062257470134,
+          "frequencyRatio": 0.9999919635958914,
+          "gainErrorDb": -0.004629978607090837
+        }
+      ],
+      "sceneSha256": "744e3f2b632c5e5cbabf770e2e6d33209ada48513e57325250c9edd432b6d090",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "cfr-rate.mp4",
+      "sha256": "6d4998cf0daf43e74de4ffbd4b690f9e31c9008a9279476f0df3b3f8d7c254e9",
+      "passed": true
+    },
+    {
+      "kind": "trim",
+      "sourceKind": "vfr",
+      "frames": 60,
+      "previewFrames": [59, 0, 1, 30],
+      "previewMarkers": [
+        {
+          "frame": 59,
+          "sourceFrame": 74
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 14
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 16
+        },
+        {
+          "frame": 30,
+          "sourceFrame": 45
+        }
+      ],
+      "audioWindows": 54,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 440,
+          "amplitude": 0.125,
+          "rms": 0.08849035335150628,
+          "frequencyRatio": 0.9999771907722647,
+          "gainErrorDb": 0.010018282286766388
+        },
+        {
+          "start": 0.7,
+          "end": 0.9,
+          "frequency": 880,
+          "amplitude": 0.25,
+          "rms": 0.17667117511181907,
+          "frequencyRatio": 0.9999867982518282,
+          "gainErrorDb": -0.005186262438568314
+        },
+        {
+          "start": 1.7,
+          "end": 1.9,
+          "frequency": 220,
+          "amplitude": 0.0625,
+          "rms": 0.04417315296031382,
+          "frequencyRatio": 0.9999934636676772,
+          "gainErrorDb": -0.004132407611405604
+        }
+      ],
+      "sceneSha256": "ade7001dcc1688eee559b0740f7ff30a66d8bc5daba5326f386cf5c5ce588f48",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "vfr-trim.mp4",
+      "sha256": "56e6c45d13d83ed2bc5f23803239ed74011bbe5d41d1b4056ed7f61a39e1783d",
+      "passed": true
+    },
+    {
+      "kind": "split",
+      "sourceKind": "vfr",
+      "frames": 60,
+      "previewFrames": [59, 0, 1, 30],
+      "previewMarkers": [
+        {
+          "frame": 59,
+          "sourceFrame": 74
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 14
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 16
+        },
+        {
+          "frame": 30,
+          "sourceFrame": 45
+        }
+      ],
+      "audioWindows": 54,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 440,
+          "amplitude": 0.125,
+          "rms": 0.08849035335150628,
+          "frequencyRatio": 0.9999771907722647,
+          "gainErrorDb": 0.010018282286766388
+        },
+        {
+          "start": 0.7,
+          "end": 0.9,
+          "frequency": 880,
+          "amplitude": 0.25,
+          "rms": 0.17667117511181907,
+          "frequencyRatio": 0.9999867982518282,
+          "gainErrorDb": -0.005186262438568314
+        },
+        {
+          "start": 1.7,
+          "end": 1.9,
+          "frequency": 220,
+          "amplitude": 0.0625,
+          "rms": 0.04417315296031382,
+          "frequencyRatio": 0.9999934636676772,
+          "gainErrorDb": -0.004132407611405604
+        }
+      ],
+      "sceneSha256": "12747f18d34a44e92add449f3c101372b0cb419983be2d595340780f3e45f65a",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "vfr-split.mp4",
+      "sha256": "0f26cbc372a7b4486df9b73522d26f2a413520462ae79ff3d429523f4f3585cd",
+      "passed": true
+    },
+    {
+      "kind": "rate",
+      "sourceKind": "vfr",
+      "frames": 45,
+      "previewFrames": [44, 0, 1, 22],
+      "previewMarkers": [
+        {
+          "frame": 44,
+          "sourceFrame": 88
+        },
+        {
+          "frame": 0,
+          "sourceFrame": 0
+        },
+        {
+          "frame": 1,
+          "sourceFrame": 2
+        },
+        {
+          "frame": 22,
+          "sourceFrame": 44
+        }
+      ],
+      "audioWindows": 39,
+      "measurements": [
+        {
+          "start": 0.1,
+          "end": 0.3,
+          "frequency": 880,
+          "amplitude": 0.125,
+          "rms": 0.08837380539747673,
+          "frequencyRatio": 0.9999569847468137,
+          "gainErrorDb": -0.0014291790862303551
+        },
+        {
+          "start": 0.6,
+          "end": 0.8,
+          "frequency": 1760,
+          "amplitude": 0.25,
+          "rms": 0.17663602124441252,
+          "frequencyRatio": 0.99997238980744,
+          "gainErrorDb": -0.006914744715754402
+        },
+        {
+          "start": 1.1,
+          "end": 1.3,
+          "frequency": 440,
+          "amplitude": 0.0625,
+          "rms": 0.04417062257470134,
+          "frequencyRatio": 0.9999919635958914,
+          "gainErrorDb": -0.004629978607090837
+        }
+      ],
+      "sceneSha256": "5dec3b66e98807242792206677b7d83bc1bb6df8fdfd0b8e3e85901386af40ba",
+      "audioMeasurement": "first channel; no implicit downmix gain",
+      "file": "vfr-rate.mp4",
+      "sha256": "1ff09fcc506e8f0efb15d0b7f095c72274907e801fa7231ff8644d7e16bfbd46",
+      "passed": true
+    }
+  ],
+  "fixture": {
+    "id": "F-01/F-02-frame-markers-v2",
+    "license": "MIT synthetic fixture generated by this repository",
+    "sha256": "d585e3a8868b9a4788e48d6c76e525bbd680ffcbc5e07f778b298e6866a13a36",
+    "fps": 30,
+    "seconds": 3,
+    "width": 160,
+    "height": 90,
+    "sampleRate": 48000,
+    "colors": ["red", "lime", "blue"],
+    "markers": "7-bit source frame ID, 14px cells at x=8+20*bit, y=2..15",
+    "tones": [
+      {
+        "hz": 440,
+        "amplitude": 0.25
+      },
+      {
+        "hz": 880,
+        "amplitude": 0.5
+      },
+      {
+        "hz": 220,
+        "amplitude": 0.125
+      }
+    ],
+    "tolerances": {
+      "videoFrames": 1,
+      "gainDb": 0.75,
+      "frequencyRatio": 0.9
+    },
+    "variants": [
+      {
+        "kind": "cfr",
+        "file": "source.mp4",
+        "sha256": "d585e3a8868b9a4788e48d6c76e525bbd680ffcbc5e07f778b298e6866a13a36",
+        "frameDeltaMs": [33.333333333333336]
+      },
+      {
+        "kind": "vfr",
+        "file": "source-vfr.mp4",
+        "sha256": "b712ef4d1865d234ba56c7912ca5a52311036592f914d5c8993ef386984363f9",
+        "frameDeltaMs": [67, 33]
+      }
+    ]
+  },
+  "browser": "148.0.7778.96"
+}
