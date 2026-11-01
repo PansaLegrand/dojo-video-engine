@@ -525,7 +525,9 @@ export function compareStableVersions(left, right) {
 async function verifyRegistryIntegrity(entries, registry) {
   for (const entry of entries) {
     let integrity = await registry.getIntegrity(entry.name, entry.version);
-    for (let attempt = 0; integrity === null && attempt < 30; attempt++) {
+    // npm accepts uploads before processing/registry propagation finishes.
+    // Allow five minutes of read-only checks; never retry the publish itself.
+    for (let attempt = 0; integrity === null && attempt < 300; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       integrity = await registry.getIntegrity(entry.name, entry.version);
     }
