@@ -106,164 +106,223 @@ try {
   report.browser = browser.version();
   const page = await browser.newPage();
   await page.goto(server.resolvedUrls.local[0]);
-  const src = await page.evaluate(
-    (bytes) =>
-      URL.createObjectURL(
-        new Blob([Uint8Array.from(bytes)], { type: "video/mp4" }),
-      ),
-    Array.from(sourceBytes),
+  const vfr = path.join(output, "source-vfr.mp4");
+  run("ffmpeg", [
+    "-v",
+    "error",
+    "-y",
+    "-i",
+    source,
+    "-vf",
+    "select='if(lt(t,1),not(mod(n,2)),1)'",
+    "-fps_mode",
+    "vfr",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-c:a",
+    "copy",
+    "-threads",
+    "1",
+    vfr,
+  ]);
+  const frameMetadata = JSON.parse(
+    run("ffprobe", [
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "frame=best_effort_timestamp_time",
+      "-of",
+      "json",
+      vfr,
+    ]).toString(),
   );
-  for (const kind of ["trim", "split", "rate"]) {
-    const frames = kind === "rate" ? 45 : 60,
-      offset = kind === "rate" ? 0 : 0.5,
-      rate = kind === "rate" ? 2 : 1;
-    const node = (id, from, duration, videoStartTime) => ({
-      id,
-      type: "video",
-      assetId: "source",
-      from,
-      duration,
-      videoStartTime,
-      playbackRate: rate,
-      volume: 0.5,
-      style: { width: "100%", height: "100%" },
+  const pts = frameMetadata.frames.map((f) =>
+    Number(f.best_effort_timestamp_time),
+  );
+  const deltas = new Set(
+    pts.slice(1).map((t, i) => Math.round((t - pts[i]) * 1000)),
+  );
+  if (deltas.size < 2)
+    throw new Error("VFR fixture did not contain variable timestamps");
+  report.fixture.variants = [];
+  for (const sourceKind of ["cfr", "vfr"]) {
+    const variantFile = sourceKind === "cfr" ? source : vfr;
+    const variantBytes = await readFile(variantFile);
+    report.fixture.variants.push({
+      kind: sourceKind,
+      file: path.basename(variantFile),
+      sha256: createHash("sha256").update(variantBytes).digest("hex"),
+      frameDeltaMs: sourceKind === "vfr" ? [...deltas] : [1000 / 30],
     });
-    const scene = {
-      schemaVersion: 1,
-      width: 160,
-      height: 90,
-      fps: 30,
-      duration: frames,
-      assets: { source: { id: "source", type: "video", src } },
-      nodes:
-        kind === "split"
-          ? [node("first", 0, 30, 0.5), node("second", 30, 30, 1.5)]
-          : [node("clip", 0, frames, offset)],
-    };
-    const previewFrames = [frames - 1, 0, 1, Math.floor(frames / 2)];
-    for (const frame of previewFrames) {
-      const preview = await page.evaluate(
-        ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
-        { scene, frame },
-      );
-      const at =
-        (Math.floor(preview.height / 2) * preview.width +
-          Math.floor(preview.width / 2)) *
-        4;
-      verifyColorFrames(Buffer.from(preview.rgba.slice(at, at + 3)), {
-        width: 1,
-        height: 1,
-        frames: 1,
-        sourceOffset: offset + (frame / 30) * rate,
+    const src = await page.evaluate(
+      (bytes) =>
+        URL.createObjectURL(
+          new Blob([Uint8Array.from(bytes)], { type: "video/mp4" }),
+        ),
+      Array.from(variantBytes),
+    );
+    for (const kind of ["trim", "split", "rate"]) {
+      const frames = kind === "rate" ? 45 : 60,
+        offset = kind === "rate" ? 0 : 0.5,
+        rate = kind === "rate" ? 2 : 1;
+      const node = (id, from, duration, videoStartTime) => ({
+        id,
+        type: "video",
+        assetId: "source",
+        from,
+        duration,
+        videoStartTime,
+        playbackRate: rate,
+        volume: 0.5,
+        style: { width: "100%", height: "100%" },
       });
-    }
-    const exported = await page.evaluate(
-      (scene) => window.renderGoldenExportFile(scene),
-      scene,
-    );
-    const portableScene = {
-      ...scene,
-      assets: { source: { ...scene.assets.source, src: "source.mp4" } },
-    };
-    const sceneBytes = JSON.stringify(portableScene, null, 2) + "\n";
-    await writeFile(path.join(output, kind + ".scene.json"), sceneBytes);
-    const file = path.join(output, kind + ".mp4");
-    await writeFile(file, Buffer.from(exported.base64, "base64"));
-    run("ffmpeg", ["-v", "error", "-i", file, "-f", "null", "-"]);
-    const rgb = run("ffmpeg", [
-      "-v",
-      "error",
-      "-i",
-      file,
-      "-map",
-      "0:v:0",
-      "-pix_fmt",
-      "rgb24",
-      "-f",
-      "rawvideo",
-      "-",
-    ]);
-    verifyColorFrames(rgb, {
-      width: 160,
-      height: 90,
-      frames,
-      sourceOffset: offset,
-      rate,
-    });
-    const audio = run("ffmpeg", [
-      "-v",
-      "error",
-      "-i",
-      file,
-      "-map",
-      "0:a:0",
-      "-af",
-      "pan=mono|c0=c0",
-      "-ac",
-      "1",
-      "-ar",
-      "48000",
-      "-f",
-      "f32le",
-      "-",
-    ]);
-    const pcm = Float32Array.from({ length: audio.length / 4 }, (_, i) =>
-      audio.readFloatLE(i * 4),
-    );
-    const tones =
-      kind === "rate"
-        ? [
-            { start: 0.1, end: 0.3, frequency: 880, amplitude: 0.125 },
-            { start: 0.6, end: 0.8, frequency: 1760, amplitude: 0.25 },
-            { start: 1.1, end: 1.3, frequency: 440, amplitude: 0.0625 },
-          ]
-        : [
-            { start: 0.1, end: 0.3, frequency: 440, amplitude: 0.125 },
-            { start: 0.7, end: 0.9, frequency: 880, amplitude: 0.25 },
-            { start: 1.7, end: 1.9, frequency: 220, amplitude: 0.0625 },
-          ];
-    const measurements = tones.map((t) => ({ ...t, ...verifyTone(pcm, t) }));
-    const audioWindows = verifyAudioTimeline(pcm, {
-      frames,
-      sourceOffset: offset,
-      rate,
-    });
-    const metadata = JSON.parse(
-      run("ffprobe", [
+      const scene = {
+        schemaVersion: 1,
+        width: 160,
+        height: 90,
+        fps: 30,
+        duration: frames,
+        assets: { source: { id: "source", type: "video", src } },
+        nodes:
+          kind === "split"
+            ? [node("first", 0, 30, 0.5), node("second", 30, 30, 1.5)]
+            : [node("clip", 0, frames, offset)],
+      };
+      const previewFrames = [frames - 1, 0, 1, Math.floor(frames / 2)];
+      for (const frame of previewFrames) {
+        const preview = await page.evaluate(
+          ({ scene, frame }) => window.renderGoldenFrame(scene, frame),
+          { scene, frame },
+        );
+        const at =
+          (Math.floor(preview.height / 2) * preview.width +
+            Math.floor(preview.width / 2)) *
+          4;
+        verifyColorFrames(Buffer.from(preview.rgba.slice(at, at + 3)), {
+          width: 1,
+          height: 1,
+          frames: 1,
+          sourceOffset: offset + (frame / 30) * rate,
+        });
+      }
+      const exported = await page.evaluate(
+        (scene) => window.renderGoldenExportFile(scene),
+        scene,
+      );
+      const portableScene = {
+        ...scene,
+        assets: {
+          source: { ...scene.assets.source, src: path.basename(variantFile) },
+        },
+      };
+      const sceneBytes = JSON.stringify(portableScene, null, 2) + "\n";
+      await writeFile(
+        path.join(output, sourceKind + "-" + kind + ".scene.json"),
+        sceneBytes,
+      );
+      const file = path.join(output, sourceKind + "-" + kind + ".mp4");
+      await writeFile(file, Buffer.from(exported.base64, "base64"));
+      run("ffmpeg", ["-v", "error", "-i", file, "-f", "null", "-"]);
+      const rgb = run("ffmpeg", [
         "-v",
         "error",
-        "-show_streams",
-        "-of",
-        "json",
+        "-i",
         file,
-      ]).toString(),
-    );
-    const video = metadata.streams.find((s) => s.codec_type === "video");
-    if (
-      video.width !== 160 ||
-      video.height !== 90 ||
-      Math.abs(Number(video.duration) - frames / 30) > 1 / 30
-    )
-      throw new Error("Export dimensions/duration mismatch");
-    report.checks.push({
-      kind,
-      frames,
-      previewFrames,
-      audioWindows,
-      measurements,
-      sceneSha256: createHash("sha256").update(sceneBytes).digest("hex"),
-      audioMeasurement: "first channel; no implicit downmix gain",
-      file: path.basename(file),
-      sha256: createHash("sha256")
-        .update(await readFile(file))
-        .digest("hex"),
-      passed: true,
-    });
-    console.log(
-      `PASS ${kind}: ${frames} decoded frames and 3 independent audio windows`,
-    );
+        "-map",
+        "0:v:0",
+        "-pix_fmt",
+        "rgb24",
+        "-f",
+        "rawvideo",
+        "-",
+      ]);
+      verifyColorFrames(rgb, {
+        width: 160,
+        height: 90,
+        frames,
+        sourceOffset: offset,
+        rate,
+      });
+      const audio = run("ffmpeg", [
+        "-v",
+        "error",
+        "-i",
+        file,
+        "-map",
+        "0:a:0",
+        "-af",
+        "pan=mono|c0=c0",
+        "-ac",
+        "1",
+        "-ar",
+        "48000",
+        "-f",
+        "f32le",
+        "-",
+      ]);
+      const pcm = Float32Array.from({ length: audio.length / 4 }, (_, i) =>
+        audio.readFloatLE(i * 4),
+      );
+      const tones =
+        kind === "rate"
+          ? [
+              { start: 0.1, end: 0.3, frequency: 880, amplitude: 0.125 },
+              { start: 0.6, end: 0.8, frequency: 1760, amplitude: 0.25 },
+              { start: 1.1, end: 1.3, frequency: 440, amplitude: 0.0625 },
+            ]
+          : [
+              { start: 0.1, end: 0.3, frequency: 440, amplitude: 0.125 },
+              { start: 0.7, end: 0.9, frequency: 880, amplitude: 0.25 },
+              { start: 1.7, end: 1.9, frequency: 220, amplitude: 0.0625 },
+            ];
+      const measurements = tones.map((t) => ({ ...t, ...verifyTone(pcm, t) }));
+      const audioWindows = verifyAudioTimeline(pcm, {
+        frames,
+        sourceOffset: offset,
+        rate,
+      });
+      const metadata = JSON.parse(
+        run("ffprobe", [
+          "-v",
+          "error",
+          "-show_streams",
+          "-of",
+          "json",
+          file,
+        ]).toString(),
+      );
+      const video = metadata.streams.find((s) => s.codec_type === "video");
+      if (
+        video.width !== 160 ||
+        video.height !== 90 ||
+        Math.abs(Number(video.duration) - frames / 30) > 1 / 30
+      )
+        throw new Error("Export dimensions/duration mismatch");
+      report.checks.push({
+        kind,
+        sourceKind,
+        frames,
+        previewFrames,
+        audioWindows,
+        measurements,
+        sceneSha256: createHash("sha256").update(sceneBytes).digest("hex"),
+        audioMeasurement: "first channel; no implicit downmix gain",
+        file: path.basename(file),
+        sha256: createHash("sha256")
+          .update(await readFile(file))
+          .digest("hex"),
+        passed: true,
+      });
+      console.log(
+        `PASS ${sourceKind} ${kind}: ${frames} decoded frames and 3 independent audio windows`,
+      );
+    }
+    await page.evaluate((src) => URL.revokeObjectURL(src), src);
   }
-  await page.evaluate((src) => URL.revokeObjectURL(src), src);
   report.passed = true;
 } catch (error) {
   report.error = error instanceof Error ? error.message : String(error);
