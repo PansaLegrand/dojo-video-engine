@@ -54,6 +54,8 @@ jobs:
             exit 1
           fi
       - run: pnpm install --frozen-lockfile
+      - name: Ensure independent media tools
+        run: command -v ffmpeg && command -v ffprobe || brew install ffmpeg
       - run: pnpm --filter @dojo-video-engine/golden exec playwright install --with-deps chromium firefox webkit
       - run: pnpm release:full
       - run: pnpm audit --prod --audit-level high
