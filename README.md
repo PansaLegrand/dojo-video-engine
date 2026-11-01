@@ -1,6 +1,7 @@
 # Dojo Video Engine
 
 [![CI](https://github.com/PansaLegrand/dojo-video-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/PansaLegrand/dojo-video-engine/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@dojo-video-engine/core)](https://www.npmjs.com/package/@dojo-video-engine/core)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A deterministic, browser-native video engine. Author structured scenes in
@@ -28,23 +29,39 @@ artifacts; it contains no model loop, credentials, or application UI.
 
 ## Use the published engine
 
-The synchronized **1.1.1** packages are public on npm under the MIT license.
+All **16 packages** are published together at **1.1.1** on npm under the MIT license.
 For example, add scene authoring, playback, and export to an existing project:
 
 ```sh
 npm install @dojo-video-engine/authoring@1.1.1 @dojo-video-engine/player@1.1.1 @dojo-video-engine/export@1.1.1
 ```
 
+Or create a standalone scene-authoring project with Node 20.19+ and npm:
+
+```sh
+npx @dojo-video-engine/create@1.1.1 my-video
+cd my-video
+npm install
+npm run validate
+npm run inspect
+```
+
+This starter provides TypeScript scenes and headless validation/inspection. For
+the visual editor, timeline, and chat, use
+[Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness#run-locally).
+Neither installation path requires cloning the engine repository.
+
 See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.1)
-for exact package checksums, provenance, dependency inventory, and audit evidence.
-For a ready-to-run editor with chat, clone [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness)
-and run `npm run launch`.
+and [1.1.1 release record](docs/releases/1.1.1.md) for exact package checksums,
+provenance, dependency inventory, audit evidence, and verified consumer checks.
 
 ## Develop from source
 
 Use Node 20.19+ and the repository's pinned pnpm version.
 
 ```sh
+git clone https://github.com/PansaLegrand/dojo-video-engine.git
+cd dojo-video-engine
 corepack enable
 pnpm install --frozen-lockfile
 pnpm build
@@ -129,6 +146,7 @@ fonts, and rendering environment; see [testing](docs/testing-strategy.md).
 - [Preview and export](docs/guides/preview-export.md)
 - [Extensions](docs/extension-abi.md)
 - [Repository split and migration](docs/repository-split.md)
+- [Published 1.1.1 release](docs/releases/1.1.1.md)
 - [Release process](docs/release-process.md)
 
 Historical plans/reports are labeled as such and do not establish current release
