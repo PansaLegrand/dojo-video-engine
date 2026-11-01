@@ -1,5 +1,9 @@
 # Engine verification
 
+For the planned capability inventory, independent media checks, acceptance gates,
+and harness handoff, see [the engine readiness plan](engine-readiness-plan.md).
+That plan records future work; the commands below describe existing checks.
+
 Build first: package typechecks rely on generated project-reference declarations.
 
 - `pnpm test`: engine, command, authoring, lifecycle, inspection, and CLI unit tests.

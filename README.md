@@ -147,6 +147,7 @@ fonts, and rendering environment; see [testing](docs/testing-strategy.md).
 - [Extensions](docs/extension-abi.md)
 - [Repository split and migration](docs/repository-split.md)
 - [Published 1.1.1 release](docs/releases/1.1.1.md)
+- [Engine readiness plan](docs/engine-readiness-plan.md)
 - [Release process](docs/release-process.md)
 
 Historical plans/reports are labeled as such and do not establish current release
