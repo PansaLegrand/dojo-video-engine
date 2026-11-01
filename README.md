@@ -16,10 +16,10 @@ belongs there. This repository owns the rendering engine and its headless APIs.
 
 ## Repository boundary
 
-| Repository | Responsibility |
-| --- | --- |
-| [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine) | Scene schema, authoring, commands, inspection, rendering, playback, export |
-| [dojo-video-harness](https://github.com/PansaLegrand/dojo-video-harness) | Runnable local editor, editing agent, user decisions, provider adapters |
+| Repository                                                               | Responsibility                                                             |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [dojo-video-engine](https://github.com/PansaLegrand/dojo-video-engine)   | Scene schema, authoring, commands, inspection, rendering, playback, export |
+| [dojo-video-harness](https://github.com/PansaLegrand/dojo-video-harness) | Runnable local editor, editing agent, user decisions, provider adapters    |
 
 The old reference applications, playground, model-agent demonstrations, MCP demo,
 CLI Studio UI, and app-specific evaluation runner have been removed. Browser
@@ -90,13 +90,13 @@ project and checks Node, browser, worker, CLI, and build entry points. The
 ## Author a scene
 
 ```ts
-import { bg, makeScene, seconds, title } from '@dojo-video-engine/authoring';
+import { bg, makeScene, seconds, title } from "@dojo-video-engine/authoring";
 
 export default makeScene({
-  size: 'portrait',
+  size: "portrait",
   fps: 30,
   duration: seconds(5),
-  children: [bg('#0f172a'), title('Hello, Dojo')],
+  children: [bg("#0f172a"), title("Hello, Dojo")],
 });
 ```
 
@@ -107,16 +107,16 @@ codec capabilities are explicit; arbitrary HTML, React, and CSS are not executed
 
 ## Packages
 
-| Package | Purpose |
-| --- | --- |
-| `schema` | Scene validation, migration, patches, JSON Schema |
-| `authoring`, `layout`, `presets` | Typed scene builders, layout, motion and composition primitives |
+| Package                                 | Purpose                                                                |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| `schema`                                | Scene validation, migration, patches, JSON Schema                      |
+| `authoring`, `layout`, `presets`        | Typed scene builders, layout, motion and composition primitives        |
 | `commands`, `inspection`, `agent-tools` | Reversible commands, geometry/time inspection, bounded proof workflows |
-| `core`, `extensions`, `runtime` | Frame evaluation, trusted extensions, reusable resource lifecycle |
-| `renderer-canvas2d` | Canvas2D rendering and media preparation |
-| `player`, `export` | Playback, seeking, audio mixing, browser MP4 export |
-| `interchange` | Explicitly bounded host/import/export bridges |
-| `cli`, `create` | Headless validation, inspection, authoring starter |
+| `core`, `extensions`, `runtime`         | Frame evaluation, trusted extensions, reusable resource lifecycle      |
+| `renderer-canvas2d`                     | Canvas2D rendering and media preparation                               |
+| `player`, `export`                      | Playback, seeking, audio mixing, browser MP4 export                    |
+| `interchange`                           | Explicitly bounded host/import/export bridges                          |
+| `cli`, `create`                         | Headless validation, inspection, authoring starter                     |
 
 Each public package is scoped under `@dojo-video-engine/`. `packages/showcase`
 contains private engine scene fixtures used by examples and rendering tests.
@@ -136,6 +136,17 @@ scene corpus checks, resource lifecycle checks, browser pixels/media/audio/expor
 cross-browser probes, performance budgets, and package smoke checks. It does not
 contact a paid model provider. Exact pixel assertions require the pinned browser,
 fonts, and rendering environment; see [testing](docs/testing-strategy.md).
+
+The [readiness evidence](docs/readiness-report-2026-11-02.md) adds an independent
+FFmpeg content oracle: six CFR/VFR exports, 330 decoded frame identities, 24 preview
+markers, and 294 audio windows. Run `pnpm verify:media` with FFmpeg and ffprobe on
+PATH. This qualifies the documented fixtures; it is not a claim that every codec,
+browser, effect, or editing workflow has been qualified.
+
+Applications should consume exact published versions and retain their lockfile.
+Engine fixes belong in this repository; keep product persistence, provider calls,
+approvals, and billing in host adapters. Run the application's own preview/export
+and command acceptance checks after each engine update.
 
 ## Documentation
 
