@@ -139,6 +139,7 @@ fonts, and rendering environment; see [testing](docs/testing-strategy.md).
 
 ## Documentation
 
+- [Coding agent repository guide](AGENTS.md)
 - [Getting started](docs/guides/getting-started.md)
 - [Scene format](docs/scene-format.md)
 - [API reference](docs/api-reference.md)
