@@ -25,6 +25,10 @@ integrated. Subsequent VFR/frame-marker increments passed their focused fault an
 browser/export checks; the final clean media run identifies source commit
 `c60a1fa3c85e75e1ec8684fa33c483a990589400`.
 
+[CI for 3cd2909](https://github.com/PansaLegrand/dojo-video-engine/actions/runs/41328311940)
+passed the complete macOS engine gate and the Linux contract/cross-browser/clean
+consumer job. Release candidates explicitly prepare FFmpeg/ffprobe as well.
+
 [Machine-readable measurements](reports/readiness-media-2026-11-02.json) record
 the exact source commit, browser/FFmpeg versions, tolerances, source hashes,
 individual preview IDs and export/audio measurements. The source/exports/portable
