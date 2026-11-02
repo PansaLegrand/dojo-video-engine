@@ -14,3 +14,12 @@ Keep focused tests and evidence with each subsequent increment. Do not mark the
 entire engine qualified until the planned gates and their actual evidence exist.
 
 Current evidence and remaining limits: [execution report](readiness-report-2026-11-02.md).
+
+## Consumer workflow evidence — 2026-11-03
+
+[Harness basic workflows and music](https://github.com/PansaLegrand/dojo-video-harness/blob/main/docs/basic-workflows-and-music-2026-11-03.md)
+now exercise the published 1.1.1 packages through clip joining, imported-image
+layering, captions, music gain/mixing and an approved-revision browser export.
+Independent FFmpeg checks confirm frame colors/order/logo and known audio tones.
+No runtime patch or new engine version is required. This supplements E-05 consumer
+handoff; broader fixture, environment and human-review rows remain open.

@@ -49,6 +49,7 @@ layout, or universal browser export. Those real-media and human-review rows rema
 open in the plan. Existing resource, performance and cross-browser gates remain
 required; the new content oracle complements them.
 
-The harness still needs its own intent/approval/UI and complete live-model gate.
+The harness has separate intent/approval/UI and live-model gates; later Gateway
+and [workflow/music reports](https://github.com/PansaLegrand/dojo-video-harness/blob/main/docs/basic-workflows-and-music-2026-11-03.md) record their progress.
 Kie's provider availability is not an engine rendering result. Keep the public
 runtime version pinned until an actual runtime/API fix requires a new release.

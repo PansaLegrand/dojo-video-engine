@@ -143,6 +143,11 @@ markers, and 294 audio windows. Run `pnpm verify:media` with FFmpeg and ffprobe 
 PATH. This qualifies the documented fixtures; it is not a claim that every codec,
 browser, effect, or editing workflow has been qualified.
 
+The harness's [basic workflow and music acceptance](https://github.com/PansaLegrand/dojo-video-harness/blob/main/docs/basic-workflows-and-music-2026-11-03.md)
+exercises engine 1.1.1 through actual clip concatenation, image overlay, captions,
+background-audio mixing and revision-bound browser export. Provider preparation
+and approval remain harness responsibilities; no engine runtime change was needed.
+
 Applications should consume exact published versions and retain their lockfile.
 Engine fixes belong in this repository; keep product persistence, provider calls,
 approvals, and billing in host adapters. Run the application's own preview/export
