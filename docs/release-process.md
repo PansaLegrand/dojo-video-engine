@@ -6,9 +6,9 @@ npm release so repository documentation never treats one as proof of another.
 
 ## Current publication status
 
-The synchronized **1.1.1** package set is published with MIT licenses and GitHub
-provenance. All 16 public packages resolve `latest` to 1.1.1. See the
-[release record](releases/1.1.1.md) and its exact artifacts and workflow receipts.
+The synchronized **1.1.2** package set is published with MIT licenses and GitHub
+provenance. All 16 public packages resolve `latest` to 1.1.2. See the
+[release record](releases/1.1.2.md) and its exact artifacts and workflow receipts.
 The earlier 1.1.0 publication exposed npm 12's changed JSON output shape and
 registry processing delays. The release controller now reads anonymous public
 registry endpoints, waits for propagation without retrying uploads, and checks

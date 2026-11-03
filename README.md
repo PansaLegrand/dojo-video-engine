@@ -29,17 +29,17 @@ artifacts; it contains no model loop, credentials, or application UI.
 
 ## Use the published engine
 
-All **16 packages** are published together at **1.1.1** on npm under the MIT license.
+All **16 packages** are published together at **1.1.2** on npm under the MIT license.
 For example, add scene authoring, playback, and export to an existing project:
 
 ```sh
-npm install @dojo-video-engine/authoring@1.1.1 @dojo-video-engine/player@1.1.1 @dojo-video-engine/export@1.1.1
+npm install @dojo-video-engine/authoring@1.1.2 @dojo-video-engine/player@1.1.2 @dojo-video-engine/export@1.1.2
 ```
 
 Or create a standalone scene-authoring project with Node 20.19+ and npm:
 
 ```sh
-npx @dojo-video-engine/create@1.1.1 my-video
+npx @dojo-video-engine/create@1.1.2 my-video
 cd my-video
 npm install
 npm run validate
@@ -51,8 +51,8 @@ the visual editor, timeline, and chat, use
 [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness#run-locally).
 Neither installation path requires cloning the engine repository.
 
-See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.1)
-and [1.1.1 release record](docs/releases/1.1.1.md) for exact package checksums,
+See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.2)
+and [1.1.2 release record](docs/releases/1.1.2.md) for exact package checksums,
 provenance, dependency inventory, audit evidence, and verified consumer checks.
 
 ## Develop from source
@@ -163,7 +163,7 @@ and command acceptance checks after each engine update.
 - [Preview and export](docs/guides/preview-export.md)
 - [Extensions](docs/extension-abi.md)
 - [Repository split and migration](docs/repository-split.md)
-- [Published 1.1.1 release](docs/releases/1.1.1.md)
+- [Published 1.1.2 release](docs/releases/1.1.2.md)
 - [Engine readiness plan](docs/engine-readiness-plan.md)
 - [Release process](docs/release-process.md)
 
