@@ -1,3 +1,4 @@
+import type { Scene } from "@dojo-video-engine/schema";
 import { describe, expect, it, vi } from "vitest";
 import { sampleScene } from "@dojo-video-engine/core";
 import {
@@ -4192,6 +4193,69 @@ describe("Canvas2D display-list facade", () => {
     }
     expect(JSON.parse(JSON.stringify(list))).toEqual(list);
   });
+
+  it.each(["#7C3AED", " #F0A ", " ReD ", " RGB(124, 58, 237) "])(
+    "executes canonicalized background and shape paint %s",
+    (paint) => {
+      vi.stubGlobal(
+        "Path2D",
+        class {
+          rect() {}
+          moveTo() {}
+          lineTo() {}
+          closePath() {}
+        },
+      );
+      try {
+        const target = createScratchRenderHarness().target.context;
+        const coloredScene: Scene = {
+          ...scene,
+          nodes: [
+            {
+              id: "background",
+              type: "div",
+              style: { width: 160, height: 90, background: paint },
+            },
+            {
+              id: "shape",
+              type: "shape",
+              shape: { kind: "rect" },
+              style: {
+                width: 40,
+                height: 40,
+                fill: paint,
+                stroke: paint,
+                strokeWidth: 2,
+              },
+            },
+          ],
+        };
+        const list = compileCanvas2DDisplayList(target, coloredScene, 0);
+        expect(() =>
+          executeCanvas2DDisplayList(target, list, { scene: coloredScene }),
+        ).not.toThrow();
+        const shape = list.groups[1];
+        if (!shape || shape.content?.kind !== "shape" || !shape.content.fill)
+          throw new Error("Expected shape fill");
+        const tampered = {
+          ...shape,
+          content: {
+            ...shape.content,
+            fill: { kind: "color" as const, source: "#000000" },
+          },
+        };
+        expect(() =>
+          executeCanvas2DDisplayList(
+            target,
+            { ...list, groups: [list.groups[0]!, tampered] },
+            { scene: coloredScene },
+          ),
+        ).toThrow(/tampered shape paint semantics/);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    },
+  );
 
   it("rejects composition and undeclared backend capability mismatches", () => {
     const target = createScratchRenderHarness().target.context;

@@ -259,7 +259,7 @@ export const fixtures: GoldenFixture[] = [
             top: 70,
             width: 190,
             height: 190,
-            fill: "#fb7185",
+            fill: " #FB7185 ",
             stroke: "#fef3c7",
             strokeWidth: 8,
             strokeLineJoin: "round",
@@ -507,7 +507,7 @@ export const fixtures: GoldenFixture[] = [
           style: {
             width: "100%",
             height: "100%",
-            backgroundColor: "#101820",
+            backgroundColor: " #101820 ",
           },
           children: [
             {
@@ -521,7 +521,7 @@ export const fixtures: GoldenFixture[] = [
                 right: 40,
                 bottom: 28,
                 height: 48,
-                backgroundColor: "#ffd166",
+                backgroundColor: "#FFD166",
                 borderRadius: 8,
               },
               children: [],

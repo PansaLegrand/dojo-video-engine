@@ -56,6 +56,7 @@ import {
 } from "@dojo-video-engine/schema";
 import {
   parseBorderValue,
+  parseColorValue,
   parseConicGradientValue,
   parseFilterValue,
   parseLinearGradientValue,
@@ -4132,6 +4133,14 @@ function reconstructDisplayGroups(
   return { boxes, extensionOperations, displayGroups };
 }
 
+// The compiler canonicalizes color spelling, but preserves gradient source text.
+// Compare that same representation without accepting a different paint value.
+function compiledPaintSource(source: string | undefined): string | undefined {
+  return source === undefined
+    ? undefined
+    : (parseColorValue(source)?.source ?? source);
+}
+
 function assertDisplayGroupSemantics(
   group: DisplayGroup,
   composition: DisplayList["composition"],
@@ -4173,7 +4182,8 @@ function assertDisplayGroupSemantics(
     Boolean(group.background) !== Boolean(backgroundSource) ||
     (group.background &&
       (group.background.nodeId !== node.id ||
-        group.background.paint.source !== backgroundSource ||
+        group.background.paint.source !==
+          compiledPaintSource(backgroundSource) ||
         !sameRect(group.background.bounds, group.box)))
   ) {
     throw new Error(
@@ -4233,8 +4243,8 @@ function assertDisplayGroupSemantics(
     if (
       content?.kind !== "shape" ||
       content.nodeId !== node.id ||
-      content.fill?.source !== fillSource ||
-      content.stroke?.paint.source !== strokeSource ||
+      content.fill?.source !== compiledPaintSource(fillSource) ||
+      content.stroke?.paint.source !== compiledPaintSource(strokeSource) ||
       !sameRect(content.bounds, group.box)
     ) {
       throw new Error(

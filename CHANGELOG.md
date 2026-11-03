@@ -8,6 +8,12 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.1.2 — 2026-11-03
+
+- Accept valid uppercase and whitespace-padded colors in background and shape display-list validation, using the compiler's canonical color spelling.
+- Preserve rejection of altered paint values and exact pixels for existing scenes.
+- Add regression cases for hex, named and functional colors; exercise equivalent spellings against unchanged browser goldens.
+
 ## 1.1.1 — 2026-10-31
 
 - Correct release verification for npm 12 by reading public registry JSON directly.
