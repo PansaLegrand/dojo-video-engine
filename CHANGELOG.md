@@ -8,6 +8,11 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.1.3 — 2026-11-03
+
+- Pin the renderer/export Mediabunny dependency to the qualified 1.46.0 version, preventing fresh installations from resolving an incompatible AAC muxer.
+- Exercise candidate tarballs through independent browser export and decoded-media checks without any consumer media-dependency override.
+
 ## 1.1.2 — 2026-11-03
 
 - Accept valid uppercase and whitespace-padded colors in background and shape display-list validation, using the compiler's canonical color spelling.

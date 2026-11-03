@@ -32,6 +32,9 @@ if (failures.length > 0) {
 console.log(`example corpus ok (${files.length} canonical/migratable scenes)`);
 
 async function collectJson(directory, into) {
+  // This directory is an independently installed consumer, not a Scene corpus.
+  // Its package.json and generated reports are checked by verify:terminal.
+  if (directory === resolve(root, "examples/terminal-editing")) return;
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) await collectJson(path, into);

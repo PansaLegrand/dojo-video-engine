@@ -150,7 +150,7 @@ importers:
         specifier: workspace:*
         version: link:../schema
       mediabunny:
-        specifier: ^1.46.0
+        specifier: 1.46.0
         version: 1.46.0
     devDependencies:
       vitest:
@@ -274,7 +274,7 @@ importers:
         specifier: workspace:*
         version: link:../schema
       mediabunny:
-        specifier: ^1.46.0
+        specifier: 1.46.0
         version: 1.46.0
     devDependencies:
       lottie-web:

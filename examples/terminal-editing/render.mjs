@@ -10,6 +10,9 @@ const scenePath = process.argv[2] ?? "scene.json";
 const output = resolve(process.argv[3] ?? "output");
 const sceneBytes = await readFile(scenePath);
 const scene = parseScene(JSON.parse(sceneBytes));
+const engineVersion = JSON.parse(
+  await readFile("node_modules/@dojo-video-engine/export/package.json", "utf8"),
+).version;
 // Keep this local example's resource envelope bounded.
 if (scene.duration > 1800 || scene.width > 1920 || scene.height > 1920)
   throw new Error("Example limit: 1800 frames and 1920 pixels per dimension.");
@@ -111,7 +114,7 @@ try {
     resolve(output, "render-report.json"),
     JSON.stringify(
       {
-        engine: "1.1.2",
+        engine: engineVersion,
         node: process.version,
         platform: `${process.platform}/${process.arch}`,
         browser: browser.version(),

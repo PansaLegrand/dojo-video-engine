@@ -1,10 +1,14 @@
 // Registry-only consumer acceptance. Never invokes a model or paid provider.
-import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
+import { publicPackageDirectories } from "./public-package-policy.mjs";
+
+const packSource = process.argv.includes("--pack-source");
+const root = fileURLToPath(new URL("..", import.meta.url));
 
 const directory = await mkdtemp(join(tmpdir(), "dojo-terminal-editing-"));
 await cp(
@@ -32,7 +36,49 @@ function run(args, failure = false) {
   }
   return result;
 }
-run(["install", "--ignore-workspace", "--frozen-lockfile"]);
+if (packSource) {
+  const packs = join(directory, "packs");
+  await mkdir(packs);
+  const manifest = JSON.parse(
+    await readFile(join(directory, "package.json"), "utf8"),
+  );
+  // Override only internal engine identities to retained candidate tarballs.
+  // External media dependencies resolve from their actual published constraints.
+  manifest.pnpm = { overrides: {} };
+  for (const packageDir of publicPackageDirectories) {
+    const candidate = JSON.parse(
+      await readFile(join(root, packageDir, "package.json"), "utf8"),
+    );
+    const packed = spawnSync(
+      "pnpm",
+      ["--filter", candidate.name, "pack", "--pack-destination", packs],
+      { cwd: root, encoding: "utf8" },
+    );
+    assert.equal(packed.status, 0, packed.stderr);
+    const tarball = `file:./packs/${candidate.name.slice(1).replace("/", "-")}-${candidate.version}.tgz`;
+    manifest.pnpm.overrides[candidate.name] = tarball;
+    if (manifest.dependencies[candidate.name])
+      manifest.dependencies[candidate.name] = tarball;
+  }
+  assert.equal(manifest.pnpm.overrides.mediabunny, undefined);
+  await writeFile(
+    join(directory, "package.json"),
+    JSON.stringify(manifest, null, 2),
+  );
+  await rm(join(directory, "pnpm-lock.yaml"));
+  run(["install", "--ignore-workspace", "--no-frozen-lockfile"]);
+  const lock = await readFile(join(directory, "pnpm-lock.yaml"), "utf8");
+  assert.deepEqual(
+    [
+      ...new Set(
+        [...lock.matchAll(/mediabunny@([^:\s]+):/g)].map((match) => match[1]),
+      ),
+    ],
+    ["1.46.0"],
+  );
+} else {
+  run(["install", "--ignore-workspace", "--frozen-lockfile"]);
+}
 run(["exec", "playwright", "install", "--only-shell", "chromium"]);
 run(["fixtures"]);
 run(["author"]);

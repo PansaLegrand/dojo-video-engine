@@ -38,6 +38,7 @@ const steps =
         ["pnpm", ["resource:smoke"]],
         ["pnpm", ["golden:test"]],
         ["node", ["scripts/verify-media-content.mjs"]],
+        ["node", ["scripts/verify-terminal-editing.mjs", "--pack-source"]],
         ["pnpm", ["cross-browser"]],
         ["pnpm", ["performance:gate"]],
         ["node", ["scripts/release-gate.mjs", "smoke"]],
