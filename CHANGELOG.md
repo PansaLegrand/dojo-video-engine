@@ -10,7 +10,7 @@ requires the receipts and provenance in
 
 ## 1.1.3 — 2026-11-03
 
-- Pin the renderer/export Mediabunny dependency to the qualified 1.46.0 version, preventing fresh installations from resolving an incompatible AAC muxer.
+- Pin the renderer/export Mediabunny dependency to the qualified 1.50.3 version, preventing fresh installations from resolving an incompatible AAC muxer.
 - Exercise candidate tarballs through independent browser export and decoded-media checks without any consumer media-dependency override.
 
 ## 1.1.2 — 2026-11-03

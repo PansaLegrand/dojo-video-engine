@@ -52,7 +52,7 @@
     "@dojo-video-engine/core": "workspace:*",
     "@dojo-video-engine/renderer-canvas2d": "workspace:*",
     "@dojo-video-engine/schema": "workspace:*",
-    "mediabunny": "1.46.0"
+    "mediabunny": "1.50.3"
   },
   "devDependencies": {
     "vitest": "4.1.12"

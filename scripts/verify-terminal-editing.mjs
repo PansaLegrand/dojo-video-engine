@@ -74,7 +74,11 @@ if (packSource) {
         [...lock.matchAll(/mediabunny@([^:\s]+):/g)].map((match) => match[1]),
       ),
     ],
-    ["1.46.0"],
+    [
+      JSON.parse(
+        await readFile(join(root, "packages/export/package.json"), "utf8"),
+      ).dependencies.mediabunny,
+    ],
   );
 } else {
   run(["install", "--ignore-workspace", "--frozen-lockfile"]);

@@ -53,7 +53,7 @@
     "@dojo-video-engine/extensions": "workspace:*",
     "@dojo-video-engine/runtime": "workspace:*",
     "@dojo-video-engine/schema": "workspace:*",
-    "mediabunny": "1.46.0"
+    "mediabunny": "1.50.3"
   },
   "devDependencies": {
     "lottie-web": "^5.13.0",
