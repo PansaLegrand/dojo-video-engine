@@ -1,0 +1,6 @@
+node_modules/
+public/
+output/
+scene.json
+before.json
+edit-receipt.json

@@ -17,6 +17,11 @@ Build first: package typechecks rely on generated project-reference declarations
 - `pnpm release:fast` / `pnpm release:full`: aggregate release gates and package smoke tests.
 - `pnpm verify:clean`: all public tarballs installed into an external headless consumer,
   including Node, browser, worker, CLI, and TypeScript builds.
+- `pnpm verify:terminal`: opt-in registry consumer example in a fresh external
+  project, using the example's pinned published packages and lockfile. Exercises
+  Scene commands, headless preview/export, independent FFmpeg content checks,
+  reopening and invalid-input rejection. It does not validate unreleased source
+  changes or call a model. See [terminal acceptance](terminal-editing-2026-11-03.md).
 - `pnpm verify:media`: build, then independently generate source media with FFmpeg,
   trim/split/retime through the browser engine and decode every output frame with
   FFmpeg. Requires `ffmpeg`/`ffprobe`; retains source hashes, Scenes, exports and

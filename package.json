@@ -31,7 +31,8 @@
     "release:full": "node scripts/release-gate.mjs full",
     "release:pack": "node scripts/pack-release.mjs",
     "verify:clean": "node scripts/verify-clean-machine.mjs",
-    "verify:media": "pnpm build && node scripts/verify-media-content.mjs"
+    "verify:media": "pnpm build && node scripts/verify-media-content.mjs",
+    "verify:terminal": "node scripts/verify-terminal-editing.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.5",

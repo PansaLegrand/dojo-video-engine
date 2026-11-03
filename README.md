@@ -51,6 +51,35 @@ the visual editor, timeline, and chat, use
 [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness#run-locally).
 Neither installation path requires cloning the engine repository.
 
+## Edit videos from a terminal or coding agent
+
+Use Dojo as the rendering/editing toolkit underneath your own coding agent:
+author a TypeScript/JSON Scene, validate and inspect it, render preview frames,
+then export an MP4. The agent supplies the conversation and planning; the engine
+needs no LLM provider or separate model loop. A graphical editor is optional.
+
+The [standalone terminal example](examples/terminal-editing/README.md) exercises
+published packages with two trimmed clips, a revised title, mixed audio, preview
+images and a verified four-second MP4. It includes a small headless-Chromium
+render script and a tested dependency pin. Run its isolated acceptance check with
+Node 20.19+, pinned pnpm and FFmpeg/ffprobe:
+
+```sh
+pnpm verify:terminal
+```
+
+The check installs registry packages in a temporary project and retains the MP4,
+contact sheet and independent decoded-media report. It requires package/browser
+downloads but no model calls or API keys. See the example for commands to run in
+your own project and an instruction to give a coding agent.
+
+**Scope:** terminal-driven rendering uses a browser runtime behind the scenes.
+The public CLI handles validation/inspection; rendering/export in this example
+comes from its scripts, not a new public CLI command. No installable Codex/Claude
+plugin is shipped, and separate client acceptance remains untested. Keep the
+example's Mediabunny pin: an unrestricted 1.1.2 install exposed an AAC export
+compatibility failure. [Test evidence and limitations](docs/terminal-editing-2026-11-03.md).
+
 See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.2)
 and [1.1.2 release record](docs/releases/1.1.2.md) for exact package checksums,
 provenance, dependency inventory, audit evidence, and verified consumer checks.

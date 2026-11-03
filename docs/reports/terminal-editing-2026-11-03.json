@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "dimensions": [640, 360],
+  "fps": 30,
+  "frames": 120,
+  "duration": 4,
+  "previewFrames": [0, 15, 45, 65, 90, 119],
+  "titleWhitePixels": 2324,
+  "audio": [
+    {
+      "start": 0.25,
+      "end": 0.75,
+      "voice": 440,
+      "clipAmplitude": 0.06225430720297644,
+      "musicAmplitude": 0.02497589933315223
+    },
+    {
+      "start": 1.25,
+      "end": 1.75,
+      "voice": 440,
+      "clipAmplitude": 0.0624851577842218,
+      "musicAmplitude": 0.024973200993078475
+    },
+    {
+      "start": 2.25,
+      "end": 2.75,
+      "voice": 880,
+      "clipAmplitude": 0.06284964660115763,
+      "musicAmplitude": 0.024993038725412472
+    },
+    {
+      "start": 3.25,
+      "end": 3.75,
+      "voice": 880,
+      "clipAmplitude": 0.0626512772642043,
+      "musicAmplitude": 0.024997155801685905
+    }
+  ],
+  "hashes": {
+    "scene.json": "b6061816ed0ab1135c984eab2d723d42eca08550d1e1a081413d33cc26128472",
+    "public/a.mp4": "4aa40e0731cab4259212da627423efe7fd9d65642067ef44bdf586285fe79056",
+    "public/b.mp4": "38e7daee7fe3c5b4a7eac953590927d31f5edb4aee453d3a7b24dbba1c8122ec",
+    "public/music.wav": "2aef40382a4a7bf0d26ac999c1b40daa6bfe0172c037e0305a9ffadef6aa2907",
+    "output/edited.mp4": "47f2eafdba0b656b57da8defd12e20d12342c5ad4fce059b96205ed49d109a81",
+    "pnpm-lock.yaml": "d8ffa8259dd21cdc7febc31c6a0397addfb393fb67d1c01a5c6b55c11ab8a5d8"
+  },
+  "environment": {
+    "node": "v20.19.5",
+    "platform": "darwin/arm64",
+    "browser": "148.0.7778.96",
+    "ffmpeg": "ffmpeg version 8.0 Copyright (c) 2000-2025 the FFmpeg developers"
+  },
+  "negativeChecks": {
+    "missingAssetRejected": true,
+    "invalidSceneRejected": true
+  },
+  "editing": {
+    "revision": 1,
+    "staleRejected": true
+  },
+  "engineVersion": "1.1.2",
+  "mediabunnyVersion": "1.46.0",
+  "reopenedAndReverified": true
+}
