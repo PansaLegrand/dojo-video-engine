@@ -1,6 +1,6 @@
 # Readiness execution ledger
 
-Started: 2026-11-01. Last updated: 2026-11-02. The engine plan remains the acceptance contract.
+Started: 2026-11-01. Last updated: 2026-11-04. The engine plan remains the acceptance contract.
 
 | Increment   | Change                                                                                                                                    | Proof                                                                                                                       | Status                                  |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -23,3 +23,11 @@ layering, captions, music gain/mixing and an approved-revision browser export.
 Independent FFmpeg checks confirm frame colors/order/logo and known audio tones.
 No runtime patch or new engine version is required. This supplements E-05 consumer
 handoff; broader fixture, environment and human-review rows remain open.
+
+## November 4 release and paired acceptance
+
+[Engine 1.1.3](releases/1.1.3.md) is published with an exact media runtime and
+a fresh-candidate export regression. Both consumer candidates passed actual
+browser checks; the harness adds three licensed real-media cases through 60
+seconds. This advances E-03/E-05 subsets. Physical-phone rotation/VFR, wider
+media/environment coverage and final human acceptance remain open.

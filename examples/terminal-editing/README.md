@@ -1,6 +1,6 @@
 # Terminal editing with a coding agent
 
-This is a standalone consumer example using published engine **1.1.2** packages.
+This is a standalone consumer example using published engine **1.1.3** packages.
 A coding agent can edit the Scene and invoke these scripts from its shell. There
 is no nested LLM loop, editor UI, API key, MCP server or provider SDK. Rendering
 uses a local headless Chromium process; it is not browser-free Node rendering.
@@ -44,7 +44,8 @@ From the engine checkout, `pnpm verify:terminal` runs the same example in a new
 temporary directory, reopens/rerenders the saved Scene in a fresh process, and
 checks invalid Scene and missing-asset failures. It retains the directory and
 evidence even on failure. This is an opt-in registry consumer check, not part of
-the source release gate; it tests the published version pinned in this example.
+the source release gate in registry mode. The full source release gate separately
+uses `--pack-source`, installing current tarballs with no media override.
 
 ## Ask a coding agent to edit
 
@@ -71,12 +72,11 @@ Large projects need a streaming sink; this bounded example exports a Blob.
 
 ## Dependency compatibility
 
-Keep the included lockfile and `pnpm.overrides.mediabunny=1.46.0`. Engine 1.1.2's
-published semver range otherwise resolved to Mediabunny 1.65.1 during this test,
-and AAC export failed with `AAC output has unsupported sample tables`.
-Pinning the engine's tested dependency version resolved that failure. This is a
-consumer compatibility workaround; it does not repair the published package's
-broad dependency range or establish compatibility with newer muxers.
+Keep the included lockfile. Engine 1.1.3 pins Mediabunny **1.50.3** directly,
+matching both consumers; this example needs no override. The initial 1.1.2 test
+resolved an incompatible newer muxer and required a temporary 1.46.0 override.
+That failure led to the upstream fix and a candidate-tarball export check in the
+full release gate. See [the release record](../../docs/releases/1.1.3.md).
 
 The scripts use only public package imports, with no source aliases, sibling
 harness checkout or private app services. Vite hosts the browser modules and

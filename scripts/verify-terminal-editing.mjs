@@ -1,4 +1,4 @@
-// Registry-only consumer acceptance. Never invokes a model or paid provider.
+// Isolated registry or candidate-tarball acceptance. No model or paid provider.
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

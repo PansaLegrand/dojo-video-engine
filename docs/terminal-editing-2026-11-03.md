@@ -3,6 +3,13 @@
 Date: 2026-11-03. Last reviewed: 2026-11-03.
 Status: bounded registry-consumer workflow passed with the documented dependency pin.
 
+## Follow-up: 1.1.3
+
+The [November 4 patch release](releases/1.1.3.md) fixes the fresh-install dependency
+problem upstream using the shared 1.50.3 runtime. The current example uses 1.1.3
+and passed registry acceptance without any override. The original 1.1.2 evidence
+and failures below remain historical records.
+
 ## What was exercised
 
 A coding agent in this session authored and executed a standalone terminal
