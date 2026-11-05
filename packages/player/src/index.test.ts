@@ -719,6 +719,35 @@ describe("Player audio preview", () => {
     player.dispose();
   });
 
+  it("keeps a pending audio start alive when looped playback corrects backwards", async () => {
+    const driver = fakeDriver();
+    const audio = fakeAudio();
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      loop: true,
+      audio: audio.preview,
+      now: driver.now,
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+    await player.audioReady;
+    player.play();
+    audio.setPosition(0);
+    // Initial decoding can hold the audio clock while video advances a frame.
+    for (let tick = 0; tick < 12; tick += 1) await driver.step(34);
+    expect(audio.calls).toEqual(["start@0.000"]);
+    audio.setPosition(0.2);
+    await driver.step(34);
+    expect(player.currentFrame).toBe(6);
+    expect(audio.calls).toEqual(["start@0.000"]);
+    audio.setPosition(null);
+    await driver.step(150);
+    expect(player.currentFrame).toBe(0);
+    expect(audio.calls).toEqual(["start@0.000", "start@0.000"]);
+    player.dispose();
+  });
+
   it("does not attach audio when the scene has nothing audible", async () => {
     const driver = fakeDriver();
     const audio = fakeAudio(false);

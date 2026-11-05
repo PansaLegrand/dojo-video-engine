@@ -25,7 +25,10 @@ import {
   type LayoutCompileResult,
   type LayoutPlan,
 } from "@dojo-video-engine/layout";
-import { createPlayerFromRuntime } from "@dojo-video-engine/player";
+import {
+  ChunkedWebAudioPreview,
+  createPlayerFromRuntime,
+} from "@dojo-video-engine/player";
 import { goldenExtensionRegistry } from "./extensions.js";
 import {
   Canvas2DStaticDisplayCache,
@@ -40,7 +43,10 @@ import {
   type Canvas2DStaticDisplayCacheStats,
   type ScratchSurfacePoolStats,
 } from "@dojo-video-engine/renderer-canvas2d";
-import { createCanvas2DSceneRuntime } from "@dojo-video-engine/renderer-canvas2d/runtime";
+import {
+  createCanvas2DSceneRuntime,
+  withCanvas2DResolvedAssets,
+} from "@dojo-video-engine/renderer-canvas2d/runtime";
 import { validateScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
 import {
   ALL_FORMATS,
@@ -1678,6 +1684,72 @@ window.runGoldenRuntimeParityChecks = async (): Promise<VideoCheck[]> => {
     await audioRuntime?.disposeAsync();
     if (directAssets) await disposeAssetsAsync(directAssets);
     URL.revokeObjectURL(toneUrl);
+  }
+
+  const playbackUrl = URL.createObjectURL(buildToneWav(4, 440));
+  const playbackScene: Scene = {
+    schemaVersion: 1,
+    width: 64,
+    height: 40,
+    fps: 30,
+    duration: 120,
+    assets: { tone: { id: "tone", type: "audio", src: playbackUrl } },
+    nodes: [
+      {
+        id: "tone",
+        type: "audio",
+        assetId: "tone",
+        from: 0,
+        duration: 120,
+        volume: 0.5,
+      },
+    ],
+  };
+  const playbackRuntime = await createCanvas2DSceneRuntime({
+    scene: playbackScene,
+  });
+  let playbackPlayer:
+    | Awaited<ReturnType<typeof createPlayerFromRuntime>>
+    | undefined;
+  let starts = 0;
+  class DelayedAudioPreview extends ChunkedWebAudioPreview {
+    override start(atSeconds: number): void {
+      starts++;
+      super.start(atSeconds);
+    }
+  }
+  try {
+    // Keep actual decoding and Web Audio, but reproduce a slow first media read.
+    await withCanvas2DResolvedAssets(playbackRuntime, ({ assets }) => {
+      const clip = assets.audio.get("tone");
+      if (!clip) throw new Error("Playback fixture has no audio source.");
+      const samples = clip.sink.samples.bind(clip.sink);
+      clip.sink.samples = async function* (
+        ...args: Parameters<typeof samples>
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        yield* samples(...args);
+      };
+    });
+    playbackPlayer = await createPlayerFromRuntime(playbackRuntime, {
+      context: createCaptureContext(64, 40).context,
+      loop: true,
+      audio: new DelayedAudioPreview(),
+    });
+    await playbackPlayer.audioReady;
+    playbackPlayer.play();
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const frame = playbackPlayer.currentFrame;
+    checks.push({
+      label:
+        "looped playback survives delayed real audio decoding without restart jitter",
+      pass: starts === 1 && frame >= 20 && playbackPlayer.playing,
+      detail: `audio starts=${starts}, frame=${frame}, playing=${playbackPlayer.playing}`,
+    });
+  } finally {
+    await playbackPlayer?.disposeAsync();
+    await playbackRuntime.disposeAsync();
+    URL.revokeObjectURL(playbackUrl);
   }
 
   return checks;
