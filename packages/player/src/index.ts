@@ -516,6 +516,7 @@ export class Player {
     // than one frame from the audio position, re-anchor the frame clock. A
     // skipped video frame is invisible; skipped audio is not.
     const audioPosition = this.audio?.position();
+    let correctedToAudio = false;
 
     if (audioPosition != null) {
       const audioFrame = Math.floor(audioPosition * this.scene.fps);
@@ -526,14 +527,16 @@ export class Player {
         audioFrame < this.clock.durationInFrames
       ) {
         this.clock.seek(audioFrame, this.now());
+        correctedToAudio = true;
       }
     }
 
     const { frame, ended } = this.clock.frameAt(this.now());
 
-    // Loop wrap: the clock jumped backwards, so the audio source (which
-    // plays linearly) must restart from the wrapped position.
-    if (frame < this.renderedFrame && this.clock.loop) {
+    // Audio drift correction can move the playhead backwards during startup.
+    // Restarting audio then cancels its pending mix and can repeat indefinitely.
+    // Only a clock wrap should restart the linear audio source.
+    if (frame < this.renderedFrame && this.clock.loop && !correctedToAudio) {
       this.audio?.start(frame / this.scene.fps);
     }
 

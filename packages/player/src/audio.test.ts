@@ -106,62 +106,70 @@ describe("chunked audio preview", () => {
     preview.dispose();
   });
 
-  it("keeps the player's rendered frame synchronized while initial audio is loading", async () => {
-    const first = deferred<AudioBuffer | null>();
-    mix.mockImplementationOnce(() => first.promise);
-    const audio = fakeAudioContext();
-    const preview = new ChunkedWebAudioPreview(30, audio.create);
-    let now = 0;
-    let scheduled: (() => void) | null = null;
-    const player = await createPlayer({
-      scene: {
-        ...scene,
-        schemaVersion: 1,
-        width: 100,
-        height: 100,
-        assets: {},
-        nodes: [],
-      },
-      assets: {
-        images: new Map(),
-        fonts: new Map(),
-        videos: new Map(),
-        videoFrames: new Map(),
-        audio: new Map(),
-        lotties: new Map(),
-        lottieFrames: new Map(),
-      },
-      context: { clearRect: vi.fn() } as unknown as CanvasRenderingContext2D,
-      audio: preview,
-      now: () => now,
-      requestFrame: (callback) => {
-        scheduled = callback;
-        return 1;
-      },
-      cancelFrame: () => {
+  it.each([false, true])(
+    "keeps the player synchronized while initial audio loads (loop=%s)",
+    async (loop) => {
+      const first = deferred<AudioBuffer | null>();
+      mix.mockImplementationOnce(() => first.promise);
+      const audio = fakeAudioContext();
+      const preview = new ChunkedWebAudioPreview(30, audio.create);
+      let now = 0;
+      let scheduled: (() => void) | null = null;
+      const player = await createPlayer({
+        loop,
+        scene: {
+          ...scene,
+          schemaVersion: 1,
+          width: 100,
+          height: 100,
+          assets: {},
+          nodes: [],
+        },
+        assets: {
+          images: new Map(),
+          fonts: new Map(),
+          videos: new Map(),
+          videoFrames: new Map(),
+          audio: new Map(),
+          lotties: new Map(),
+          lottieFrames: new Map(),
+        },
+        context: { clearRect: vi.fn() } as unknown as CanvasRenderingContext2D,
+        audio: preview,
+        now: () => now,
+        requestFrame: (callback) => {
+          scheduled = callback;
+          return 1;
+        },
+        cancelFrame: () => {
+          scheduled = null;
+        },
+      });
+      const tick = async (time: number) => {
+        now = time;
+        audio.context.currentTime = time / 1000;
+        const callback = scheduled;
         scheduled = null;
-      },
-    });
-    const tick = async (time: number) => {
-      now = time;
-      audio.context.currentTime = time / 1000;
-      const callback = scheduled;
-      scheduled = null;
-      callback?.();
+        callback?.();
+        await settle();
+      };
+      await player.audioReady;
+      player.play();
+      await tick(34);
+      expect(player.currentFrame).toBe(1);
+      await tick(2000);
+      expect(mix).toHaveBeenCalledTimes(1);
+      expect(mix.mock.calls[0]?.[4]?.aborted).toBe(false);
+      expect(player.currentFrame).toBe(0);
+      first.resolve(buffer());
       await settle();
-    };
-    await player.audioReady;
-    player.play();
-    await tick(2000);
-    expect(player.currentFrame).toBe(0);
-    first.resolve(buffer());
-    await settle();
-    expect(audio.sources[0]!.start).toHaveBeenCalledWith(2, 0, 30);
-    await tick(2034);
-    expect(player.currentFrame).toBe(1);
-    expect(preview.position()).toBeCloseTo(0.034);
-    await player.disposeAsync();
-  });
+      expect(audio.sources[0]!.start).toHaveBeenCalledWith(2, 0, 30);
+      await tick(2034);
+      expect(player.currentFrame).toBe(1);
+      expect(preview.position()).toBeCloseTo(0.034);
+      await player.disposeAsync();
+    },
+  );
 
   it("prefetches one chunk and schedules uninterrupted boundaries with bounded sources", async () => {
     const audio = fakeAudioContext();

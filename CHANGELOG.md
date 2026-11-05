@@ -8,6 +8,11 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.1.4 — 2026-11-05
+
+- Keep pending audio decoding alive when looped preview corrects its video clock backward to match audio. This fixes repeated startup resets that can freeze the playhead and produce a buzzing sound.
+- Verify delayed startup with the chunked mixer, real browser audio decoding and normal end-of-video looping.
+
 ## 1.1.3 — 2026-11-03
 
 - Pin the renderer/export Mediabunny dependency to the qualified 1.50.3 version, preventing fresh installations from resolving an incompatible AAC muxer.
