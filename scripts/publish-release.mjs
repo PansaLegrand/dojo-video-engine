@@ -485,21 +485,27 @@ export function createNpmRegistryAdapter({
       return tags;
     },
     async publish(entry, tag) {
-      await runNpmMutation([
-        "publish",
-        entry.path,
-        "--access",
-        "public",
-        "--provenance",
-        "--tag",
-        tag,
-      ]);
+      await runNpmMutation(
+        [
+          "publish",
+          entry.path,
+          "--access",
+          "public",
+          "--provenance",
+          "--tag",
+          tag,
+        ],
+        entry.name,
+      );
     },
     async setTag(name, version, tag) {
-      await runNpmMutation(["dist-tag", "add", `${name}@${version}`, tag]);
+      await runNpmMutation(
+        ["dist-tag", "add", `${name}@${version}`, tag],
+        name,
+      );
     },
     async removeTag(name, tag) {
-      await runNpmMutation(["dist-tag", "rm", name, tag]);
+      await runNpmMutation(["dist-tag", "rm", name, tag], name);
     },
   };
 }
@@ -911,13 +917,37 @@ async function readPublicRegistryJson(path) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
-async function runNpmMutation(args) {
+/** No token fallback for existing packages; one explicit initial identity only. */
+export function npmMutationEnvironment(name, source = process.env) {
+  const { NPM_THREE_BOOTSTRAP_TOKEN: token, ...environment } = source;
+  const bootstrap = source.BOOTSTRAP_THREE === "true";
+  if (bootstrap && source.RELEASE_VERSION !== "1.2.0")
+    throw new Error(
+      "Three.js bootstrap is limited to the initial 1.2.0 release.",
+    );
+  if (bootstrap && !token?.trim())
+    throw new Error(
+      "Configure NPM_THREE_BOOTSTRAP_TOKEN in the protected npm-release environment before the initial Three.js publication.",
+    );
+  if (!bootstrap && token)
+    throw new Error(
+      "A bootstrap secret requires the explicit one-time bootstrap input.",
+    );
+  return {
+    ...environment,
+    NODE_AUTH_TOKEN:
+      bootstrap && name === "@dojo-video-engine/three" ? token : "",
+    NPM_TOKEN: "",
+  };
+}
+
+async function runNpmMutation(args, name) {
   try {
     const { stdout, stderr } = await execFileAsync("npm", args, {
       cwd: rootDir,
       encoding: "utf8",
       maxBuffer: 8 * 1024 * 1024,
-      env: process.env,
+      env: npmMutationEnvironment(name),
     });
     if (stdout.trim()) process.stdout.write(stdout);
     if (stderr.trim()) process.stderr.write(stderr);
@@ -975,7 +1005,12 @@ async function main() {
   });
 
   if (mode === "--verify-oidc") {
-    if (process.env.NODE_AUTH_TOKEN || process.env.NPM_TOKEN)
+    if (
+      process.env.NODE_AUTH_TOKEN ||
+      process.env.NPM_TOKEN ||
+      process.env.NPM_THREE_BOOTSTRAP_TOKEN ||
+      process.env.BOOTSTRAP_THREE === "true"
+    )
       throw new Error("OIDC verification must not receive a bootstrap token.");
     const count = await verifyTrustedPublishers(
       bundle,
@@ -987,10 +1022,19 @@ async function main() {
     );
     return;
   }
-  const result = await publishVerifiedRelease(
-    bundle,
-    createNpmRegistryAdapter(),
-  );
+  const registry = createNpmRegistryAdapter();
+  npmMutationEnvironment("@dojo-video-engine/three");
+  if (
+    bundle.packages.some(
+      (entry) => entry.name === "@dojo-video-engine/three",
+    ) &&
+    !Object.keys(await registry.getTags("@dojo-video-engine/three")).length &&
+    process.env.BOOTSTRAP_THREE !== "true"
+  )
+    throw new Error(
+      "The new Three.js package needs explicit first-publication bootstrap before any package is uploaded.",
+    );
+  const result = await publishVerifiedRelease(bundle, registry);
   console.log(
     `DojoVideoEngine ${bundle.manifest.releaseVersion} registry verified: ` +
       `${result.published.length} published, ${result.skipped.length} reused, ` +

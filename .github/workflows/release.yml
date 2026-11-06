@@ -12,6 +12,11 @@ on:
         required: true
         default: false
         type: boolean
+      bootstrap_three:
+        description: One-time 1.2.0 bootstrap for the new Three.js package only
+        required: true
+        default: false
+        type: boolean
 
       verify_trusted_publishers:
         description: Verify OIDC access against an already published release (no new versions)
@@ -99,9 +104,11 @@ jobs:
       - run: npm install --global npm@12.2.1
       - name: Publish the exact tested tarballs
         env:
-          # All package identities now trust this workflow/environment.
-          # Publishing must use OIDC, with no persistent-token fallback.
+          # Existing packages remain OIDC-only. The explicit 1.2.0 bootstrap
+          # token is selected only for the new Three.js identity by the controller.
           NODE_AUTH_TOKEN: ""
+          BOOTSTRAP_THREE: ${{ inputs.bootstrap_three }}
+          NPM_THREE_BOOTSTRAP_TOKEN: ${{ inputs.bootstrap_three && secrets.NPM_THREE_BOOTSTRAP_TOKEN || '' }}
           RELEASE_VERSION: ${{ inputs.version }}
         run: node scripts/publish-release.mjs artifacts/release "v$RELEASE_VERSION"
       - name: Attach durable release evidence
