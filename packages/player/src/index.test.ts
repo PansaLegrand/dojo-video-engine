@@ -734,8 +734,12 @@ describe("Player audio preview", () => {
     await player.audioReady;
     player.play();
     audio.setPosition(0);
-    // Initial decoding can hold the audio clock while video advances a frame.
+    // The picture must hold the requested frame until the audio clock advances.
+    const frames: number[] = [];
+    player.on("frame", (frame) => frames.push(frame));
     for (let tick = 0; tick < 12; tick += 1) await driver.step(34);
+    expect(player.currentFrame).toBe(0);
+    expect(frames.every((frame) => frame === 0)).toBe(true);
     expect(audio.calls).toEqual(["start@0.000"]);
     audio.setPosition(0.2);
     await driver.step(34);
@@ -745,6 +749,59 @@ describe("Player audio preview", () => {
     await driver.step(150);
     expect(player.currentFrame).toBe(0);
     expect(audio.calls).toEqual(["start@0.000", "start@0.000"]);
+    player.dispose();
+  });
+
+  it("follows one-frame audio lag without presenting a forward-then-backward jump", async () => {
+    const driver = fakeDriver();
+    const audio = fakeAudio();
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      loop: true,
+      audio: audio.preview,
+      now: driver.now,
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+    await player.audioReady;
+    const frames: number[] = [];
+    player.on("frame", (frame) => frames.push(frame));
+    player.play();
+    for (const frame of [0, 0, 1, 1, 2, 2, 3]) {
+      audio.setPosition(frame / 30);
+      await driver.step(34);
+      expect(player.currentFrame).toBe(frame);
+    }
+    expect(frames).toEqual([1, 2, 3]);
+    expect(audio.calls).toEqual(["start@0.000"]);
+    player.dispose();
+  });
+
+  it("uses one wall-clock sample when an update crosses a frame boundary", async () => {
+    const driver = fakeDriver();
+    const audio = fakeAudio();
+    let readAdvance = 0;
+    let readOffset = 0;
+    const player = await createPlayer({
+      context: fakeContext(),
+      scene: testScene,
+      audio: audio.preview,
+      now: () => {
+        const value = driver.now() + readOffset;
+        readOffset += readAdvance;
+        return value;
+      },
+      requestFrame: driver.requestFrame,
+      cancelFrame: driver.cancelFrame,
+    });
+    await player.audioReady;
+    player.play();
+    audio.setPosition(0);
+    readAdvance = 34;
+    await driver.step(33);
+    expect(player.currentFrame).toBe(0);
+    expect(audio.calls).toEqual(["start@0.000"]);
     player.dispose();
   });
 

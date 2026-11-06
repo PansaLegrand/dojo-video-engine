@@ -156,7 +156,7 @@ describe("chunked audio preview", () => {
       await player.audioReady;
       player.play();
       await tick(34);
-      expect(player.currentFrame).toBe(1);
+      expect(player.currentFrame).toBe(0);
       await tick(2000);
       expect(mix).toHaveBeenCalledTimes(1);
       expect(mix.mock.calls[0]?.[4]?.aborted).toBe(false);
