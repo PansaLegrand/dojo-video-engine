@@ -246,6 +246,16 @@ requirements when the workflow is reviewed.
 
 ### First-publication bootstrap
 
+The 1.2.0 release introduces `@dojo-video-engine/three`. Its first publication
+uses the explicit `bootstrap_three=true` input and the short-lived
+`NPM_THREE_BOOTSTRAP_TOKEN` secret in the protected `npm-release` environment.
+The controller sends that credential only to this package's publish/dist-tag
+operations; all existing packages remain OIDC-only. It rejects other versions,
+missing secrets, accidental token activation and token-bearing OIDC verification.
+After verified publication, configure the new package's trusted publisher for
+`release.yml` / `npm-release`, verify token-free access, revoke the bootstrap
+token and delete the secret. This does not weaken existing package settings.
+
 npm package settings cannot be assumed to offer trusted-publisher configuration
 for a package identity that does not yet exist. For the first publication of
 each new `@dojo-video-engine/*` identity:

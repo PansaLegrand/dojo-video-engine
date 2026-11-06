@@ -17,6 +17,7 @@ import {
   publishVerifiedRelease,
   verifyTrustedPublishers,
   createNpmRegistryAdapter,
+  npmMutationEnvironment,
   sha256,
   sha512Integrity,
   temporaryReleaseTag,
@@ -25,6 +26,54 @@ import {
 
 const commit = "a".repeat(40);
 const temporaryPaths = [];
+
+describe("first-publication bootstrap isolation", () => {
+  const environment = {
+    BOOTSTRAP_THREE: "true",
+    RELEASE_VERSION: "1.2.0",
+    NPM_THREE_BOOTSTRAP_TOKEN: "synthetic-bootstrap",
+    NODE_AUTH_TOKEN: "unrelated-token",
+    NPM_TOKEN: "unrelated-token",
+  };
+  it("passes the temporary token only to the new package and strips alternate token variables", () => {
+    expect(
+      npmMutationEnvironment("@dojo-video-engine/three", environment)
+        .NODE_AUTH_TOKEN,
+    ).toBe("synthetic-bootstrap");
+    const existing = npmMutationEnvironment(
+      "@dojo-video-engine/schema",
+      environment,
+    );
+    expect(existing.NODE_AUTH_TOKEN).toBe("");
+    expect(existing.NPM_TOKEN).toBe("");
+    expect(existing).not.toHaveProperty("NPM_THREE_BOOTSTRAP_TOKEN");
+  });
+  it("requires explicit activation, the initial release and a configured secret", () => {
+    expect(() =>
+      npmMutationEnvironment("@dojo-video-engine/three", {
+        ...environment,
+        RELEASE_VERSION: "1.2.1",
+      }),
+    ).toThrow(/initial/);
+    expect(() =>
+      npmMutationEnvironment("@dojo-video-engine/three", {
+        ...environment,
+        NPM_THREE_BOOTSTRAP_TOKEN: "",
+      }),
+    ).toThrow(/protected/);
+    expect(() =>
+      npmMutationEnvironment("@dojo-video-engine/three", {
+        ...environment,
+        BOOTSTRAP_THREE: "false",
+      }),
+    ).toThrow(/explicit/);
+    expect(
+      npmMutationEnvironment("@dojo-video-engine/schema", {
+        NODE_AUTH_TOKEN: "stale",
+      }).NODE_AUTH_TOKEN,
+    ).toBe("");
+  });
+});
 
 afterEach(async () => {
   await Promise.all(
