@@ -17,7 +17,9 @@
       "@dojo-video-engine/inspection": ["packages/inspection/src/index.ts"],
       "@dojo-video-engine/interchange": ["packages/interchange/src/index.ts"],
       "@dojo-video-engine/layout": ["packages/layout/src/index.ts"],
-      "@dojo-video-engine/create": ["packages/create-dojo-video-engine/src/index.ts"],
+      "@dojo-video-engine/create": [
+        "packages/create-dojo-video-engine/src/index.ts"
+      ],
       "@dojo-video-engine/presets": ["packages/presets/src/index.ts"],
       "@dojo-video-engine/presets/catalog": ["packages/presets/src/catalog.ts"],
       "@dojo-video-engine/presets/intents": ["packages/presets/src/intents.ts"],
@@ -31,7 +33,10 @@
       ],
       "@dojo-video-engine/runtime": ["packages/runtime/src/index.ts"],
       "@dojo-video-engine/export": ["packages/export/src/index.ts"],
-      "@dojo-video-engine/player": ["packages/player/src/index.ts"]
+      "@dojo-video-engine/player": ["packages/player/src/index.ts"],
+      "@dojo-video-engine/three": ["packages/three/src/index.ts"],
+      "@dojo-video-engine/three/schema": ["packages/three/src/schema.ts"],
+      "@dojo-video-engine/interchange/svg": ["packages/interchange/src/svg.ts"]
     },
     "strict": true,
     "declaration": true,

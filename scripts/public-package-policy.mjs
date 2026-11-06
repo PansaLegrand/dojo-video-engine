@@ -3,6 +3,14 @@
  * here only when their milestone creates the package and its public boundary.
  */
 export const publicPackagePolicy = {
+  "@dojo-video-engine/three": {
+    owner: "Bounded declarative Three.js layers and optional GPU runtime",
+    allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/schema",
+      "@dojo-video-engine/extensions",
+      "@dojo-video-engine/renderer-canvas2d",
+    ],
+  },
   "@dojo-video-engine/agent-tools": {
     owner: "Framework-neutral agent tool adapters",
     allowedDojoVideoEngineDependencies: [

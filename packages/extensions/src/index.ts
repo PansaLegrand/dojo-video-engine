@@ -252,7 +252,7 @@ export type DojoVideoEngineExtensionDefinition<
   displayName?: string;
   description?: string;
   compatibleVersions?: readonly string[];
-  paramsSchema: ZodType<P>;
+  paramsSchema: ZodType<P, z.ZodTypeDef, unknown>;
   deterministic: true;
   workerCompatible: boolean;
   /**
@@ -1167,6 +1167,10 @@ function cloneFrozenCompileJson<T>(value: T, label: string): T {
             `Extension ${label} requires enumerable data properties.`,
           );
         }
+        // Parsed optional Scene fields may be explicitly undefined in TypeScript.
+        // Their canonical JSON representation omits the property. Array holes,
+        // undefined elements, accessors and opaque output remain rejected.
+        if (descriptor.value === undefined) continue;
         Object.defineProperty(result, key, {
           value: clone(descriptor.value, depth + 1),
           enumerable: true,
@@ -1195,7 +1199,11 @@ function assertEncodedDisplaySize(
 
 /** Calls and validates an extension's opt-in resource-reuse identity. */
 export function extensionResourceReuseKey<P, ResolvedAssets, PreparedFrame>(
-  definition: DojoVideoEngineExtensionDefinition<P, ResolvedAssets, PreparedFrame>,
+  definition: DojoVideoEngineExtensionDefinition<
+    P,
+    ResolvedAssets,
+    PreparedFrame
+  >,
   context: ExtensionReuseContext<P>,
 ): string | null {
   if (!definition.reuseKey) return null;

@@ -8,6 +8,14 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.2.0 — 2026-11-06
+
+- Add bounded editable SVG import through `@dojo-video-engine/interchange/svg`, preserving named parts, vector geometry, transforms and group opacity.
+- Add the optional `@dojo-video-engine/three` package: validated object/material/camera data, deterministic animation, transparent composition and shared browser export.
+- Preserve trim/split animation phase through explicit source-time controls; reject unsupported WebGL execution and excessive resources with actionable errors.
+- Accept extension parameter schemas with defaults and normalize optional undefined fields in immutable compile snapshots without weakening opaque output validation.
+- Keep Scene v1 and existing APIs compatible. Raw code execution, general SVG/CSS/SMIL, external 3D models/textures and cross-GPU pixel identity remain outside this release.
+
 ## 1.1.5 — 2026-11-06
 
 - Hold the picture at the audio position while the initial audio mix prepares, eliminating one-frame forward/backward oscillation at preview startup.

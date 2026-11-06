@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/authoring",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "Seconds-first TypeScript authoring helpers for DojoVideoEngine scenes.",
   "keywords": [
     "dojo-video-engine",
