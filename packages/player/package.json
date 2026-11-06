@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/player",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Real-time playback for dojo-video-engine scenes: a deterministic frame clock plus a canvas render loop with play/pause/seek/loop.",
   "keywords": [
     "dojo-video-engine",

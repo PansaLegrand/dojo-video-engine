@@ -8,6 +8,12 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.1.5 — 2026-11-06
+
+- Hold the picture at the audio position while the initial audio mix prepares, eliminating one-frame forward/backward oscillation at preview startup.
+- Use one wall-clock sample per playback update so crossing a frame boundary cannot advance the picture after audio synchronization.
+- Cover delayed real audio decoding, one-frame audio lag and frame-boundary timing with monotonic playback regressions. Scene v1 and public APIs are unchanged.
+
 ## 1.1.4 — 2026-11-05
 
 - Keep pending audio decoding alive when looped preview corrects its video clock backward to match audio. This fixes repeated startup resets that can freeze the playhead and produce a buzzing sound.

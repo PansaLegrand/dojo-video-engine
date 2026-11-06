@@ -1737,14 +1737,22 @@ window.runGoldenRuntimeParityChecks = async (): Promise<VideoCheck[]> => {
       audio: new DelayedAudioPreview(),
     });
     await playbackPlayer.audioReady;
+    const startupFrames: number[] = [];
+    playbackPlayer.on("frame", (frame) => startupFrames.push(frame));
     playbackPlayer.play();
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const frame = playbackPlayer.currentFrame;
     checks.push({
       label:
         "looped playback survives delayed real audio decoding without restart jitter",
-      pass: starts === 1 && frame >= 20 && playbackPlayer.playing,
-      detail: `audio starts=${starts}, frame=${frame}, playing=${playbackPlayer.playing}`,
+      pass:
+        starts === 1 &&
+        frame >= 20 &&
+        playbackPlayer.playing &&
+        startupFrames.every(
+          (value, index) => index === 0 || value >= startupFrames[index - 1]!,
+        ),
+      detail: `audio starts=${starts}, frame=${frame}, playing=${playbackPlayer.playing}, first frames=${startupFrames.slice(0, 12).join(",")}`,
     });
   } finally {
     await playbackPlayer?.disposeAsync();

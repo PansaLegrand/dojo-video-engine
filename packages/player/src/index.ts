@@ -512,26 +512,27 @@ export class Player {
       return;
     }
 
-    // Audio hardware is the steadier clock: when the frame clock drifts more
-    // than one frame from the audio position, re-anchor the frame clock. A
-    // skipped video frame is invisible; skipped audio is not.
+    // Follow the available audio clock exactly. A one-frame tolerance lets
+    // video advance and then jump backwards while the first audio mix prepares
+    // or the AudioContext is suspended.
     const audioPosition = this.audio?.position();
+    const tickTime = this.now();
     let correctedToAudio = false;
 
     if (audioPosition != null) {
       const audioFrame = Math.floor(audioPosition * this.scene.fps);
-      const clockFrame = this.clock.frameAt(this.now()).frame;
+      const clockFrame = this.clock.frameAt(tickTime).frame;
 
       if (
-        Math.abs(audioFrame - clockFrame) > 1 &&
+        audioFrame !== clockFrame &&
         audioFrame < this.clock.durationInFrames
       ) {
-        this.clock.seek(audioFrame, this.now());
+        this.clock.seek(audioFrame, tickTime);
         correctedToAudio = true;
       }
     }
 
-    const { frame, ended } = this.clock.frameAt(this.now());
+    const { frame, ended } = this.clock.frameAt(tickTime);
 
     // Audio drift correction can move the playhead backwards during startup.
     // Restarting audio then cancels its pending mix and can repeat indefinitely.
