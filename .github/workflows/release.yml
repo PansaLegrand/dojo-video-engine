@@ -13,7 +13,7 @@ on:
         default: false
         type: boolean
       bootstrap_three:
-        description: One-time 1.2.0 bootstrap for the new Three.js package only
+        description: One-time 1.2.1 bootstrap for the new Three.js package only
         required: true
         default: false
         type: boolean
@@ -104,7 +104,7 @@ jobs:
       - run: npm install --global npm@12.2.1
       - name: Publish the exact tested tarballs
         env:
-          # Existing packages remain OIDC-only. The explicit 1.2.0 bootstrap
+          # Existing packages remain OIDC-only. The explicit 1.2.1 bootstrap
           # token is selected only for the new Three.js identity by the controller.
           NODE_AUTH_TOKEN: ""
           BOOTSTRAP_THREE: ${{ inputs.bootstrap_three }}
