@@ -29,17 +29,17 @@ artifacts; it contains no model loop, credentials, or application UI.
 
 ## Use the published engine
 
-All **16 packages** are published together at **1.1.4** on npm under the MIT license.
+All **16 packages** are published together at **1.1.5** on npm under the MIT license.
 For example, add scene authoring, playback, and export to an existing project:
 
 ```sh
-npm install @dojo-video-engine/authoring@1.1.4 @dojo-video-engine/player@1.1.4 @dojo-video-engine/export@1.1.4
+npm install @dojo-video-engine/authoring@1.1.5 @dojo-video-engine/player@1.1.5 @dojo-video-engine/export@1.1.5
 ```
 
 Or create a standalone scene-authoring project with Node 20.19+ and npm:
 
 ```sh
-npx @dojo-video-engine/create@1.1.4 my-video
+npx @dojo-video-engine/create@1.1.5 my-video
 cd my-video
 npm install
 npm run validate
@@ -76,12 +76,12 @@ your own project and an instruction to give a coding agent.
 **Scope:** terminal-driven rendering uses a browser runtime behind the scenes.
 The public CLI handles validation/inspection; rendering/export in this example
 comes from its scripts, not a new public CLI command. No installable Codex/Claude
-plugin is shipped, and separate client acceptance remains untested. Engine 1.1.4
+plugin is shipped, and separate client acceptance remains untested. Engine 1.1.5
 pins its qualified media runtime, so no consumer override is needed.
 [Test evidence and limitations](docs/terminal-editing-2026-11-03.md).
 
-See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.4)
-and [1.1.4 release record](docs/releases/1.1.4.md) for exact package checksums,
+See the [release artifacts](https://github.com/PansaLegrand/dojo-video-engine/releases/tag/v1.1.5)
+and [1.1.5 release record](docs/releases/1.1.5.md) for exact package checksums,
 provenance, dependency inventory, audit evidence, and verified consumer checks.
 
 ## Develop from source
@@ -192,7 +192,7 @@ and command acceptance checks after each engine update.
 - [Preview and export](docs/guides/preview-export.md)
 - [Extensions](docs/extension-abi.md)
 - [Repository split and migration](docs/repository-split.md)
-- [Published 1.1.4 release](docs/releases/1.1.4.md)
+- [Published 1.1.5 release](docs/releases/1.1.5.md)
 - [Engine readiness plan](docs/engine-readiness-plan.md)
 - [Release process](docs/release-process.md)
 
