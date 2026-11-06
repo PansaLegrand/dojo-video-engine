@@ -466,10 +466,13 @@ export function createNpmRegistryAdapter({
       return result;
     },
     async getTags(name) {
-      const result = await readJson(
-        `/-/package/${name.replace("/", "%2f")}/dist-tags`,
-      );
-      if (result === null) return {};
+      // npm's dist-tag endpoint returns 401 for a brand-new package identity.
+      // The public package document distinguishes absence with an actual 404.
+      const metadata = await readJson(`/${name.replace("/", "%2f")}`);
+      if (metadata === null) return {};
+      if (metadata.name !== name)
+        throw new Error("Registry package identity mismatch.");
+      const result = metadata["dist-tags"];
       assertRecord(result, `${name} registry tags`);
       const tags = {};
       for (const [key, value] of Object.entries(result)) {
@@ -921,9 +924,9 @@ async function readPublicRegistryJson(path) {
 export function npmMutationEnvironment(name, source = process.env) {
   const { NPM_THREE_BOOTSTRAP_TOKEN: token, ...environment } = source;
   const bootstrap = source.BOOTSTRAP_THREE === "true";
-  if (bootstrap && source.RELEASE_VERSION !== "1.2.0")
+  if (bootstrap && source.RELEASE_VERSION !== "1.2.1")
     throw new Error(
-      "Three.js bootstrap is limited to the initial 1.2.0 release.",
+      "Three.js bootstrap is limited to the initial 1.2.1 release.",
     );
   if (bootstrap && !token?.trim())
     throw new Error(

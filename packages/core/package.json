@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/core",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Scene builder API, keyframe animation evaluator, and layout pass for dojo-video-engine.",
   "keywords": [
     "dojo-video-engine",

@@ -246,7 +246,14 @@ requirements when the workflow is reviewed.
 
 ### First-publication bootstrap
 
-The 1.2.0 release introduces `@dojo-video-engine/three`. Its first publication
+The immutable `v1.2.0` tag was not published: its workflow passed all candidate
+checks but stopped before any upload because npm returns HTTP 401 from the
+anonymous dist-tag endpoint for a nonexistent package. Release 1.2.1 reads tags
+from the public package document, where absence is HTTP 404. Authorization
+failures still fail closed. The failed run is
+[42261999577](https://github.com/PansaLegrand/dojo-video-engine/actions/runs/42261999577).
+
+The 1.2.1 release introduces `@dojo-video-engine/three`. Its first publication
 uses the explicit `bootstrap_three=true` input and the short-lived
 `NPM_THREE_BOOTSTRAP_TOKEN` secret in the protected `npm-release` environment.
 The controller sends that credential only to this package's publish/dist-tag

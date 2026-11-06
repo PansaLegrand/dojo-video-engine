@@ -8,7 +8,15 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.2.1 — 2026-11-07
+
+- Carry forward the SVG and Three.js APIs from the unpublished 1.2.0 source baseline.
+- Read dist-tags from npm's public package document so the initial Three.js publication recognizes a missing package without bypassing authorization errors.
+- Preserve the immutable v1.2.0 tag and restrict the one-time Three.js bootstrap credential to 1.2.1.
+
 ## 1.2.0 — 2026-11-06
+
+Source baseline only; publication stopped before any uploads. Superseded by 1.2.1.
 
 - Add bounded editable SVG import through `@dojo-video-engine/interchange/svg`, preserving named parts, vector geometry, transforms and group opacity.
 - Add the optional `@dojo-video-engine/three` package: validated object/material/camera data, deterministic animation, transparent composition and shared browser export.

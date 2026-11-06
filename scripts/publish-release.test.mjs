@@ -30,7 +30,7 @@ const temporaryPaths = [];
 describe("first-publication bootstrap isolation", () => {
   const environment = {
     BOOTSTRAP_THREE: "true",
-    RELEASE_VERSION: "1.2.0",
+    RELEASE_VERSION: "1.2.1",
     NPM_THREE_BOOTSTRAP_TOKEN: "synthetic-bootstrap",
     NODE_AUTH_TOKEN: "unrelated-token",
     NPM_TOKEN: "unrelated-token",
@@ -52,7 +52,7 @@ describe("first-publication bootstrap isolation", () => {
     expect(() =>
       npmMutationEnvironment("@dojo-video-engine/three", {
         ...environment,
-        RELEASE_VERSION: "1.2.1",
+        RELEASE_VERSION: "1.2.2",
       }),
     ).toThrow(/initial/);
     expect(() =>
@@ -591,8 +591,8 @@ it("reads immutable integrity from registry objects, not npm 12 singleton arrays
   const integrity = sha512Integrity(Buffer.from("published"));
   const registry = createNpmRegistryAdapter({
     readJson: async (url) =>
-      url.endsWith("/dist-tags")
-        ? { latest: "1.1.0" }
+      url === "/@dojo-video-engine%2fcore"
+        ? { name: "@dojo-video-engine/core", "dist-tags": { latest: "1.1.0" } }
         : {
             name: "@dojo-video-engine/core",
             version: "1.1.0",
@@ -609,6 +609,30 @@ it("reads immutable integrity from registry objects, not npm 12 singleton arrays
   expect(
     await missing.getIntegrity("@dojo-video-engine/core", "1.1.0"),
   ).toBeNull();
+});
+
+it("preflights a new identity through public metadata without treating authorization failures as absence", async () => {
+  const registry = createNpmRegistryAdapter({
+    readJson: async (url) => {
+      if (url === "/@dojo-video-engine%2fthree") return null;
+      throw new Error("The unauthenticated dist-tag endpoint returns HTTP 401");
+    },
+  });
+  expect(await registry.getTags("@dojo-video-engine/three")).toEqual({});
+  const denied = createNpmRegistryAdapter({
+    readJson: async () => {
+      throw new Error("HTTP 401");
+    },
+  });
+  await expect(denied.getTags("@dojo-video-engine/three")).rejects.toThrow(
+    "HTTP 401",
+  );
+  const mismatch = createNpmRegistryAdapter({
+    readJson: async () => ({ name: "another-package", "dist-tags": {} }),
+  });
+  await expect(mismatch.getTags("@dojo-video-engine/three")).rejects.toThrow(
+    /identity mismatch/,
+  );
 });
 
 it("cleans old candidate tags without changing unrelated or future tags", async () => {

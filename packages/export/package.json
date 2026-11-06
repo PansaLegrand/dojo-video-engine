@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/export",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Browser-native video export surface (WebCodecs) for dojo-video-engine scenes.",
   "keywords": [
     "dojo-video-engine",
