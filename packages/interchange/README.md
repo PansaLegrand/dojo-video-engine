@@ -1,5 +1,25 @@
 # @dojo-video-engine/interchange
 
+## Editable SVG subset
+
+`importSvgGraphic` from `@dojo-video-engine/interchange/svg` compiles a bounded
+SVG string to native groups and paths with an original-ID map. Options are
+`{id, from?, duration}` in composition frames. The result contains `node`, `ids`,
+`width`, and `height`; no executable markup or remote resources are retained.
+
+Supports one SVG/viewBox starting at 0 0, groups, paths, rectangles, circles, ellipses, lines,
+polygons and polylines; solid fill/stroke, opacity, line caps/joins, fill rule,
+translate/scale/rotate. Intrinsic width/height must match viewBox. Use native
+text and keyframes separately. Rejects CSS/style, gradients/defs, rounded rects,
+filters, external references, text, nested SVG, use and SMIL instead of silently
+dropping visible features. Limits: 128KB XML, 512 elements, 24 levels and bounded
+path coordinates. DTD/entities, scripts, events and active content are rejected.
+
+The browser-compatible XML parser `saxes` 6.0.0 (ISC) and its `xmlchars` dependency
+are isolated to this entry point. Replacing the parser must retain strict XML,
+entity rejection and all importer conformance tests. No DOM parser or network
+access is required.
+
 Data-only interoperability for Dojo Video Engine Scene v1. The package never runs
 React, a DOM, HTML, CSS, scripts, or remote providers.
 
@@ -23,7 +43,10 @@ second. Import chooses an integer Scene fps (or accepts `sceneFps`); export can
 target any bounded rational tick rate.
 
 ```ts
-import { exportTimelineV1, importTimelineV1 } from "@dojo-video-engine/interchange";
+import {
+  exportTimelineV1,
+  importTimelineV1,
+} from "@dojo-video-engine/interchange";
 
 const timeline = {
   interchangeVersion: 1,
@@ -106,3 +129,7 @@ or executable image URI schemes.
 All public document and result contracts have detached draft-07 schema helpers.
 Default budgets are hard ceilings; callers may lower them per operation but
 cannot raise them. All failures use a bounded, nonthrowing JSON envelope.
+
+Upstream saxes is archived. This entry pins 6.0.0 and admits only bounded, offline
+XML; retain adversarial fixtures and review parser advisories before release.
+`SAXES_LICENSE` preserves the upstream notice omitted by its npm tarball.

@@ -8,16 +8,44 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../../packages/agent-tools" },
-    { "path": "../../packages/schema" },
-    { "path": "../../packages/core" },
-    { "path": "../../packages/extensions" },
-    { "path": "../../packages/layout" },
-    { "path": "../../packages/presets" },
-    { "path": "../../packages/renderer-canvas2d" },
-    { "path": "../../packages/runtime" },
-    { "path": "../../packages/export" },
-    { "path": "../../packages/player" },
-    { "path": "../../packages/showcase" }
+    {
+      "path": "../../packages/agent-tools"
+    },
+    {
+      "path": "../../packages/schema"
+    },
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/extensions"
+    },
+    {
+      "path": "../../packages/layout"
+    },
+    {
+      "path": "../../packages/presets"
+    },
+    {
+      "path": "../../packages/renderer-canvas2d"
+    },
+    {
+      "path": "../../packages/runtime"
+    },
+    {
+      "path": "../../packages/export"
+    },
+    {
+      "path": "../../packages/player"
+    },
+    {
+      "path": "../../packages/showcase"
+    },
+    {
+      "path": "../../packages/three"
+    },
+    {
+      "path": "../../packages/interchange"
+    }
   ]
 }

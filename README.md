@@ -191,6 +191,8 @@ and command acceptance checks after each engine update.
 - [Engine contracts](llms.txt)
 - [Preview and export](docs/guides/preview-export.md)
 - [Extensions](docs/extension-abi.md)
+- [Editable vectors and Three.js design](docs/rfcs/0014-vector-and-three-layers.md)
+- [Graphics implementation and local evidence](docs/graphics-milestone-2026-11-06.md)
 - [Repository split and migration](docs/repository-split.md)
 - [Published 1.1.5 release](docs/releases/1.1.5.md)
 - [Engine readiness plan](docs/engine-readiness-plan.md)

@@ -203,6 +203,7 @@ async function rewriteStarterDependencies(packed) {
     "@dojo-video-engine/commands": spec("@dojo-video-engine/commands"),
     "@dojo-video-engine/export": spec("@dojo-video-engine/export"),
     "@dojo-video-engine/interchange": spec("@dojo-video-engine/interchange"),
+    "@dojo-video-engine/three": spec("@dojo-video-engine/three"),
     "@dojo-video-engine/renderer-canvas2d": spec(
       "@dojo-video-engine/renderer-canvas2d",
     ),
@@ -302,6 +303,9 @@ console.log("packed runtime entry points ok");
 async function writePlatformSmokes() {
   const nodeSource = `import { createAgentWorkflowToolRegistry } from "@dojo-video-engine/agent-tools";
 import { exportTimelineV1, importTimelineV1 } from "@dojo-video-engine/interchange";
+import { importSvgGraphic } from "@dojo-video-engine/interchange/svg";
+import { createThreeRegistryOptions } from "@dojo-video-engine/three";
+if (importSvgGraphic('<svg viewBox="0 0 10 10"><circle r="2"/></svg>', {id: "svg", duration: 30}).node.type !== "div" || !createThreeRegistryOptions().extensions) throw new Error("Packed graphics entry points failed");
 import { createExportWorkerHandler } from "@dojo-video-engine/export/worker";
 
 const scene = {

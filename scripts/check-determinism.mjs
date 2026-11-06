@@ -11,6 +11,8 @@ import { join, relative } from "node:path";
 
 const packages = [
   "packages/schema/src",
+  "packages/three/src",
+  "packages/interchange/src",
   "packages/core/src",
   "packages/renderer-canvas2d/src",
   "packages/presets/src",

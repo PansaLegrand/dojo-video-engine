@@ -89,3 +89,12 @@ receipt. See [the release process](release-process.md) and the
   [SECURITY.md](../SECURITY.md).
 - Release evidence, rollback, partial publication, and advisory handling follow
   [release-process.md](release-process.md).
+
+## Editable graphics source milestone (2026-11-06)
+
+Adds the `interchange/svg` entry and optional `three` / `three/schema` package
+entries. Existing Scene v1 documents and APIs retain their meaning. New 3D scenes
+require an exact host-installed extension and opaque handler; older hosts fail
+preflight rather than omit the layer. SVG import emits existing native nodes.
+Parameter schema input types may differ from normalized output types; runtime
+validation still precedes all extension hooks. No deprecations or removals.

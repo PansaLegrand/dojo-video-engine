@@ -116,6 +116,10 @@
         ".": {
           "types": "./dist/index.d.ts",
           "import": "./dist/index.js"
+        },
+        "./svg": {
+          "types": "./dist/svg.d.ts",
+          "import": "./dist/svg.js"
         }
       },
       "bin": null
@@ -202,6 +206,21 @@
         "./values": {
           "types": "./dist/values.d.ts",
           "import": "./dist/values.js"
+        }
+      },
+      "bin": null
+    },
+    "@dojo-video-engine/three": {
+      "owner": "Bounded declarative Three.js scenes and optional browser runtime",
+      "stability": "stable",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./schema": {
+          "types": "./dist/schema.d.ts",
+          "import": "./dist/schema.js"
         }
       },
       "bin": null

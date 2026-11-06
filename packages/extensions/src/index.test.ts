@@ -80,6 +80,38 @@ function compileContext(
 }
 
 describe("extension registry", () => {
+  it("normalizes explicit optional undefined fields without mutating a compiled Scene", () => {
+    const context = compileContext();
+    Object.assign(context.scene, { markers: undefined });
+    Object.assign(context.node ?? {}, { children: undefined });
+    const definition = defineExtension({
+      name: "com.example.grid",
+      version: "2.0.0",
+      paramsSchema: z.object({ columns: z.number().default(4) }),
+      deterministic: true,
+      workerCompatible: true,
+      display: {
+        kind: "standard",
+        version: "1",
+        compile: (input, output) => {
+          expect(Object.hasOwn(input.scene, "markers")).toBe(false);
+          expect(Object.hasOwn(input.node, "children")).toBe(false);
+          output.rect("cell", {
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            fill: "red",
+          });
+        },
+      },
+    });
+    expect(compileExtensionDisplay(definition, context as never).kind).toBe(
+      "standard",
+    );
+    expect(Object.hasOwn(context.scene, "markers")).toBe(true);
+    expect(Object.hasOwn(context.node ?? {}, "children")).toBe(true);
+  });
   it("resolves exact and explicitly compatible versions", () => {
     const definition = testExtension();
     const registry = createExtensionRegistry([definition]);
