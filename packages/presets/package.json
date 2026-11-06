@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/presets",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "Pure animation presets and caption generators that compile to dojo-video-engine scene data.",
   "keywords": [
     "dojo-video-engine",
