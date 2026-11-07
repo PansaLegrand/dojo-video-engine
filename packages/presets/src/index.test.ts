@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
+import {
+  validateScene,
+  type Scene,
+  type SceneNode,
+} from "@dojo-video-engine/schema";
 import {
   audioCrossfade,
   audioFadeEnvelope,
@@ -941,6 +945,42 @@ describe("text overlay template catalog", () => {
       maxLines: 1,
       minFontSize: 16,
     });
+  });
+
+  it("allows every explicit line in overlay slots by default", () => {
+    for (const [template] of textOverlayTemplateEntries) {
+      const lines = "FIRST\nSECOND\nTHIRD\nFOURTH\nFIFTH";
+      const overlay = textOverlay({
+        ...examples[template],
+        title: lines,
+        subtitle: lines,
+        kicker: lines,
+        body: lines,
+        attribution: lines,
+        value: lines,
+        label: lines,
+      });
+      const text = overlay.children?.filter((child) => child.type === "text");
+      expect(text?.length).toBeGreaterThan(0);
+      for (const child of text ?? []) {
+        expect(child.text).toBe(lines);
+        expect(child.style?.maxLines).toBe(5);
+        expect(child.style?.textFit).toBe("shrink");
+      }
+    }
+  });
+
+  it("preserves an explicit line limit on multiline text", () => {
+    const overlay = textOverlay({
+      template: "titleCard",
+      title: "Takeoff",
+      subtitle: "Engines push forward.\nWings create lift.\nThe plane rises.",
+      subtitleStyle: { maxLines: 2 },
+    });
+    expect(
+      overlay.children?.find((child) => child.id.endsWith("-subtitle"))?.style
+        ?.maxLines,
+    ).toBe(2);
   });
 
   it("lets slot style overrides replace robust defaults", () => {

@@ -1511,6 +1511,41 @@ describe("designed motion-graphic macros", () => {
     validScene(result.nodes);
   });
 
+  it.each(["titleCard", "textOverlay"])(
+    "preserves multiline subtitles in %s",
+    (macro) => {
+      const subtitle =
+        "Engines push the plane forward.\nAir flowing over the wings creates lift.\nWhen lift beats weight, it rises.";
+      const result = expectOk(
+        expandMacroNodes(
+          [
+            {
+              macro,
+              id: "takeoff",
+              title: "HOW TAKEOFF WORKS",
+              subtitle,
+              from: 150,
+              duration: 75,
+            },
+          ],
+          { ...ctx, duration: 300 },
+        ),
+      );
+      const node = result.nodes[0] as SceneNode;
+      const text = node.children?.find((child) =>
+        child.id.endsWith("-subtitle"),
+      );
+      expect(text?.text).toBe(subtitle);
+      expect(text?.style).toMatchObject({
+        maxLines: 3,
+        minFontSize: 22,
+        textFit: "shrink",
+      });
+      expect(node).toMatchObject({ from: 150, duration: 75 });
+      validScene(result.nodes);
+    },
+  );
+
   it("expands calloutArrow into an annotation group", () => {
     const result = expectOk(
       expandMacroNodes(

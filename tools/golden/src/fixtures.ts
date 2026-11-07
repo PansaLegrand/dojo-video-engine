@@ -2,6 +2,7 @@ import type { Scene } from "@dojo-video-engine/schema";
 import {
   compileMotionPreset,
   motionPresetDefinitions,
+  textOverlay,
 } from "@dojo-video-engine/presets";
 
 // 16x16 PNG with colored quadrants (TL red, TR green, BL blue, BR yellow),
@@ -131,6 +132,61 @@ export type ProbeGoldenFixture = {
 export type GoldenFixture = ExactGoldenFixture | ProbeGoldenFixture;
 
 export const fixtures: GoldenFixture[] = [
+  {
+    kind: "probe",
+    id: "title-card-three-line-subtitle",
+    description:
+      "A title-card subtitle preserves all three authored lines with default fitting limits.",
+    frame: 0,
+    scene: {
+      schemaVersion: 1,
+      width: 320,
+      height: 180,
+      fps: 30,
+      duration: 1,
+      assets: {},
+      nodes: [
+        textOverlay({
+          id: "takeoff",
+          template: "titleCard",
+          title: "TAKEOFF",
+          subtitle: "ENGINES PUSH\nWINGS LIFT\nTHE PLANE RISES",
+          duration: 1,
+          enter: false,
+          style: {
+            left: 0,
+            right: 0,
+            top: 0,
+            width: 320,
+            height: 180,
+            gap: 0,
+            backgroundColor: "#111827",
+          },
+          titleStyle: {
+            width: 320,
+            height: 40,
+            fontFamily: "Arial",
+            fontSize: 24,
+          },
+          subtitleStyle: {
+            width: 320,
+            height: 120,
+            fontFamily: "Arial",
+            fontSize: 20,
+            lineHeight: 1,
+          },
+        }),
+      ],
+    },
+    probes: [90, 110, 130].map((y, index) => ({
+      label: `subtitle line ${index + 1} has glyph pixels`,
+      x: 0,
+      y,
+      toX: 319,
+      minAlpha: 255,
+      notRgb: [17, 24, 39],
+    })),
+  },
   {
     kind: "exact",
     id: "motion-preset-catalog",

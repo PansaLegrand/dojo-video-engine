@@ -1138,6 +1138,7 @@ function titleCardOverlay(options: TextOverlayOptions): SceneNode {
         options.kicker,
         robustTextStyle(
           "kicker",
+          options.kicker,
           eyebrowStyle(options.accentColor ?? "#38bdf8"),
           options.kickerStyle,
         ),
@@ -1148,6 +1149,7 @@ function titleCardOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "title"),
         robustTextStyle(
           "title",
+          options.title,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1167,6 +1169,7 @@ function titleCardOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1218,7 +1221,12 @@ function lowerThirdOverlay(options: TextOverlayOptions): SceneNode {
         id,
         "kicker",
         options.kicker,
-        robustTextStyle("kicker", eyebrowStyle(accent), options.kickerStyle),
+        robustTextStyle(
+          "kicker",
+          options.kicker,
+          eyebrowStyle(accent),
+          options.kickerStyle,
+        ),
       ),
       textNode(
         id,
@@ -1226,6 +1234,7 @@ function lowerThirdOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "title"),
         robustTextStyle(
           "title",
+          options.title,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1243,6 +1252,7 @@ function lowerThirdOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1293,6 +1303,7 @@ function quoteCardOverlay(options: TextOverlayOptions): SceneNode {
         options.kicker,
         robustTextStyle(
           "kicker",
+          options.kicker,
           eyebrowStyle(options.accentColor ?? "#2563eb"),
           options.kickerStyle,
         ),
@@ -1303,6 +1314,7 @@ function quoteCardOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "body"),
         robustTextStyle(
           "body",
+          options.body,
           {
             width: "100%",
             fontFamily: "Georgia, Times New Roman, serif",
@@ -1321,6 +1333,7 @@ function quoteCardOverlay(options: TextOverlayOptions): SceneNode {
         options.attribution,
         robustTextStyle(
           "attribution",
+          options.attribution,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1373,6 +1386,7 @@ function statCalloutOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "value"),
         robustTextStyle(
           "value",
+          options.value,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1391,6 +1405,7 @@ function statCalloutOverlay(options: TextOverlayOptions): SceneNode {
         options.label,
         robustTextStyle(
           "label",
+          options.label,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1408,6 +1423,7 @@ function statCalloutOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1459,6 +1475,7 @@ function announcementBannerOverlay(options: TextOverlayOptions): SceneNode {
         options.kicker,
         robustTextStyle(
           "kicker",
+          options.kicker,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1477,6 +1494,7 @@ function announcementBannerOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "title"),
         robustTextStyle(
           "title",
+          options.title,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1496,6 +1514,7 @@ function announcementBannerOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1544,6 +1563,7 @@ function socialHookOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "title"),
         robustTextStyle(
           "title",
+          options.title,
           {
             width: "100%",
             fontFamily: "Poppins, Inter, system-ui, sans-serif",
@@ -1568,6 +1588,7 @@ function socialHookOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "92%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1626,7 +1647,12 @@ function chapterTitleOverlay(options: TextOverlayOptions): SceneNode {
         id,
         "kicker",
         options.kicker,
-        robustTextStyle("kicker", eyebrowStyle(accent), options.kickerStyle),
+        robustTextStyle(
+          "kicker",
+          options.kicker,
+          eyebrowStyle(accent),
+          options.kickerStyle,
+        ),
       ),
       textNode(
         id,
@@ -1634,6 +1660,7 @@ function chapterTitleOverlay(options: TextOverlayOptions): SceneNode {
         requiredSlot(options, "title"),
         robustTextStyle(
           "title",
+          options.title,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1653,6 +1680,7 @@ function chapterTitleOverlay(options: TextOverlayOptions): SceneNode {
         options.subtitle,
         robustTextStyle(
           "subtitle",
+          options.subtitle,
           {
             width: "100%",
             fontFamily: "Inter, system-ui, Arial, sans-serif",
@@ -1718,6 +1746,7 @@ function textOverlayContainerStyle(
 
 function robustTextStyle(
   slot: TextOverlaySlot,
+  text: string | undefined,
   style: SceneStyle,
   overrides: SceneStyle = {},
 ): SceneStyle {
@@ -1746,7 +1775,8 @@ function robustTextStyle(
     overflow: "hidden",
     textFit: "shrink",
     textOverflow: "ellipsis",
-    maxLines: maxLinesBySlot[slot],
+    // Shrinking cannot remove authored line breaks. Explicit overrides still win.
+    maxLines: Math.max(maxLinesBySlot[slot], (text ?? "").split("\n").length),
     minFontSize: Math.max(14, Math.round(fontSize * 0.52)),
     ...mergedStyle,
   };
