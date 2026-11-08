@@ -37,7 +37,7 @@ the harness's authoritative ProjectDocument or authorize project commits.
 
 ## 2. Starting point and evidence limits
 
-The published package set is 1.2.1; see [its release record](releases/1.2.1.md).
+The published package set is 1.2.2; see [its release record](releases/1.2.2.md).
 Existing checks cover unit behavior, schema/contracts, fuzzing, a scene corpus,
 pixel/media goldens, resource lifecycle, cross-browser probes, performance and
 clean consumers. See [engine verification](testing-strategy.md).
