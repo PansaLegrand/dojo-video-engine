@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/create",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Create a starter DojoVideoEngine video project.",
   "keywords": [
     "dojo-video-engine",

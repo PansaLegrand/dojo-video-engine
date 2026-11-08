@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/renderer-canvas2d",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Deterministic Canvas2D still-frame renderer for dojo-video-engine scenes.",
   "keywords": [
     "dojo-video-engine",

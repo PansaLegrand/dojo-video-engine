@@ -8,6 +8,12 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.2.2 — 2026-11-08
+
+- Preserve authored line breaks in the default fitting limits for native text overlays, including title cards, lower-thirds, quote cards, statistics and announcements.
+- Retain explicit caller-provided `maxLines` overrides without changing text fitting, Scene v1 or existing validation rules.
+- Add per-slot, macro and actual rendered-line regressions. Scene v1 and public APIs remain compatible.
+
 ## 1.2.1 — 2026-11-07
 
 - Carry forward the SVG and Three.js APIs from the unpublished 1.2.0 source baseline.
