@@ -52,8 +52,11 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_ENV, `RELEASE_COMMIT=${manifest.gitCommit}\nRELEASE_TAG=v${manifest.releaseVersion}\n`);
           JS
       - name: Install pinned keyless signer
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl --fail --location --silent --show-error https://github.com/sigstore/gitsign/releases/download/v0.18.0/gitsign_0.18.0_linux_amd64 --output "$RUNNER_TEMP/gitsign"
+          gh release download v0.18.0 --repo sigstore/gitsign \
+            --pattern gitsign_0.18.0_linux_amd64 --output "$RUNNER_TEMP/gitsign"
           GITSIGN_PATH="$RUNNER_TEMP/gitsign" node --input-type=module <<'JS'
           import fs from 'node:fs'; import { createHash } from 'node:crypto';
           const file=process.env.GITSIGN_PATH;
