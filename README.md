@@ -29,17 +29,17 @@ artifacts; it contains no model loop, credentials, or application UI.
 
 ## Use the published engine
 
-All **17 packages** are published together at **1.2.2** on npm under the MIT license.
+All **17 packages** are published together at **1.2.3** on npm under the MIT license.
 For example, add scene authoring, playback, and export to an existing project:
 
 ```sh
-npm install @dojo-video-engine/authoring@1.2.2 @dojo-video-engine/player@1.2.2 @dojo-video-engine/export@1.2.2
+npm install @dojo-video-engine/authoring@1.2.3 @dojo-video-engine/player@1.2.3 @dojo-video-engine/export@1.2.3
 ```
 
 Or create a standalone scene-authoring project with Node 20.19+ and npm:
 
 ```sh
-npx @dojo-video-engine/create@1.2.2 my-video
+npx @dojo-video-engine/create@1.2.3 my-video
 cd my-video
 npm install
 npm run validate
@@ -76,12 +76,12 @@ your own project and an instruction to give a coding agent.
 **Scope:** terminal-driven rendering uses a browser runtime behind the scenes.
 The public CLI handles validation/inspection; rendering/export in this example
 comes from its scripts, not a new public CLI command. No installable Codex/Claude
-plugin is shipped, and separate client acceptance remains untested. Engine 1.2.2
+plugin is shipped, and separate client acceptance remains untested. Engine 1.2.3
 pins its qualified media runtime, so no consumer override is needed.
 [Test evidence and limitations](docs/terminal-editing-2026-11-03.md).
 
-See the [publication artifacts and workflow](https://github.com/PansaLegrand/dojo-video-engine/actions/runs/42469626833)
-and [1.2.2 release record](docs/releases/1.2.2.md) for exact package checksums,
+See the [publication artifacts and workflow](https://github.com/PansaLegrand/dojo-video-engine/actions/runs/42578789788)
+and [1.2.3 release record](docs/releases/1.2.3.md) for exact package checksums,
 provenance, dependency inventory, audit evidence, and qualification limits.
 
 ## Develop from source
@@ -194,7 +194,7 @@ and command acceptance checks after each engine update.
 - [Editable vectors and Three.js design](docs/rfcs/0014-vector-and-three-layers.md)
 - [Graphics implementation and local evidence](docs/graphics-milestone-2026-11-06.md)
 - [Repository split and migration](docs/repository-split.md)
-- [Published 1.2.2 release](docs/releases/1.2.2.md)
+- [Published 1.2.3 release](docs/releases/1.2.3.md)
 - [Engine readiness plan](docs/engine-readiness-plan.md)
 - [Release process](docs/release-process.md)
 
