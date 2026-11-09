@@ -1107,6 +1107,7 @@ export function textOverlay(options: TextOverlayOptions): SceneNode {
 }
 
 function titleCardOverlay(options: TextOverlayOptions): SceneNode {
+  options = responsiveTitleCardOptions(options);
   const id = overlayId(options, "title-card");
 
   return overlayContainer(
@@ -1184,6 +1185,165 @@ function titleCardOverlay(options: TextOverlayOptions): SceneNode {
       ),
     ],
   );
+}
+
+/** Known composition dimensions let the title stack reserve real line boxes.
+ * Caller geometry/styles still win; composition-less overlays retain 1.x defaults. */
+function responsiveTitleCardOptions(
+  options: TextOverlayOptions,
+): TextOverlayOptions {
+  const size = options.composition;
+  if (!size) return options;
+  const scale = Math.min(1, Math.min(size.width, size.height) / 1080);
+  const box = safeAreaBox(size, "center", {
+    heightRatio: 0.29,
+    safeArea: options.safeArea,
+  });
+  const style = options.style ?? {};
+  const numeric = (value: unknown, fallback: number): number =>
+    typeof value === "number" ? value : fallback;
+  const padding = numeric(style.padding, 0);
+  const topPadding = numeric(style.paddingTop, padding);
+  const bottomPadding = numeric(style.paddingBottom, padding);
+  const width = numeric(style.width, numeric(box.width, size.width));
+  const innerWidth = Math.max(
+    1,
+    width -
+      numeric(style.paddingLeft, padding) -
+      numeric(style.paddingRight, padding),
+  );
+  const gap = numeric(style.gap, Math.round(24 * scale));
+  const rows = (
+    [
+      {
+        slot: "kicker",
+        text: options.kicker,
+        overrides: options.kickerStyle,
+        font: Math.max(12, Math.round(26 * scale)),
+        lineHeight: 1.2,
+      },
+      {
+        slot: "title",
+        text: options.title,
+        overrides: options.titleStyle,
+        font: Math.max(20, Math.round(108 * scale)),
+        lineHeight: 1.1,
+      },
+      {
+        slot: "subtitle",
+        text: options.subtitle,
+        overrides: options.subtitleStyle,
+        font: Math.max(14, Math.round(42 * scale)),
+        lineHeight: 1.18,
+      },
+    ] as const
+  )
+    .filter((row) => row.text?.trim())
+    .map((row) => {
+      const overrides = row.overrides ?? {};
+      const fontSize = numeric(overrides.fontSize, row.font);
+      const lineHeight = numeric(overrides.lineHeight, row.lineHeight);
+      const authoredLines = (row.text ?? "").split("\n");
+      // Conservative geometry only: the shared text fitter still measures glyphs
+      // and rejects copy that cannot fit at its readable minimum.
+      let units = 0;
+      for (const character of row.text ?? "")
+        units += /\s/u.test(character)
+          ? 0.35
+          : /[MW]/u.test(character)
+            ? 1
+            : /[A-Z]/u.test(character)
+              ? 0.85
+              : /[\x00-\x7f]/u.test(character)
+                ? 0.58
+                : 1;
+      const wrapped = Math.ceil((units * fontSize) / innerWidth);
+      const lines =
+        authoredLines.length > 1
+          ? authoredLines.length
+          : Math.max(1, Math.min(6, wrapped + (wrapped > 1 ? 1 : 0)));
+      const maxLines = numeric(
+        overrides.maxLines,
+        Math.max(row.slot === "kicker" ? 1 : 2, lines),
+      );
+      return {
+        ...row,
+        overrides,
+        fontSize,
+        lineHeight,
+        lines: Math.min(lines, maxLines),
+        maxLines,
+        height: numeric(
+          overrides.height,
+          Math.ceil(fontSize * lineHeight * Math.min(lines, maxLines)),
+        ),
+      };
+    });
+  const gaps = Math.max(0, rows.length - 1) * gap;
+  const total = rows.reduce((sum, row) => sum + row.height, 0);
+  const minima = rows.map((row) =>
+    Math.min(
+      row.height,
+      Math.ceil((row.slot === "title" ? 14 : 12) * row.lineHeight * row.lines),
+    ),
+  );
+  const minimumTotal = minima.reduce((sum, value) => sum + value, 0);
+  const insets = resolveSafeArea(size, options.safeArea ?? "auto");
+  const height = numeric(
+    style.height,
+    Math.min(
+      Math.max(1, size.height - insets.top - insets.bottom),
+      Math.max(
+        numeric(box.height, size.height * 0.29),
+        total + gaps + topPadding + bottomPadding,
+      ),
+    ),
+  );
+  const available = Math.max(1, height - gaps - topPadding - bottomPadding);
+  const ratio = Math.min(
+    1,
+    Math.max(0, available - minimumTotal) / Math.max(1, total - minimumTotal),
+  );
+  const result: TextOverlayOptions = {
+    ...options,
+    style: {
+      ...safeAreaBox(size, "center", { height, safeArea: options.safeArea }),
+      gap,
+      ...style,
+    },
+  };
+  for (const [index, row] of rows.entries()) {
+    const minimum = minima[index] ?? 0;
+    const slotHeight = Math.max(
+      1,
+      Math.floor(
+        available < minimumTotal
+          ? (row.height * available) / Math.max(1, total)
+          : minimum + (row.height - minimum) * ratio,
+      ),
+    );
+    const fitted: SceneStyle = {
+      fontSize: row.fontSize,
+      lineHeight: row.lineHeight,
+      height: slotHeight,
+      maxLines: row.maxLines,
+      minFontSize: Math.max(
+        12,
+        Math.min(
+          Math.round(row.fontSize * 0.52),
+          Math.floor(slotHeight / (row.lineHeight * row.lines)),
+        ),
+      ),
+      ...(row.slot === "kicker"
+        ? { letterSpacing: Math.round(3 * scale) }
+        : {}),
+      ...row.overrides,
+    };
+    if (row.slot === "kicker") result.kickerStyle = fitted;
+    else if (row.slot === "title") result.titleStyle = fitted;
+    else result.subtitleStyle = fitted;
+  }
+  return result;
 }
 
 function lowerThirdOverlay(options: TextOverlayOptions): SceneNode {

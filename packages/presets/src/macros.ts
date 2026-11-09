@@ -1142,6 +1142,10 @@ registerMacro<z.infer<typeof titleCardParams>>({
     const palette = graphicPalette(params);
     const bold = params.look === "bold";
     const minimal = params.look === "minimal";
+    const titleScale = Math.min(
+      1,
+      Math.min(runtime.ctx.width, runtime.ctx.height) / 1080,
+    );
 
     return expandRegisteredMacro(
       "textOverlay",
@@ -1165,17 +1169,19 @@ registerMacro<z.infer<typeof titleCardParams>>({
           params.exitDuration ?? Math.min(12, Math.max(1, duration - 1)),
         style: {
           backgroundColor: minimal ? "rgba(0,0,0,0)" : palette.panel,
-          borderRadius: minimal ? 0 : 28,
+          borderRadius: minimal ? 0 : Math.round(28 * titleScale),
           border: minimal
             ? "0px solid transparent"
             : `2px solid ${palette.accent}`,
-          padding: bold ? 48 : 36,
-          boxShadow: minimal ? "none" : "0px 24px 72px rgba(0,0,0,0.32)",
+          padding: Math.round((bold ? 48 : 36) * titleScale),
+          boxShadow: minimal ? undefined : "0px 24px 72px rgba(0,0,0,0.32)",
         },
         titleStyle: {
           color: palette.text,
-          fontSize: bold ? 128 : 108,
-          textStroke: bold ? "5px rgba(15,23,42,0.46)" : undefined,
+          fontSize: Math.max(20, Math.round((bold ? 128 : 108) * titleScale)),
+          textStroke: bold
+            ? `${Math.max(1, Math.round(5 * titleScale))}px rgba(15,23,42,0.46)`
+            : undefined,
         },
         subtitleStyle: { color: palette.muted },
         kickerStyle: { color: palette.accent },

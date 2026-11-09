@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/cli",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Command-line validation and inspection tools for DojoVideoEngine scene modules.",
   "keywords": [
     "dojo-video-engine",

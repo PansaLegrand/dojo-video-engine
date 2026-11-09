@@ -8,6 +8,12 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.2.3 — 2026-11-09
+
+- Make title-card padding, fonts, line boxes and panel height responsive to the composition and optional text slots; small bold outro cards no longer collapse to zero-height text.
+- Preserve editable text, stable node IDs, timing, explicit fitting/style overrides and composition-less legacy defaults. Remove the title-card minimal look's invalid `boxShadow: "none"` value.
+- Add 408 bounded browser layout cases across landscape, portrait and square small/HD canvases, long Latin/CJK text and optional slots, plus a default-geometry rendered outro probe. Scene v1 and public APIs remain compatible.
+
 ## 1.2.2 — 2026-11-08
 
 - Preserve authored line breaks in the default fitting limits for native text overlays, including title cards, lower-thirds, quote cards, statistics and announcements.

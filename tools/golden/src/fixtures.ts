@@ -1,4 +1,5 @@
-import type { Scene } from "@dojo-video-engine/schema";
+import { parseScene, type Scene } from "@dojo-video-engine/schema";
+import { expandMacroNodes } from "@dojo-video-engine/presets/macros";
 import {
   compileMotionPreset,
   motionPresetDefinitions,
@@ -131,7 +132,53 @@ export type ProbeGoldenFixture = {
 
 export type GoldenFixture = ExactGoldenFixture | ProbeGoldenFixture;
 
+function smallBoldTitleCardScene(): Scene {
+  const expanded = expandMacroNodes(
+    [
+      {
+        macro: "titleCard",
+        id: "outro",
+        title: "Made by DojoClip.com",
+        palette: "berry",
+        look: "bold",
+        tempo: "energetic",
+        from: 360,
+        duration: 120,
+      },
+    ],
+    { width: 640, height: 360, fps: 30, duration: 480 },
+  );
+  if (!expanded.ok) throw new Error(expanded.errors.join("; "));
+  return parseScene({
+    schemaVersion: 1,
+    width: 640,
+    height: 360,
+    fps: 30,
+    duration: 480,
+    assets: {},
+    nodes: expanded.nodes,
+  });
+}
+
 export const fixtures: GoldenFixture[] = [
+  {
+    kind: "probe",
+    id: "small-bold-title-card-outro",
+    description:
+      "Default small bold title-card geometry paints readable glyphs after its entry animation.",
+    frame: 390,
+    scene: smallBoldTitleCardScene(),
+    probes: [
+      {
+        label: "opaque title glyphs inside the translucent panel",
+        x: 70,
+        y: 180,
+        toX: 570,
+        minAlpha: 250,
+        notRgb: [88, 28, 135],
+      },
+    ],
+  },
   {
     kind: "probe",
     id: "title-card-three-line-subtitle",

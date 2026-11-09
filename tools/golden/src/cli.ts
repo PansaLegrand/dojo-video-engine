@@ -46,8 +46,14 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/schema/src/values.ts",
         ),
-        "@dojo-video-engine/schema": resolve(rootDir, "packages/schema/src/index.ts"),
-        "@dojo-video-engine/core": resolve(rootDir, "packages/core/src/index.ts"),
+        "@dojo-video-engine/schema": resolve(
+          rootDir,
+          "packages/schema/src/index.ts",
+        ),
+        "@dojo-video-engine/core": resolve(
+          rootDir,
+          "packages/core/src/index.ts",
+        ),
         "@dojo-video-engine/agent-tools": resolve(
           rootDir,
           "packages/agent-tools/src/index.ts",
@@ -56,7 +62,10 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/extensions/src/index.ts",
         ),
-        "@dojo-video-engine/layout": resolve(rootDir, "packages/layout/src/index.ts"),
+        "@dojo-video-engine/layout": resolve(
+          rootDir,
+          "packages/layout/src/index.ts",
+        ),
         "@dojo-video-engine/presets": resolve(
           rootDir,
           "packages/presets/src/index.ts",
@@ -77,8 +86,14 @@ async function run(currentMode: GoldenMode): Promise<void> {
           rootDir,
           "packages/runtime/src/index.ts",
         ),
-        "@dojo-video-engine/export": resolve(rootDir, "packages/export/src/index.ts"),
-        "@dojo-video-engine/player": resolve(rootDir, "packages/player/src/index.ts"),
+        "@dojo-video-engine/export": resolve(
+          rootDir,
+          "packages/export/src/index.ts",
+        ),
+        "@dojo-video-engine/player": resolve(
+          rootDir,
+          "packages/player/src/index.ts",
+        ),
       },
     },
     server: {
@@ -158,6 +173,15 @@ async function run(currentMode: GoldenMode): Promise<void> {
     failures.push(...(await runRuntimeParityChecks(page)));
     failures.push(...(await runAgentToolChecks(page)));
     failures.push(...(await runLayoutV2Checks(page)));
+    const titleCards = await page.evaluate(() =>
+      window.runGoldenTitleCardChecks(),
+    );
+    for (const check of titleCards) {
+      if (!check.pass) failures.push(`${check.label}: ${check.detail}`);
+    }
+    console.log(
+      `title-card layout matrix: ${titleCards.filter((check) => check.pass).length}/${titleCards.length} passed`,
+    );
 
     if (failures.length > 0) {
       throw new Error(`Golden failures:\n${failures.join("\n\n")}`);
