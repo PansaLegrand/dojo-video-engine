@@ -15,6 +15,7 @@ import {
   renderSceneStill,
 } from "@dojo-video-engine/agent-tools";
 import type { TextMetricsProvider } from "@dojo-video-engine/core";
+import { verifyTitleCardLayoutMatrix } from "./title-card-layout.js";
 import {
   column,
   compileLayout,
@@ -47,7 +48,11 @@ import {
   createCanvas2DSceneRuntime,
   withCanvas2DResolvedAssets,
 } from "@dojo-video-engine/renderer-canvas2d/runtime";
-import { validateScene, type Scene, type SceneNode } from "@dojo-video-engine/schema";
+import {
+  validateScene,
+  type Scene,
+  type SceneNode,
+} from "@dojo-video-engine/schema";
 import {
   ALL_FORMATS,
   AudioBufferSink,
@@ -121,6 +126,7 @@ declare global {
     runGoldenRuntimeParityChecks: () => Promise<VideoCheck[]>;
     runGoldenAgentToolChecks: () => Promise<VideoCheck[]>;
     runGoldenLayoutV2Checks: () => Promise<VideoCheck[]>;
+    runGoldenTitleCardChecks: () => VideoCheck[];
     runGoldenRendererConformanceChecks: () => Promise<VideoCheck[]>;
   }
 }
@@ -357,16 +363,19 @@ async function runGoldenWorkflowEvidenceChecks(): Promise<VideoCheck[]> {
           : applied.error.message,
       );
     }
-    const rendered = await registry.call("dojo-video-engine.workflow.evidence", {
-      handle,
-      expectedRevision: 1,
-      operation: "proof.comparison.render",
-      params: {
-        explicitFrames: [0],
-        title: "Golden before / after",
-        includeVisualDiff: true,
+    const rendered = await registry.call(
+      "dojo-video-engine.workflow.evidence",
+      {
+        handle,
+        expectedRevision: 1,
+        operation: "proof.comparison.render",
+        params: {
+          explicitFrames: [0],
+          title: "Golden before / after",
+          includeVisualDiff: true,
+        },
       },
-    });
+    );
     if (!rendered.ok) throw new Error(rendered.error.message);
     const result = objectValue(rendered.data).result;
     const proof = objectValue(result);
@@ -1062,6 +1071,23 @@ function renderRendererConformanceReference(
     capture.canvas.height = 1;
   }
 }
+
+window.runGoldenTitleCardChecks = () => {
+  const capture = createCaptureContext(1, 1);
+  try {
+    return verifyTitleCardLayoutMatrix((line, style, fontSize) => {
+      capture.context.font = `${style.fontStyle ?? "normal"} ${style.fontWeight ?? 400} ${fontSize}px ${style.fontFamily ?? "sans-serif"}`;
+      capture.context.letterSpacing =
+        typeof style.letterSpacing === "number"
+          ? `${style.letterSpacing}px`
+          : (style.letterSpacing ?? "0px");
+      return capture.context.measureText(line).width;
+    });
+  } finally {
+    capture.canvas.width = 1;
+    capture.canvas.height = 1;
+  }
+};
 
 window.renderGoldenFrame = async (
   scene: Scene,

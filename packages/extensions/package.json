@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/extensions",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Versioned deterministic extension registry and lifecycle contracts for DojoVideoEngine.",
   "keywords": [
     "dojo-video-engine",

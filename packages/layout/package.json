@@ -1,6 +1,6 @@
 {
   "name": "@dojo-video-engine/layout",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Bounded semantic layout authoring that compiles to DojoVideoEngine Scene v1.",
   "keywords": [
     "dojo-video-engine",
