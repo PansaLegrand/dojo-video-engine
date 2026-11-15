@@ -4,26 +4,20 @@ Starter project generator for Dojo Video Engine.
 
 ## Usage
 
-Until the scoped package is visibly published and verified on npm, run the
-repository's exact-tarball clean installer. The bare generator emits registry
-dependencies, so invoking it alone is not a prepublication install path:
+With Node 20.19+, create a project from published engine **1.2.3**:
 
 ```sh
-pnpm install
-pnpm build
-pnpm verify:clean -- --keep
-# Continue in the printed preserved starter directory.
-```
-
-After registry publication:
-
-```sh
-pnpm dlx @dojo-video-engine/create hello-video
+npx @dojo-video-engine/create@1.2.3 hello-video
 cd hello-video
-pnpm install
-pnpm validate
-pnpm lint
+npm install
+npm run validate
+npm run inspect
 ```
+
+To test unpublished engine changes from a source checkout, run
+`pnpm install --frozen-lockfile`, `pnpm build`, then `pnpm verify:clean -- --keep`.
+Continue in the printed preserved starter directory. This installs local tarballs
+without publishing them.
 
 The generated project uses `@dojo-video-engine/authoring` for scene source and `@dojo-video-engine/cli` for validation, scene printing, and headless inspection.
 
@@ -36,19 +30,16 @@ package.json
 tsconfig.json
 ```
 
-
 Add images, video, audio, fonts, or Lottie JSON under `public/assets`. Reference them in source with `publicAsset("assets/file.ext")`; the generated scene JSON stores the fetchable URL `/assets/file.ext`.
 
 ## API Stability
 
 Stable for 1.x integrations:
 
-- After verified registry publication, CLI usage through package managers is
-  `npx @dojo-video-engine/create@latest <name>` or
-  `pnpm dlx @dojo-video-engine/create <name>`; the installed bin remains
-  `create-dojo-video-engine`. Before publication, use the retained-tarball command
-  above.
-- Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `dev`, `validate`, `print`, `migrate`, `inspect`, `lint`, and `build`.
+- CLI usage through package managers is `npx @dojo-video-engine/create@1.2.3 <name>`
+  or `pnpm dlx @dojo-video-engine/create@1.2.3 <name>`; the installed bin remains
+  `create-dojo-video-engine`. Use the local-tarball check above for unpublished changes.
+- Generated project contract: `src/video.ts`, `public/assets`, `package.json` scripts for `validate`, `print`, `migrate`, `inspect`, `lint`, and `build`.
 - Programmatic generator entry points: `createDojoVideoEngineProject()`, `helpText()`, `CreateDojoVideoEngineOptions`, and `CreateDojoVideoEngineResult`.
 
 Evolving additively in 1.x:
@@ -65,3 +56,5 @@ Internal/not public:
 MIT
 
 This generator creates a headless authoring project. For the visual editor and agent, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
+For the hosted timeline and chat editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).

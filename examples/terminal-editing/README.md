@@ -1,8 +1,12 @@
 # Terminal editing with a coding agent
 
-This is a standalone consumer example using published engine **1.1.3** packages.
-A coding agent can edit the Scene and invoke these scripts from its shell. There
-is no nested LLM loop, editor UI, API key, MCP server or provider SDK. Rendering
+This is a standalone consumer example using published engine **1.2.3** packages.
+A coding agent can edit the Scene and invoke these scripts from its shell.
+
+For the hosted editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).
+For a local timeline and chat UI, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+
+There is no nested LLM loop, editor UI, API key, MCP server or provider SDK. Rendering
 uses a local headless Chromium process; it is not browser-free Node rendering.
 
 ## Run the checked example
@@ -72,11 +76,12 @@ Large projects need a streaming sink; this bounded example exports a Blob.
 
 ## Dependency compatibility
 
-Keep the included lockfile. Engine 1.1.3 pins Mediabunny **1.50.3** directly,
+Keep the included lockfile. Engine 1.2.3 pins Mediabunny **1.50.3** directly,
 matching both consumers; this example needs no override. The initial 1.1.2 test
 resolved an incompatible newer muxer and required a temporary 1.46.0 override.
 That failure led to the upstream fix and a candidate-tarball export check in the
-full release gate. See [the release record](../../docs/releases/1.1.3.md).
+full release gate. See [the original compatibility fix](../../docs/releases/1.1.3.md) and
+[the current package release](../../docs/releases/1.2.3.md).
 
 The scripts use only public package imports, with no source aliases, sibling
 harness checkout or private app services. Vite hosts the browser modules and

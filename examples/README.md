@@ -1,10 +1,23 @@
 # Examples
 
-MF9 developer/agent starters:
+Start with a concrete workflow:
 
-- [`agent-workflow-repair.mjs`](agent-workflow-repair.mjs) demonstrates a
-  failed command, failed check, typed repair, final snapshot, and portable
-  evidence references.
+| Use case                                       | Example                                                                                                                      | Expected result                                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Trim/join two clips, add a title and mix audio | [Terminal editing](terminal-editing/README.md)                                                                               | A four-second MP4, preview images and independent decoded-media checks; published engine 1.2.3 |
+| Animated word captions                         | [Caption scene](generated/tiktok-captions.json)                                                                              | Timed text highlights rendered from a self-contained Scene                                     |
+| Import supplied SRT/VTT captions               | [Subtitle layouts](generated/subtitle-stress-gallery.json)                                                                   | Styled timed captions; no transcription service required                                       |
+| Add a logo or picture-in-picture               | [Image overlays](generated/image-overlay-stress-gallery.json), [video overlays](generated/video-overlay-stress-gallery.json) | Layered media composed with the same preview/export runtime                                    |
+
+For the hosted timeline and chat editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).
+For a local editor, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+These engine examples use supplied or synthetic assets and do not require a
+commercial database, cloud storage account or model API key.
+
+Reusable developer modules:
+
+- [`terminal-editing/author.mjs`](terminal-editing/author.mjs) constructs a Scene,
+  revises its title through the workflow SDK and rejects a stale edit.
 - [`extension-starter.mjs`](extension-starter.mjs) defines and registers a
   versioned trusted extension without embedding code in Scene JSON.
 - [`macro-starter.mjs`](macro-starter.mjs) defines a bounded macro manifest and
@@ -29,7 +42,8 @@ The trailing numbers are optional frame indices written as PNGs next to the MP4.
 pnpm showcase:generate
 ```
 
-Those scenes also power the playground scene picker, so docs, examples, and preview stay aligned.
+Those scenes are shared with engine verification fixtures. The engine repository
+does not include a playground or end-user editor.
 
 `examples/generated/presets/*.json` is produced from the preset gallery scene generator:
 
@@ -53,7 +67,7 @@ The PNG frames are committed for docs. The intermediate MP4 files are ignored.
 
 ## Prompt-style examples
 
-The generated showcase now includes two use-case demos aimed at agent and editor workflows:
+The generated showcase includes supplied scenes for these workflows:
 
 - `launch-info-display.json` — a prompt-to-video style launch display with animated panels, scan lines, countdown text, and progress motion.
 - `timed-text-overlay.json` — a written timing prompt mapped to frame-accurate overlays: `dojo-video-engine.dev` at top center for the first 5 seconds, then `Coming soon...` in the bottom-right corner for the final 10 seconds.
@@ -62,7 +76,9 @@ The generated showcase now includes two use-case demos aimed at agent and editor
 - `image-overlay-stress-gallery.json` — logo bug, watermark, transparent sticker, product shot, avatar badge, and oversized corner badge presets in one self-contained scene.
 - `video-overlay-stress-gallery.json` — picture-in-picture, reaction cam, screen demo, muted background loop, b-roll strip, and video badge presets backed by one embedded MP4 asset.
 
-These examples prove the scene contract is ready for prompt-generated videos. The repository does not yet ship a natural-language compiler; today an agent, app, or preset layer writes the scene JSON and dojo-video-engine validates, previews, and exports it.
+These examples demonstrate explicit Scene inputs, not natural-language intent
+recognition. An agent, application or preset layer writes the Scene; the engine
+validates, previews and exports it. The model loop belongs to the host.
 
 Render the text stress gallery when changing text layout or renderer behavior:
 
@@ -109,10 +125,6 @@ text node with `from`/`duration` timing, a `fontSize` pop with `easeOut`,
 opacity fade-in, highlight pills behind emphasized words, a color keyframe
 (white → gold) on the last word, an animated progress bar, and an SVG image
 asset — all from one JSON document, no code.
-
-| frame 30                             | frame 60                             | frame 135                              |
-| ------------------------------------ | ------------------------------------ | -------------------------------------- |
-| frame 30 (historical render; see scene source) | frame 60 (historical render; see scene source) | frame 135 (historical render; see scene source) |
 
 ## generate-tiktok.mjs
 
