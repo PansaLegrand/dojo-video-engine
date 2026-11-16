@@ -55,8 +55,10 @@ for (const id of ids)
   if (!demos.includes(id)) throw new Error(`Unknown demo: ${id}`);
 const output = resolve(root, "docs/assets/showcase");
 const proof = resolve(root, "test-results/creative-showcase");
+const reports = resolve(root, "docs/reports/showcase");
 await mkdir(output, { recursive: true });
 await mkdir(proof, { recursive: true });
+await mkdir(reports, { recursive: true });
 const aliases = await Promise.all(
   [
     "@dojo-video-engine/renderer-canvas2d/runtime",
@@ -182,11 +184,11 @@ try {
       resolve(output, `${id}.gif`),
     ]);
     await writeFile(
-      resolve(directory, `${id}.render.json`),
+      resolve(reports, `${id}.render.json`),
       JSON.stringify(
         {
           title: metadata.title ?? id,
-          source: `${id}.mjs`,
+          source: `examples/creative-showcase/${id}.mjs`,
           sceneSha256: createHash("sha256").update(json).digest("hex"),
           engine: JSON.parse(
             await readFile(

@@ -1,20 +1,11 @@
 {
-  "title": "Deep Field",
-  "source": "cinema.mjs",
-  "sceneSha256": "b3fd7bc74660fefecec4f2bf1bd826cc4c64d349cf22316c9c2c9874810bb1b6",
+  "title": "ORBIT \u2014 Better together",
+  "source": "examples/creative-showcase/company.mjs",
+  "sceneSha256": "e344ced3ec998e637c511f31484d4ff9e04e23daff4ddda7863c4277d7a9676e",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    45,
-    105,
-    150,
-    185,
-    240,
-    315,
-    359
-  ],
+  "frames": [35, 82, 155, 202, 275, 330],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
@@ -29,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 4130409,
+      "byteLength": 3976071,
       "mimeType": "video/mp4"
     },
     "checks": [

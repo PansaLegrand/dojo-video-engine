@@ -1,21 +1,11 @@
 {
   "title": "Chroma Bloom",
-  "source": "bloom.mjs",
+  "source": "examples/creative-showcase/bloom.mjs",
   "sceneSha256": "d0a98dfc416633dcad0e10403653bbc78e7fd0ff4d4e7779dae307d7c2f035d9",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    30,
-    75,
-    120,
-    180,
-    225,
-    285,
-    330,
-    359
-  ],
+  "frames": [0, 30, 75, 120, 180, 225, 285, 330, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",

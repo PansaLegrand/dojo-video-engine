@@ -1,27 +1,18 @@
 {
-  "title": "Night Train",
-  "source": "journey.mjs",
-  "sceneSha256": "73b9e8f1c7c2bfb1ba4c7a6d21b4560270f054b1070b6051ffd370c15380da70",
+  "title": "Type in Motion",
+  "source": "examples/creative-showcase/kinetic.mjs",
+  "sceneSha256": "f94c7a3a350e05b33ba146e3938f36ab793c675e05e153e3221024626d351bae",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    45,
-    95,
-    140,
-    165,
-    215,
-    285,
-    359
-  ],
+  "frames": [0, 55, 90, 145, 190, 265, 295, 330, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
     "status": "verified",
     "expectation": {
-      "width": 1280,
-      "height": 720,
+      "width": 720,
+      "height": 1280,
       "durationSeconds": 12,
       "hasAudio": false,
       "requireAudibleAudio": false,
@@ -29,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 3678807,
+      "byteLength": 2781970,
       "mimeType": "video/mp4"
     },
     "checks": [
@@ -48,12 +39,12 @@
         "status": "passed",
         "message": "Video display dimensions match the export request.",
         "expected": {
-          "width": 1280,
-          "height": 720
+          "width": 720,
+          "height": 1280
         },
         "actual": {
-          "width": 1280,
-          "height": 720
+          "width": 720,
+          "height": 1280
         }
       },
       {
@@ -106,8 +97,8 @@
   },
   "decoded": {
     "codec_name": "h264",
-    "width": 1280,
-    "height": 720,
+    "width": 720,
+    "height": 1280,
     "duration": "12.000000",
     "nb_read_frames": "360"
   },

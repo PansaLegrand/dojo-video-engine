@@ -1,11 +1,11 @@
 {
-  "title": "After Hours",
-  "source": "festival.mjs",
-  "sceneSha256": "a69f2d31f17ab21d8e611352f2c026a090c1f7d38010b6be5f4765b8d5597f75",
+  "title": "Night Train",
+  "source": "examples/creative-showcase/journey.mjs",
+  "sceneSha256": "73b9e8f1c7c2bfb1ba4c7a6d21b4560270f054b1070b6051ffd370c15380da70",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [0, 30, 70, 145, 200, 275, 330, 359],
+  "frames": [0, 45, 95, 140, 165, 215, 285, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
@@ -20,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 4135087,
+      "byteLength": 3678807,
       "mimeType": "video/mp4"
     },
     "checks": [

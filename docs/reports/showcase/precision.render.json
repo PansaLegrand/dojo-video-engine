@@ -1,11 +1,11 @@
 {
-  "title": "ORBIT — Better together",
-  "source": "company.mjs",
-  "sceneSha256": "e344ced3ec998e637c511f31484d4ff9e04e23daff4ddda7863c4277d7a9676e",
+  "title": "Precision",
+  "source": "examples/creative-showcase/precision.mjs",
+  "sceneSha256": "073fa5fe552cdec56767b6ebf5001411e20ba596c20b052a56bd0200ec08fbee",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [35, 82, 155, 202, 275, 330],
+  "frames": [0, 50, 95, 145, 192, 230, 290, 335, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
@@ -20,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 3976071,
+      "byteLength": 3438824,
       "mimeType": "video/mp4"
     },
     "checks": [

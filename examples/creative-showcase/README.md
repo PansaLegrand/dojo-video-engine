@@ -94,7 +94,8 @@ node examples/creative-showcase/render.mjs
 ```
 
 The renderer uses the existing tool dependencies, Chromium, FFmpeg and ffprobe.
-It writes Scene JSON and render reports beside the authors, MP4/GIF/PNG files
+It writes Scene JSON beside the authors, render reports under
+`docs/reports/showcase/`, MP4/GIF/PNG files
 under `docs/assets/showcase/`, and review frames under ignored
 `test-results/creative-showcase/`. It checks Scene/Three.js limits, exports via
 the browser engine, counts every decoded video frame and fully decodes each MP4.
@@ -143,5 +144,5 @@ qualify these nine examples. Three.js needs WebGL2; MP4 export needs compatible
 WebCodecs. Rendering resources use the existing engine 1.2.3 limits and geometry.
 
 The root README uses one GitHub-hosted MP4 attachment of the approved six-category
-reel. `readme-video.json` binds its stable attachment URL to the local file hash.
+reel. [The video receipt](../../docs/reports/showcase/readme-video.json) binds its stable attachment URL to the local file hash.
 The newer studies remain separately available here.

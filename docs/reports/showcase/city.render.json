@@ -1,20 +1,11 @@
 {
   "title": "Little Worlds",
-  "source": "city.mjs",
+  "source": "examples/creative-showcase/city.mjs",
   "sceneSha256": "a9eff179ce77777728994fb74eb195784e5f24240f27f10f2079a9ca87950cbb",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    35,
-    80,
-    120,
-    180,
-    210,
-    285,
-    359
-  ],
+  "frames": [0, 35, 80, 120, 180, 210, 285, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",

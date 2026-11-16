@@ -1,21 +1,11 @@
 {
-  "title": "Precision",
-  "source": "precision.mjs",
-  "sceneSha256": "073fa5fe552cdec56767b6ebf5001411e20ba596c20b052a56bd0200ec08fbee",
+  "title": "Deep Field",
+  "source": "examples/creative-showcase/cinema.mjs",
+  "sceneSha256": "b3fd7bc74660fefecec4f2bf1bd826cc4c64d349cf22316c9c2c9874810bb1b6",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    50,
-    95,
-    145,
-    192,
-    230,
-    290,
-    335,
-    359
-  ],
+  "frames": [0, 45, 105, 150, 185, 240, 315, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
@@ -30,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 3438824,
+      "byteLength": 4130409,
       "mimeType": "video/mp4"
     },
     "checks": [

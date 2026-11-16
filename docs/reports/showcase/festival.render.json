@@ -1,20 +1,11 @@
 {
-  "title": "Field Notes",
-  "source": "data-story.mjs",
-  "sceneSha256": "0514c0bc94f63105a41a26a54670686318cae12e16a2f9ec93aa0244e3728b38",
+  "title": "After Hours",
+  "source": "examples/creative-showcase/festival.mjs",
+  "sceneSha256": "a69f2d31f17ab21d8e611352f2c026a090c1f7d38010b6be5f4765b8d5597f75",
   "engine": "1.2.3",
   "browser": "148.0.7778.96",
   "platform": "darwin/arm64",
-  "frames": [
-    0,
-    30,
-    80,
-    145,
-    200,
-    275,
-    330,
-    359
-  ],
+  "frames": [0, 30, 70, 145, 200, 275, 330, 359],
   "codec": "avc",
   "verification": {
     "mode": "sampled",
@@ -29,7 +20,7 @@
     },
     "requestMetadata": {
       "source": "blob",
-      "byteLength": 1171109,
+      "byteLength": 4135087,
       "mimeType": "video/mp4"
     },
     "checks": [
