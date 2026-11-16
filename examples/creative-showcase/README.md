@@ -1,13 +1,41 @@
 # Motion worth making
 
-Nine studies with different subjects, formats and motion languages. Every film
-is 12 seconds at 30 fps. Eight are landscape (1280 × 720); Type in Motion is portrait
+Twelve studies with different subjects, formats and motion languages. Every film
+is 12 seconds at 30 fps. Eleven are landscape (1280 × 720); Type in Motion is portrait
 (720 × 1280). Native text, vector shapes and 3D geometry stay editable. No external
 media, model calls or API keys are required.
 
 [![Six creative directions](../../docs/assets/showcase/gallery.gif)](../../docs/assets/showcase/gallery.mp4)
 
-## New studies
+## Videos for different scenarios
+
+[![Sports, software and drink campaigns](../../docs/assets/showcase/scenarios.gif)](../../docs/assets/showcase/scenarios.mp4)
+
+### Night League — Sports broadcast
+
+[![Night League](../../docs/assets/showcase/sports-card.png)](../../docs/assets/showcase/sports.mp4)
+
+A stadium reveal, a diagonal team matchup and bold score graphics. The teams and score are fictional broadcast-design material.
+
+[Watch MP4](../../docs/assets/showcase/sports.mp4) · [Authoring source](sports.mjs) · [Scene JSON](sports.json)
+
+### Flow — Software product demo
+
+[![Flow](../../docs/assets/showcase/software-card.png)](../../docs/assets/showcase/software.mp4)
+
+Animated cards organize into a task board, a teammate reviews the work, and the project ships. This is an original concept interface drawn with editable graphics.
+
+[Watch MP4](../../docs/assets/showcase/software.mp4) · [Authoring source](software.mjs) · [Scene JSON](software.json)
+
+### Squeeze — Food and drink campaign
+
+[![Squeeze](../../docs/assets/showcase/citrus-card.png)](../../docs/assets/showcase/citrus.mp4)
+
+Detailed citrus slices, a pouring ribbon, a filling glass and a branded can create a bright fictional product campaign. No nutrition or health claims are made.
+
+[Watch MP4](../../docs/assets/showcase/citrus.mp4) · [Authoring source](citrus.mjs) · [Scene JSON](citrus.json)
+
+## 3D and vector detail
 
 [![Three new studies](../../docs/assets/showcase/showoff.gif)](../../docs/assets/showcase/showoff.mp4)
 
@@ -106,7 +134,8 @@ After rendering all scenes, build the category cards and 12-second README reel:
 
 ```sh
 node examples/creative-showcase/gallery.mjs            # approved six-category reel
-node examples/creative-showcase/gallery.mjs --studies  # newer three-study reel
+node examples/creative-showcase/gallery.mjs --studies  # 3D and vector detail
+node examples/creative-showcase/gallery.mjs --scenarios # sports, software and product ads
 ```
 
 This optional gallery assembly uses FFmpeg with `drawtext` support. It takes
@@ -140,9 +169,10 @@ System sans-serif fonts can render differently across platforms.
 
 The committed render reports record the Scene hash, engine/browser version,
 sampled preview frames and independently decoded output dimensions/count. They
-qualify these nine examples. Three.js needs WebGL2; MP4 export needs compatible
+qualify these twelve examples. Three.js needs WebGL2; MP4 export needs compatible
 WebCodecs. Rendering resources use the existing engine 1.2.3 limits and geometry.
 
-The root README uses one GitHub-hosted MP4 attachment of the approved six-category
-reel. [The video receipt](../../docs/reports/showcase/readme-video.json) binds its stable attachment URL to the local file hash.
-The newer studies remain separately available here.
+The root README groups the collection into three short GitHub-hosted MP4 reels.
+[Video receipts](../../docs/reports/showcase/readme-videos.json) bind their stable
+attachment URLs to local file hashes. Individual films and their editable source
+remain available above.

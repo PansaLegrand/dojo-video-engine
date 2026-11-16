@@ -46,6 +46,9 @@ const demos = [
   "city",
   "precision",
   "bloom",
+  "sports",
+  "software",
+  "citrus",
 ];
 const stillsOnly = process.argv.includes("--stills");
 for (const arg of process.argv.slice(2))

@@ -1,0 +1,6056 @@
+{
+  "schemaVersion": 1,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 360,
+  "assets": {},
+  "nodes": [
+    {
+      "id": "sports-stadium",
+      "type": "div",
+      "from": 0,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0,
+        "overflow": "hidden"
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "opener-backdrop",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "background": "linear-gradient(135deg, #071316 0%, #111C30 65%, #172C58 100%)"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "stadium-world",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 40px) scale(0.88) rotate(-6deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(0px, 0px) scale(1.1) rotate(0deg)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "stadium-bowl-0",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 215 515 C 20 305 260 125 640 125 C 1020 125 1260 305 1065 515 C 925 640 355 640 215 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#44626D",
+                "strokeWidth": 3,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-1",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 197 515 C 2 305 242 118.7 640 118.7 C 1038 118.7 1278 305 1083 515 C 943 649 337 649 197 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-2",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 179 515 C -16 305 224 112.4 640 112.4 C 1056 112.4 1296 305 1101 515 C 961 658 319 658 179 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-3",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 161 515 C -34 305 206 106.1 640 106.1 C 1074 106.1 1314 305 1119 515 C 979 667 301 667 161 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#44626D",
+                "strokeWidth": 3,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-4",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 143 515 C -52 305 188 99.8 640 99.8 C 1092 99.8 1332 305 1137 515 C 997 676 283 676 143 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-5",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 125 515 C -70 305 170 93.5 640 93.5 C 1110 93.5 1350 305 1155 515 C 1015 685 265 685 125 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-6",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 107 515 C -88 305 152 87.2 640 87.2 C 1128 87.2 1368 305 1173 515 C 1033 694 247 694 107 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#44626D",
+                "strokeWidth": 3,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-7",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 89 515 C -106 305 134 80.9 640 80.9 C 1146 80.9 1386 305 1191 515 C 1051 703 229 703 89 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-bowl-8",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 71 515 C -124 305 116 74.6 640 74.6 C 1164 74.6 1404 305 1209 515 C 1069 712 211 712 71 515 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#233545",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-0",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1117,
+                "top": 345,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-1",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1113.5221329447718,
+                "top": 370.91538625489443,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-2",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1103.1392469122268,
+                "top": 396.4528678218249,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-3",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1086.0027477609428,
+                "top": 421.2400507141451,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-4",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1062.362524236581,
+                "top": 444.91548198941024,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-5",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1032.5633040312741,
+                "top": 467.1339205471985,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-6",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 997.0396268776152,
+                "top": 487.57137152177097,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-7",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 956.3095079808593,
+                "top": 505.92981085678673,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-8",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 910.9668841907613,
+                "top": 521.9415311671362,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-9",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 861.6729530648777,
+                "top": 535.3730455154401,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-10",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 809.1465311192894,
+                "top": 546.0284921773642,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-11",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 754.1535718651651,
+                "top": 553.7524907466012,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-12",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 697.4959964817891,
+                "top": 558.4324079310816,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-13",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 640,
+                "top": 560,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-14",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 582.504003518211,
+                "top": 558.4324079310816,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-15",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 525.846428134835,
+                "top": 553.7524907466012,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-16",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 470.85346888071047,
+                "top": 546.0284921773642,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-17",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 418.32704693512244,
+                "top": 535.3730455154401,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-18",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 369.0331158092387,
+                "top": 521.9415311671362,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-19",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 323.6904920191408,
+                "top": 505.9298108567868,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-20",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 282.96037312238474,
+                "top": 487.57137152177097,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-21",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 247.43669596872593,
+                "top": 467.1339205471985,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-22",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 217.63747576341893,
+                "top": 444.9154819894103,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-23",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 193.99725223905716,
+                "top": 421.24005071414524,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-24",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 176.86075308777322,
+                "top": 396.4528678218249,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-25",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 166.47786705522827,
+                "top": 370.9153862548945,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-26",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 163,
+                "top": 345,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-27",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 166.47786705522827,
+                "top": 319.0846137451055,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-28",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 176.86075308777316,
+                "top": 293.54713217817516,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-29",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 193.9972522390571,
+                "top": 268.7599492858549,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-30",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 217.63747576341876,
+                "top": 245.08451801058987,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-31",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 247.43669596872581,
+                "top": 222.86607945280156,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-32",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 282.9603731223848,
+                "top": 202.428628478229,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-33",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 323.69049201914055,
+                "top": 184.07018914321333,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-34",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 369.0331158092386,
+                "top": 168.0584688328639,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-35",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 418.3270469351225,
+                "top": 154.62695448455983,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-36",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 470.85346888071035,
+                "top": 143.97150782263583,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-37",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 525.8464281348349,
+                "top": 136.24750925339882,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-38",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 582.5040035182107,
+                "top": 131.5675920689184,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-39",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 639.9999999999999,
+                "top": 130,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-40",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 697.4959964817891,
+                "top": 131.5675920689184,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-41",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 754.1535718651648,
+                "top": 136.2475092533988,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-42",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 809.1465311192894,
+                "top": 143.9715078226358,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-43",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 861.6729530648773,
+                "top": 154.62695448455983,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-44",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 910.9668841907612,
+                "top": 168.05846883286384,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-45",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 956.3095079808593,
+                "top": 184.07018914321327,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-46",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 997.0396268776151,
+                "top": 202.42862847822894,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-47",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1032.5633040312741,
+                "top": 222.86607945280147,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-48",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1062.362524236581,
+                "top": 245.0845180105898,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-49",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1086.0027477609428,
+                "top": 268.75994928585476,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-50",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1103.1392469122268,
+                "top": 293.54713217817505,
+                "backgroundColor": "#7E9CA9",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "stadium-light-51",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 5,
+                "height": 3,
+                "position": "absolute",
+                "left": 1113.5221329447718,
+                "top": 319.0846137451054,
+                "backgroundColor": "#D2FF35",
+                "opacity": 0.8
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-shadow",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 365 280 L 915 280 L 1110 570 L 170 570 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#03080C"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-base",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 365 260 L 915 260 L 1110 550 L 170 550 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#123C34",
+                "stroke": "#D2FF35",
+                "strokeWidth": 2,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-stripe-0",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 365 260 L 915 260 L 939.375 296.25 L 340.625 296.25 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#1A493C"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-stripe-2",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 316.25 332.5 L 963.75 332.5 L 988.125 368.75 L 291.875 368.75 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#1A493C"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-stripe-4",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 267.5 405 L 1012.5 405 L 1036.875 441.25 L 243.125 441.25 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#1A493C"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-stripe-6",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 218.75 477.5 L 1061.25 477.5 L 1085.625 513.75 L 194.375 513.75 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "#1A493C"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-boundary",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 378 273 L 902 273 L 1082 534 L 198 534 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#91C894",
+                "strokeWidth": 2,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-center",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 288 403 L 992 403 M 565 403 C 565 373 715 373 715 403 C 715 433 565 433 565 403 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#91C894",
+                "strokeWidth": 2,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-boxes",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 473 273 L 454 329 L 826 329 L 807 273 M 381 534 L 409 461 L 871 461 L 899 534",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#91C894",
+                "strokeWidth": 2,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "pitch-goals",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 564 260 L 564 237 L 716 237 L 716 260 M 535 550 L 535 574 L 745 574 L 745 550",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#F4F6EE",
+                "strokeWidth": 3,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "left-light-beam",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 118 130 L 830 620 L 230 625 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "linear-gradient(0deg, rgba(209,255,53,0) 0%, rgba(209,255,53,0.13) 100%)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "rotate(-8deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "rotate(12deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "right-light-beam",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 1172 130 L 920 625 L 290 625 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "linear-gradient(0deg, rgba(36,87,255,0) 0%, rgba(73,119,255,0.24) 100%)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "rotate(8deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "rotate(-12deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 5,
+            "position": "absolute",
+            "left": -300,
+            "top": 90,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -127,
+            "top": 127,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 46,
+            "top": 164,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-3",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 219,
+            "top": 201,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-4",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 5,
+            "position": "absolute",
+            "left": 392,
+            "top": 238,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-5",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": 565,
+            "top": 275,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-6",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": 738,
+            "top": 312,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-7",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 911,
+            "top": 349,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-8",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 5,
+            "position": "absolute",
+            "left": 1084,
+            "top": 386,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-9",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 1257,
+            "top": 423,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-10",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": -270,
+            "top": 460,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-11",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -97,
+            "top": 497,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-12",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 5,
+            "position": "absolute",
+            "left": 76,
+            "top": 534,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-13",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 249,
+            "top": 571,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-14",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 422,
+            "top": 608,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-15",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": 595,
+            "top": 115,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-16",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 5,
+            "position": "absolute",
+            "left": 768,
+            "top": 152,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-17",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 941,
+            "top": 189,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-18",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 1114,
+            "top": 226,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-19",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 1287,
+            "top": 263,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-20",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 5,
+            "position": "absolute",
+            "left": -240,
+            "top": 300,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-speed-21",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -67,
+            "top": 337,
+            "backgroundColor": "#D2FF35",
+            "opacity": 0.14,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-kicker",
+          "type": "text",
+          "text": "THE CITY COMES ALIVE",
+          "from": 0,
+          "style": {
+            "width": 880,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 200,
+            "top": 177,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 16,
+            "fontWeight": 700,
+            "color": "#D2FF35",
+            "lineHeight": 1,
+            "letterSpacing": 5,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-headline",
+          "type": "text",
+          "text": "MATCHDAY",
+          "from": 0,
+          "style": {
+            "width": 1224,
+            "height": 226.25,
+            "position": "absolute",
+            "left": 28,
+            "top": 245,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 181,
+            "fontWeight": 900,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": -10,
+            "textAlign": "center",
+            "textShadow": "0px 6px 14px rgba(0,0,0,0.6)",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 5,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 27,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 5,
+                  "value": 0
+                },
+                {
+                  "frame": 27,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "opener-live-bug",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 12,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 32,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 12,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "opener-bug-background",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 324,
+                "height": 43,
+                "position": "absolute",
+                "left": 478,
+                "top": 477,
+                "backgroundColor": "#D2FF35"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "opener-live-dot",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 8,
+                "height": 8,
+                "position": "absolute",
+                "left": 496,
+                "top": 494,
+                "backgroundColor": "#081014",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "opener-time",
+              "type": "text",
+              "text": "SAT / 20:00 / NIGHT LEAGUE",
+              "from": 0,
+              "style": {
+                "width": 280,
+                "height": 20,
+                "position": "absolute",
+                "left": 519,
+                "top": 490,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 700,
+                "color": "#081014",
+                "lineHeight": 1,
+                "letterSpacing": 1,
+                "maxLines": 1
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "opener-brand",
+          "type": "text",
+          "text": "NIGHT / LEAGUE",
+          "from": 0,
+          "style": {
+            "width": 330,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 48,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "opener-edition",
+          "type": "text",
+          "text": "ROUND 05 / UNDER THE LIGHTS",
+          "from": 0,
+          "style": {
+            "width": 392,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 840,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "opener-header-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 65,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "opener-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 653,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "opener-disclosure",
+          "type": "text",
+          "text": "FICTIONAL TEAMS / BROADCAST DESIGN STUDY",
+          "from": 0,
+          "style": {
+            "width": 860,
+            "height": 16,
+            "position": "absolute",
+            "left": 48,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "opener-dojo",
+          "type": "text",
+          "text": "DOJO / SPORT",
+          "from": 0,
+          "style": {
+            "width": 252,
+            "height": 16,
+            "position": "absolute",
+            "left": 980,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "sports-matchup",
+      "type": "div",
+      "from": 120,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0,
+        "overflow": "hidden"
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "matchup-base",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#081014"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-north-panel",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 0 0 L 758 0 L 534 720 L 0 720 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "#D2FF35"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-950px, 0px)"
+                },
+                {
+                  "frame": 17,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "matchup-south-panel",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 815 0 L 1280 0 L 1280 720 L 590 720 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "#2457FF"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(950px, 0px)"
+                },
+                {
+                  "frame": 17,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "matchup-north-speed",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "north-speed-0",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 5,
+                "position": "absolute",
+                "left": -300,
+                "top": 90,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-1",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -127,
+                "top": 127,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-2",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 46,
+                "top": 164,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-3",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 219,
+                "top": 201,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-4",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 5,
+                "position": "absolute",
+                "left": 392,
+                "top": 238,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-5",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": 565,
+                "top": 275,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-6",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": 738,
+                "top": 312,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-7",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 911,
+                "top": 349,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-8",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 5,
+                "position": "absolute",
+                "left": 1084,
+                "top": 386,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-9",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 1257,
+                "top": 423,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-10",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": -270,
+                "top": 460,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-11",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -97,
+                "top": 497,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-12",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 5,
+                "position": "absolute",
+                "left": 76,
+                "top": 534,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-13",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 249,
+                "top": 571,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-14",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 422,
+                "top": 608,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-15",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": 595,
+                "top": 115,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-16",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 5,
+                "position": "absolute",
+                "left": 768,
+                "top": 152,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-17",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 941,
+                "top": 189,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-18",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 1114,
+                "top": 226,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-19",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 1287,
+                "top": 263,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-20",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 5,
+                "position": "absolute",
+                "left": -240,
+                "top": 300,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "north-speed-21",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -67,
+                "top": 337,
+                "backgroundColor": "#081014",
+                "opacity": 0.09,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "matchup-south-speed",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "south-speed-0",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 5,
+                "position": "absolute",
+                "left": -300,
+                "top": 90,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-1",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -127,
+                "top": 127,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-2",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 46,
+                "top": 164,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-3",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 219,
+                "top": 201,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-4",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 5,
+                "position": "absolute",
+                "left": 392,
+                "top": 238,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-5",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": 565,
+                "top": 275,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-6",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": 738,
+                "top": 312,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-7",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 911,
+                "top": 349,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-8",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 5,
+                "position": "absolute",
+                "left": 1084,
+                "top": 386,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-9",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 1257,
+                "top": 423,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-10",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": -270,
+                "top": 460,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-11",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -97,
+                "top": 497,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-12",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 5,
+                "position": "absolute",
+                "left": 76,
+                "top": 534,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-13",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 249,
+                "top": 571,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-14",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 422,
+                "top": 608,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-15",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 2,
+                "position": "absolute",
+                "left": 595,
+                "top": 115,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-16",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 5,
+                "position": "absolute",
+                "left": 768,
+                "top": 152,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-17",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 144,
+                "height": 2,
+                "position": "absolute",
+                "left": 941,
+                "top": 189,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-18",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 2,
+                "position": "absolute",
+                "left": 1114,
+                "top": 226,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(460px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-19",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 216,
+                "height": 2,
+                "position": "absolute",
+                "left": 1287,
+                "top": 263,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(530px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-20",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 72,
+                "height": 5,
+                "position": "absolute",
+                "left": -240,
+                "top": 300,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(320px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "south-speed-21",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 108,
+                "height": 2,
+                "position": "absolute",
+                "left": -67,
+                "top": 337,
+                "backgroundColor": "#F4F6EE",
+                "opacity": 0.07,
+                "transform": "rotate(-18deg)"
+              },
+              "animations": [
+                {
+                  "kind": "keyframes",
+                  "property": "transform",
+                  "frames": [
+                    {
+                      "frame": 0,
+                      "value": "translate(0px, 0px) rotate(-18deg)"
+                    },
+                    {
+                      "frame": 119,
+                      "value": "translate(390px, -70px) rotate(-18deg)"
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "north-crest",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 70 0 L 138 30 L 126 110 L 70 158 L 14 110 L 2 30 Z M 34 102 L 70 40 L 106 102 L 90 102 L 70 69 L 50 102 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 140,
+              "height": 160
+            },
+            "fillRule": "evenodd"
+          },
+          "from": 0,
+          "style": {
+            "width": 140,
+            "height": 160,
+            "position": "absolute",
+            "left": 215,
+            "top": 150,
+            "fill": "#081014"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 40px)"
+                },
+                {
+                  "frame": 12,
+                  "value": "translate(0px, 40px)"
+                },
+                {
+                  "frame": 35,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 12,
+                  "value": 0
+                },
+                {
+                  "frame": 35,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "south-crest",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 70 0 L 138 30 L 126 110 L 70 158 L 14 110 L 2 30 Z M 89 40 L 42 82 L 70 82 L 51 119 L 104 67 L 77 67 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 140,
+              "height": 160
+            },
+            "fillRule": "evenodd"
+          },
+          "from": 0,
+          "style": {
+            "width": 140,
+            "height": 160,
+            "position": "absolute",
+            "left": 921,
+            "top": 150,
+            "fill": "#F4F6EE"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 40px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 40px)"
+                },
+                {
+                  "frame": 41,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 0
+                },
+                {
+                  "frame": 41,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "north-name",
+          "type": "text",
+          "text": "NORTH",
+          "from": 0,
+          "style": {
+            "width": 510,
+            "height": 136.25,
+            "position": "absolute",
+            "left": 58,
+            "top": 332,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 109,
+            "fontWeight": 900,
+            "color": "#081014",
+            "lineHeight": 1,
+            "letterSpacing": -6,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 16,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 34,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 16,
+                  "value": 0
+                },
+                {
+                  "frame": 34,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "south-name",
+          "type": "text",
+          "text": "SOUTH",
+          "from": 0,
+          "style": {
+            "width": 510,
+            "height": 136.25,
+            "position": "absolute",
+            "left": 714,
+            "top": 332,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 109,
+            "fontWeight": 900,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": -6,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 22,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 40,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 22,
+                  "value": 0
+                },
+                {
+                  "frame": 40,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "north-caption",
+          "type": "text",
+          "text": "ATHLETIC CLUB",
+          "from": 0,
+          "style": {
+            "width": 450,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 90,
+            "top": 470,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#081014",
+            "lineHeight": 1,
+            "letterSpacing": 4,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 22,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 40,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 22,
+                  "value": 0
+                },
+                {
+                  "frame": 40,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "south-caption",
+          "type": "text",
+          "text": "SPORTING CLUB",
+          "from": 0,
+          "style": {
+            "width": 450,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 740,
+            "top": 470,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 4,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 28,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 46,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 28,
+                  "value": 0
+                },
+                {
+                  "frame": 46,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "versus-background",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 136,
+            "height": 112,
+            "position": "absolute",
+            "left": 572,
+            "top": 311,
+            "backgroundColor": "#081014",
+            "transform": "rotate(-9deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.2) rotate(-9deg)"
+                },
+                {
+                  "frame": 20,
+                  "value": "scale(1) rotate(-9deg)",
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "versus",
+          "type": "text",
+          "text": "VS",
+          "from": 0,
+          "style": {
+            "width": 135,
+            "height": 71.25,
+            "position": "absolute",
+            "left": 573,
+            "top": 327,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 57,
+            "fontWeight": 900,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": -3,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 22,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 40,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 22,
+                  "value": 0
+                },
+                {
+                  "frame": 40,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "matchup-top-left",
+          "type": "text",
+          "text": "NIGHT / LEAGUE",
+          "from": 0,
+          "style": {
+            "width": 340,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 48,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#081014",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-top-right",
+          "type": "text",
+          "text": "ROUND 05 / THE FIXTURE",
+          "from": 0,
+          "style": {
+            "width": 432,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 800,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 65,
+            "backgroundColor": "#081014",
+            "opacity": 0.28
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-tagline-backing",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 56,
+            "position": "absolute",
+            "left": 340,
+            "top": 568,
+            "backgroundColor": "#081014"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-tagline",
+          "type": "text",
+          "text": "TWO SIDES. ONE NIGHT.",
+          "from": 0,
+          "style": {
+            "width": 1140,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 70,
+            "top": 584,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 18,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 4,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 653,
+            "backgroundColor": "#081014",
+            "opacity": 0.3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-disclosure",
+          "type": "text",
+          "text": "FICTIONAL TEAMS / BROADCAST DESIGN STUDY",
+          "from": 0,
+          "style": {
+            "width": 850,
+            "height": 16,
+            "position": "absolute",
+            "left": 48,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#081014",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "matchup-dojo",
+          "type": "text",
+          "text": "DOJO / SPORT",
+          "from": 0,
+          "style": {
+            "width": 252,
+            "height": 16,
+            "position": "absolute",
+            "left": 980,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "sports-score",
+      "type": "div",
+      "from": 240,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0,
+        "overflow": "hidden"
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "score-background",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "background": "linear-gradient(135deg, #081014 0%, #142421 50%, #0A172E 100%)"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-lime-ribbon",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M -300 330 L 180 -20 L 330 -20 L -150 330 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "#D2FF35"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-blue-ribbon",
+          "type": "shape",
+          "shape": {
+            "kind": "path",
+            "d": "M 975 740 L 1410 270 L 1505 360 L 1100 740 Z",
+            "viewBox": {
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720
+            }
+          },
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "fill": "#2457FF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-speed-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 5,
+            "position": "absolute",
+            "left": -300,
+            "top": 90,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -127,
+            "top": 127,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 46,
+            "top": 164,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-3",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 219,
+            "top": 201,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-4",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 5,
+            "position": "absolute",
+            "left": 392,
+            "top": 238,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-5",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": 565,
+            "top": 275,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-6",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": 738,
+            "top": 312,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-7",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 911,
+            "top": 349,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-8",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 5,
+            "position": "absolute",
+            "left": 1084,
+            "top": 386,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-9",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 1257,
+            "top": 423,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-10",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": -270,
+            "top": 460,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-11",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -97,
+            "top": 497,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-12",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 5,
+            "position": "absolute",
+            "left": 76,
+            "top": 534,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-13",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 249,
+            "top": 571,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-14",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 422,
+            "top": 608,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-15",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 2,
+            "position": "absolute",
+            "left": 595,
+            "top": 115,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-16",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 5,
+            "position": "absolute",
+            "left": 768,
+            "top": 152,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-17",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 144,
+            "height": 2,
+            "position": "absolute",
+            "left": 941,
+            "top": 189,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-18",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 180,
+            "height": 2,
+            "position": "absolute",
+            "left": 1114,
+            "top": 226,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(460px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-19",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 216,
+            "height": 2,
+            "position": "absolute",
+            "left": 1287,
+            "top": 263,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(530px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-20",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 5,
+            "position": "absolute",
+            "left": -240,
+            "top": 300,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(320px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-speed-21",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 108,
+            "height": 2,
+            "position": "absolute",
+            "left": -67,
+            "top": 337,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.09,
+            "transform": "rotate(-18deg)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 0px) rotate(-18deg)"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(390px, -70px) rotate(-18deg)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-field-lines",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "score-field-grid",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 0 584 L 1280 584 M 0 618 L 1280 618 M 100 653 L 420 507 M 390 653 L 530 507 M 640 653 L 640 507 M 890 653 L 750 507 M 1180 653 L 860 507",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#28433E",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "score-field-circle",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 515 585 C 515 560 765 560 765 585 C 765 610 515 610 515 585 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0,
+                "fill": "transparent",
+                "stroke": "#28433E",
+                "strokeWidth": 1,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "full-time-pill",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "full-time-pill-bg",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 240,
+                "height": 39,
+                "position": "absolute",
+                "left": 520,
+                "top": 119,
+                "backgroundColor": "#D2FF35"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "full-time-pill-copy",
+              "type": "text",
+              "text": "90:00 / FULL TIME",
+              "from": 0,
+              "style": {
+                "width": 230,
+                "height": 20,
+                "position": "absolute",
+                "left": 525,
+                "top": 130,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#081014",
+                "lineHeight": 1,
+                "letterSpacing": 2,
+                "textAlign": "center",
+                "maxLines": 1
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "score-north",
+          "type": "text",
+          "text": "NORTH",
+          "from": 0,
+          "style": {
+            "width": 375,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 180,
+            "top": 197,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 24,
+            "fontWeight": 700,
+            "color": "#D2FF35",
+            "lineHeight": 1,
+            "letterSpacing": 5,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 5,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 23,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 5,
+                  "value": 0
+                },
+                {
+                  "frame": 23,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-south",
+          "type": "text",
+          "text": "SOUTH",
+          "from": 0,
+          "style": {
+            "width": 375,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 725,
+            "top": 197,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 24,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 5,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 10,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 28,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 10,
+                  "value": 0
+                },
+                {
+                  "frame": 28,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-two",
+          "type": "text",
+          "text": "02",
+          "from": 0,
+          "style": {
+            "width": 430,
+            "height": 295,
+            "position": "absolute",
+            "left": 150,
+            "top": 238,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 236,
+            "fontWeight": 900,
+            "color": "#D2FF35",
+            "lineHeight": 1,
+            "letterSpacing": -17,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 8,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 29,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 8,
+                  "value": 0
+                },
+                {
+                  "frame": 29,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-one",
+          "type": "text",
+          "text": "01",
+          "from": 0,
+          "style": {
+            "width": 430,
+            "height": 295,
+            "position": "absolute",
+            "left": 700,
+            "top": 238,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 236,
+            "fontWeight": 900,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": -17,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 13,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 34,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 13,
+                  "value": 0
+                },
+                {
+                  "frame": 34,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-divider",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 72,
+            "height": 8,
+            "position": "absolute",
+            "left": 604,
+            "top": 355,
+            "backgroundColor": "#2457FF"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0, 1)"
+                },
+                {
+                  "frame": 28,
+                  "value": "scale(1, 1)",
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-tagline",
+          "type": "text",
+          "text": "EVERY SECOND COUNTS.",
+          "from": 0,
+          "style": {
+            "width": 1080,
+            "height": 48.75,
+            "position": "absolute",
+            "left": 100,
+            "top": 531,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 39,
+            "fontWeight": 900,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": -1.3,
+            "textAlign": "center",
+            "maxLines": 1
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 25,
+                  "value": "translate(0px, 38px)"
+                },
+                {
+                  "frame": 43,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 25,
+                  "value": 0
+                },
+                {
+                  "frame": 43,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "score-header-backing",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 78,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#081014"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-brand",
+          "type": "text",
+          "text": "NIGHT / LEAGUE",
+          "from": 0,
+          "style": {
+            "width": 330,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 48,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-edition",
+          "type": "text",
+          "text": "THE FINAL WHISTLE / ROUND 05",
+          "from": 0,
+          "style": {
+            "width": 392,
+            "height": 17.5,
+            "position": "absolute",
+            "left": 840,
+            "top": 32,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-header-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 65,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1184,
+            "height": 1,
+            "position": "absolute",
+            "left": 48,
+            "top": 653,
+            "backgroundColor": "#F4F6EE",
+            "opacity": 0.3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-disclosure",
+          "type": "text",
+          "text": "FICTIONAL TEAMS / BROADCAST DESIGN STUDY",
+          "from": 0,
+          "style": {
+            "width": 860,
+            "height": 16,
+            "position": "absolute",
+            "left": 48,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "score-dojo",
+          "type": "text",
+          "text": "DOJO / SPORT",
+          "from": 0,
+          "style": {
+            "width": 252,
+            "height": 16,
+            "position": "absolute",
+            "left": 980,
+            "top": 679,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 700,
+            "color": "#F4F6EE",
+            "lineHeight": 1,
+            "letterSpacing": 1.8,
+            "textAlign": "right",
+            "maxLines": 1
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

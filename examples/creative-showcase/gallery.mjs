@@ -6,24 +6,33 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = resolve(root, "docs/assets/showcase");
 const studies = process.argv.includes("--studies");
+const scenarios = process.argv.includes("--scenarios");
 for (const flag of process.argv.slice(2))
-  if (flag !== "--studies") throw new Error(`Unknown option: ${flag}`);
-const name = studies ? "showoff" : "gallery";
-const duration = studies ? 4 : 2;
-const entries = studies
+  if (!["--studies", "--scenarios"].includes(flag))
+    throw new Error(`Unknown option: ${flag}`);
+if (studies && scenarios) throw new Error("Choose one reel at a time.");
+const name = scenarios ? "scenarios" : studies ? "showoff" : "gallery";
+const duration = studies || scenarios ? 4 : 2;
+const entries = scenarios
   ? [
-      ["city", "MINIATURE WORLDS", 4],
-      ["precision", "EXPLODED ASSEMBLY", 3.5],
-      ["bloom", "KINETIC VECTOR ART", 6],
+      ["sports", "SPORTS BROADCAST", 1],
+      ["software", "SOFTWARE PRODUCT DEMO", 2.5],
+      ["citrus", "FOOD & DRINK CAMPAIGN", 7],
     ]
-  : [
-      ["journey", "ILLUSTRATED STORY", 4.5],
-      ["data-story", "DATA & REPORTS", 1.5],
-      ["kinetic", "PORTRAIT MOTION POSTER", 8.5],
-      ["cinema", "CINEMATIC TITLES", 4],
-      ["festival", "FESTIVE 3D", 1.5],
-      ["company", "COMPANY LAUNCH", 8.5],
-    ];
+  : studies
+    ? [
+        ["city", "MINIATURE WORLDS", 4],
+        ["precision", "EXPLODED ASSEMBLY", 3.5],
+        ["bloom", "KINETIC VECTOR ART", 6],
+      ]
+    : [
+        ["journey", "ILLUSTRATED STORY", 4.5],
+        ["data-story", "DATA & REPORTS", 1.5],
+        ["kinetic", "PORTRAIT MOTION POSTER", 8.5],
+        ["cinema", "CINEMATIC TITLES", 4],
+        ["festival", "FESTIVE 3D", 1.5],
+        ["company", "COMPANY LAUNCH", 8.5],
+      ];
 const run = (args) =>
   execFileSync("ffmpeg", ["-v", "error", "-y", ...args], { stdio: "pipe" });
 const fit =

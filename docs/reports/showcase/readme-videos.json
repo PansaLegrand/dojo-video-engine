@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "reels": [
+    {
+      "id": "gallery",
+      "title": "Creative directions",
+      "url": "https://github.com/user-attachments/assets/99fa44aa-1e46-4594-9938-7b8cfe312223",
+      "file": "docs/assets/showcase/gallery.mp4",
+      "sha256": "5d64e0ab38d02f7c0b36ca3afae79cc30498f24aafda26cac0b1a906858ed617",
+      "durationSeconds": 12,
+      "scenes": [
+        "journey",
+        "data-story",
+        "kinetic",
+        "cinema",
+        "festival",
+        "company"
+      ],
+      "selection": "User-approved reel"
+    },
+    {
+      "id": "showoff",
+      "title": "3D and vector detail",
+      "url": "https://github.com/user-attachments/assets/59f7b7d2-bb9c-442a-808c-8935aeec4de0",
+      "file": "docs/assets/showcase/showoff.mp4",
+      "sha256": "9410d76d38d15b5a4b0dc306c436489eb05e3fd16f196e328f18cf28c328553f",
+      "durationSeconds": 12,
+      "scenes": ["city", "precision", "bloom"],
+      "selection": "User-approved reel"
+    },
+    {
+      "id": "scenarios",
+      "title": "Real-world scenarios",
+      "url": "https://github.com/user-attachments/assets/088f91fb-d8a0-47d6-85c9-9e7665a116e9",
+      "file": "docs/assets/showcase/scenarios.mp4",
+      "sha256": "ca06c45d7dc33470220ffbefb31f87f096de1d58edbd7df0615db7a6622551c8",
+      "durationSeconds": 12,
+      "scenes": ["sports", "software", "citrus"],
+      "selection": "Scenario expansion requested for the README"
+    }
+  ]
+}

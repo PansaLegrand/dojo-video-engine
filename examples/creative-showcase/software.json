@@ -1,0 +1,6278 @@
+{
+  "schemaVersion": 1,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 360,
+  "assets": {},
+  "nodes": [
+    {
+      "id": "flow-collect",
+      "type": "div",
+      "from": 0,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "flow1-paper",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#F4F3EC"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-brandmark-a",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 38,
+            "backgroundColor": "#182E2A",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-brandmark-b",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 72,
+            "top": 38,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-brandmark-c",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 56,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-brand",
+          "type": "text",
+          "text": "flow",
+          "from": 0,
+          "style": {
+            "width": 200,
+            "height": 44.8,
+            "position": "absolute",
+            "left": 97,
+            "top": 34,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 32,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.8,
+            "maxLines": 1,
+            "minFontSize": 31,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-concept",
+          "type": "text",
+          "text": "CONCEPT INTERFACE",
+          "from": 0,
+          "style": {
+            "width": 300,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 925,
+            "top": 45,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-title",
+          "type": "text",
+          "text": "Bring good ideas into focus.",
+          "from": 0,
+          "style": {
+            "width": 880,
+            "height": 51.8,
+            "position": "absolute",
+            "left": 54,
+            "top": 94,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 37,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.2,
+            "maxLines": 1,
+            "minFontSize": 36,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-subtitle",
+          "type": "text",
+          "text": "01  /  ORGANIZE",
+          "from": 0,
+          "style": {
+            "width": 382,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 843,
+            "top": 109,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 0,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-footer",
+          "type": "text",
+          "text": "LESS FRICTION. MORE FLOW.",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 54,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow1-page",
+          "type": "text",
+          "text": "1 / 3",
+          "from": 0,
+          "style": {
+            "width": 90,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 1135,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-window",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1124,
+            "height": 490,
+            "position": "absolute",
+            "left": 78,
+            "top": 164,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 20,
+            "boxShadow": "0px 14px 30px rgba(24,46,42,0.12)"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-sidebar",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 205,
+            "height": 488,
+            "position": "absolute",
+            "left": 79,
+            "top": 165,
+            "backgroundColor": "#F7F9F6",
+            "borderTopLeftRadius": 20,
+            "borderBottomLeftRadius": 20
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-divider",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1,
+            "height": 488,
+            "position": "absolute",
+            "left": 284,
+            "top": 165,
+            "backgroundColor": "#DCE5DF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-toolbar-line",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 916,
+            "height": 1,
+            "position": "absolute",
+            "left": 285,
+            "top": 218,
+            "backgroundColor": "#DCE5DF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-dot-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 100,
+            "top": 185,
+            "backgroundColor": "#E9B9A7",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-dot-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 117,
+            "top": 185,
+            "backgroundColor": "#E9D5A7",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-dot-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 134,
+            "top": 185,
+            "backgroundColor": "#A9D2BB",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-workspace",
+          "type": "text",
+          "text": "Studio workspace",
+          "from": 0,
+          "style": {
+            "width": 150,
+            "height": 19.599999999999998,
+            "position": "absolute",
+            "left": 105,
+            "top": 229,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.2,
+            "maxLines": 1,
+            "minFontSize": 13,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-selected",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 174,
+            "height": 38,
+            "position": "absolute",
+            "left": 95,
+            "top": 269,
+            "backgroundColor": "#C2F4D5",
+            "borderRadius": 9
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-sidebar-icon",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 282,
+            "backgroundColor": "#287653",
+            "borderRadius": 3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-sidebar-current",
+          "type": "text",
+          "text": "Launch board",
+          "from": 0,
+          "style": {
+            "width": 127,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 281,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-icon-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 328,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 6
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-0",
+          "type": "text",
+          "text": "My tasks",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 325,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-icon-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 372,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-1",
+          "type": "text",
+          "text": "Calendar",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 369,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-icon-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 416,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 6
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-nav-2",
+          "type": "text",
+          "text": "Files",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 413,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-team-label",
+          "type": "text",
+          "text": "YOUR TEAM",
+          "from": 0,
+          "style": {
+            "width": 140,
+            "height": 14,
+            "position": "absolute",
+            "left": 109,
+            "top": 488,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 1.8,
+            "maxLines": 1,
+            "minFontSize": 9,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-team-m",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "collect-team-m-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 107,
+                "top": 514,
+                "backgroundColor": "#D9D1F3",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-team-m-letter",
+              "type": "text",
+              "text": "M",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 107,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-team-a",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "collect-team-a-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 130,
+                "top": 514,
+                "backgroundColor": "#C2F4D5",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-team-a-letter",
+              "type": "text",
+              "text": "A",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 130,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-team-j",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "collect-team-j-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 153,
+                "top": 514,
+                "backgroundColor": "#FFD7B8",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-team-j-letter",
+              "type": "text",
+              "text": "J",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 153,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-team-note",
+          "type": "text",
+          "text": "Better, together.",
+          "from": 0,
+          "style": {
+            "width": 150,
+            "height": 16.799999999999997,
+            "position": "absolute",
+            "left": 107,
+            "top": 557,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 12,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.30000000000000004,
+            "maxLines": 1,
+            "minFontSize": 11,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-breadcrumb",
+          "type": "text",
+          "text": "Projects  /  Spring launch",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 313,
+            "top": 185,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "collect-profile",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "collect-profile-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 27,
+                "height": 27,
+                "position": "absolute",
+                "left": 1150,
+                "top": 177,
+                "backgroundColor": "#D9D1F3",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13.5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-profile-letter",
+              "type": "text",
+              "text": "M",
+              "from": 0,
+              "style": {
+                "width": 27,
+                "height": 15.12,
+                "position": "absolute",
+                "left": 1150,
+                "top": 183.21,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.8,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.27,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.8,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-board-title",
+          "type": "text",
+          "text": "Spring launch",
+          "from": 0,
+          "style": {
+            "width": 500,
+            "height": 35,
+            "position": "absolute",
+            "left": 315,
+            "top": 239,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 25,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.625,
+            "maxLines": 1,
+            "minFontSize": 24,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "organized-columns",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0.18
+                },
+                {
+                  "frame": 41,
+                  "value": 0.18
+                },
+                {
+                  "frame": 69,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "todo-column",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "todo-column-area",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 254,
+                    "height": 330,
+                    "position": "absolute",
+                    "left": 313,
+                    "top": 292,
+                    "backgroundColor": "#F3F7F3",
+                    "borderRadius": 12
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "todo-column-state",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 7,
+                    "height": 7,
+                    "position": "absolute",
+                    "left": 327,
+                    "top": 308,
+                    "backgroundColor": "#D9D1F3",
+                    "borderRadius": 4
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "todo-column-label",
+                  "type": "text",
+                  "text": "Ideas",
+                  "from": 0,
+                  "style": {
+                    "width": 160,
+                    "height": 18.2,
+                    "position": "absolute",
+                    "left": 342,
+                    "top": 303,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 13,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.325,
+                    "maxLines": 1,
+                    "minFontSize": 12,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "todo-column-count",
+                  "type": "text",
+                  "text": "2",
+                  "from": 0,
+                  "style": {
+                    "width": 25,
+                    "height": 16.799999999999997,
+                    "position": "absolute",
+                    "left": 526,
+                    "top": 304,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 12,
+                    "fontWeight": 600,
+                    "color": "#76867E",
+                    "lineHeight": 1.1,
+                    "letterSpacing": 0,
+                    "textAlign": "right",
+                    "maxLines": 1,
+                    "minFontSize": 11,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "doing-column",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "doing-column-area",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 254,
+                    "height": 330,
+                    "position": "absolute",
+                    "left": 584,
+                    "top": 292,
+                    "backgroundColor": "#F3F7F3",
+                    "borderRadius": 12
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "doing-column-state",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 7,
+                    "height": 7,
+                    "position": "absolute",
+                    "left": 598,
+                    "top": 308,
+                    "backgroundColor": "#DCA975",
+                    "borderRadius": 4
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "doing-column-label",
+                  "type": "text",
+                  "text": "In progress",
+                  "from": 0,
+                  "style": {
+                    "width": 160,
+                    "height": 18.2,
+                    "position": "absolute",
+                    "left": 613,
+                    "top": 303,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 13,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.325,
+                    "maxLines": 1,
+                    "minFontSize": 12,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "doing-column-count",
+                  "type": "text",
+                  "text": "2",
+                  "from": 0,
+                  "style": {
+                    "width": 25,
+                    "height": 16.799999999999997,
+                    "position": "absolute",
+                    "left": 797,
+                    "top": 304,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 12,
+                    "fontWeight": 600,
+                    "color": "#76867E",
+                    "lineHeight": 1.1,
+                    "letterSpacing": 0,
+                    "textAlign": "right",
+                    "maxLines": 1,
+                    "minFontSize": 11,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "done-column",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "done-column-area",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 254,
+                    "height": 330,
+                    "position": "absolute",
+                    "left": 855,
+                    "top": 292,
+                    "backgroundColor": "#F3F7F3",
+                    "borderRadius": 12
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "done-column-state",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 7,
+                    "height": 7,
+                    "position": "absolute",
+                    "left": 869,
+                    "top": 308,
+                    "backgroundColor": "#287653",
+                    "borderRadius": 4
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "done-column-label",
+                  "type": "text",
+                  "text": "Ready to share",
+                  "from": 0,
+                  "style": {
+                    "width": 160,
+                    "height": 18.2,
+                    "position": "absolute",
+                    "left": 884,
+                    "top": 303,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 13,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.325,
+                    "maxLines": 1,
+                    "minFontSize": 12,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "done-column-count",
+                  "type": "text",
+                  "text": "1",
+                  "from": 0,
+                  "style": {
+                    "width": 25,
+                    "height": 16.799999999999997,
+                    "position": "absolute",
+                    "left": 1068,
+                    "top": 304,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 12,
+                    "fontWeight": 600,
+                    "color": "#76867E",
+                    "lineHeight": 1.1,
+                    "letterSpacing": 0,
+                    "textAlign": "right",
+                    "maxLines": 1,
+                    "minFontSize": 11,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "organize-button",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(1)"
+                },
+                {
+                  "frame": 35,
+                  "value": "scale(1)"
+                },
+                {
+                  "frame": 40,
+                  "value": "scale(0.985)"
+                },
+                {
+                  "frame": 46,
+                  "value": "scale(1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "organize-button-bg",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 166,
+                "height": 35,
+                "position": "absolute",
+                "left": 1004,
+                "top": 235,
+                "backgroundColor": "#182E2A",
+                "borderRadius": 9
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "organize-button-label",
+              "type": "text",
+              "text": "Organize board",
+              "from": 0,
+              "style": {
+                "width": 142,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 1016,
+                "top": 245,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 600,
+                "color": "#FFFFFF",
+                "lineHeight": 1.1,
+                "letterSpacing": 0.1,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-card-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 324,
+            "top": 337,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(61px, 13px) rotate(-6deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(61px, 13px) rotate(-6deg)"
+                },
+                {
+                  "frame": 83,
+                  "value": "translate(0px, 0px) rotate(0deg)",
+                  "easing": "cubic-bezier(0.18, 0.85, 0.25, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-card-1-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-1-title",
+              "type": "text",
+              "text": "Customer notes",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-1-tagline",
+              "type": "text",
+              "text": "Gather the little insights",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-1-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "collect-card-1-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#D9D1F3",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "collect-card-1-avatar-letter",
+                  "type": "text",
+                  "text": "M",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "collect-card-1-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-1-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-card-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 324,
+            "top": 462,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(326px, -24px) rotate(5deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(326px, -24px) rotate(5deg)"
+                },
+                {
+                  "frame": 83,
+                  "value": "translate(0px, 0px) rotate(0deg)",
+                  "easing": "cubic-bezier(0.18, 0.85, 0.25, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-card-2-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#FFD7B8",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-2-title",
+              "type": "text",
+              "text": "Brand direction",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-2-tagline",
+              "type": "text",
+              "text": "A starting point for the team",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-2-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "collect-card-2-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#FFD7B8",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "collect-card-2-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "collect-card-2-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-2-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-card-3",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 595,
+            "top": 337,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-50px, -7px) rotate(4deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(-50px, -7px) rotate(4deg)"
+                },
+                {
+                  "frame": 83,
+                  "value": "translate(0px, 0px) rotate(0deg)",
+                  "easing": "cubic-bezier(0.18, 0.85, 0.25, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-card-3-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#C2F4D5",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-3-title",
+              "type": "text",
+              "text": "Launch page",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-3-tagline",
+              "type": "text",
+              "text": "Shape the first impression",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-3-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "collect-card-3-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#C2F4D5",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "collect-card-3-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "collect-card-3-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-3-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-card-4",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 595,
+            "top": 462,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(285px, -38px) rotate(-7deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(285px, -38px) rotate(-7deg)"
+                },
+                {
+                  "frame": 83,
+                  "value": "translate(0px, 0px) rotate(0deg)",
+                  "easing": "cubic-bezier(0.18, 0.85, 0.25, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-card-4-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-4-title",
+              "type": "text",
+              "text": "Story & copy",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-4-tagline",
+              "type": "text",
+              "text": "Find the words that fit",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-4-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "collect-card-4-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#D9D1F3",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "collect-card-4-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "collect-card-4-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-4-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-card-5",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 866,
+            "top": 337,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-60px, -35px) rotate(6deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(-60px, -35px) rotate(6deg)"
+                },
+                {
+                  "frame": 83,
+                  "value": "translate(0px, 0px) rotate(0deg)",
+                  "easing": "cubic-bezier(0.18, 0.85, 0.25, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-card-5-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#FFD7B8",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-5-title",
+              "type": "text",
+              "text": "Team checklist",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-5-tagline",
+              "type": "text",
+              "text": "Make the next step clear",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-5-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "collect-card-5-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#FFD7B8",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "collect-card-5-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "collect-card-5-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-card-5-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "collect-cursor",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 100,
+            "height": 60,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(1140px, 578px)"
+                },
+                {
+                  "frame": 20,
+                  "value": "translate(1140px, 578px)"
+                },
+                {
+                  "frame": 35,
+                  "value": "translate(1100px, 252px)",
+                  "easing": "easeInOut"
+                },
+                {
+                  "frame": 48,
+                  "value": "translate(1100px, 252px)"
+                },
+                {
+                  "frame": 94,
+                  "value": "translate(1127px, 599px)",
+                  "easing": "easeInOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "collect-cursor-pointer",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M1 1 L1 30 L8 23 L14 35 L19 32 L13 21 L27 21 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 30,
+                  "height": 38
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 30,
+                "height": 38,
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "fill": "#182E2A",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.5,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-cursor-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 57,
+                "height": 24,
+                "position": "absolute",
+                "left": 22,
+                "top": 31,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 6
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "collect-cursor-name",
+              "type": "text",
+              "text": "Mia",
+              "from": 0,
+              "style": {
+                "width": 45,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 28,
+                "top": 36,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "organize-click",
+          "type": "div",
+          "from": 38,
+          "duration": 18,
+          "style": {
+            "width": 24,
+            "height": 24,
+            "position": "absolute",
+            "left": 1088,
+            "top": 240,
+            "backgroundColor": "transparent",
+            "border": "2px solid #287653",
+            "borderRadius": 12
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.4)"
+                },
+                {
+                  "frame": 17,
+                  "value": "scale(2)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 1
+                },
+                {
+                  "frame": 17,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "flow-collaborate",
+      "type": "div",
+      "from": 120,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "flow2-paper",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#F4F3EC"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-brandmark-a",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 38,
+            "backgroundColor": "#182E2A",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-brandmark-b",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 72,
+            "top": 38,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-brandmark-c",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 56,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-brand",
+          "type": "text",
+          "text": "flow",
+          "from": 0,
+          "style": {
+            "width": 200,
+            "height": 44.8,
+            "position": "absolute",
+            "left": 97,
+            "top": 34,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 32,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.8,
+            "maxLines": 1,
+            "minFontSize": 31,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-concept",
+          "type": "text",
+          "text": "CONCEPT INTERFACE",
+          "from": 0,
+          "style": {
+            "width": 300,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 925,
+            "top": 45,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-title",
+          "type": "text",
+          "text": "Move forward, together.",
+          "from": 0,
+          "style": {
+            "width": 880,
+            "height": 51.8,
+            "position": "absolute",
+            "left": 54,
+            "top": 94,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 37,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.2,
+            "maxLines": 1,
+            "minFontSize": 36,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-subtitle",
+          "type": "text",
+          "text": "02  /  COLLABORATE",
+          "from": 0,
+          "style": {
+            "width": 382,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 843,
+            "top": 109,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 0,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-footer",
+          "type": "text",
+          "text": "LESS FRICTION. MORE FLOW.",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 54,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow2-page",
+          "type": "text",
+          "text": "2 / 3",
+          "from": 0,
+          "style": {
+            "width": 90,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 1135,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-window",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1124,
+            "height": 490,
+            "position": "absolute",
+            "left": 78,
+            "top": 164,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 20,
+            "boxShadow": "0px 14px 30px rgba(24,46,42,0.12)"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-sidebar",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 205,
+            "height": 488,
+            "position": "absolute",
+            "left": 79,
+            "top": 165,
+            "backgroundColor": "#F7F9F6",
+            "borderTopLeftRadius": 20,
+            "borderBottomLeftRadius": 20
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-divider",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1,
+            "height": 488,
+            "position": "absolute",
+            "left": 284,
+            "top": 165,
+            "backgroundColor": "#DCE5DF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-toolbar-line",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 916,
+            "height": 1,
+            "position": "absolute",
+            "left": 285,
+            "top": 218,
+            "backgroundColor": "#DCE5DF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-dot-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 100,
+            "top": 185,
+            "backgroundColor": "#E9B9A7",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-dot-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 117,
+            "top": 185,
+            "backgroundColor": "#E9D5A7",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-dot-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 8,
+            "height": 8,
+            "position": "absolute",
+            "left": 134,
+            "top": 185,
+            "backgroundColor": "#A9D2BB",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-workspace",
+          "type": "text",
+          "text": "Studio workspace",
+          "from": 0,
+          "style": {
+            "width": 150,
+            "height": 19.599999999999998,
+            "position": "absolute",
+            "left": 105,
+            "top": 229,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 14,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.2,
+            "maxLines": 1,
+            "minFontSize": 13,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-selected",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 174,
+            "height": 38,
+            "position": "absolute",
+            "left": 95,
+            "top": 269,
+            "backgroundColor": "#C2F4D5",
+            "borderRadius": 9
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-sidebar-icon",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 282,
+            "backgroundColor": "#287653",
+            "borderRadius": 3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-sidebar-current",
+          "type": "text",
+          "text": "Launch board",
+          "from": 0,
+          "style": {
+            "width": 127,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 281,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-icon-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 328,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 6
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-0",
+          "type": "text",
+          "text": "My tasks",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 325,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-icon-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 372,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 3
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-1",
+          "type": "text",
+          "text": "Calendar",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 369,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-icon-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 12,
+            "height": 12,
+            "position": "absolute",
+            "left": 109,
+            "top": 416,
+            "backgroundColor": "transparent",
+            "border": "1.5px solid #76867E",
+            "borderRadius": 6
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-nav-2",
+          "type": "text",
+          "text": "Files",
+          "from": 0,
+          "style": {
+            "width": 130,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 132,
+            "top": 413,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-team-label",
+          "type": "text",
+          "text": "YOUR TEAM",
+          "from": 0,
+          "style": {
+            "width": 140,
+            "height": 14,
+            "position": "absolute",
+            "left": 109,
+            "top": 488,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 10,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 1.8,
+            "maxLines": 1,
+            "minFontSize": 9,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-team-m",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-team-m-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 107,
+                "top": 514,
+                "backgroundColor": "#D9D1F3",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-team-m-letter",
+              "type": "text",
+              "text": "M",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 107,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-team-a",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-team-a-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 130,
+                "top": 514,
+                "backgroundColor": "#C2F4D5",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-team-a-letter",
+              "type": "text",
+              "text": "A",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 130,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-team-j",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-team-j-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 153,
+                "top": 514,
+                "backgroundColor": "#FFD7B8",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-team-j-letter",
+              "type": "text",
+              "text": "J",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 14.559999999999999,
+                "position": "absolute",
+                "left": 153,
+                "top": 519.98,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.4,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.26,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.4,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-team-note",
+          "type": "text",
+          "text": "Better, together.",
+          "from": 0,
+          "style": {
+            "width": 150,
+            "height": 16.799999999999997,
+            "position": "absolute",
+            "left": 107,
+            "top": 557,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 12,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.30000000000000004,
+            "maxLines": 1,
+            "minFontSize": 11,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-breadcrumb",
+          "type": "text",
+          "text": "Projects  /  Spring launch",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 313,
+            "top": 185,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.325,
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-profile",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-profile-circle",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 27,
+                "height": 27,
+                "position": "absolute",
+                "left": 1150,
+                "top": 177,
+                "backgroundColor": "#D9D1F3",
+                "border": "2px solid #FFFFFF",
+                "borderRadius": 13.5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-profile-letter",
+              "type": "text",
+              "text": "M",
+              "from": 0,
+              "style": {
+                "width": 27,
+                "height": 15.12,
+                "position": "absolute",
+                "left": 1150,
+                "top": 183.21,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 10.8,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.27,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 9.8,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-board-title",
+          "type": "text",
+          "text": "Spring launch",
+          "from": 0,
+          "style": {
+            "width": 500,
+            "height": 35,
+            "position": "absolute",
+            "left": 315,
+            "top": 239,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 25,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.625,
+            "maxLines": 1,
+            "minFontSize": 24,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-background-ideas",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-background-ideas-area",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 254,
+                "height": 330,
+                "position": "absolute",
+                "left": 313,
+                "top": 292,
+                "backgroundColor": "#F3F7F3",
+                "borderRadius": 12
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ideas-state",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 7,
+                "height": 7,
+                "position": "absolute",
+                "left": 327,
+                "top": 308,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ideas-label",
+              "type": "text",
+              "text": "Ideas",
+              "from": 0,
+              "style": {
+                "width": 160,
+                "height": 18.2,
+                "position": "absolute",
+                "left": 342,
+                "top": 303,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.325,
+                "maxLines": 1,
+                "minFontSize": 12,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ideas-count",
+              "type": "text",
+              "text": "2",
+              "from": 0,
+              "style": {
+                "width": 25,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 526,
+                "top": 304,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 600,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "right",
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-background-doing",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-background-doing-area",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 254,
+                "height": 330,
+                "position": "absolute",
+                "left": 584,
+                "top": 292,
+                "backgroundColor": "#F3F7F3",
+                "borderRadius": 12
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-doing-state",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 7,
+                "height": 7,
+                "position": "absolute",
+                "left": 598,
+                "top": 308,
+                "backgroundColor": "#DCA975",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-doing-label",
+              "type": "text",
+              "text": "In progress",
+              "from": 0,
+              "style": {
+                "width": 160,
+                "height": 18.2,
+                "position": "absolute",
+                "left": 613,
+                "top": 303,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.325,
+                "maxLines": 1,
+                "minFontSize": 12,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-doing-count",
+              "type": "text",
+              "text": "1",
+              "from": 0,
+              "style": {
+                "width": 25,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 797,
+                "top": 304,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 600,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "right",
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-background-ready",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-background-ready-area",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 254,
+                "height": 330,
+                "position": "absolute",
+                "left": 855,
+                "top": 292,
+                "backgroundColor": "#F3F7F3",
+                "borderRadius": 12
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ready-state",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 7,
+                "height": 7,
+                "position": "absolute",
+                "left": 869,
+                "top": 308,
+                "backgroundColor": "#287653",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ready-label",
+              "type": "text",
+              "text": "Ready to share",
+              "from": 0,
+              "style": {
+                "width": 160,
+                "height": 18.2,
+                "position": "absolute",
+                "left": 884,
+                "top": 303,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.325,
+                "maxLines": 1,
+                "minFontSize": 12,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-ready-count",
+              "type": "text",
+              "text": "2",
+              "from": 0,
+              "style": {
+                "width": 25,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 1068,
+                "top": 304,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 600,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "right",
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-background-card-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 324,
+            "top": 337,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-background-card-1-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-1-title",
+              "type": "text",
+              "text": "Customer notes",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-1-tagline",
+              "type": "text",
+              "text": "Gather the little insights",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-1-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-background-card-1-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#D9D1F3",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-background-card-1-avatar-letter",
+                  "type": "text",
+                  "text": "M",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "review-background-card-1-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-1-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-background-card-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 232,
+            "height": 112,
+            "position": "absolute",
+            "left": 324,
+            "top": 462,
+            "backgroundColor": "#FFFFFF",
+            "border": "1px solid #DCE5DF",
+            "borderRadius": 12,
+            "boxShadow": "0px 5px 10px rgba(24,46,42,0.05)"
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "review-background-card-2-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 52,
+                "height": 5,
+                "position": "absolute",
+                "left": 14,
+                "top": 13,
+                "backgroundColor": "#FFD7B8",
+                "borderRadius": 3
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-2-title",
+              "type": "text",
+              "text": "Brand direction",
+              "from": 0,
+              "style": {
+                "width": 204,
+                "height": 25.2,
+                "position": "absolute",
+                "left": 14,
+                "top": 30,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 18,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.5,
+                "maxLines": 1,
+                "minFontSize": 17,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-2-tagline",
+              "type": "text",
+              "text": "A starting point for the team",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 14,
+                "top": 61,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-2-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-background-card-2-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 18,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 83,
+                    "backgroundColor": "#FFD7B8",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 9
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-background-card-2-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 18,
+                    "height": 10.08,
+                    "position": "absolute",
+                    "left": 14,
+                    "top": 87.14,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 7.2,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.18000000000000002,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 6.2,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "review-background-card-2-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 55,
+                "height": 4,
+                "position": "absolute",
+                "left": 43,
+                "top": 89,
+                "backgroundColor": "#E8EDE8",
+                "borderRadius": 2
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-background-card-2-check-box",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 15,
+                "height": 15,
+                "position": "absolute",
+                "left": 199,
+                "top": 85,
+                "backgroundColor": "transparent",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 4
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "review-dim",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 916,
+            "height": 434,
+            "position": "absolute",
+            "left": 285,
+            "top": 219,
+            "backgroundColor": "rgba(24,46,42,0.10)",
+            "borderBottomRightRadius": 20
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "review-dialog",
+          "type": "div",
+          "from": 0,
+          "duration": 76,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 22px)"
+                },
+                {
+                  "frame": 6,
+                  "value": "translate(0px, 22px)"
+                },
+                {
+                  "frame": 24,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 6,
+                  "value": 0
+                },
+                {
+                  "frame": 24,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "review-dialog-body",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 578,
+                "height": 321,
+                "position": "absolute",
+                "left": 542,
+                "top": 259,
+                "backgroundColor": "#FFFFFF",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 17,
+                "boxShadow": "0px 16px 40px rgba(24,46,42,0.18)"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-dialog-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-dialog-tag-bg",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 72,
+                    "height": 26,
+                    "position": "absolute",
+                    "left": 567,
+                    "top": 280,
+                    "backgroundColor": "#D9D1F3",
+                    "borderRadius": 13
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-dialog-tag-text",
+                  "type": "text",
+                  "text": "REVIEW",
+                  "from": 0,
+                  "style": {
+                    "width": 52,
+                    "height": 15.399999999999999,
+                    "position": "absolute",
+                    "left": 577,
+                    "top": 286,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 11,
+                    "fontWeight": 600,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": 0.3,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 10,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "review-dialog-title",
+              "type": "text",
+              "text": "Launch page",
+              "from": 0,
+              "style": {
+                "width": 500,
+                "height": 42,
+                "position": "absolute",
+                "left": 567,
+                "top": 321,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 30,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.8,
+                "maxLines": 1,
+                "minFontSize": 29,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-dialog-description",
+              "type": "text",
+              "text": "The details are ready. Bring the team in.",
+              "from": 0,
+              "style": {
+                "width": 500,
+                "height": 21,
+                "position": "absolute",
+                "left": 567,
+                "top": 366,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 15,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.1,
+                "maxLines": 1,
+                "minFontSize": 14,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-comment-bg",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 526,
+                "height": 61,
+                "position": "absolute",
+                "left": 567,
+                "top": 409,
+                "backgroundColor": "#F4F7F3",
+                "borderRadius": 11
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-comment-avatar",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-comment-avatar-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 30,
+                    "height": 30,
+                    "position": "absolute",
+                    "left": 580,
+                    "top": 422,
+                    "backgroundColor": "#C2F4D5",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 15
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-comment-avatar-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 30,
+                    "height": 16.799999999999997,
+                    "position": "absolute",
+                    "left": 580,
+                    "top": 428.9,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 12,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.30000000000000004,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 11,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "review-comment-author",
+              "type": "text",
+              "text": "Alex",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 622,
+                "top": 420,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.30000000000000004,
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-comment-message",
+              "type": "text",
+              "text": "Love the direction. Ready to share.",
+              "from": 0,
+              "style": {
+                "width": 450,
+                "height": 18.2,
+                "position": "absolute",
+                "left": 622,
+                "top": 440,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 13,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.1,
+                "maxLines": 1,
+                "minFontSize": 12,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-approval-label",
+              "type": "text",
+              "text": "Final check",
+              "from": 0,
+              "style": {
+                "width": 210,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 567,
+                "top": 515,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-approver-m",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-approver-m-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 27,
+                    "height": 27,
+                    "position": "absolute",
+                    "left": 646,
+                    "top": 505,
+                    "backgroundColor": "#D9D1F3",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 13.5
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-approver-m-letter",
+                  "type": "text",
+                  "text": "M",
+                  "from": 0,
+                  "style": {
+                    "width": 27,
+                    "height": 15.12,
+                    "position": "absolute",
+                    "left": 646,
+                    "top": 511.21,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 10.8,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.27,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 9.8,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "review-approver-a",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "review-approver-a-circle",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 27,
+                    "height": 27,
+                    "position": "absolute",
+                    "left": 669,
+                    "top": 505,
+                    "backgroundColor": "#C2F4D5",
+                    "border": "2px solid #FFFFFF",
+                    "borderRadius": 13.5
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "review-approver-a-letter",
+                  "type": "text",
+                  "text": "A",
+                  "from": 0,
+                  "style": {
+                    "width": 27,
+                    "height": 15.12,
+                    "position": "absolute",
+                    "left": 669,
+                    "top": 511.21,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 10.8,
+                    "fontWeight": 700,
+                    "color": "#182E2A",
+                    "lineHeight": 1.1,
+                    "letterSpacing": -0.27,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 9.8,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "approve-button",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 162,
+                "height": 42,
+                "position": "absolute",
+                "left": 931,
+                "top": 500,
+                "backgroundColor": "#182E2A",
+                "borderRadius": 11
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approve-button-label",
+              "type": "text",
+              "text": "Approve & share",
+              "from": 0,
+              "style": {
+                "width": 142,
+                "height": 16.799999999999997,
+                "position": "absolute",
+                "left": 941,
+                "top": 514,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 12,
+                "fontWeight": 600,
+                "color": "#FFFFFF",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 11,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "approval-success",
+          "type": "div",
+          "from": 76,
+          "duration": 44,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 10,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.97)"
+                },
+                {
+                  "frame": 14,
+                  "value": "scale(1)",
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "approval-success-bg",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 578,
+                "height": 321,
+                "position": "absolute",
+                "left": 542,
+                "top": 259,
+                "backgroundColor": "#FFFFFF",
+                "border": "1px solid #DCE5DF",
+                "borderRadius": 17,
+                "boxShadow": "0px 16px 40px rgba(24,46,42,0.18)"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approval-success-icon",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 90,
+                "height": 90,
+                "position": "absolute",
+                "left": 784,
+                "top": 304,
+                "backgroundColor": "#C2F4D5",
+                "borderRadius": 45
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approval-success-check",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 7.56 21 L 16.8 29.82 L 34.44 10.08",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 42,
+                  "height": 42
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 42,
+                "height": 42,
+                "position": "absolute",
+                "left": 808,
+                "top": 328,
+                "fill": "transparent",
+                "stroke": "#287653",
+                "strokeWidth": 4.2,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approval-success-title",
+              "type": "text",
+              "text": "Everyone is on the same page.",
+              "from": 0,
+              "style": {
+                "width": 525,
+                "height": 33.599999999999994,
+                "position": "absolute",
+                "left": 568,
+                "top": 421,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 24,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": -0.7,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 23,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approval-success-note",
+              "type": "text",
+              "text": "Launch page approved and ready to share.",
+              "from": 0,
+              "style": {
+                "width": 525,
+                "height": 19.599999999999998,
+                "position": "absolute",
+                "left": 568,
+                "top": 462,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 14,
+                "fontWeight": 400,
+                "color": "#76867E",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 13,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "approval-success-status",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "position": "absolute",
+                "inset": 0
+              },
+              "animations": [],
+              "children": [
+                {
+                  "id": "approval-success-status-bg",
+                  "type": "div",
+                  "from": 0,
+                  "style": {
+                    "width": 127,
+                    "height": 26,
+                    "position": "absolute",
+                    "left": 766,
+                    "top": 514,
+                    "backgroundColor": "#C2F4D5",
+                    "borderRadius": 13
+                  },
+                  "animations": [],
+                  "children": []
+                },
+                {
+                  "id": "approval-success-status-text",
+                  "type": "text",
+                  "text": "APPROVED",
+                  "from": 0,
+                  "style": {
+                    "width": 107,
+                    "height": 15.399999999999999,
+                    "position": "absolute",
+                    "left": 776,
+                    "top": 520,
+                    "fontFamily": "Arial, Helvetica, sans-serif",
+                    "fontSize": 11,
+                    "fontWeight": 600,
+                    "color": "#287653",
+                    "lineHeight": 1.1,
+                    "letterSpacing": 0.3,
+                    "textAlign": "center",
+                    "maxLines": 1,
+                    "minFontSize": 10,
+                    "textFit": "shrink"
+                  },
+                  "animations": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "review-cursor",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 100,
+            "height": 60,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(1100px, 597px)"
+                },
+                {
+                  "frame": 30,
+                  "value": "translate(1100px, 597px)"
+                },
+                {
+                  "frame": 60,
+                  "value": "translate(1022px, 518px)",
+                  "easing": "easeInOut"
+                },
+                {
+                  "frame": 82,
+                  "value": "translate(1022px, 518px)"
+                },
+                {
+                  "frame": 105,
+                  "value": "translate(1154px, 598px)",
+                  "easing": "easeInOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "review-cursor-pointer",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M1 1 L1 30 L8 23 L14 35 L19 32 L13 21 L27 21 Z",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 30,
+                  "height": 38
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 30,
+                "height": 38,
+                "position": "absolute",
+                "left": 0,
+                "top": 0,
+                "fill": "#182E2A",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.5,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-cursor-tag",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 57,
+                "height": 24,
+                "position": "absolute",
+                "left": 22,
+                "top": 31,
+                "backgroundColor": "#D9D1F3",
+                "borderRadius": 6
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "review-cursor-name",
+              "type": "text",
+              "text": "Mia",
+              "from": 0,
+              "style": {
+                "width": 45,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 28,
+                "top": 36,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "approval-click",
+          "type": "div",
+          "from": 67,
+          "duration": 18,
+          "style": {
+            "width": 24,
+            "height": 24,
+            "position": "absolute",
+            "left": 1010,
+            "top": 506,
+            "backgroundColor": "transparent",
+            "border": "2px solid #287653",
+            "borderRadius": 12
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.4)"
+                },
+                {
+                  "frame": 17,
+                  "value": "scale(2)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 1
+                },
+                {
+                  "frame": 17,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "flow-ship",
+      "type": "div",
+      "from": 240,
+      "duration": 120,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "flow3-paper",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#C2F4D5"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-brandmark-a",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 38,
+            "backgroundColor": "#182E2A",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-brandmark-b",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 72,
+            "top": 38,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-brandmark-c",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 14,
+            "height": 14,
+            "position": "absolute",
+            "left": 54,
+            "top": 56,
+            "backgroundColor": "#287653",
+            "borderRadius": 4
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-brand",
+          "type": "text",
+          "text": "flow",
+          "from": 0,
+          "style": {
+            "width": 200,
+            "height": 44.8,
+            "position": "absolute",
+            "left": 97,
+            "top": 34,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 32,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.8,
+            "maxLines": 1,
+            "minFontSize": 31,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-concept",
+          "type": "text",
+          "text": "CONCEPT INTERFACE",
+          "from": 0,
+          "style": {
+            "width": 300,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 925,
+            "top": 45,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-title",
+          "type": "text",
+          "text": "",
+          "from": 0,
+          "style": {
+            "width": 880,
+            "height": 51.8,
+            "position": "absolute",
+            "left": 54,
+            "top": 94,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 37,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -1.2,
+            "maxLines": 1,
+            "minFontSize": 36,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-subtitle",
+          "type": "text",
+          "text": "03  /  SHIP",
+          "from": 0,
+          "style": {
+            "width": 382,
+            "height": 18.2,
+            "position": "absolute",
+            "left": 843,
+            "top": 109,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 13,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 0,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 12,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-footer",
+          "type": "text",
+          "text": "LESS FRICTION. MORE FLOW.",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 54,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "flow3-page",
+          "type": "text",
+          "text": "3 / 3",
+          "from": 0,
+          "style": {
+            "width": 90,
+            "height": 15.399999999999999,
+            "position": "absolute",
+            "left": 1135,
+            "top": 684,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 600,
+            "color": "#76867E",
+            "lineHeight": 1.1,
+            "letterSpacing": 2,
+            "textAlign": "right",
+            "maxLines": 1,
+            "minFontSize": 10,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-0",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 7,
+            "height": 7,
+            "position": "absolute",
+            "left": 840,
+            "top": 288,
+            "backgroundColor": "#287653",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-110.000px, 0.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(18.000px, 0.000px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-1",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 10,
+            "height": 18,
+            "position": "absolute",
+            "left": 843.5159698893431,
+            "top": 358.5,
+            "backgroundColor": "#D9D1F3",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-95.263px, -40.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(15.588px, 12.500px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-2",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 13,
+            "height": 7,
+            "position": "absolute",
+            "left": 775,
+            "top": 428.29611541307906,
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-55.000px, -69.282px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(9.000px, 21.651px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-3",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 7,
+            "height": 18,
+            "position": "absolute",
+            "left": 640,
+            "top": 408,
+            "backgroundColor": "#287653",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-0.000px, -80.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(0.000px, 25.000px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-4",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 10,
+            "height": 7,
+            "position": "absolute",
+            "left": 522.5,
+            "top": 410.10958193360585,
+            "backgroundColor": "#D9D1F3",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(55.000px, -69.282px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-9.000px, 21.651px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-5",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 13,
+            "height": 18,
+            "position": "absolute",
+            "left": 406.17314097820156,
+            "top": 369,
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(95.263px, -40.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-15.588px, 12.500px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-6",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 7,
+            "height": 7,
+            "position": "absolute",
+            "left": 440,
+            "top": 288,
+            "backgroundColor": "#287653",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(110.000px, -0.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-18.000px, 0.000px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-7",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 10,
+            "height": 18,
+            "position": "absolute",
+            "left": 436.4840301106569,
+            "top": 217.50000000000006,
+            "backgroundColor": "#D9D1F3",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(95.263px, 40.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-15.588px, -12.500px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-8",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 13,
+            "height": 7,
+            "position": "absolute",
+            "left": 504.9999999999999,
+            "top": 147.70388458692096,
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(55.000px, 69.282px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-9.000px, -21.651px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-9",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 7,
+            "height": 18,
+            "position": "absolute",
+            "left": 640,
+            "top": 168,
+            "backgroundColor": "#287653",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0.000px, 80.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(-0.000px, -25.000px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-10",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 10,
+            "height": 7,
+            "position": "absolute",
+            "left": 757.5,
+            "top": 165.89041806639415,
+            "backgroundColor": "#D9D1F3",
+            "borderRadius": 6
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-55.000px, 69.282px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(9.000px, -21.651px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-confetti-11",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 13,
+            "height": 18,
+            "position": "absolute",
+            "left": 873.8268590217983,
+            "top": 206.99999999999994,
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": 2
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(-95.263px, 40.000px) rotate(0deg)"
+                },
+                {
+                  "frame": 42,
+                  "value": "translate(0px, 0px) rotate(65deg)",
+                  "easing": "easeOut"
+                },
+                {
+                  "frame": 119,
+                  "value": "translate(15.588px, -12.500px) rotate(110deg)"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 0.9
+                },
+                {
+                  "frame": 95,
+                  "value": 0.9
+                },
+                {
+                  "frame": 119,
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-hero",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 16px)"
+                },
+                {
+                  "frame": 26,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 26,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "ship-icon-shadow",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 164,
+                "height": 164,
+                "position": "absolute",
+                "left": 558,
+                "top": 186,
+                "backgroundColor": "rgba(40,118,83,0.10)",
+                "borderRadius": 45,
+                "transform": "rotate(-9deg)"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-icon",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 164,
+                "height": 164,
+                "position": "absolute",
+                "left": 558,
+                "top": 174,
+                "backgroundColor": "#FFFFFF",
+                "borderRadius": 42,
+                "boxShadow": "0px 16px 28px rgba(40,118,83,0.12)"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-check",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 13.68 38 L 30.400000000000002 53.959999999999994 L 62.31999999999999 18.24",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 76,
+                  "height": 76
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 76,
+                "height": 76,
+                "position": "absolute",
+                "left": 602,
+                "top": 220,
+                "fill": "transparent",
+                "stroke": "#287653",
+                "strokeWidth": 7.6000000000000005,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "ship-title",
+          "type": "text",
+          "text": "Good work. Out in the world.",
+          "from": 0,
+          "style": {
+            "width": 1120,
+            "height": 79.8,
+            "position": "absolute",
+            "left": 80,
+            "top": 384,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 57,
+            "fontWeight": 700,
+            "color": "#182E2A",
+            "lineHeight": 1.1,
+            "letterSpacing": -2.5,
+            "textAlign": "center",
+            "maxLines": 1,
+            "minFontSize": 56,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 16px)"
+                },
+                {
+                  "frame": 12,
+                  "value": "translate(0px, 16px)"
+                },
+                {
+                  "frame": 36,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 12,
+                  "value": 0
+                },
+                {
+                  "frame": 36,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-note",
+          "type": "text",
+          "text": "From the first idea to a shared finish.",
+          "from": 0,
+          "style": {
+            "width": 880,
+            "height": 26.599999999999998,
+            "position": "absolute",
+            "left": 200,
+            "top": 460,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 19,
+            "fontWeight": 400,
+            "color": "#287653",
+            "lineHeight": 1.1,
+            "letterSpacing": -0.3,
+            "textAlign": "center",
+            "maxLines": 1,
+            "minFontSize": 18,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 16px)"
+                },
+                {
+                  "frame": 20,
+                  "value": "translate(0px, 16px)"
+                },
+                {
+                  "frame": 40,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 20,
+                  "value": 0
+                },
+                {
+                  "frame": 40,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "ship-pipeline",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 14px)"
+                },
+                {
+                  "frame": 24,
+                  "value": "translate(0px, 14px)"
+                },
+                {
+                  "frame": 46,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 24,
+                  "value": 0
+                },
+                {
+                  "frame": 46,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "ship-pipeline-line",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 670,
+                "height": 2,
+                "position": "absolute",
+                "left": 306,
+                "top": 534,
+                "backgroundColor": "#8ABDA1"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-dot-0",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 293,
+                "top": 522,
+                "backgroundColor": "#287653",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-check-0",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 2.88 8 L 6.4 11.36 L 13.12 3.84",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 16,
+                  "height": 16
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 16,
+                "height": 16,
+                "position": "absolute",
+                "left": 298,
+                "top": 527,
+                "fill": "transparent",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.6,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-label-0",
+              "type": "text",
+              "text": "Ideas",
+              "from": 0,
+              "style": {
+                "width": 150,
+                "height": 19.599999999999998,
+                "position": "absolute",
+                "left": 230,
+                "top": 564,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 14,
+                "fontWeight": 400,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 13,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-dot-1",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 516,
+                "top": 522,
+                "backgroundColor": "#287653",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-check-1",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 2.88 8 L 6.4 11.36 L 13.12 3.84",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 16,
+                  "height": 16
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 16,
+                "height": 16,
+                "position": "absolute",
+                "left": 521,
+                "top": 527,
+                "fill": "transparent",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.6,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-label-1",
+              "type": "text",
+              "text": "In progress",
+              "from": 0,
+              "style": {
+                "width": 150,
+                "height": 19.599999999999998,
+                "position": "absolute",
+                "left": 453,
+                "top": 564,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 14,
+                "fontWeight": 400,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 13,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-dot-2",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 739,
+                "top": 522,
+                "backgroundColor": "#287653",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-check-2",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 2.88 8 L 6.4 11.36 L 13.12 3.84",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 16,
+                  "height": 16
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 16,
+                "height": 16,
+                "position": "absolute",
+                "left": 744,
+                "top": 527,
+                "fill": "transparent",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.6,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-label-2",
+              "type": "text",
+              "text": "Approved",
+              "from": 0,
+              "style": {
+                "width": 150,
+                "height": 19.599999999999998,
+                "position": "absolute",
+                "left": 676,
+                "top": 564,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 14,
+                "fontWeight": 400,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 13,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-dot-3",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 26,
+                "height": 26,
+                "position": "absolute",
+                "left": 962,
+                "top": 522,
+                "backgroundColor": "#182E2A",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-check-3",
+              "type": "shape",
+              "shape": {
+                "kind": "path",
+                "d": "M 2.88 8 L 6.4 11.36 L 13.12 3.84",
+                "viewBox": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 16,
+                  "height": 16
+                }
+              },
+              "from": 0,
+              "style": {
+                "width": 16,
+                "height": 16,
+                "position": "absolute",
+                "left": 967,
+                "top": 527,
+                "fill": "transparent",
+                "stroke": "#FFFFFF",
+                "strokeWidth": 1.6,
+                "strokeLineCap": "round",
+                "strokeLineJoin": "round"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-pipeline-label-3",
+              "type": "text",
+              "text": "Shipped",
+              "from": 0,
+              "style": {
+                "width": 150,
+                "height": 19.599999999999998,
+                "position": "absolute",
+                "left": 899,
+                "top": 564,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 14,
+                "fontWeight": 700,
+                "color": "#182E2A",
+                "lineHeight": 1.1,
+                "letterSpacing": 0,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 13,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "ship-badge",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "ship-badge-bg",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 308,
+                "height": 26,
+                "position": "absolute",
+                "left": 486,
+                "top": 615,
+                "backgroundColor": "#FFFFFF",
+                "borderRadius": 13
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "ship-badge-text",
+              "type": "text",
+              "text": "MADE POSSIBLE TOGETHER",
+              "from": 0,
+              "style": {
+                "width": 288,
+                "height": 15.399999999999999,
+                "position": "absolute",
+                "left": 496,
+                "top": 621,
+                "fontFamily": "Arial, Helvetica, sans-serif",
+                "fontSize": 11,
+                "fontWeight": 600,
+                "color": "#287653",
+                "lineHeight": 1.1,
+                "letterSpacing": 0.3,
+                "textAlign": "center",
+                "maxLines": 1,
+                "minFontSize": 10,
+                "textFit": "shrink"
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
