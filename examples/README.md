@@ -1,5 +1,15 @@
 # Examples
 
+## Creative showcase
+
+Start with a finished design: **[Nine creative studies](creative-showcase/README.md)**
+cover illustrated stories, data reports, portrait motion posters, cinematic titles,
+festive 3D, company launches, miniature cities, exploded assemblies and kinetic vector art. Each film is an original editable 12-second scene.
+They include full MP4s, animated previews, source code and a reproducible renderer.
+Use them for an event announcement, a company launch or your own visual direction.
+
+## Editing tutorials
+
 Start with a concrete workflow:
 
 | Use case                                       | Example                                                                                                                      | Expected result                                                                                |

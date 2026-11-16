@@ -9,6 +9,14 @@ audio and graphics into an editable Scene, preview any frame, and export MP4 in
 a compatible browser. Dojo Video Engine is the MIT-licensed rendering foundation
 used by DojoClip and the local Dojo Video Harness.
 
+## Made with Dojo
+
+https://github.com/user-attachments/assets/99fa44aa-1e46-4594-9938-7b8cfe312223
+
+A 12-second showcase of illustrated stories, data animation, kinetic typography
+and editable 3D. **[Explore the examples and make them yours →](examples/creative-showcase/README.md)**
+The original scenes stay editable; no API keys are needed to render them.
+
 **Want to make a video now? [Try the hosted DojoClip editor](https://dojoclip.com/en/applications/video-edit-ai).**
 Use the timeline or chat, with managed accounts and online services. AI and cloud
 operations follow the product's account and credit requirements.
