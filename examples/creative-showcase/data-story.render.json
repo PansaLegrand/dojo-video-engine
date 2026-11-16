@@ -1,0 +1,115 @@
+{
+  "title": "Field Notes",
+  "source": "data-story.mjs",
+  "sceneSha256": "0514c0bc94f63105a41a26a54670686318cae12e16a2f9ec93aa0244e3728b38",
+  "engine": "1.2.3",
+  "browser": "148.0.7778.96",
+  "platform": "darwin/arm64",
+  "frames": [
+    0,
+    30,
+    80,
+    145,
+    200,
+    275,
+    330,
+    359
+  ],
+  "codec": "avc",
+  "verification": {
+    "mode": "sampled",
+    "status": "verified",
+    "expectation": {
+      "width": 1280,
+      "height": 720,
+      "durationSeconds": 12,
+      "hasAudio": false,
+      "requireAudibleAudio": false,
+      "fps": 30
+    },
+    "requestMetadata": {
+      "source": "blob",
+      "byteLength": 1171109,
+      "mimeType": "video/mp4"
+    },
+    "checks": [
+      {
+        "id": "container_readable",
+        "status": "passed",
+        "message": "The output container was parsed successfully."
+      },
+      {
+        "id": "video_track_present",
+        "status": "passed",
+        "message": "A primary video track is present."
+      },
+      {
+        "id": "video_dimensions_match",
+        "status": "passed",
+        "message": "Video display dimensions match the export request.",
+        "expected": {
+          "width": 1280,
+          "height": 720
+        },
+        "actual": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      {
+        "id": "video_duration_match",
+        "status": "passed",
+        "message": "Video duration is within one composition frame of the request.",
+        "expected": 12,
+        "actual": 12
+      },
+      {
+        "id": "audio_track_presence_match",
+        "status": "passed",
+        "message": "No unexpected audio track is present.",
+        "expected": false,
+        "actual": false
+      },
+      {
+        "id": "audio_video_sync",
+        "status": "skipped",
+        "message": "This check was not reached for the selected verification path."
+      },
+      {
+        "id": "video_frames_decoded",
+        "status": "passed",
+        "message": "Decoded 3 bounded representative video frame(s).",
+        "actual": 3
+      },
+      {
+        "id": "video_frame_nonblank",
+        "status": "passed",
+        "message": "At least one representative video frame contains nonblank pixels."
+      },
+      {
+        "id": "audio_samples_decoded",
+        "status": "skipped",
+        "message": "This check was not reached for the selected verification path."
+      },
+      {
+        "id": "audio_audible",
+        "status": "skipped",
+        "message": "This check was not reached for the selected verification path."
+      },
+      {
+        "id": "resources_disposed",
+        "status": "passed",
+        "message": "Verification input and decoder resources were disposed."
+      }
+    ],
+    "issues": []
+  },
+  "decoded": {
+    "codec_name": "h264",
+    "width": 1280,
+    "height": 720,
+    "duration": "12.000000",
+    "nb_read_frames": "360"
+  },
+  "audio": "Silent motion study; no audio track authored."
+}

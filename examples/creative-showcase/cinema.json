@@ -1,0 +1,2412 @@
+{
+  "schemaVersion": 1,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 360,
+  "assets": {},
+  "nodes": [
+    {
+      "id": "atmosphere",
+      "type": "div",
+      "from": 0,
+      "duration": 360,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "black-space",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#030D15"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "horizon-light",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "position": "absolute",
+            "inset": 0,
+            "background": "radial-gradient(circle at 50% 50%, #164B53 0%, #071C28 42%, #02090F 80%)"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "light-tunnel",
+      "type": "extension",
+      "extension": {
+        "name": "dojo.three-scene",
+        "version": "1.0.0",
+        "params": {
+          "camera": {
+            "kind": "perspective",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 7
+            },
+            "target": {
+              "x": 0,
+              "y": 0,
+              "z": -40
+            },
+            "fov": 64
+          },
+          "materials": {
+            "teal": {
+              "color": "#178A96",
+              "unlit": true
+            },
+            "ice": {
+              "color": "#86E8E2",
+              "unlit": true
+            },
+            "gold": {
+              "color": "#DAAE70",
+              "unlit": true
+            }
+          },
+          "objects": {
+            "space": {
+              "kind": "group",
+              "keyframes": {
+                "position.z": [
+                  {
+                    "time": 0,
+                    "value": -4
+                  },
+                  {
+                    "time": 12,
+                    "value": 16
+                  }
+                ],
+                "rotation.z": [
+                  {
+                    "time": 0,
+                    "value": -12
+                  },
+                  {
+                    "time": 12,
+                    "value": 32
+                  }
+                ],
+                "position.x": [
+                  {
+                    "time": 0,
+                    "value": 0.3
+                  },
+                  {
+                    "time": 6,
+                    "value": -0.15
+                  },
+                  {
+                    "time": 12,
+                    "value": 0.15
+                  }
+                ]
+              }
+            },
+            "gate0": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0,
+                "y": 0.2,
+                "z": 3
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "gate0top": {
+              "kind": "mesh",
+              "parentId": "gate0",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate0bottom": {
+              "kind": "mesh",
+              "parentId": "gate0",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate0left": {
+              "kind": "mesh",
+              "parentId": "gate0",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate0right": {
+              "kind": "mesh",
+              "parentId": "gate0",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate1": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.1028693422366354,
+                "y": 0.18421219880057704,
+                "z": -0.20000000000000018
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 6
+              }
+            },
+            "gate1top": {
+              "kind": "mesh",
+              "parentId": "gate1",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate1bottom": {
+              "kind": "mesh",
+              "parentId": "gate1",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate1left": {
+              "kind": "mesh",
+              "parentId": "gate1",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate1right": {
+              "kind": "mesh",
+              "parentId": "gate1",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate2": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.1932653061713073,
+                "y": 0.1393413418694331,
+                "z": -3.4000000000000004
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 12
+              }
+            },
+            "gate2top": {
+              "kind": "mesh",
+              "parentId": "gate2",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate2bottom": {
+              "kind": "mesh",
+              "parentId": "gate2",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate2left": {
+              "kind": "mesh",
+              "parentId": "gate2",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate2right": {
+              "kind": "mesh",
+              "parentId": "gate2",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate3": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.260226967678205,
+                "y": 0.07247155089533468,
+                "z": -6.600000000000001
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 18
+              }
+            },
+            "gate3top": {
+              "kind": "mesh",
+              "parentId": "gate3",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate3bottom": {
+              "kind": "mesh",
+              "parentId": "gate3",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate3left": {
+              "kind": "mesh",
+              "parentId": "gate3",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate3right": {
+              "kind": "mesh",
+              "parentId": "gate3",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate4": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.29563491899653804,
+                "y": -0.005839904460257763,
+                "z": -9.8
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 24
+              }
+            },
+            "gate4top": {
+              "kind": "mesh",
+              "parentId": "gate4",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate4bottom": {
+              "kind": "mesh",
+              "parentId": "gate4",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate4left": {
+              "kind": "mesh",
+              "parentId": "gate4",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate4right": {
+              "kind": "mesh",
+              "parentId": "gate4",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate5": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.29519578406218105,
+                "y": -0.08322936730942848,
+                "z": -13
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 30
+              }
+            },
+            "gate5top": {
+              "kind": "mesh",
+              "parentId": "gate5",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate5bottom": {
+              "kind": "mesh",
+              "parentId": "gate5",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate5left": {
+              "kind": "mesh",
+              "parentId": "gate5",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate5right": {
+              "kind": "mesh",
+              "parentId": "gate5",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate6": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.25896280999466215,
+                "y": -0.14747874310824916,
+                "z": -16.200000000000003
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 36
+              }
+            },
+            "gate6top": {
+              "kind": "mesh",
+              "parentId": "gate6",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate6bottom": {
+              "kind": "mesh",
+              "parentId": "gate6",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate6left": {
+              "kind": "mesh",
+              "parentId": "gate6",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate6right": {
+              "kind": "mesh",
+              "parentId": "gate6",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate7": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.1913294106403512,
+                "y": -0.18844446813373167,
+                "z": -19.400000000000002
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 42
+              }
+            },
+            "gate7top": {
+              "kind": "mesh",
+              "parentId": "gate7",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate7bottom": {
+              "kind": "mesh",
+              "parentId": "gate7",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate7left": {
+              "kind": "mesh",
+              "parentId": "gate7",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate7right": {
+              "kind": "mesh",
+              "parentId": "gate7",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate8": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.10049644504677153,
+                "y": -0.19965895515895063,
+                "z": -22.6
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 48
+              }
+            },
+            "gate8top": {
+              "kind": "mesh",
+              "parentId": "gate8",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate8bottom": {
+              "kind": "mesh",
+              "parentId": "gate8",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate8left": {
+              "kind": "mesh",
+              "parentId": "gate8",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate8right": {
+              "kind": "mesh",
+              "parentId": "gate8",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate9": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.0025221742101445856,
+                "y": -0.1793516832668294,
+                "z": -25.8
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 54
+              }
+            },
+            "gate9top": {
+              "kind": "mesh",
+              "parentId": "gate9",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate9bottom": {
+              "kind": "mesh",
+              "parentId": "gate9",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate9left": {
+              "kind": "mesh",
+              "parentId": "gate9",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate9right": {
+              "kind": "mesh",
+              "parentId": "gate9",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate10": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.10523496830688595,
+                "y": -0.13072872417272238,
+                "z": -29
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 60
+              }
+            },
+            "gate10top": {
+              "kind": "mesh",
+              "parentId": "gate10",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate10bottom": {
+              "kind": "mesh",
+              "parentId": "gate10",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate10left": {
+              "kind": "mesh",
+              "parentId": "gate10",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate10right": {
+              "kind": "mesh",
+              "parentId": "gate10",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate11": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.19518754111955008,
+                "y": -0.06146657399568387,
+                "z": -32.2
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 66
+              }
+            },
+            "gate11top": {
+              "kind": "mesh",
+              "parentId": "gate11",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate11bottom": {
+              "kind": "mesh",
+              "parentId": "gate11",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate11left": {
+              "kind": "mesh",
+              "parentId": "gate11",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate11right": {
+              "kind": "mesh",
+              "parentId": "gate11",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate12": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.2614727317240763,
+                "y": 0.017499796687889455,
+                "z": -35.400000000000006
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 72
+              }
+            },
+            "gate12top": {
+              "kind": "mesh",
+              "parentId": "gate12",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate12bottom": {
+              "kind": "mesh",
+              "parentId": "gate12",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate12left": {
+              "kind": "mesh",
+              "parentId": "gate12",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate12right": {
+              "kind": "mesh",
+              "parentId": "gate12",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate13": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.29605315755097095,
+                "y": 0.09370333426007543,
+                "z": -38.6
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 78
+              }
+            },
+            "gate13top": {
+              "kind": "mesh",
+              "parentId": "gate13",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate13bottom": {
+              "kind": "mesh",
+              "parentId": "gate13",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate13left": {
+              "kind": "mesh",
+              "parentId": "gate13",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate13right": {
+              "kind": "mesh",
+              "parentId": "gate13",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate14": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.29473578378729975,
+                "y": 0.15511317570205005,
+                "z": -41.800000000000004
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 84
+              }
+            },
+            "gate14top": {
+              "kind": "mesh",
+              "parentId": "gate14",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate14bottom": {
+              "kind": "mesh",
+              "parentId": "gate14",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate14left": {
+              "kind": "mesh",
+              "parentId": "gate14",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate14right": {
+              "kind": "mesh",
+              "parentId": "gate14",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate15": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.25768034802797757,
+                "y": 0.19203405733007323,
+                "z": -45
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 90
+              }
+            },
+            "gate15top": {
+              "kind": "mesh",
+              "parentId": "gate15",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate15bottom": {
+              "kind": "mesh",
+              "parentId": "gate15",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate15left": {
+              "kind": "mesh",
+              "parentId": "gate15",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate15right": {
+              "kind": "mesh",
+              "parentId": "gate15",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "gold"
+            },
+            "gate16": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.18937999136169648,
+                "y": 0.19863698375163852,
+                "z": -48.2
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 96
+              }
+            },
+            "gate16top": {
+              "kind": "mesh",
+              "parentId": "gate16",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate16bottom": {
+              "kind": "mesh",
+              "parentId": "gate16",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate16left": {
+              "kind": "mesh",
+              "parentId": "gate16",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate16right": {
+              "kind": "mesh",
+              "parentId": "gate16",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate17": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": -0.09811644446092244,
+                "y": 0.17387949806996497,
+                "z": -51.400000000000006
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 102
+              }
+            },
+            "gate17top": {
+              "kind": "mesh",
+              "parentId": "gate17",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate17bottom": {
+              "kind": "mesh",
+              "parentId": "gate17",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.065,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate17left": {
+              "kind": "mesh",
+              "parentId": "gate17",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate17right": {
+              "kind": "mesh",
+              "parentId": "gate17",
+              "geometry": {
+                "kind": "box",
+                "width": 0.065,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate18": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.005044170145304914,
+                "y": 0.12167026290645092,
+                "z": -54.6
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 108
+              }
+            },
+            "gate18top": {
+              "kind": "mesh",
+              "parentId": "gate18",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate18bottom": {
+              "kind": "mesh",
+              "parentId": "gate18",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.035,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate18left": {
+              "kind": "mesh",
+              "parentId": "gate18",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate18right": {
+              "kind": "mesh",
+              "parentId": "gate18",
+              "geometry": {
+                "kind": "box",
+                "width": 0.035,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "teal"
+            },
+            "gate19": {
+              "kind": "group",
+              "parentId": "space",
+              "position": {
+                "x": 0.10759315604783985,
+                "y": 0.05025196851645097,
+                "z": -57.800000000000004
+              },
+              "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 114
+              }
+            },
+            "gate19top": {
+              "kind": "mesh",
+              "parentId": "gate19",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": 2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate19bottom": {
+              "kind": "mesh",
+              "parentId": "gate19",
+              "geometry": {
+                "kind": "box",
+                "width": 6.7,
+                "height": 0.05,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 0,
+                "y": -2.15,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate19left": {
+              "kind": "mesh",
+              "parentId": "gate19",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": -3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "gate19right": {
+              "kind": "mesh",
+              "parentId": "gate19",
+              "geometry": {
+                "kind": "box",
+                "width": 0.05,
+                "height": 4.3,
+                "depth": 0.08
+              },
+              "position": {
+                "x": 3.35,
+                "y": 0,
+                "z": 0
+              },
+              "materialId": "ice"
+            },
+            "spark0": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": 1.4,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "spark1": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -1.511601727669437,
+                "y": 0.9693319897147304,
+                "z": -2.8
+              }
+            },
+            "spark2": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 0.23603208297523603,
+                "y": -1.8827643345212173,
+                "z": -5.6
+              }
+            },
+            "spark3": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": 2.0382959434901204,
+                "y": 1.8609799372664775,
+                "z": -8.399999999999999
+              }
+            },
+            "spark4": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -1.3786020296649986,
+                "y": -0.17068584435663584,
+                "z": -11.2
+              }
+            },
+            "spark5": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 1.7296805859086835,
+                "y": -0.7702243080155223,
+                "z": -14
+              }
+            },
+            "spark6": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": -0.7008810953405471,
+                "y": 1.8252109982670974,
+                "z": -16.799999999999997
+              }
+            },
+            "spark7": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -1.544105745198374,
+                "y": -2.081042130603375,
+                "z": -19.599999999999998
+              }
+            },
+            "spark8": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 1.3150622231377909,
+                "y": 0.3361540735216317,
+                "z": -22.4
+              }
+            },
+            "spark9": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": -1.8948856529103557,
+                "y": 0.5475720021817243,
+                "z": -25.2
+              }
+            },
+            "spark10": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 1.1443052035823433,
+                "y": -1.7118636465900672,
+                "z": -28
+              }
+            },
+            "spark11": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 1.002714505578256,
+                "y": 2.2374899271166444,
+                "z": -30.799999999999997
+              }
+            },
+            "spark12": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": -1.2113228988400353,
+                "y": -0.49134656712490504,
+                "z": -33.599999999999994
+              }
+            },
+            "spark13": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 2.0021668527846055,
+                "y": -0.30818122569226636,
+                "z": -36.4
+              }
+            },
+            "spark14": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -1.5527495849663642,
+                "y": 1.5461871413026058,
+                "z": -39.199999999999996
+              }
+            },
+            "spark15": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": -0.4306717584655106,
+                "y": -2.3255409477937623,
+                "z": -42
+              }
+            },
+            "spark16": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": 1.0705552153201556,
+                "y": 0.6315193189174021,
+                "z": -44.8
+              }
+            },
+            "spark17": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.8500000000000001
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -2.0482447570565583,
+                "y": 0.059369802452569176,
+                "z": -47.599999999999994
+              }
+            },
+            "spark18": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.45
+              },
+              "materialId": "gold",
+              "position": {
+                "x": 1.9137286955549624,
+                "y": -1.333245969469496,
+                "z": -50.4
+              }
+            },
+            "spark19": {
+              "kind": "mesh",
+              "parentId": "space",
+              "geometry": {
+                "kind": "box",
+                "width": 0.012,
+                "height": 0.012,
+                "depth": 0.65
+              },
+              "materialId": "ice",
+              "position": {
+                "x": -0.15453599080690306,
+                "y": 2.342503602451277,
+                "z": -53.199999999999996
+              }
+            }
+          },
+          "lighting": {
+            "ambient": 1,
+            "intensity": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 8
+            }
+          }
+        }
+      },
+      "from": 0,
+      "duration": 360,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "lens-and-letterbox",
+      "type": "div",
+      "from": 0,
+      "duration": 360,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "center-scrim",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "background": "radial-gradient(circle at 50% 50%, rgba(2,9,15,0.7) 0%, rgba(2,9,15,0) 65%)"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "top-matte",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 68,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#02070B"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "bottom-matte",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 68,
+            "position": "absolute",
+            "left": 0,
+            "top": 652,
+            "backgroundColor": "#02070B"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "top-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1140,
+            "height": 1,
+            "position": "absolute",
+            "left": 70,
+            "top": 67,
+            "backgroundColor": "#28414A"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "bottom-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1140,
+            "height": 1,
+            "position": "absolute",
+            "left": 70,
+            "top": 652,
+            "backgroundColor": "#28414A"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "film-label",
+          "type": "text",
+          "text": "D O J O   /   M O T I O N   P I C T U R E S",
+          "from": 0,
+          "style": {
+            "width": 1080,
+            "height": 16.5,
+            "position": "absolute",
+            "left": 100,
+            "top": 28,
+            "fontFamily": "Arial",
+            "fontSize": 11,
+            "fontWeight": 400,
+            "color": "#7C9A9E",
+            "letterSpacing": 3,
+            "textAlign": "center"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "film-footer",
+          "type": "text",
+          "text": "LIGHT   /   SPACE   /   POSSIBILITY",
+          "from": 0,
+          "style": {
+            "width": 1080,
+            "height": 15,
+            "position": "absolute",
+            "left": 100,
+            "top": 680,
+            "fontFamily": "Arial",
+            "fontSize": 10,
+            "fontWeight": 400,
+            "color": "#7C9A9E",
+            "letterSpacing": 3,
+            "textAlign": "center"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "prologue",
+      "type": "div",
+      "from": 0,
+      "duration": 95,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 25,
+              "value": 1,
+              "easing": "easeOut"
+            },
+            {
+              "frame": 70,
+              "value": 1
+            },
+            {
+              "frame": 94,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "scale(0.94)"
+            },
+            {
+              "frame": 94,
+              "value": "scale(1.06)"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "invitation",
+          "type": "text",
+          "text": "EVERY FRAME IS A NEW FRONTIER",
+          "from": 0,
+          "style": {
+            "width": 1000,
+            "height": 30,
+            "position": "absolute",
+            "left": 140,
+            "top": 338,
+            "fontFamily": "Arial",
+            "fontSize": 20,
+            "fontWeight": 400,
+            "color": "#D7E8E6",
+            "letterSpacing": 5,
+            "textAlign": "center"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "main-title",
+      "type": "div",
+      "from": 80,
+      "duration": 205,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 25,
+              "value": 1,
+              "easing": "easeOut"
+            },
+            {
+              "frame": 180,
+              "value": 1
+            },
+            {
+              "frame": 204,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "scale(0.94)"
+            },
+            {
+              "frame": 204,
+              "value": "scale(1.06)"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "film-title",
+          "type": "text",
+          "text": "DEEP FIELD",
+          "from": 0,
+          "style": {
+            "width": 1150,
+            "height": 156,
+            "position": "absolute",
+            "left": 65,
+            "top": 282,
+            "fontFamily": "Georgia, serif",
+            "fontSize": 104,
+            "fontWeight": 400,
+            "color": "#F1EEE1",
+            "letterSpacing": 12,
+            "textAlign": "center",
+            "textShadow": "0px 4px 24px #02070B"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "title-underline",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 98,
+            "height": 1,
+            "position": "absolute",
+            "left": 591,
+            "top": 430,
+            "backgroundColor": "#BDA375"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "film-tagline",
+          "type": "text",
+          "text": "A JOURNEY BEYOND THE FRAME",
+          "from": 0,
+          "style": {
+            "width": 980,
+            "height": 19.5,
+            "position": "absolute",
+            "left": 150,
+            "top": 457,
+            "fontFamily": "Arial",
+            "fontSize": 13,
+            "fontWeight": 400,
+            "color": "#C2D3D0",
+            "letterSpacing": 5,
+            "textAlign": "center"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "epilogue",
+      "type": "div",
+      "from": 282,
+      "duration": 78,
+      "style": {
+        "position": "absolute",
+        "inset": 0
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 25,
+              "value": 1,
+              "easing": "easeOut"
+            },
+            {
+              "frame": 53,
+              "value": 1
+            },
+            {
+              "frame": 77,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "scale(0.94)"
+            },
+            {
+              "frame": 77,
+              "value": "scale(1.06)"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "closing-line",
+          "type": "text",
+          "text": "THE POSSIBILITIES ARE INFINITE",
+          "from": 0,
+          "style": {
+            "width": 1040,
+            "height": 28.5,
+            "position": "absolute",
+            "left": 120,
+            "top": 337,
+            "fontFamily": "Arial",
+            "fontSize": 19,
+            "fontWeight": 400,
+            "color": "#F1EEE1",
+            "letterSpacing": 5,
+            "textAlign": "center"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

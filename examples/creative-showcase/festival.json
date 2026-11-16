@@ -1,0 +1,5330 @@
+{
+  "schemaVersion": 1,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 360,
+  "assets": {},
+  "nodes": [
+    {
+      "id": "backdrop",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 1280,
+        "height": 720,
+        "position": "absolute",
+        "left": 0,
+        "top": 0,
+        "backgroundColor": "#160d2d"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "ambient-wash",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 1000,
+        "height": 1080,
+        "position": "absolute",
+        "left": 510,
+        "top": -180,
+        "background": "radial-gradient(circle at 50% 50%, #6424d1 0%, #32104f 47%, #160d2d 75%)"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "orange-disc",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 390,
+        "height": 390,
+        "position": "absolute",
+        "left": 725,
+        "top": 130,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 195,
+        "opacity": 0.94
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "scale(0.65)"
+            },
+            {
+              "frame": 30,
+              "value": "scale(1)",
+              "easing": "easeOut"
+            },
+            {
+              "frame": 180,
+              "value": "scale(1.13)",
+              "easing": "easeInOut"
+            },
+            {
+              "frame": 359,
+              "value": "scale(1)",
+              "easing": "easeInOut"
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "halo",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 510,
+        "height": 510,
+        "position": "absolute",
+        "left": 662,
+        "top": 85,
+        "backgroundColor": "transparent",
+        "border": "1px solid #b880ff",
+        "borderRadius": 255,
+        "opacity": 0.7
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "scale(0.8)"
+            },
+            {
+              "frame": 359,
+              "value": "scale(1.14)"
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-0",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 650,
+        "top": -50,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(0deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(25px, 48px) rotate(180deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(360deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 20,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-1",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 787,
+        "top": 41,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(23deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(36px, 48px) rotate(203deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(383deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 21,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-2",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 924,
+        "top": 132,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(46deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(47px, 48px) rotate(226deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(406deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 22,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-3",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 1061,
+        "top": 223,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(69deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(58px, 48px) rotate(249deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(429deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 23,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-4",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1198,
+        "top": 314,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(92deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(69px, 48px) rotate(272deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(452deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 24,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-5",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 775,
+        "top": 405,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(115deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(80px, 48px) rotate(295deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(475deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 25,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-6",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 912,
+        "top": 496,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(138deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(31px, 48px) rotate(318deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(498deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 26,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-7",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1049,
+        "top": 587,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(161deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(42px, 48px) rotate(341deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(521deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 27,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-8",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1186,
+        "top": 678,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(184deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(53px, 48px) rotate(364deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(544deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 28,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-9",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 763,
+        "top": 29,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(207deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(64px, 48px) rotate(387deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(567deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 29,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-10",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 900,
+        "top": 120,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(230deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(75px, 48px) rotate(410deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(590deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 30,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-11",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1037,
+        "top": 211,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(253deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(26px, 48px) rotate(433deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(613deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 31,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-12",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 1174,
+        "top": 302,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(276deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(37px, 48px) rotate(456deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(636deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 32,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-13",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 751,
+        "top": 393,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(299deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(48px, 48px) rotate(479deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(659deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 33,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-14",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 888,
+        "top": 484,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(322deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(59px, 48px) rotate(502deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(682deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 34,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-15",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 1025,
+        "top": 575,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(345deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(70px, 48px) rotate(525deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(705deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 35,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-16",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1162,
+        "top": 666,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(368deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(81px, 48px) rotate(548deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(728deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 36,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-17",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 739,
+        "top": 17,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(391deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(32px, 48px) rotate(571deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(751deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 37,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-18",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 876,
+        "top": 108,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(414deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(43px, 48px) rotate(594deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(774deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 38,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-19",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1013,
+        "top": 199,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(437deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(54px, 48px) rotate(617deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(797deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 39,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-20",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1150,
+        "top": 290,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(460deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(65px, 48px) rotate(640deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(820deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 40,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-21",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 727,
+        "top": 381,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(483deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(76px, 48px) rotate(663deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(843deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 41,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-22",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 864,
+        "top": 472,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(506deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(27px, 48px) rotate(686deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(866deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 42,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-23",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1001,
+        "top": 563,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(529deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(38px, 48px) rotate(709deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(889deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 43,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-24",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 1138,
+        "top": 654,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(552deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(49px, 48px) rotate(732deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(912deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 44,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-25",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 715,
+        "top": 5,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(575deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(60px, 48px) rotate(755deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(935deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 45,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-26",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 852,
+        "top": 96,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(598deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(71px, 48px) rotate(778deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(958deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 46,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-27",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 989,
+        "top": 187,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(621deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(82px, 48px) rotate(801deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(981deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 47,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-28",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 1126,
+        "top": 278,
+        "backgroundColor": "#ff4daa",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(644deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(33px, 48px) rotate(824deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(1004deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 48,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-29",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 703,
+        "top": 369,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(667deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(44px, 48px) rotate(847deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(1027deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 49,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-30",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 7,
+        "height": 22,
+        "position": "absolute",
+        "left": 840,
+        "top": 460,
+        "backgroundColor": "#ff783a",
+        "borderRadius": 4,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(690deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(55px, 48px) rotate(870deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(1050deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 50,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "confetti-31",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 11,
+        "height": 6,
+        "position": "absolute",
+        "left": 977,
+        "top": 551,
+        "backgroundColor": "#fff4e6",
+        "borderRadius": 0,
+        "opacity": 0.8,
+        "transformOrigin": "center center"
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, -32px) rotate(713deg)"
+            },
+            {
+              "frame": 180,
+              "value": "translate(66px, 48px) rotate(893deg)"
+            },
+            {
+              "frame": 359,
+              "value": "translate(0px, -32px) rotate(1073deg)"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 51,
+              "value": 0.8
+            },
+            {
+              "frame": 330,
+              "value": 0.8
+            },
+            {
+              "frame": 359,
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "disco-sculpture",
+      "type": "extension",
+      "extension": {
+        "name": "dojo.three-scene",
+        "version": "1.0.0",
+        "params": {
+          "camera": {
+            "kind": "perspective",
+            "fov": 42,
+            "position": {
+              "x": 0,
+              "y": 0.1,
+              "z": 7.6
+            },
+            "target": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orbit": {
+              "degreesPerSecond": 2,
+              "phase": 0
+            }
+          },
+          "lighting": {
+            "ambient": 1.25,
+            "intensity": 3.2,
+            "position": {
+              "x": -3,
+              "y": 5,
+              "z": 7
+            }
+          },
+          "materials": {
+            "violet": {
+              "color": "#5723be",
+              "roughness": 0.45,
+              "metalness": 0.05
+            },
+            "rose": {
+              "color": "#ff99c8",
+              "roughness": 0.2,
+              "metalness": 0.12
+            },
+            "lavender": {
+              "color": "#a59bff",
+              "roughness": 0.2,
+              "metalness": 0.12
+            },
+            "ivory": {
+              "color": "#fff2d8",
+              "roughness": 0.22,
+              "metalness": 0.1
+            },
+            "pink": {
+              "color": "#ee4ba1",
+              "roughness": 0.28,
+              "metalness": 0.08
+            },
+            "peach": {
+              "color": "#ff8547",
+              "roughness": 0.26
+            },
+            "lime": {
+              "color": "#e6ff74",
+              "roughness": 0.35
+            }
+          },
+          "objects": {
+            "sculpture": {
+              "kind": "group",
+              "rotation": {
+                "x": 12,
+                "y": -18,
+                "z": -8
+              },
+              "spin": {
+                "x": 0,
+                "y": 23,
+                "z": 0
+              },
+              "keyframes": {
+                "scale.x": [
+                  {
+                    "time": 0,
+                    "value": 0.72
+                  },
+                  {
+                    "time": 0.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 3.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 4.3,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 7.9,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 8.3,
+                    "value": 0.94
+                  },
+                  {
+                    "time": 12,
+                    "value": 0.94
+                  }
+                ],
+                "scale.y": [
+                  {
+                    "time": 0,
+                    "value": 0.72
+                  },
+                  {
+                    "time": 0.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 3.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 4.3,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 7.9,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 8.3,
+                    "value": 0.94
+                  },
+                  {
+                    "time": 12,
+                    "value": 0.94
+                  }
+                ],
+                "scale.z": [
+                  {
+                    "time": 0,
+                    "value": 0.72
+                  },
+                  {
+                    "time": 0.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 3.9,
+                    "value": 1
+                  },
+                  {
+                    "time": 4.3,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 7.9,
+                    "value": 1.06
+                  },
+                  {
+                    "time": 8.3,
+                    "value": 0.94
+                  },
+                  {
+                    "time": 12,
+                    "value": 0.94
+                  }
+                ]
+              }
+            },
+            "core": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 1.39
+              },
+              "materialId": "violet"
+            },
+            "orbitPeach": {
+              "kind": "mesh",
+              "geometry": {
+                "kind": "torus",
+                "radius": 2.11,
+                "tube": 0.13
+              },
+              "materialId": "peach",
+              "rotation": {
+                "x": 65,
+                "y": 15,
+                "z": -22
+              },
+              "spin": {
+                "x": 6,
+                "y": 9,
+                "z": 12
+              }
+            },
+            "orbitLime": {
+              "kind": "mesh",
+              "geometry": {
+                "kind": "torus",
+                "radius": 2.28,
+                "tube": 0.055
+              },
+              "materialId": "lime",
+              "rotation": {
+                "x": -20,
+                "y": 64,
+                "z": 35
+              },
+              "spin": {
+                "x": -6,
+                "y": 4,
+                "z": -9
+              }
+            },
+            "satellites": {
+              "kind": "group",
+              "spin": {
+                "x": 7,
+                "y": -12,
+                "z": 10
+              }
+            },
+            "tile_0_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0,
+                "y": -1.371951226347426,
+                "z": 0.4993494092554765
+              },
+              "rotation": {
+                "x": 70,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_0_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.2496747046277382,
+                "y": -1.371951226347426,
+                "z": 0.432449273779995
+              },
+              "rotation": {
+                "x": 70,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_0_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.4324492737799949,
+                "y": -1.371951226347426,
+                "z": 0.24967470462773828
+              },
+              "rotation": {
+                "x": 70,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_0_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.4993494092554765,
+                "y": -1.371951226347426,
+                "z": 3.057633278504205e-17
+              },
+              "rotation": {
+                "x": 70,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_0_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.432449273779995,
+                "y": -1.371951226347426,
+                "z": -0.2496747046277381
+              },
+              "rotation": {
+                "x": 70,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_0_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.2496747046277382,
+                "y": -1.371951226347426,
+                "z": -0.432449273779995
+              },
+              "rotation": {
+                "x": 70,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_0_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 6.11526655700841e-17,
+                "y": -1.371951226347426,
+                "z": -0.4993494092554765
+              },
+              "rotation": {
+                "x": 70,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_0_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.2496747046277381,
+                "y": -1.371951226347426,
+                "z": -0.432449273779995
+              },
+              "rotation": {
+                "x": 70,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_0_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.4324492737799948,
+                "y": -1.371951226347426,
+                "z": -0.24967470462773844
+              },
+              "rotation": {
+                "x": 70,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_0_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.4993494092554765,
+                "y": -1.371951226347426,
+                "z": -9.172899835512614e-17
+              },
+              "rotation": {
+                "x": 70,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_0_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.4324492737799949,
+                "y": -1.371951226347426,
+                "z": 0.24967470462773828
+              },
+              "rotation": {
+                "x": 70,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_0_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.24967470462773844,
+                "y": -1.371951226347426,
+                "z": 0.4324492737799948
+              },
+              "rotation": {
+                "x": 70,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_1_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0,
+                "y": -1.118424886953708,
+                "z": 0.9384699101423475
+              },
+              "rotation": {
+                "x": 50,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_1_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.46923495507117363,
+                "y": -1.118424886953708,
+                "z": 0.8127387828705724
+              },
+              "rotation": {
+                "x": 50,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_1_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.8127387828705722,
+                "y": -1.118424886953708,
+                "z": 0.4692349550711738
+              },
+              "rotation": {
+                "x": 50,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_1_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.9384699101423475,
+                "y": -1.118424886953708,
+                "z": 5.74647085775965e-17
+              },
+              "rotation": {
+                "x": 50,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_1_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.8127387828705724,
+                "y": -1.118424886953708,
+                "z": -0.46923495507117347
+              },
+              "rotation": {
+                "x": 50,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_1_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.46923495507117363,
+                "y": -1.118424886953708,
+                "z": -0.8127387828705724
+              },
+              "rotation": {
+                "x": 50,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_1_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 1.14929417155193e-16,
+                "y": -1.118424886953708,
+                "z": -0.9384699101423475
+              },
+              "rotation": {
+                "x": 50,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_1_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.46923495507117347,
+                "y": -1.118424886953708,
+                "z": -0.8127387828705724
+              },
+              "rotation": {
+                "x": 50,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_1_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.8127387828705721,
+                "y": -1.118424886953708,
+                "z": -0.46923495507117413
+              },
+              "rotation": {
+                "x": 50,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_1_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.9384699101423475,
+                "y": -1.118424886953708,
+                "z": -1.7239412573278946e-16
+              },
+              "rotation": {
+                "x": 50,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_1_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.8127387828705722,
+                "y": -1.118424886953708,
+                "z": 0.4692349550711738
+              },
+              "rotation": {
+                "x": 50,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_1_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.46923495507117413,
+                "y": -1.118424886953708,
+                "z": 0.8127387828705721
+              },
+              "rotation": {
+                "x": 50,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_2_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0,
+                "y": -0.7299999999999999,
+                "z": 1.2643970895252805
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_2_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.6321985447626401,
+                "y": -0.7299999999999999,
+                "z": 1.0950000000000002
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_2_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 1.095,
+                "y": -0.7299999999999999,
+                "z": 0.6321985447626404
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_2_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 1.2643970895252805,
+                "y": -0.7299999999999999,
+                "z": 7.742199242691821e-17
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_2_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 1.0950000000000002,
+                "y": -0.7299999999999999,
+                "z": -0.63219854476264
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_2_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.6321985447626401,
+                "y": -0.7299999999999999,
+                "z": -1.0950000000000002
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_2_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 1.5484398485383641e-16,
+                "y": -0.7299999999999999,
+                "z": -1.2643970895252805
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_2_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.6321985447626399,
+                "y": -0.7299999999999999,
+                "z": -1.0950000000000002
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_2_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -1.0949999999999998,
+                "y": -0.7299999999999999,
+                "z": -0.6321985447626408
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_2_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -1.2643970895252805,
+                "y": -0.7299999999999999,
+                "z": -2.322659772807546e-16
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_2_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -1.095,
+                "y": -0.7299999999999999,
+                "z": 0.6321985447626404
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_2_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.6321985447626408,
+                "y": -0.7299999999999999,
+                "z": 1.0949999999999998
+              },
+              "rotation": {
+                "x": 29.999999999999996,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_3_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0,
+                "y": -0.25352633939371827,
+                "z": 1.4378193193978237
+              },
+              "rotation": {
+                "x": 10,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_3_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.7189096596989117,
+                "y": -0.25352633939371827,
+                "z": 1.245188056650567
+              },
+              "rotation": {
+                "x": 10,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_3_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 1.245188056650567,
+                "y": -0.25352633939371827,
+                "z": 0.718909659698912
+              },
+              "rotation": {
+                "x": 10,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_3_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 1.4378193193978237,
+                "y": -0.25352633939371827,
+                "z": 8.804104136263852e-17
+              },
+              "rotation": {
+                "x": 10,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_3_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 1.245188056650567,
+                "y": -0.25352633939371827,
+                "z": -0.7189096596989115
+              },
+              "rotation": {
+                "x": 10,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_3_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.7189096596989117,
+                "y": -0.25352633939371827,
+                "z": -1.245188056650567
+              },
+              "rotation": {
+                "x": 10,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_3_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 1.7608208272527704e-16,
+                "y": -0.25352633939371827,
+                "z": -1.4378193193978237
+              },
+              "rotation": {
+                "x": 10,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_3_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.7189096596989114,
+                "y": -0.25352633939371827,
+                "z": -1.2451880566505673
+              },
+              "rotation": {
+                "x": 10,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_3_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -1.2451880566505669,
+                "y": -0.25352633939371827,
+                "z": -0.7189096596989125
+              },
+              "rotation": {
+                "x": 10,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_3_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -1.4378193193978237,
+                "y": -0.25352633939371827,
+                "z": -2.641231240879156e-16
+              },
+              "rotation": {
+                "x": 10,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_3_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -1.245188056650567,
+                "y": -0.25352633939371827,
+                "z": 0.718909659698912
+              },
+              "rotation": {
+                "x": 10,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_3_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.7189096596989125,
+                "y": -0.25352633939371827,
+                "z": 1.2451880566505666
+              },
+              "rotation": {
+                "x": 10,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_4_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0,
+                "y": 0.25352633939371827,
+                "z": 1.4378193193978237
+              },
+              "rotation": {
+                "x": -10,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_4_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.7189096596989117,
+                "y": 0.25352633939371827,
+                "z": 1.245188056650567
+              },
+              "rotation": {
+                "x": -10,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_4_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 1.245188056650567,
+                "y": 0.25352633939371827,
+                "z": 0.718909659698912
+              },
+              "rotation": {
+                "x": -10,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_4_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 1.4378193193978237,
+                "y": 0.25352633939371827,
+                "z": 8.804104136263852e-17
+              },
+              "rotation": {
+                "x": -10,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_4_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 1.245188056650567,
+                "y": 0.25352633939371827,
+                "z": -0.7189096596989115
+              },
+              "rotation": {
+                "x": -10,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_4_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.7189096596989117,
+                "y": 0.25352633939371827,
+                "z": -1.245188056650567
+              },
+              "rotation": {
+                "x": -10,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_4_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 1.7608208272527704e-16,
+                "y": 0.25352633939371827,
+                "z": -1.4378193193978237
+              },
+              "rotation": {
+                "x": -10,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_4_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.7189096596989114,
+                "y": 0.25352633939371827,
+                "z": -1.2451880566505673
+              },
+              "rotation": {
+                "x": -10,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_4_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -1.2451880566505669,
+                "y": 0.25352633939371827,
+                "z": -0.7189096596989125
+              },
+              "rotation": {
+                "x": -10,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_4_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -1.4378193193978237,
+                "y": 0.25352633939371827,
+                "z": -2.641231240879156e-16
+              },
+              "rotation": {
+                "x": -10,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_4_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -1.245188056650567,
+                "y": 0.25352633939371827,
+                "z": 0.718909659698912
+              },
+              "rotation": {
+                "x": -10,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_4_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.6499731169880574,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.7189096596989125,
+                "y": 0.25352633939371827,
+                "z": 1.2451880566505666
+              },
+              "rotation": {
+                "x": -10,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_5_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0,
+                "y": 0.7299999999999999,
+                "z": 1.2643970895252805
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_5_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.6321985447626401,
+                "y": 0.7299999999999999,
+                "z": 1.0950000000000002
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_5_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 1.095,
+                "y": 0.7299999999999999,
+                "z": 0.6321985447626404
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_5_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 1.2643970895252805,
+                "y": 0.7299999999999999,
+                "z": 7.742199242691821e-17
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_5_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 1.0950000000000002,
+                "y": 0.7299999999999999,
+                "z": -0.63219854476264
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_5_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.6321985447626401,
+                "y": 0.7299999999999999,
+                "z": -1.0950000000000002
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_5_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 1.5484398485383641e-16,
+                "y": 0.7299999999999999,
+                "z": -1.2643970895252805
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_5_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.6321985447626399,
+                "y": 0.7299999999999999,
+                "z": -1.0950000000000002
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_5_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -1.0949999999999998,
+                "y": 0.7299999999999999,
+                "z": -0.6321985447626408
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_5_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -1.2643970895252805,
+                "y": 0.7299999999999999,
+                "z": -2.322659772807546e-16
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_5_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -1.095,
+                "y": 0.7299999999999999,
+                "z": 0.6321985447626404
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_5_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.5715767664977296,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.6321985447626408,
+                "y": 0.7299999999999999,
+                "z": 1.0949999999999998
+              },
+              "rotation": {
+                "x": -29.999999999999996,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_6_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0,
+                "y": 1.118424886953708,
+                "z": 0.9384699101423475
+              },
+              "rotation": {
+                "x": -50,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_6_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.46923495507117363,
+                "y": 1.118424886953708,
+                "z": 0.8127387828705724
+              },
+              "rotation": {
+                "x": -50,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_6_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.8127387828705722,
+                "y": 1.118424886953708,
+                "z": 0.4692349550711738
+              },
+              "rotation": {
+                "x": -50,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_6_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.9384699101423475,
+                "y": 1.118424886953708,
+                "z": 5.74647085775965e-17
+              },
+              "rotation": {
+                "x": -50,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_6_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.8127387828705724,
+                "y": 1.118424886953708,
+                "z": -0.46923495507117347
+              },
+              "rotation": {
+                "x": -50,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_6_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.46923495507117363,
+                "y": 1.118424886953708,
+                "z": -0.8127387828705724
+              },
+              "rotation": {
+                "x": -50,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_6_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 1.14929417155193e-16,
+                "y": 1.118424886953708,
+                "z": -0.9384699101423475
+              },
+              "rotation": {
+                "x": -50,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_6_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.46923495507117347,
+                "y": 1.118424886953708,
+                "z": -0.8127387828705724
+              },
+              "rotation": {
+                "x": -50,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_6_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.8127387828705721,
+                "y": 1.118424886953708,
+                "z": -0.46923495507117413
+              },
+              "rotation": {
+                "x": -50,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_6_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.9384699101423475,
+                "y": 1.118424886953708,
+                "z": -1.7239412573278946e-16
+              },
+              "rotation": {
+                "x": -50,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_6_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.8127387828705722,
+                "y": 1.118424886953708,
+                "z": 0.4692349550711738
+              },
+              "rotation": {
+                "x": -50,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_6_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.424239822393116,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.46923495507117413,
+                "y": 1.118424886953708,
+                "z": 0.8127387828705721
+              },
+              "rotation": {
+                "x": -50,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "tile_7_0": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0,
+                "y": 1.371951226347426,
+                "z": 0.4993494092554765
+              },
+              "rotation": {
+                "x": -70,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "tile_7_1": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.2496747046277382,
+                "y": 1.371951226347426,
+                "z": 0.432449273779995
+              },
+              "rotation": {
+                "x": -70,
+                "y": 29.999999999999996,
+                "z": 0
+              }
+            },
+            "tile_7_2": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 0.4324492737799949,
+                "y": 1.371951226347426,
+                "z": 0.24967470462773828
+              },
+              "rotation": {
+                "x": -70,
+                "y": 59.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_7_3": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": 0.4993494092554765,
+                "y": 1.371951226347426,
+                "z": 3.057633278504205e-17
+              },
+              "rotation": {
+                "x": -70,
+                "y": 90,
+                "z": 0
+              }
+            },
+            "tile_7_4": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": 0.432449273779995,
+                "y": 1.371951226347426,
+                "z": -0.2496747046277381
+              },
+              "rotation": {
+                "x": -70,
+                "y": 119.99999999999999,
+                "z": 0
+              }
+            },
+            "tile_7_5": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": 0.2496747046277382,
+                "y": 1.371951226347426,
+                "z": -0.432449273779995
+              },
+              "rotation": {
+                "x": -70,
+                "y": 150.00000000000003,
+                "z": 0
+              }
+            },
+            "tile_7_6": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": 6.11526655700841e-17,
+                "y": 1.371951226347426,
+                "z": -0.4993494092554765
+              },
+              "rotation": {
+                "x": -70,
+                "y": 180,
+                "z": 0
+              }
+            },
+            "tile_7_7": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.2496747046277381,
+                "y": 1.371951226347426,
+                "z": -0.432449273779995
+              },
+              "rotation": {
+                "x": -70,
+                "y": 209.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_7_8": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "lavender",
+              "position": {
+                "x": -0.4324492737799948,
+                "y": 1.371951226347426,
+                "z": -0.24967470462773844
+              },
+              "rotation": {
+                "x": -70,
+                "y": 239.99999999999997,
+                "z": 0
+              }
+            },
+            "tile_7_9": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "ivory",
+              "position": {
+                "x": -0.4993494092554765,
+                "y": 1.371951226347426,
+                "z": -9.172899835512614e-17
+              },
+              "rotation": {
+                "x": -70,
+                "y": 270,
+                "z": 0
+              }
+            },
+            "tile_7_10": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "pink",
+              "position": {
+                "x": -0.4324492737799949,
+                "y": 1.371951226347426,
+                "z": 0.24967470462773828
+              },
+              "rotation": {
+                "x": -70,
+                "y": 300.00000000000006,
+                "z": 0
+              }
+            },
+            "tile_7_11": {
+              "kind": "mesh",
+              "parentId": "sculpture",
+              "geometry": {
+                "kind": "box",
+                "width": 0.22573329459494143,
+                "height": 0.435,
+                "depth": 0.045
+              },
+              "materialId": "rose",
+              "position": {
+                "x": -0.24967470462773844,
+                "y": 1.371951226347426,
+                "z": 0.4324492737799948
+              },
+              "rotation": {
+                "x": -70,
+                "y": 329.99999999999994,
+                "z": 0
+              }
+            },
+            "satellite_0": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.16
+              },
+              "materialId": "lime",
+              "position": {
+                "x": 2.43,
+                "y": 0,
+                "z": 0
+              }
+            },
+            "satellite_1": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "peach",
+              "position": {
+                "x": -1.7918059966441444,
+                "y": 1.513098638590034,
+                "z": -0.645264454774749
+              }
+            },
+            "satellite_2": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "lime",
+              "position": {
+                "x": 0.21244339885589766,
+                "y": -2.231423221514168,
+                "z": 0.7628628329318949
+              }
+            },
+            "satellite_3": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.16
+              },
+              "materialId": "peach",
+              "position": {
+                "x": 1.4785077612388258,
+                "y": 1.7776647435993336,
+                "z": -0.25662886595996975
+              }
+            },
+            "satellite_4": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "lime",
+              "position": {
+                "x": -2.3928541582572462,
+                "y": -0.3901655419460464,
+                "z": -0.4594637811947851
+              }
+            },
+            "satellite_5": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "peach",
+              "position": {
+                "x": 2.050323868275749,
+                "y": -1.2022730088315658,
+                "z": 0.7998291602861316
+              }
+            },
+            "satellite_6": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.16
+              },
+              "materialId": "lime",
+              "position": {
+                "x": -0.6308352263016919,
+                "y": 2.163202568141763,
+                "z": -0.4861329188286396
+              }
+            },
+            "satellite_7": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "peach",
+              "position": {
+                "x": -1.1200075379204126,
+                "y": -1.9878828212527362,
+                "z": -0.22509932216336348
+              }
+            },
+            "satellite_8": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.09
+              },
+              "materialId": "lime",
+              "position": {
+                "x": 2.2825522820485546,
+                "y": 0.768402666217522,
+                "z": 0.752256219633328
+              }
+            },
+            "satellite_9": {
+              "kind": "mesh",
+              "parentId": "satellites",
+              "geometry": {
+                "kind": "sphere",
+                "radius": 0.16
+              },
+              "materialId": "peach",
+              "position": {
+                "x": -2.246157784407468,
+                "y": 0.8546906359310044,
+                "z": -0.6642543475664324
+              }
+            }
+          }
+        }
+      },
+      "from": 0,
+      "duration": 360,
+      "style": {
+        "width": 710,
+        "height": 650,
+        "position": "absolute",
+        "left": 565,
+        "top": 30
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "frame": 14,
+              "value": 1,
+              "easing": "easeOut"
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "eyebrow",
+      "type": "text",
+      "text": "DOJO  /  MOTION STUDIES",
+      "from": 0,
+      "style": {
+        "width": 400,
+        "height": 26,
+        "position": "absolute",
+        "left": 68,
+        "top": 52,
+        "fontFamily": "Arial, Helvetica, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 700,
+        "color": "#fff4e6",
+        "lineHeight": 1,
+        "letterSpacing": 2.5,
+        "maxLines": 1,
+        "minFontSize": 12,
+        "textFit": "shrink"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "edition",
+      "type": "text",
+      "text": "VOL. 01",
+      "from": 0,
+      "style": {
+        "width": 130,
+        "height": 26,
+        "position": "absolute",
+        "left": 1080,
+        "top": 52,
+        "fontFamily": "Arial, Helvetica, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 700,
+        "color": "#fff4e6",
+        "lineHeight": 1,
+        "letterSpacing": 2.5,
+        "textAlign": "right",
+        "maxLines": 1,
+        "minFontSize": 12,
+        "textFit": "shrink"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "invite-pill",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 194,
+        "height": 32,
+        "position": "absolute",
+        "left": 68,
+        "top": 119,
+        "backgroundColor": "#e4ff67",
+        "borderRadius": 16
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "invite-pill-copy",
+          "type": "text",
+          "text": "NO ORDINARY NIGHT",
+          "from": 0,
+          "style": {
+            "width": 166,
+            "height": 18,
+            "position": "absolute",
+            "left": 16,
+            "top": 9,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 11,
+            "fontWeight": 800,
+            "color": "#160d2d",
+            "lineHeight": 1,
+            "letterSpacing": 1.4,
+            "maxLines": 1,
+            "minFontSize": 9,
+            "textFit": "shrink"
+          },
+          "animations": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "act-0",
+      "type": "div",
+      "from": 0,
+      "duration": 120,
+      "style": {
+        "width": 560,
+        "height": 365,
+        "position": "absolute",
+        "left": 64,
+        "top": 180
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 1
+            },
+            {
+              "frame": 106,
+              "value": 1
+            },
+            {
+              "frame": 119,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 106,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 119,
+              "value": "translate(0px, -20px)",
+              "easing": "easeIn"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "act-0-first",
+          "type": "text",
+          "text": "AFTER",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 124,
+            "fontWeight": 900,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 122,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 8,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-0-second",
+          "type": "text",
+          "text": "HOURS",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 112,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 124,
+            "fontWeight": 900,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 122,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 6,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 24,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 6,
+                  "value": 0
+                },
+                {
+                  "frame": 14,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-0-note",
+          "type": "text",
+          "text": "Turn a moment into a celebration.",
+          "from": 0,
+          "style": {
+            "width": 490,
+            "height": 35,
+            "position": "absolute",
+            "left": 4,
+            "top": 274,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 19,
+            "fontWeight": 400,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": 0.1,
+            "maxLines": 1,
+            "minFontSize": 17,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "act-1",
+      "type": "div",
+      "from": 120,
+      "duration": 120,
+      "style": {
+        "width": 560,
+        "height": 365,
+        "position": "absolute",
+        "left": 64,
+        "top": 180
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 1
+            },
+            {
+              "frame": 106,
+              "value": 1
+            },
+            {
+              "frame": 119,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 106,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 119,
+              "value": "translate(0px, -20px)",
+              "easing": "easeIn"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "act-1-first",
+          "type": "text",
+          "text": "GOOD",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 116,
+            "fontWeight": 900,
+            "color": "#e4ff67",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 114,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 8,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-1-second",
+          "type": "text",
+          "text": "ENERGY.",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 112,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 116,
+            "fontWeight": 900,
+            "color": "#e4ff67",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 114,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 6,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 24,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 6,
+                  "value": 0
+                },
+                {
+                  "frame": 14,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-1-note",
+          "type": "text",
+          "text": "A little color. A lot of possibility.",
+          "from": 0,
+          "style": {
+            "width": 490,
+            "height": 35,
+            "position": "absolute",
+            "left": 4,
+            "top": 274,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 19,
+            "fontWeight": 400,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": 0.1,
+            "maxLines": 1,
+            "minFontSize": 17,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "act-2",
+      "type": "div",
+      "from": 240,
+      "duration": 120,
+      "style": {
+        "width": 560,
+        "height": 365,
+        "position": "absolute",
+        "left": 64,
+        "top": 180
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 1
+            },
+            {
+              "frame": 106,
+              "value": 1
+            },
+            {
+              "frame": 119,
+              "value": 0,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "kind": "keyframes",
+          "property": "transform",
+          "frames": [
+            {
+              "frame": 0,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 106,
+              "value": "translate(0px, 0px)"
+            },
+            {
+              "frame": 119,
+              "value": "translate(0px, -20px)",
+              "easing": "easeIn"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "act-2-first",
+          "type": "text",
+          "text": "MAKE",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 103,
+            "fontWeight": 900,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 101,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 18,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 8,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-2-second",
+          "type": "text",
+          "text": "SOME JOY.",
+          "from": 0,
+          "style": {
+            "width": 560,
+            "height": 132,
+            "position": "absolute",
+            "left": 0,
+            "top": 112,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 103,
+            "fontWeight": 900,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": -7,
+            "maxLines": 1,
+            "minFontSize": 101,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 6,
+                  "value": "translate(0px, 65px)"
+                },
+                {
+                  "frame": 24,
+                  "value": "translate(0px, 0px)",
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 6,
+                  "value": 0
+                },
+                {
+                  "frame": 14,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "act-2-note",
+          "type": "text",
+          "text": "Your next big moment starts here.",
+          "from": 0,
+          "style": {
+            "width": 490,
+            "height": 35,
+            "position": "absolute",
+            "left": 4,
+            "top": 274,
+            "fontFamily": "Arial, Helvetica, sans-serif",
+            "fontSize": 19,
+            "fontWeight": 400,
+            "color": "#fff4e6",
+            "lineHeight": 1,
+            "letterSpacing": 0.1,
+            "maxLines": 1,
+            "minFontSize": 17,
+            "textFit": "shrink"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 18,
+                  "value": 0
+                },
+                {
+                  "frame": 32,
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "footer-rule",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 1144,
+        "height": 1,
+        "position": "absolute",
+        "left": 68,
+        "top": 612,
+        "backgroundColor": "#654478"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "footer",
+      "type": "text",
+      "text": "CELEBRATE THE POSSIBILITIES",
+      "from": 0,
+      "style": {
+        "width": 500,
+        "height": 28,
+        "position": "absolute",
+        "left": 68,
+        "top": 638,
+        "fontFamily": "Arial, Helvetica, sans-serif",
+        "fontSize": 13,
+        "fontWeight": 700,
+        "color": "#fff4e6",
+        "lineHeight": 1,
+        "letterSpacing": 2.7,
+        "maxLines": 1,
+        "minFontSize": 11,
+        "textFit": "shrink"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "footer-right",
+      "type": "text",
+      "text": "BUILT TO MOVE  ↗",
+      "from": 0,
+      "style": {
+        "width": 342,
+        "height": 28,
+        "position": "absolute",
+        "left": 870,
+        "top": 638,
+        "fontFamily": "Arial, Helvetica, sans-serif",
+        "fontSize": 13,
+        "fontWeight": 700,
+        "color": "#e4ff67",
+        "lineHeight": 1,
+        "letterSpacing": 2.5,
+        "textAlign": "right",
+        "maxLines": 1,
+        "minFontSize": 11,
+        "textFit": "shrink"
+      },
+      "animations": [],
+      "children": []
+    },
+    {
+      "id": "chapter-0",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 29,
+        "height": 4,
+        "position": "absolute",
+        "left": 68,
+        "top": 569,
+        "backgroundColor": "#fff4e6",
+        "opacity": 0.2
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 1
+            },
+            {
+              "frame": 119,
+              "value": 1
+            },
+            {
+              "frame": 120,
+              "value": 0.2
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "chapter-1",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 29,
+        "height": 4,
+        "position": "absolute",
+        "left": 109,
+        "top": 569,
+        "backgroundColor": "#fff4e6",
+        "opacity": 0.2
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0.2
+            },
+            {
+              "frame": 119,
+              "value": 0.2
+            },
+            {
+              "frame": 120,
+              "value": 1
+            },
+            {
+              "frame": 239,
+              "value": 1
+            },
+            {
+              "frame": 240,
+              "value": 0.2
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "chapter-2",
+      "type": "div",
+      "from": 0,
+      "style": {
+        "width": 29,
+        "height": 4,
+        "position": "absolute",
+        "left": 150,
+        "top": 569,
+        "backgroundColor": "#fff4e6",
+        "opacity": 0.2
+      },
+      "animations": [
+        {
+          "kind": "keyframes",
+          "property": "opacity",
+          "frames": [
+            {
+              "frame": 0,
+              "value": 0.2
+            },
+            {
+              "frame": 239,
+              "value": 0.2
+            },
+            {
+              "frame": 240,
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "children": []
+    }
+  ]
+}

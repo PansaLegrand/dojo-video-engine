@@ -1,0 +1,1893 @@
+{
+  "schemaVersion": 1,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 360,
+  "assets": {},
+  "nodes": [
+    {
+      "id": "orbit-chapter-1",
+      "type": "div",
+      "from": 0,
+      "duration": 120,
+      "style": {
+        "width": 1280,
+        "height": 720,
+        "position": "absolute",
+        "left": 0,
+        "top": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "orbit-chapter-1-background",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#F3F1E9"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-header-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 100,
+            "backgroundColor": "#15203920"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 627,
+            "backgroundColor": "#15203920"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-brand",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "orbit-chapter-1-brand-symbol",
+              "type": "shape",
+              "shape": {
+                "kind": "ellipse"
+              },
+              "from": 0,
+              "style": {
+                "width": 24,
+                "height": 24,
+                "position": "absolute",
+                "left": 74,
+                "top": 46,
+                "fill": "transparent",
+                "stroke": "#244EFF",
+                "strokeWidth": 5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-1-brand-name",
+              "type": "text",
+              "text": "ORBIT",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 37.12,
+                "position": "absolute",
+                "left": 111,
+                "top": 40,
+                "fontFamily": "Arial",
+                "fontSize": 29,
+                "fontWeight": 700,
+                "color": "#152039",
+                "lineHeight": 1.08,
+                "letterSpacing": 1.2
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-1-top-right",
+          "type": "text",
+          "text": "A SHARED VISION",
+          "from": 0,
+          "style": {
+            "width": 268,
+            "height": 15.36,
+            "position": "absolute",
+            "left": 936,
+            "top": 51,
+            "fontFamily": "Arial",
+            "fontSize": 12,
+            "fontWeight": 700,
+            "color": "#687087",
+            "lineHeight": 1.08,
+            "letterSpacing": 2.4,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-sculpture",
+          "type": "extension",
+          "extension": {
+            "name": "dojo.three-scene",
+            "version": "1.0.0",
+            "params": {
+              "camera": {
+                "kind": "perspective",
+                "position": {
+                  "x": 0,
+                  "y": 0.55,
+                  "z": 7.1
+                },
+                "target": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fov": 43,
+                "orbit": {
+                  "degreesPerSecond": 5,
+                  "phase": 0
+                }
+              },
+              "lighting": {
+                "ambient": 1.65,
+                "intensity": 3.1,
+                "position": {
+                  "x": -4,
+                  "y": 5,
+                  "z": 6
+                }
+              },
+              "materials": {
+                "blue": {
+                  "color": "#244EFF",
+                  "roughness": 0.22,
+                  "metalness": 0.12
+                },
+                "pearl": {
+                  "color": "#FFFFFF",
+                  "roughness": 0.27,
+                  "metalness": 0.08
+                },
+                "line": {
+                  "color": "#6A7894",
+                  "roughness": 0.5,
+                  "metalness": 0.1
+                },
+                "accent": {
+                  "color": "#D8FD7B",
+                  "roughness": 0.31,
+                  "metalness": 0
+                }
+              },
+              "objects": {
+                "assembly": {
+                  "kind": "group",
+                  "rotation": {
+                    "x": -12,
+                    "y": 18,
+                    "z": -24
+                  },
+                  "spin": {
+                    "x": 8,
+                    "y": 18,
+                    "z": 4
+                  }
+                },
+                "blueOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.53,
+                    "tube": 0.27
+                  },
+                  "materialId": "blue",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  }
+                },
+                "pearlOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.47,
+                    "tube": 0.18
+                  },
+                  "materialId": "pearl",
+                  "rotation": {
+                    "x": 75,
+                    "y": 48,
+                    "z": 35
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 9,
+                    "z": 0
+                  }
+                },
+                "fineOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 2.03,
+                    "tube": 0.023
+                  },
+                  "materialId": "line",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 13
+                  }
+                },
+                "nucleus": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.58
+                  },
+                  "materialId": "pearl"
+                },
+                "outerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 32
+                  }
+                },
+                "brightSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.23
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "blueSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.14
+                  },
+                  "materialId": "blue",
+                  "position": {
+                    "x": -2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "innerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -40
+                  }
+                },
+                "innerSatellite": {
+                  "kind": "mesh",
+                  "parentId": "innerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.18
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 1.53,
+                    "y": 0,
+                    "z": 0
+                  }
+                }
+              },
+              "timeOffset": 0
+            }
+          },
+          "from": 0,
+          "style": {
+            "width": 650,
+            "height": 574,
+            "position": "absolute",
+            "left": 592,
+            "top": 84
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 16,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.82)"
+                },
+                {
+                  "frame": 37,
+                  "value": "scale(1)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                },
+                {
+                  "frame": 119,
+                  "value": "scale(1.04)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-headline",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 19,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 42px)"
+                },
+                {
+                  "frame": 27,
+                  "value": "translate(0px, 0px)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "orbit-chapter-1-eyebrow",
+              "type": "text",
+              "text": "INTRODUCING ORBIT",
+              "from": 0,
+              "style": {
+                "width": 520,
+                "height": 16.64,
+                "position": "absolute",
+                "left": 76,
+                "top": 182,
+                "fontFamily": "Arial",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#244EFF",
+                "lineHeight": 1.08,
+                "letterSpacing": 2.5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-1-line-one",
+              "type": "text",
+              "text": "Great ideas.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 111.36,
+                "position": "absolute",
+                "left": 69,
+                "top": 238,
+                "fontFamily": "Arial",
+                "fontSize": 87,
+                "fontWeight": 700,
+                "color": "#152039",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.915
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-1-line-two",
+              "type": "text",
+              "text": "Start here.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 111.36,
+                "position": "absolute",
+                "left": 69,
+                "top": 333,
+                "fontFamily": "Arial",
+                "fontSize": 87,
+                "fontWeight": 700,
+                "color": "#152039",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.915
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-1-accent",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 54,
+                "height": 4,
+                "position": "absolute",
+                "left": 76,
+                "top": 452,
+                "backgroundColor": "#244EFF"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-1-caption",
+              "type": "text",
+              "text": "A place for people, ideas\nand the possibilities between them.",
+              "from": 0,
+              "style": {
+                "width": 465,
+                "height": 62,
+                "position": "absolute",
+                "left": 76,
+                "top": 481,
+                "fontFamily": "Arial",
+                "fontSize": 20,
+                "fontWeight": 400,
+                "color": "#687087",
+                "lineHeight": 1.4,
+                "letterSpacing": 0
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-1-footer",
+          "type": "text",
+          "text": "IDEAS BECOME POSSIBLE TOGETHER",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 14.08,
+            "position": "absolute",
+            "left": 76,
+            "top": 653,
+            "fontFamily": "Arial",
+            "fontSize": 11,
+            "fontWeight": 700,
+            "color": "#687087",
+            "lineHeight": 1.08,
+            "letterSpacing": 2
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-chapter-number",
+          "type": "text",
+          "text": "01 / 03",
+          "from": 0,
+          "style": {
+            "width": 88,
+            "height": 16.64,
+            "position": "absolute",
+            "left": 1116,
+            "top": 650,
+            "fontFamily": "Arial",
+            "fontSize": 13,
+            "fontWeight": 700,
+            "color": "#687087",
+            "lineHeight": 1.08,
+            "letterSpacing": 1,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-progress-track",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#15203912"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-1-progress",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 0,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#244EFF"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "width",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 119,
+                  "value": 1128
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "orbit-chapter-2",
+      "type": "div",
+      "from": 120,
+      "duration": 120,
+      "style": {
+        "width": 1280,
+        "height": 720,
+        "position": "absolute",
+        "left": 0,
+        "top": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "orbit-chapter-2-background",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#152039"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-header-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 100,
+            "backgroundColor": "#FFFFFF25"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 627,
+            "backgroundColor": "#FFFFFF25"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-brand",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "orbit-chapter-2-brand-symbol",
+              "type": "shape",
+              "shape": {
+                "kind": "ellipse"
+              },
+              "from": 0,
+              "style": {
+                "width": 24,
+                "height": 24,
+                "position": "absolute",
+                "left": 74,
+                "top": 46,
+                "fill": "transparent",
+                "stroke": "#D8FD7B",
+                "strokeWidth": 5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-2-brand-name",
+              "type": "text",
+              "text": "ORBIT",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 37.12,
+                "position": "absolute",
+                "left": 111,
+                "top": 40,
+                "fontFamily": "Arial",
+                "fontSize": 29,
+                "fontWeight": 700,
+                "color": "#F3F1E9",
+                "lineHeight": 1.08,
+                "letterSpacing": 1.2
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-2-top-right",
+          "type": "text",
+          "text": "A SHARED VISION",
+          "from": 0,
+          "style": {
+            "width": 268,
+            "height": 15.36,
+            "position": "absolute",
+            "left": 936,
+            "top": 51,
+            "fontFamily": "Arial",
+            "fontSize": 12,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 2.4,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-sculpture",
+          "type": "extension",
+          "extension": {
+            "name": "dojo.three-scene",
+            "version": "1.0.0",
+            "params": {
+              "camera": {
+                "kind": "perspective",
+                "position": {
+                  "x": 0,
+                  "y": 0.55,
+                  "z": 7.1
+                },
+                "target": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fov": 43,
+                "orbit": {
+                  "degreesPerSecond": 5,
+                  "phase": 18
+                }
+              },
+              "lighting": {
+                "ambient": 1.65,
+                "intensity": 3.1,
+                "position": {
+                  "x": -4,
+                  "y": 5,
+                  "z": 6
+                }
+              },
+              "materials": {
+                "blue": {
+                  "color": "#244EFF",
+                  "roughness": 0.22,
+                  "metalness": 0.12
+                },
+                "pearl": {
+                  "color": "#FFFFFF",
+                  "roughness": 0.27,
+                  "metalness": 0.08
+                },
+                "line": {
+                  "color": "#B9C8EF",
+                  "roughness": 0.5,
+                  "metalness": 0.1
+                },
+                "accent": {
+                  "color": "#D8FD7B",
+                  "roughness": 0.31,
+                  "metalness": 0
+                }
+              },
+              "objects": {
+                "assembly": {
+                  "kind": "group",
+                  "rotation": {
+                    "x": -12,
+                    "y": 18,
+                    "z": -24
+                  },
+                  "spin": {
+                    "x": 8,
+                    "y": 18,
+                    "z": 4
+                  }
+                },
+                "blueOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.53,
+                    "tube": 0.27
+                  },
+                  "materialId": "blue",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  }
+                },
+                "pearlOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.47,
+                    "tube": 0.18
+                  },
+                  "materialId": "pearl",
+                  "rotation": {
+                    "x": 75,
+                    "y": 48,
+                    "z": 35
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 9,
+                    "z": 0
+                  }
+                },
+                "fineOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 2.03,
+                    "tube": 0.023
+                  },
+                  "materialId": "line",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 13
+                  }
+                },
+                "nucleus": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.58
+                  },
+                  "materialId": "pearl"
+                },
+                "outerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 32
+                  }
+                },
+                "brightSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.23
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "blueSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.14
+                  },
+                  "materialId": "blue",
+                  "position": {
+                    "x": -2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "innerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -40
+                  }
+                },
+                "innerSatellite": {
+                  "kind": "mesh",
+                  "parentId": "innerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.18
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 1.53,
+                    "y": 0,
+                    "z": 0
+                  }
+                }
+              },
+              "timeOffset": 4
+            }
+          },
+          "from": 0,
+          "style": {
+            "width": 650,
+            "height": 574,
+            "position": "absolute",
+            "left": 592,
+            "top": 84
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 16,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.82)"
+                },
+                {
+                  "frame": 37,
+                  "value": "scale(1)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                },
+                {
+                  "frame": 119,
+                  "value": "scale(1.04)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-headline",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 19,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 42px)"
+                },
+                {
+                  "frame": 27,
+                  "value": "translate(0px, 0px)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "orbit-chapter-2-eyebrow",
+              "type": "text",
+              "text": "BRING YOUR PERSPECTIVE",
+              "from": 0,
+              "style": {
+                "width": 520,
+                "height": 16.64,
+                "position": "absolute",
+                "left": 76,
+                "top": 182,
+                "fontFamily": "Arial",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#D8FD7B",
+                "lineHeight": 1.08,
+                "letterSpacing": 2.5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-2-line-one",
+              "type": "text",
+              "text": "Different minds.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 93.44,
+                "position": "absolute",
+                "left": 69,
+                "top": 238,
+                "fontFamily": "Arial",
+                "fontSize": 73,
+                "fontWeight": 700,
+                "color": "#F3F1E9",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.2849999999999997
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-2-line-two",
+              "type": "text",
+              "text": "One direction.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 93.44,
+                "position": "absolute",
+                "left": 69,
+                "top": 333,
+                "fontFamily": "Arial",
+                "fontSize": 73,
+                "fontWeight": 700,
+                "color": "#F3F1E9",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.2849999999999997
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-2-accent",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 54,
+                "height": 4,
+                "position": "absolute",
+                "left": 76,
+                "top": 452,
+                "backgroundColor": "#D8FD7B"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-2-caption",
+              "type": "text",
+              "text": "Connect the dots. Share the vision.\nMake something that moves us.",
+              "from": 0,
+              "style": {
+                "width": 465,
+                "height": 62,
+                "position": "absolute",
+                "left": 76,
+                "top": 481,
+                "fontFamily": "Arial",
+                "fontSize": 20,
+                "fontWeight": 400,
+                "color": "#BDCAEE",
+                "lineHeight": 1.4,
+                "letterSpacing": 0
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-2-footer",
+          "type": "text",
+          "text": "IDEAS BECOME POSSIBLE TOGETHER",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 14.08,
+            "position": "absolute",
+            "left": 76,
+            "top": 653,
+            "fontFamily": "Arial",
+            "fontSize": 11,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 2
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-chapter-number",
+          "type": "text",
+          "text": "02 / 03",
+          "from": 0,
+          "style": {
+            "width": 88,
+            "height": 16.64,
+            "position": "absolute",
+            "left": 1116,
+            "top": 650,
+            "fontFamily": "Arial",
+            "fontSize": 13,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 1,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-progress-track",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#FFFFFF18"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-2-progress",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 0,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#D8FD7B"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "width",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 119,
+                  "value": 1128
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "orbit-chapter-3",
+      "type": "div",
+      "from": 240,
+      "duration": 120,
+      "style": {
+        "width": 1280,
+        "height": 720,
+        "position": "absolute",
+        "left": 0,
+        "top": 0
+      },
+      "animations": [],
+      "children": [
+        {
+          "id": "orbit-chapter-3-background",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0,
+            "backgroundColor": "#244EFF"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-header-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 100,
+            "backgroundColor": "#FFFFFF25"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-footer-rule",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 1,
+            "position": "absolute",
+            "left": 76,
+            "top": 627,
+            "backgroundColor": "#FFFFFF25"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-brand",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [],
+          "children": [
+            {
+              "id": "orbit-chapter-3-brand-symbol",
+              "type": "shape",
+              "shape": {
+                "kind": "ellipse"
+              },
+              "from": 0,
+              "style": {
+                "width": 24,
+                "height": 24,
+                "position": "absolute",
+                "left": 74,
+                "top": 46,
+                "fill": "transparent",
+                "stroke": "#D8FD7B",
+                "strokeWidth": 5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-3-brand-name",
+              "type": "text",
+              "text": "ORBIT",
+              "from": 0,
+              "style": {
+                "width": 180,
+                "height": 37.12,
+                "position": "absolute",
+                "left": 111,
+                "top": 40,
+                "fontFamily": "Arial",
+                "fontSize": 29,
+                "fontWeight": 700,
+                "color": "#FFFFFF",
+                "lineHeight": 1.08,
+                "letterSpacing": 1.2
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-3-top-right",
+          "type": "text",
+          "text": "A SHARED VISION",
+          "from": 0,
+          "style": {
+            "width": 268,
+            "height": 15.36,
+            "position": "absolute",
+            "left": 936,
+            "top": 51,
+            "fontFamily": "Arial",
+            "fontSize": 12,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 2.4,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-sculpture",
+          "type": "extension",
+          "extension": {
+            "name": "dojo.three-scene",
+            "version": "1.0.0",
+            "params": {
+              "camera": {
+                "kind": "perspective",
+                "position": {
+                  "x": 0,
+                  "y": 0.55,
+                  "z": 7.1
+                },
+                "target": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fov": 43,
+                "orbit": {
+                  "degreesPerSecond": 5,
+                  "phase": 36
+                }
+              },
+              "lighting": {
+                "ambient": 1.65,
+                "intensity": 3.1,
+                "position": {
+                  "x": -4,
+                  "y": 5,
+                  "z": 6
+                }
+              },
+              "materials": {
+                "blue": {
+                  "color": "#92B2FF",
+                  "roughness": 0.22,
+                  "metalness": 0.12
+                },
+                "pearl": {
+                  "color": "#FFFFFF",
+                  "roughness": 0.27,
+                  "metalness": 0.08
+                },
+                "line": {
+                  "color": "#B9C8EF",
+                  "roughness": 0.5,
+                  "metalness": 0.1
+                },
+                "accent": {
+                  "color": "#D8FD7B",
+                  "roughness": 0.31,
+                  "metalness": 0
+                }
+              },
+              "objects": {
+                "assembly": {
+                  "kind": "group",
+                  "rotation": {
+                    "x": -12,
+                    "y": 18,
+                    "z": -24
+                  },
+                  "spin": {
+                    "x": 8,
+                    "y": 18,
+                    "z": 4
+                  }
+                },
+                "blueOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.53,
+                    "tube": 0.27
+                  },
+                  "materialId": "blue",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  }
+                },
+                "pearlOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 1.47,
+                    "tube": 0.18
+                  },
+                  "materialId": "pearl",
+                  "rotation": {
+                    "x": 75,
+                    "y": 48,
+                    "z": 35
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 9,
+                    "z": 0
+                  }
+                },
+                "fineOrbit": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "torus",
+                    "radius": 2.03,
+                    "tube": 0.023
+                  },
+                  "materialId": "line",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 13
+                  }
+                },
+                "nucleus": {
+                  "kind": "mesh",
+                  "parentId": "assembly",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.58
+                  },
+                  "materialId": "pearl"
+                },
+                "outerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 45,
+                    "y": -32,
+                    "z": 24
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 32
+                  }
+                },
+                "brightSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.23
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "blueSatellite": {
+                  "kind": "mesh",
+                  "parentId": "outerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.14
+                  },
+                  "materialId": "blue",
+                  "position": {
+                    "x": -2.03,
+                    "y": 0,
+                    "z": 0
+                  }
+                },
+                "innerOrbit": {
+                  "kind": "group",
+                  "parentId": "assembly",
+                  "rotation": {
+                    "x": 18,
+                    "y": 10,
+                    "z": -8
+                  },
+                  "spin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -40
+                  }
+                },
+                "innerSatellite": {
+                  "kind": "mesh",
+                  "parentId": "innerOrbit",
+                  "geometry": {
+                    "kind": "sphere",
+                    "radius": 0.18
+                  },
+                  "materialId": "accent",
+                  "position": {
+                    "x": 1.53,
+                    "y": 0,
+                    "z": 0
+                  }
+                }
+              },
+              "timeOffset": 8
+            }
+          },
+          "from": 0,
+          "style": {
+            "width": 650,
+            "height": 574,
+            "position": "absolute",
+            "left": 592,
+            "top": 84
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 16,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "scale(0.82)"
+                },
+                {
+                  "frame": 37,
+                  "value": "scale(1)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                },
+                {
+                  "frame": 119,
+                  "value": "scale(1.04)"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-headline",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1280,
+            "height": 720,
+            "position": "absolute",
+            "left": 0,
+            "top": 0
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "opacity",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 19,
+                  "value": 1,
+                  "easing": "easeOut"
+                }
+              ]
+            },
+            {
+              "kind": "keyframes",
+              "property": "transform",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": "translate(0px, 42px)"
+                },
+                {
+                  "frame": 27,
+                  "value": "translate(0px, 0px)",
+                  "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                }
+              ]
+            }
+          ],
+          "children": [
+            {
+              "id": "orbit-chapter-3-eyebrow",
+              "type": "text",
+              "text": "THE NEXT CHAPTER",
+              "from": 0,
+              "style": {
+                "width": 520,
+                "height": 16.64,
+                "position": "absolute",
+                "left": 76,
+                "top": 182,
+                "fontFamily": "Arial",
+                "fontSize": 13,
+                "fontWeight": 700,
+                "color": "#D8FD7B",
+                "lineHeight": 1.08,
+                "letterSpacing": 2.5
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-3-line-one",
+              "type": "text",
+              "text": "Move forward.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 111.36,
+                "position": "absolute",
+                "left": 69,
+                "top": 238,
+                "fontFamily": "Arial",
+                "fontSize": 87,
+                "fontWeight": 700,
+                "color": "#FFFFFF",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.915
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-3-line-two",
+              "type": "text",
+              "text": "Together.",
+              "from": 0,
+              "style": {
+                "width": 580,
+                "height": 111.36,
+                "position": "absolute",
+                "left": 69,
+                "top": 333,
+                "fontFamily": "Arial",
+                "fontSize": 87,
+                "fontWeight": 700,
+                "color": "#FFFFFF",
+                "lineHeight": 1.08,
+                "letterSpacing": -3.915
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-3-accent",
+              "type": "div",
+              "from": 0,
+              "style": {
+                "width": 54,
+                "height": 4,
+                "position": "absolute",
+                "left": 76,
+                "top": 452,
+                "backgroundColor": "#D8FD7B"
+              },
+              "animations": [],
+              "children": []
+            },
+            {
+              "id": "orbit-chapter-3-caption",
+              "type": "text",
+              "text": "Your next big idea\nhas good company.",
+              "from": 0,
+              "style": {
+                "width": 465,
+                "height": 62,
+                "position": "absolute",
+                "left": 76,
+                "top": 481,
+                "fontFamily": "Arial",
+                "fontSize": 20,
+                "fontWeight": 400,
+                "color": "#BDCAEE",
+                "lineHeight": 1.4,
+                "letterSpacing": 0
+              },
+              "animations": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "orbit-chapter-3-footer",
+          "type": "text",
+          "text": "IDEAS BECOME POSSIBLE TOGETHER",
+          "from": 0,
+          "style": {
+            "width": 600,
+            "height": 14.08,
+            "position": "absolute",
+            "left": 76,
+            "top": 653,
+            "fontFamily": "Arial",
+            "fontSize": 11,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 2
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-chapter-number",
+          "type": "text",
+          "text": "03 / 03",
+          "from": 0,
+          "style": {
+            "width": 88,
+            "height": 16.64,
+            "position": "absolute",
+            "left": 1116,
+            "top": 650,
+            "fontFamily": "Arial",
+            "fontSize": 13,
+            "fontWeight": 700,
+            "color": "#BDCAEE",
+            "lineHeight": 1.08,
+            "letterSpacing": 1,
+            "textAlign": "right"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-progress-track",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 1128,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#FFFFFF18"
+          },
+          "animations": [],
+          "children": []
+        },
+        {
+          "id": "orbit-chapter-3-progress",
+          "type": "div",
+          "from": 0,
+          "style": {
+            "width": 0,
+            "height": 2,
+            "position": "absolute",
+            "left": 76,
+            "top": 609,
+            "backgroundColor": "#D8FD7B"
+          },
+          "animations": [
+            {
+              "kind": "keyframes",
+              "property": "width",
+              "frames": [
+                {
+                  "frame": 0,
+                  "value": 0
+                },
+                {
+                  "frame": 119,
+                  "value": 1128
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "markers": {
+    "introduction": 0,
+    "connection": 120,
+    "launch": 240
+  }
+}
