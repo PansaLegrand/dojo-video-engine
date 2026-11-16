@@ -108,7 +108,7 @@ samples, and diagnostics. Invalid scenes still produce a parseable envelope
 and exit `1`; valid scenes with warnings exit `0`. Use either an explicit
 comma-separated `--frames` list or `--sample-count` (both are capped at 100).
 
-For the visual editor and agent, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+For the visual editor and agent, use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 ## API Stability
 

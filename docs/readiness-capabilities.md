@@ -21,7 +21,7 @@ support remains defined by `packages/schema` and `docs/scene-format.md`.
 | Authoring, layout plans, macros and extensions                      | `packages/authoring/src/index.test.ts`, `packages/layout/src/index.test.ts`, `packages/extensions/src/index.test.ts`                                        | Validate generated Scene and registry versions; no arbitrary executable Scene data  |
 | Scene commands, inspection and bounded interchange                  | `packages/commands/src/commands.test.ts`, `packages/inspection/src/index.test.ts`, `packages/interchange/src/index.test.ts`                                 | Typed low-level contracts; not ProjectDocument approval or business intent          |
 | Tool adapters, CLI and starter                                      | `packages/agent-tools/src/index.test.ts`, `packages/cli/src/index.test.ts`, `packages/create-dojo-video-engine/src/index.test.ts`                           | Engine interfaces only; no LLM runtime or provider credentials                      |
-| Public package consumption                                          | `scripts/verify-clean-machine.mjs`; [harness consumer check](https://github.com/PansaLegrand/dojo-video-harness/blob/main/scripts/test-engine-packages.mjs) | E-T14; retained tarballs and exact dependency identities                            |
+| Public package consumption                                          | `scripts/verify-clean-machine.mjs`; [harness consumer check](https://github.com/PansaLegrand/dojo-video-agent/blob/main/scripts/test-engine-packages.mjs) | E-T14; retained tarballs and exact dependency identities                            |
 
 ## Candidate policy
 

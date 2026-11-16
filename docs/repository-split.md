@@ -1,5 +1,7 @@
 # Repository split — 2026-10-31
 
+> Naming update, 2026-11-17: the companion editor is now [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent). The original split record below retains the repository names and dependency state at that time.
+
 The engine is now **Dojo Video Engine**, repository `dojo-video-engine` and package
 namespace `@dojo-video-engine/*`. Executables, API identifiers, schema names, tool
 names, environment variables, paths, and documentation use the new naming.

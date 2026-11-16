@@ -7,7 +7,7 @@ Scene data, authoring, validation, evaluation, inspection, Canvas2D rendering,
 playback and browser export. Public packages use `@dojo-video-engine/*`.
 
 The editor UI, model loop, provider credentials and durable application approvals
-belong to [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+belong to [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 `packages/agent-tools` contains provider-neutral engine adapters, not a model
 runtime. Do not reintroduce retired editor/playground/model-agent applications.
 

@@ -15,7 +15,7 @@ is the engine half of the current workflow:
 
 `request → validated proposal → human comparison → approved edit → export`
 
-The companion is [the harness readiness plan](https://github.com/PansaLegrand/dojo-video-harness/blob/main/docs/harness-readiness-plan.md).
+The companion is [the Dojo Video Agent readiness plan](https://github.com/PansaLegrand/dojo-video-agent/blob/main/docs/harness-readiness-plan.md).
 It owns whether the proposal matches the user's request and whether approval,
 application, persistence, and undo behave correctly.
 

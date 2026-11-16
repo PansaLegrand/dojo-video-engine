@@ -1,7 +1,7 @@
 # Get started with Dojo Video Engine
 
 For the complete local editor and chat agent, start with
-[Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+[Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 This guide is for headless engine development and embedding.
 
 Use Node 20.19+ to create a project with published engine **1.2.3**:

@@ -55,6 +55,6 @@ Internal/not public:
 
 MIT
 
-This generator creates a headless authoring project. For the visual editor and agent, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+This generator creates a headless authoring project. For the visual editor and agent, use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 For the hosted timeline and chat editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).

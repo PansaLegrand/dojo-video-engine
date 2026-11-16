@@ -131,7 +131,7 @@ function formatSuccess(result: CreateDojoVideoEngineResult) {
     "  pnpm install",
     "  pnpm validate",
     "  pnpm inspect",
-    "Editor and chat: https://github.com/PansaLegrand/dojo-video-harness",
+    "Editor and chat: https://github.com/PansaLegrand/dojo-video-agent",
     "",
   ].join("\n");
 }

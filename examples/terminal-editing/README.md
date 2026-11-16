@@ -4,7 +4,7 @@ This is a standalone consumer example using published engine **1.2.3** packages.
 A coding agent can edit the Scene and invoke these scripts from its shell.
 
 For the hosted editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).
-For a local timeline and chat UI, use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+For a local timeline and chat UI, use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 There is no nested LLM loop, editor UI, API key, MCP server or provider SDK. Rendering
 uses a local headless Chromium process; it is not browser-free Node rendering.

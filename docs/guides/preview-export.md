@@ -4,7 +4,7 @@ Dojo Video Engine uses one render path for preview and export. A frame in a host
 
 ## Visual editor
 
-Use [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness) for the editor, chat, and local export UI. Engine consumers can embed the APIs below in their own host.
+Use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent) for the editor, chat, and local export UI. Engine consumers can embed the APIs below in their own host.
 
 ## Player API
 

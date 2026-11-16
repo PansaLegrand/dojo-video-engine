@@ -36,4 +36,4 @@ pnpm --filter @dojo-video-engine/golden run example examples/generated/tiktok-ca
 | [Lottie](../examples/generated/lottie-sticker.json)              | Deterministic vector animation                 |
 
 For the manual editor, chat, tools, skills, and provider integration, develop in
-[Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+[Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).

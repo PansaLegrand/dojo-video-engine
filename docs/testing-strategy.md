@@ -30,7 +30,7 @@ Build first: package typechecks rely on generated project-reference declarations
 
 The browser harness is engine test infrastructure, not a second editor application.
 UI interaction, provider contracts, and editing-agent acceptance live in
-[Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+[Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 No engine gate requires paid LLM/ASR credentials. Exact pixels depend on the pinned
 browser/font/color environment; other browsers are checked through semantic probes.

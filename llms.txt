@@ -2,7 +2,7 @@
 
 > A deterministic, browser-native video scene engine. The canonical video is a serializable JSON scene document; rendering is a pure function of (scene, frame). Agents author and patch scene JSON; the engine validates, lays out, and renders it.
 
-Full editor and model-agent development: https://github.com/PansaLegrand/dojo-video-harness. This repository exposes engine SDKs and headless commands.
+Full editor and model-agent development: https://github.com/PansaLegrand/dojo-video-agent. This repository exposes engine SDKs and headless commands.
 
 ## Mental model
 

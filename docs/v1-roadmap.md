@@ -1,4 +1,4 @@
-> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness).
+> Historical record. The editor, UI demos, and model-agent examples have been retired from this engine repository. Current application development: [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 # Dojo Video Engine base-engine v1 roadmap
 

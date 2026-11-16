@@ -56,7 +56,7 @@ try {
   console.log(`starter project: ${projectDir}`);
   console.log(
     keep
-      ? "Headless starter ready; editor and chat: https://github.com/PansaLegrand/dojo-video-harness"
+      ? "Headless starter ready; editor and chat: https://github.com/PansaLegrand/dojo-video-agent"
       : "rerun with --keep to preserve the headless authoring starter",
   );
 } finally {

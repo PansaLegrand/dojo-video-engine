@@ -7,7 +7,7 @@
 Build video features with TypeScript and JSON: compose footage, text, captions,
 audio and graphics into an editable Scene, preview any frame, and export MP4 in
 a compatible browser. Dojo Video Engine is the MIT-licensed rendering foundation
-used by DojoClip and the local Dojo Video Harness.
+used by DojoClip and Dojo Video Agent.
 
 ## Made with Dojo
 
@@ -26,7 +26,7 @@ operations follow the product's account and credit requirements.
 | You want to…                                           | Start here                                                                           | What you run                                           |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
 | Add video authoring, preview or export to your own app | **This engine**                                                                      | TypeScript libraries and a validation/inspection CLI   |
-| Run a local editor with a timeline and editing agent   | [Dojo Video Harness](https://github.com/PansaLegrand/dojo-video-harness#run-locally) | A local application with your own provider keys for AI |
+| Run a local editor with a timeline and editing agent   | [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent#run-locally) | A local application with your own provider keys for AI |
 | Edit videos without installing a developer environment | [DojoClip](https://dojoclip.com/en/applications/video-edit-ai)                       | The hosted commercial product                          |
 
 The engine is deliberately smaller than either application. It includes Scene
@@ -38,7 +38,7 @@ Your application owns project persistence, media access and any paid services.
 
 The engine's `agent-tools` package gives an agent structured inspection, command
 and evidence APIs. The calling application supplies the model and decides when
-to apply edits. A Scene is render data; it is separate from the harness/product's
+to apply edits. A Scene is render data; each application separately owns its
 ProjectDocument, timeline history and application permissions.
 
 ## Quick start: a title card
@@ -114,7 +114,7 @@ pnpm --filter @dojo-video-engine/golden run example examples/generated/tiktok-ca
 
 This produces an MP4 and a preview PNG at frame 60. Caption text and timing are
 supplied data; automatic transcription and translation belong to your host or
-the [local harness](https://github.com/PansaLegrand/dojo-video-harness).
+[Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 ### Build your own editor or coding-agent workflow
 
@@ -132,12 +132,12 @@ is no packaged Codex/Claude plugin in this repository.
 
 ## Scope and product synchronization
 
-The web product and local harness currently consume the published **1.2.3**
+DojoClip and Dojo Video Agent currently consume the published **1.2.3**
 engine. Shared rendering fixes belong here and reach both applications through
 versioned packages. The release includes responsive editable title cards and
 the existing vector/Three.js support; see the [release record](docs/releases/1.2.3.md).
 Editor UI, agent tools and host behavior have their own synchronization path in
-[the harness](https://github.com/PansaLegrand/dojo-video-harness).
+[Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
 The full hosted product also supplies account-based projects, managed provider
 operations, storage/publication and payments. Those services are intentionally

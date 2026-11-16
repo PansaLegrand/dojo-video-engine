@@ -126,7 +126,7 @@ author, then render again. Animation uses explicit frame/second keyframes. The
 files are serializable scenes; no executable code is embedded in the Scene JSON.
 
 To edit on a timeline, use the matching
-[local harness examples](https://github.com/PansaLegrand/dojo-video-harness/tree/main/examples/creative-showcase).
+[Dojo Video Agent examples](https://github.com/PansaLegrand/dojo-video-agent/tree/main/examples/creative-showcase).
 They import these scenes as editable projects through the normal command API.
 
 ## Evidence and scope
