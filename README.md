@@ -11,10 +11,25 @@ used by DojoClip and Dojo Video Agent.
 
 ## Made with Dojo
 
+### Creative directions
+
 https://github.com/user-attachments/assets/99fa44aa-1e46-4594-9938-7b8cfe312223
 
-A 12-second showcase of illustrated stories, data animation, kinetic typography
-and editable 3D. **[Explore the examples and make them yours →](examples/creative-showcase/README.md)**
+Illustrated stories, animated data, portrait typography, cinematic titles and 3D branding.
+
+### 3D and vector detail
+
+https://github.com/user-attachments/assets/59f7b7d2-bb9c-442a-808c-8935aeec4de0
+
+A miniature city, an exploded mechanical timepiece and layered kinetic vector art.
+
+### Real-world scenarios
+
+https://github.com/user-attachments/assets/088f91fb-d8a0-47d6-85c9-9e7665a116e9
+
+Sports broadcast graphics, a software workflow and a colorful drink campaign.
+
+**[Explore the editable examples and make them yours →](examples/creative-showcase/README.md)**
 The original scenes stay editable; no API keys are needed to render them.
 
 **Want to make a video now? [Try the hosted DojoClip editor](https://dojoclip.com/en/applications/video-edit-ai).**
@@ -23,11 +38,11 @@ operations follow the product's account and credit requirements.
 
 ## Choose the right starting point
 
-| You want to…                                           | Start here                                                                           | What you run                                           |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| Add video authoring, preview or export to your own app | **This engine**                                                                      | TypeScript libraries and a validation/inspection CLI   |
+| You want to…                                           | Start here                                                                       | What you run                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Add video authoring, preview or export to your own app | **This engine**                                                                  | TypeScript libraries and a validation/inspection CLI   |
 | Run a local editor with a timeline and editing agent   | [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent#run-locally) | A local application with your own provider keys for AI |
-| Edit videos without installing a developer environment | [DojoClip](https://dojoclip.com/en/applications/video-edit-ai)                       | The hosted commercial product                          |
+| Edit videos without installing a developer environment | [DojoClip](https://dojoclip.com/en/applications/video-edit-ai)                   | The hosted commercial product                          |
 
 The engine is deliberately smaller than either application. It includes Scene
 validation, frame evaluation, layout, editable vector/Three.js primitives, media

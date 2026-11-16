@@ -2,9 +2,9 @@
 
 ## Creative showcase
 
-Start with a finished design: **[Nine creative studies](creative-showcase/README.md)**
+Start with a finished design: **[Twelve creative studies](creative-showcase/README.md)**
 cover illustrated stories, data reports, portrait motion posters, cinematic titles,
-festive 3D, company launches, miniature cities, exploded assemblies and kinetic vector art. Each film is an original editable 12-second scene.
+festive 3D, company launches, miniature cities, exploded assemblies, kinetic vector art, sports broadcasts, software demos and food/drink campaigns. Each film is an original editable 12-second scene.
 They include full MP4s, animated previews, source code and a reproducible renderer.
 Use them for an event announcement, a company launch or your own visual direction.
 

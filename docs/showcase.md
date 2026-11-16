@@ -2,10 +2,10 @@
 
 ## Creative motion studies
 
-**[Nine creative studies](../examples/creative-showcase/README.md)** lead with
+**[Twelve creative studies](../examples/creative-showcase/README.md)** lead with
 finished designs: illustrated stories, data reports, portrait motion posters,
 cinematic titles, festive 3D, company launches, miniature cities, exploded assemblies
-and kinetic vector art.
+kinetic vector art, sports broadcasts, software demos and food/drink campaigns.
 Each includes editable source, a landscape or portrait MP4, a README preview and
 browser-render/decode evidence. The dedicated example renderer registers the
 Three.js extension for both preview and export.
