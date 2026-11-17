@@ -36,7 +36,17 @@
       "sha256": "ca06c45d7dc33470220ffbefb31f87f096de1d58edbd7df0615db7a6622551c8",
       "durationSeconds": 12,
       "scenes": ["sports", "software", "citrus"],
-      "selection": "Scenario expansion requested for the README"
+      "selection": "User-approved reel"
+    },
+    {
+      "id": "lettering",
+      "title": "Lottie and animated lettering",
+      "url": "https://github.com/user-attachments/assets/32125d51-061f-4a0f-b0ab-e15f79edb770",
+      "file": "docs/assets/showcase/lettering.mp4",
+      "sha256": "d7bceeebf021195daf6799eaa17ec58abe276dcefad35fc0a36e2d7c2383e84d",
+      "durationSeconds": 12,
+      "scenes": ["lottie", "handwriting", "type-motion"],
+      "selection": "Lottie and lettering examples requested for the README"
     }
   ]
 }

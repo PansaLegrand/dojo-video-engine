@@ -1,11 +1,39 @@
 # Motion worth making
 
-Twelve studies with different subjects, formats and motion languages. Every film
-is 12 seconds at 30 fps. Eleven are landscape (1280 × 720); Type in Motion is portrait
+Fifteen studies with different subjects, formats and motion languages. Every film
+is 12 seconds at 30 fps. Fourteen are landscape (1280 × 720); Type in Motion is portrait
 (720 × 1280). Native text, vector shapes and 3D geometry stay editable. No external
 media, model calls or API keys are required.
 
 [![Six creative directions](../../docs/assets/showcase/gallery.gif)](../../docs/assets/showcase/gallery.mp4)
+
+## Lottie and animated lettering
+
+[![Lottie and animated lettering](../../docs/assets/showcase/lettering.gif)](../../docs/assets/showcase/lettering.mp4)
+
+### Special Delivery — Lottie vector story
+
+[![Special Delivery](../../docs/assets/showcase/lottie-card.png)](../../docs/assets/showcase/lottie.mp4)
+
+A coral envelope unfolds, a paper airplane follows a drawn route, and a mailbox celebrates the delivery. The artwork is an original embedded Lottie document; captions remain native text.
+
+[Watch MP4](../../docs/assets/showcase/lottie.mp4) · [Authoring source](lottie.mjs) · [Scene JSON](lottie.json)
+
+### Make Magic — Handwritten lettering
+
+[![Make Magic](../../docs/assets/showcase/handwriting-card.png)](../../docs/assets/showcase/handwriting.mp4)
+
+Original monoline letter paths write “Make magic” stroke by stroke using Lottie trim paths. This is authored vector lettering, not an arbitrary text-to-handwriting generator.
+
+[Watch MP4](../../docs/assets/showcase/handwriting.mp4) · [Authoring source](handwriting.mjs) · [Scene JSON](handwriting.json)
+
+### Letter / Form — Expressive typography
+
+[![Letter / Form](../../docs/assets/showcase/type-motion-card.png)](../../docs/assets/showcase/type-motion.mp4)
+
+Native text animates through elastic letterforms, changing size and tracking, and a serif/sans finale. The words remain editable text; no variable-font axes are claimed.
+
+[Watch MP4](../../docs/assets/showcase/type-motion.mp4) · [Authoring source](type-motion.mjs) · [Scene JSON](type-motion.json)
 
 ## Videos for different scenarios
 
@@ -136,6 +164,7 @@ After rendering all scenes, build the category cards and 12-second README reel:
 node examples/creative-showcase/gallery.mjs            # approved six-category reel
 node examples/creative-showcase/gallery.mjs --studies  # 3D and vector detail
 node examples/creative-showcase/gallery.mjs --scenarios # sports, software and product ads
+node examples/creative-showcase/gallery.mjs --lettering # Lottie and animated writing
 ```
 
 This optional gallery assembly uses FFmpeg with `drawtext` support. It takes
@@ -169,10 +198,17 @@ System sans-serif fonts can render differently across platforms.
 
 The committed render reports record the Scene hash, engine/browser version,
 sampled preview frames and independently decoded output dimensions/count. They
-qualify these twelve examples. Three.js needs WebGL2; MP4 export needs compatible
+qualify these fifteen examples. Three.js needs WebGL2; MP4 export needs compatible
 WebCodecs. Rendering resources use the existing engine 1.2.3 limits and geometry.
 
-The root README groups the collection into three short GitHub-hosted MP4 reels.
+The root README groups the collection into four short GitHub-hosted MP4 reels.
 [Video receipts](../../docs/reports/showcase/readme-videos.json) bind their stable
 attachment URLs to local file hashes. Individual films and their editable source
 remain available above.
+
+The two Lottie scenes embed original vector JSON (no expressions, external images
+or fonts). The existing optional `lottie-web` dependency is already installed by
+the repository tools. In Video Agent, the same JSON is bundled under content-hashed
+static filenames so a later example revision does not overwrite saved projects’
+asset paths. Lottie artwork and handwriting paths are edited in source; the editor
+provides clip placement and playback controls. Native overlay text remains editable.
