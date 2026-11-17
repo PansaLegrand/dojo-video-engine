@@ -29,6 +29,12 @@ https://github.com/user-attachments/assets/088f91fb-d8a0-47d6-85c9-9e7665a116e9
 
 Sports broadcast graphics, a software workflow and a colorful drink campaign.
 
+### Lottie and animated lettering
+
+https://github.com/user-attachments/assets/32125d51-061f-4a0f-b0ab-e15f79edb770
+
+An original Lottie story, handwriting drawn stroke by stroke, and expressive editable text.
+
 **[Explore the editable examples and make them yours →](examples/creative-showcase/README.md)**
 The original scenes stay editable; no API keys are needed to render them.
 
