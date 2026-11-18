@@ -15,6 +15,9 @@ wordmark settles at the same moment in both versions. The shots, typography,
 color and closing hold are shared; the camera curve, move length and
 corresponding sound fade differ.
 
+[Glide motion notes](MOTION.md) describe what to preserve when adapting the
+idea to different material.
+
 ## Make a revision
 
 Follow [Open an editable copy](EDITING.md) to bring either cut into the local

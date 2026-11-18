@@ -21,6 +21,8 @@ Start with a concrete workflow:
 
 For the hosted timeline and chat editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).
 For two finished edits of the same real footage, watch [Yellowstone: the timeline becomes the film](timeline-to-film/README.md).
+See [Kīlauea](timeline-remix/README.md) for an agent's adaptation of the slower
+cut to a different set of real shots.
 For a local editor, use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 These engine examples use supplied or synthetic assets and do not require a
 commercial database, cloud storage account or model API key.

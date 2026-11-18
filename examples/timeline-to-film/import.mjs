@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { basename, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const [choice = "both", address = "http://127.0.0.1:4310"] =
   process.argv.slice(2);
-if (!["both", "cut-a", "cut-b"].includes(choice) || process.argv.length > 4)
+const sceneFile =
+  /^[a-zA-Z0-9_-]+\.json$/.test(basename(choice)) && choice.endsWith(".json")
+    ? pathToFileURL(resolve(choice))
+    : null;
+if (
+  (!sceneFile && !["both", "cut-a", "cut-b"].includes(choice)) ||
+  process.argv.length > 4
+)
   throw new Error(
-    "Usage: node import.mjs [both|cut-a|cut-b] [http://127.0.0.1:4310]",
+    "Usage: node import.mjs [both|cut-a|cut-b|FILE.json] [http://127.0.0.1:4310]",
   );
 const origin = new URL(address);
 if (
@@ -27,7 +36,10 @@ const label = (value) =>
   value.replace(/[-_]/g, " ").replace(/^./, (c) => c.toUpperCase());
 async function readCut(cut) {
   const scene = JSON.parse(
-    await readFile(new URL(cut + ".json", import.meta.url), "utf8"),
+    await readFile(
+      sceneFile ?? new URL(cut + ".json", import.meta.url),
+      "utf8",
+    ),
   );
   assert.deepEqual(
     [scene.width, scene.height, scene.fps, scene.duration],
@@ -47,7 +59,7 @@ async function readCut(cut) {
     const fileName = match[1],
       mimeType = formats[match[2]][1];
     const bytes = await readFile(
-      new URL("assets/" + fileName, import.meta.url),
+      new URL("assets/" + fileName, sceneFile ?? import.meta.url),
     );
     assert.ok(
       bytes.length && bytes.length <= 32 * 1024 * 1024,
@@ -86,9 +98,10 @@ async function request(path, body, bytes = false, mimeType) {
 
 async function importCut({ cut, scene, files }) {
   const { id } = await request("/api/projects", {
-    name:
-      "DojoClip · The timeline becomes the film · " +
-      cut.slice(-1).toUpperCase(),
+    name: sceneFile
+      ? "DojoClip · " + label(basename(choice, ".json"))
+      : "DojoClip · The timeline becomes the film · " +
+        cut.slice(-1).toUpperCase(),
   });
   const api = "/api/projects/" + encodeURIComponent(id);
   const url = new URL(
@@ -162,7 +175,7 @@ async function importCut({ cut, scene, files }) {
         path: [key],
         value,
       });
-    if (scene.markers?.length)
+    if (scene.markers && Object.keys(scene.markers).length)
       commands.push({
         type: "set",
         target: { kind: "project" },

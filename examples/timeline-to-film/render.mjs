@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 
@@ -14,7 +14,11 @@ const { chromium } = tooling("playwright");
 const { createServer } = await import(pathToFileURL(tooling.resolve("vite")));
 const { values, positionals } = parseArgs({
   allowPositionals: true,
-  options: { packages: { type: "string" }, out: { type: "string" } },
+  options: {
+    packages: { type: "string" },
+    out: { type: "string" },
+    scene: { type: "string" },
+  },
 });
 const modules = resolve(
   values.packages ?? resolve(root, "tools/golden/node_modules"),
@@ -22,10 +26,23 @@ const modules = resolve(
 const out = resolve(
   values.out ?? resolve(root, "test-results/timeline-to-film"),
 );
-const cuts = positionals.length ? positionals : ["cut-a", "cut-b"];
 assert(
-  cuts.every((cut) => ["cut-a", "cut-b"].includes(cut)),
-  "Expected cut-a or cut-b",
+  !values.scene || (!positionals.length && values.scene.endsWith(".json")),
+  "Use --scene FILE.json or named cuts, not both",
+);
+const sceneDir = values.scene ? dirname(resolve(values.scene)) : directory;
+const cuts = values.scene
+  ? [basename(values.scene, ".json")]
+  : positionals.length
+    ? positionals
+    : ["cut-a", "cut-b"];
+assert(
+  cuts.every((cut) =>
+    values.scene
+      ? /^[a-zA-Z0-9_-]+$/.test(cut)
+      : ["cut-a", "cut-b"].includes(cut),
+  ),
+  "Expected cut-a, cut-b, or a named Scene JSON file",
 );
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const aliases = {};
@@ -57,7 +74,7 @@ const server = await createServer({
     host: "127.0.0.1",
     port: 0,
     hmr: false,
-    fs: { allow: [root, modules] },
+    fs: { allow: [root, modules, sceneDir] },
   },
 });
 await mkdir(out, { recursive: true });
@@ -67,7 +84,7 @@ try {
   const origin = new URL(server.resolvedUrls.local[0]).origin;
   browser = await chromium.launch();
   for (const cut of cuts) {
-    const sceneBytes = await readFile(resolve(directory, cut + ".json"));
+    const sceneBytes = await readFile(resolve(sceneDir, cut + ".json"));
     const scene = parseScene(JSON.parse(sceneBytes));
     assert.deepEqual(
       [scene.width, scene.height, scene.fps, scene.duration],
@@ -79,7 +96,9 @@ try {
         /^(?:\.\/)?assets\/[a-zA-Z0-9_.-]+$/.test(asset.src),
         "Use assets bundled next to the Scene: " + asset.src,
       );
-      media[asset.src] = hash(await readFile(resolve(directory, asset.src)));
+      const sourceFile = resolve(sceneDir, asset.src);
+      media[asset.src] = hash(await readFile(sourceFile));
+      if (values.scene) asset.src = "/@fs/" + sourceFile;
     }
     const page = await browser.newPage();
     const errors = [];
