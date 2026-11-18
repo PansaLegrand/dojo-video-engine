@@ -20,6 +20,7 @@ Start with a concrete workflow:
 | Add a logo or picture-in-picture               | [Image overlays](generated/image-overlay-stress-gallery.json), [video overlays](generated/video-overlay-stress-gallery.json) | Layered media composed with the same preview/export runtime                                    |
 
 For the hosted timeline and chat editor, [try DojoClip](https://dojoclip.com/en/applications/video-edit-ai).
+For two finished edits of the same real footage, watch [Yellowstone: the timeline becomes the film](timeline-to-film/README.md).
 For a local editor, use [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 These engine examples use supplied or synthetic assets and do not require a
 commercial database, cloud storage account or model API key.

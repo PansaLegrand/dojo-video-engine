@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Timeline to film · export</title>
+  </head>
+  <body>
+    <script type="module">
+      import { exportVideo } from "@dojo-video-engine/export";
+      import {
+        resolveAssets,
+        disposeAssets,
+      } from "@dojo-video-engine/renderer-canvas2d";
+      window.exportCut = async (scene) => {
+        const assets = await resolveAssets(scene);
+        try {
+          const fonts = [...document.fonts]
+            .filter((face) => face.status === "loaded")
+            .map((face) => face.family.replace(/^["']|["']$/g, ""));
+          for (const asset of Object.values(scene.assets).filter(
+            (asset) => asset.type === "font",
+          )) {
+            const expected = asset.metadata?.fontFamily ?? asset.id;
+            if (!fonts.includes(expected))
+              throw new Error("Font was not prepared: " + expected);
+          }
+          const result = await exportVideo({
+            scene,
+            assets,
+            codecs: ["avc"],
+            bitrate: 8_000_000,
+            verification: "sampled",
+          });
+          const reader = new FileReader();
+          const data = await new Promise((resolve, reject) => {
+            reader.onerror = () => reject(reader.error);
+            reader.onload = () => resolve(reader.result.split(",")[1]);
+            reader.readAsDataURL(result.blob);
+          });
+          return { data, frames: result.totalFrames, fonts };
+        } finally {
+          disposeAssets(assets);
+        }
+      };
+    </script>
+  </body>
+</html>
