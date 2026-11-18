@@ -106,6 +106,10 @@ const macroSemantics: Readonly<Record<string, MacroSemantics>> = {
     requiredAssets: noAssets,
     outputRoles: ["motion-graphic", "text"],
   },
+  dataChart: {
+    requiredAssets: noAssets,
+    outputRoles: ["data-graphic", "text"],
+  },
   effectOverlay: {
     requiredAssets: noAssets,
     outputRoles: ["effect"],

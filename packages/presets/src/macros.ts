@@ -1,4 +1,5 @@
 import { z } from "zod/v3";
+import { dataChartMacro } from "./data-chart.js";
 import {
   canonicalEffectParamKeys,
   effectParamAliases,
@@ -86,6 +87,7 @@ export type MacroTranscriptWord = {
 };
 
 export type MacroContext = {
+  allowedMacroNames?: readonly string[];
   width: number;
   height: number;
   fps: number;
@@ -1340,6 +1342,8 @@ registerMacro<z.infer<typeof calloutArrowParams>>({
     );
   },
 });
+
+registerMacro(dataChartMacro);
 
 const kineticTextLooks = ["wordPop", "stack", "ticker"] as const;
 
@@ -3146,12 +3150,17 @@ function expandMacro(
   path: string,
 ): unknown {
   const name = input.macro as string;
-  const definition = registry.get(name);
+  const allowed = state.ctx.allowedMacroNames;
+  const definition =
+    !allowed || allowed.includes(name) ? registry.get(name) : undefined;
 
   if (!definition) {
-    const hints = closestIds(name, registry.keys(), 2).map((id) => `"${id}"`);
+    const available = macroNames().filter(
+      (id) => !allowed || allowed.includes(id),
+    );
+    const hints = closestIds(name, available, 2).map((id) => `"${id}"`);
     state.errors.push(
-      `${path}: unknown macro "${name}". Available macros: ${macroNames().join(", ")}.${
+      `${path}: unknown macro "${name}". Available macros: ${available.join(", ")}.${
         hints.length > 0 ? ` Did you mean ${hints.join(" or ")}?` : ""
       }`,
     );

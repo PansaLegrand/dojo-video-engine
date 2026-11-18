@@ -27,6 +27,12 @@ Build first: package typechecks rely on generated project-reference declarations
   FFmpeg. Requires `ffmpeg`/`ffprobe`; retains source hashes, Scenes, exports and
   measured tone/color results under ignored `test-results/media/`. The full gate
   includes this check. `pnpm check:media-oracle` fault-tests the independent grader.
+- `pnpm build && node tools/golden/verify-chart.mjs`: render a portrait line
+  chart with individually edited markers and a signed landscape bar chart. The
+  test checks the geometry at six preview seeks and decodes all 36 MP4 frames
+  per chart using FFmpeg. Scenes, preview PNGs, MP4s and pixel measurements
+  are retained under `test-results/charts/`. This check is part of
+  `pnpm release:full`.
 
 The browser harness is engine test infrastructure, not a second editor application.
 UI interaction, provider contracts, and editing-agent acceptance live in

@@ -145,7 +145,7 @@ const result = expandMacroNodes(
 ```
 
 The registry currently includes effect, text-effect, lower-third, title-card,
-callout, kinetic-text, progress-bar, chapter-transition, Lottie, emphasis,
+callout, kinetic-text, progress-bar, data-chart, chapter-transition, Lottie, emphasis,
 B-roll, text/image/video/audio overlay, transition, subtitle, caption, and
 countdown macros. `macroPromptGuide()` derives agent documentation from the
 same definitions and parameter schemas used at runtime, preventing prompt and
@@ -208,6 +208,28 @@ safe-area numbers, place wrapper shape and timing hoisting, typography ramps,
 fixed legacy clip layouts, and caller-style override precedence are unchanged.
 Future adaptive layout-plan compilers can be added under new manifest ids;
 they do not silently redefine an existing preset name.
+
+## Data chart macro
+
+`dataChart` expands 2–8 ordered category/value pairs into editable native
+labels, an axis, and chart marks. Set `kind` to `bar` for bars growing from a
+shared zero baseline, or `line` to reveal the line and markers together.
+Supply the domain and unit explicitly; a bar domain must contain zero. Category
+labels and the unit each occupy one line; embedded line breaks are rejected.
+Expansion rejects out-of-domain values and labels that cannot fit legibly.
+
+```json
+{
+  "macro": "dataChart",
+  "kind": "bar",
+  "domain": { "min": -10, "max": 10 },
+  "unit": "USD",
+  "data": [
+    { "label": "Mon", "value": -4 },
+    { "label": "Tue", "value": 8 }
+  ]
+}
+```
 
 ## Countdown macro
 

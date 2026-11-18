@@ -63,6 +63,18 @@ function validScene(
 }
 
 describe("macro registry", () => {
+  it("limits nested expansion, menu and spelling hints to the supplied macro catalog", () => {
+    const limited = { ...ctx, allowedMacroNames: ["countdown"] };
+    for (const macro of ["dataChart", "dataChar"]) {
+      const error = expectErrors(
+        expandMacroNodes([{ type: "div", children: [{ macro }] }], limited),
+      ).errors;
+      expect(error).toEqual([
+        `nodes[0].children[0]: unknown macro "${macro}". Available macros: countdown. Did you mean "countdown"?`,
+      ]);
+    }
+    expectOk(expandMacroNodes([{ macro: "countdown", start: 3 }], limited));
+  });
   it("registers the built-in macros", () => {
     expect(macroNames()).toEqual(
       expect.arrayContaining([
@@ -115,6 +127,154 @@ describe("macro registry", () => {
     expect(isMacroNode({ macro: "textOverlay" })).toBe(true);
     expect(isMacroNode({ type: "div" })).toBe(false);
     expect(isMacroNode(null)).toBe(false);
+  });
+});
+
+describe("dataChart macro", () => {
+  const input = {
+    macro: "dataChart",
+    id: "reading",
+    kind: "line",
+    domain: { min: -20, max: 80 },
+    unit: "°C",
+    from: 20,
+    duration: 90,
+    data: [
+      { label: "Mon", value: -10 },
+      { label: "Tue", value: 0 },
+      { label: "Wed", value: 60 },
+    ],
+  };
+  const expand = (overrides = {}) => {
+    const { nodes } = expectOk(
+      expandMacroNodes([{ ...input, ...overrides }], ctx),
+    );
+    validScene(nodes);
+    return nodes[0] as SceneNode;
+  };
+  it("uses a single advancing clip while the line and every marker keep identical coordinates", () => {
+    const chart = expand();
+    const group = chart.children!.find(
+      (child) => child.id === "reading-marks",
+    )!;
+    const line = group.children![0]!;
+    if (line.shape?.kind !== "polyline") throw new Error("missing chart line");
+    expect(chart.from).toBe(20);
+    expect(chart.children!.map((node) => node.text)).toEqual(
+      expect.arrayContaining([
+        "-20 – 80 (°C)",
+        "Mon",
+        "Tue",
+        "Wed",
+        "-10",
+        "0",
+        "60",
+      ]),
+    );
+    expect(group.style?.overflow).toBe("hidden");
+    expect(line.shape.points.map((point) => point.y)).toEqual([0.9, 0.8, 0.2]);
+    for (const [index, point] of line.shape.points.entries()) {
+      const marker = group.children![index + 1]!;
+      expect(
+        Number(marker.style?.left) + Number(marker.style?.width) / 2,
+      ).toBeCloseTo(
+        Number(line.style?.left) + point.x * Number(line.style?.width),
+      );
+      expect(
+        Number(marker.style?.top) + Number(marker.style?.height) / 2,
+      ).toBeCloseTo(
+        Number(line.style?.top) + point.y * Number(line.style?.height),
+      );
+    }
+    const reveal = group.animations![0]!;
+    if (reveal.kind !== "keyframes") throw new Error("missing reveal");
+    const midpoint =
+      (Number(reveal.frames[0]!.value) + Number(reveal.frames[1]!.value)) / 2;
+    expect(reveal.property).toBe("width");
+    expect(midpoint).toBeGreaterThan(Number(group.children![1]!.style?.left));
+    expect(midpoint).toBeLessThan(Number(group.children![3]!.style?.left));
+  });
+  it("anchors signed bars to the common zero throughout their growth and avoids duplicate frame zero for a still", () => {
+    const chart = expand({ kind: "bar" });
+    const baseline = Number(chart.children![0]!.style?.top);
+    const bars = chart.children!.at(-1)!.children!;
+    const expected = [10, 0, 60];
+    for (const [index, bar] of bars.entries()) {
+      expect(Number(bar.style?.height)).toBeCloseTo(
+        (expected[index]! / 100) * ctx.height * 0.48,
+      );
+      const [height, top] = bar.animations!;
+      if (height?.kind !== "keyframes" || top?.kind !== "keyframes")
+        throw new Error("missing growth");
+      for (const fraction of [0, 0.25, 0.5, 1]) {
+        const tipHeight = Number(height.frames[1]!.value) * fraction;
+        const y =
+          Number(top.frames[0]!.value) +
+          (Number(top.frames[1]!.value) - Number(top.frames[0]!.value)) *
+            fraction;
+        expect(index === 2 ? y + tipHeight : y).toBeCloseTo(baseline);
+      }
+    }
+    expect(
+      expand({ duration: 1 }).children!.at(-1)!.animations,
+    ).toBeUndefined();
+  });
+  it("rejects misleading scales, overflow and labels too dense for the available layout", () => {
+    for (const change of [
+      { domain: { min: 80, max: 80 } },
+      { domain: { min: 0, max: 60 } },
+      { domain: { min: -1e308, max: 1e308 } },
+      {
+        kind: "bar",
+        domain: { min: 1, max: 80 },
+        data: [
+          { label: "a", value: 1 },
+          { label: "b", value: 2 },
+        ],
+      },
+      {
+        data: Array.from({ length: 8 }, () => ({
+          label: "long label that would be tiny",
+          value: 2,
+        })),
+      },
+    ]) {
+      expectErrors(expandMacroNodes([{ ...input, ...change }], ctx));
+    }
+  });
+  it("rejects line breaks in the single-line category and domain slots", () => {
+    for (const separator of [
+      "\n",
+      "\r",
+      "\r\n",
+      "\v",
+      "\f",
+      "\u0085",
+      "\u2028",
+      "\u2029",
+    ]) {
+      for (const [field, override] of [
+        [
+          "data.0.label",
+          {
+            data: [
+              { label: "Mon" + separator + "night", value: 1 },
+              input.data[1],
+            ],
+          },
+        ],
+        ["unit", { unit: "USD" + separator + "millions" }],
+      ] as const) {
+        const result = expectErrors(
+          expandMacroNodes([{ ...input, ...override }], ctx),
+        );
+        expect(
+          result.errors.some(
+            (error) => error.includes(field) && error.includes("single line"),
+          ),
+        ).toBe(true);
+      }
+    }
   });
 });
 

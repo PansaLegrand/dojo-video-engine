@@ -9,6 +9,9 @@ npm release so repository documentation never treats one as proof of another.
 The synchronized **1.2.3** package set is published with MIT licenses and GitHub
 provenance. All 17 public packages resolve `latest` to 1.2.3. See the
 [release record](releases/1.2.3.md) and its exact artifacts and workflow receipts.
+The next [1.3.0 source candidate](releases/1.3.0.md) adds native chart
+authoring; its source version is separate from registry publication.
+
 The earlier 1.1.0 publication exposed npm 12's changed JSON output shape and
 registry processing delays. The release controller now reads anonymous public
 registry endpoints, waits for propagation without retrying uploads, and checks

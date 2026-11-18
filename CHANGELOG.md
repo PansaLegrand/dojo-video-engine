@@ -8,6 +8,11 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.3.0 — 2026-11-18
+
+- Add the `dataChart` macro for a single bar or line series with an explicit domain and unit. It expands into editable Scene v1 nodes; signed bars grow from zero and a line shares its animated clipping boundary with its markers.
+- Expose the macro through the existing capability manifest. No Scene migration, renderer change, or new package entry point is required. See the [source candidate notes](docs/releases/1.3.0.md) for input limits, verification and adoption.
+
 ## 1.2.3 — 2026-11-09
 
 - Make title-card padding, fonts, line boxes and panel height responsive to the composition and optional text slots; small bold outro cards no longer collapse to zero-height text.

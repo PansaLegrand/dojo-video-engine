@@ -160,6 +160,9 @@ the existing vector/Three.js support; see the [release record](docs/releases/1.2
 Editor UI, agent tools and host behavior have their own synchronization path in
 [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-agent).
 
+The [1.3.0 source candidate](docs/releases/1.3.0.md) adds editable single-series
+charts. The published 1.2.3 packages do not contain the `dataChart` macro.
+
 The full hosted product also supplies account-based projects, managed provider
 operations, storage/publication and payments. Those services are intentionally
 outside this repository. Open source is a reusable foundation, not a deployment
