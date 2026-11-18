@@ -1,7 +1,8 @@
 # Kīlauea · a reference-guided editing study
 
-[Watch the film](../../docs/assets/showcase/timeline-remix/kilauea.mp4) ·
-[Editable scene](kilauea.json)
+[Watch the revised film](../../docs/assets/showcase/timeline-remix/kilauea-cued.mp4) ·
+[Editable scene](kilauea-cued.json) ·
+[Watch the agent's first cut](../../docs/assets/showcase/timeline-remix/kilauea.mp4)
 
 The brief: “Make an eight-second DojoClip film with these three Kīlauea
 clips. Use Glide as the motion reference. Give the volcano footage its own
@@ -22,11 +23,11 @@ paper and serif treatment of Yellowstone. Follow the central fountain: at
 slivers; by about 4.1 the same plume fills the screen. The wordmark becomes
 fully readable around 6.8 seconds and stays on the moving image.
 
-The handoff is the strongest beat. The opening could make better use of the
-playhead: the middle panel is already underlined while the cursor is still on
-the first shot. A next cut could bring in the orange underline **when the
-playhead reaches Fountain**, immediately before the push. The included MP4
-retains the agent's first approved cut without that subsequent direction.
+In the [first approved scene](kilauea.json), Fountain was underlined before
+the playhead left Caldera. In the directed revision, the underline appears
+on frame 81 (2.70 s), when the playhead settles at the center of Fountain.
+Only the start frame of the nested `fountain-rule` layer changed; footage,
+camera motion, wordmark and duration match the first cut.
 
 ## How this trial worked
 
@@ -55,7 +56,7 @@ Start the local [Dojo Video Agent](https://github.com/PansaLegrand/dojo-video-ag
 editor. From the engine repository root:
 
 ```sh
-node examples/timeline-to-film/import.mjs examples/timeline-remix/kilauea.json
+node examples/timeline-to-film/import.mjs examples/timeline-remix/kilauea-cued.json
 ```
 
 Open the printed editor URL. The source files are copied into a fresh local
@@ -63,5 +64,5 @@ project. To render the scene directly from an engine checkout:
 
 ```sh
 pnpm build
-node examples/timeline-to-film/render.mjs --scene examples/timeline-remix/kilauea.json --out test-results/kilauea
+node examples/timeline-to-film/render.mjs --scene examples/timeline-remix/kilauea-cued.json --out test-results/kilauea
 ```
