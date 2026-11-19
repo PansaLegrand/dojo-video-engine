@@ -209,6 +209,36 @@ fixed legacy clip layouts, and caller-style override precedence are unchanged.
 Future adaptive layout-plan compilers can be added under new manifest ids;
 they do not silently redefine an existing preset name.
 
+## Editable staggered titles
+
+`kineticSplit` reveals a phrase as words, individual graphemes or whole lines.
+Explicit newlines set the rows. Each unit remains a native text layer with its
+own entrance and stable ID. The default entrance uses a row as a clipping
+window, so the letters rise into place while the underlying layout stays put.
+
+```json
+{
+  "macro": "kineticSplit",
+  "text": "Phase\nShift",
+  "splitBy": "char",
+  "preset": "maskSlide",
+  "staggerFrames": 5,
+  "holdFrames": 72,
+  "duration": 192,
+  "align": "left",
+  "fontFamily": "Fraunces",
+  "color": "#fff0cf"
+}
+```
+
+Use `elasticRise` for a spring entrance, `cascadePop` for a scale entrance or
+`trackingExpand` for opening letter and word spacing. Frame counts are local
+to the title. The last unit settles at least `holdFrames` frames before the
+end, counting the settlement frame as readable. The title has no automatic exit.
+The layout supports eight rows and 64 reveal units. Use `line` for connected
+or bidirectional lettering. Set `fontSize` as an upper bound or let the macro
+choose a size for the canvas.
+
 ## Data chart macro
 
 `dataChart` expands 2–8 ordered category/value pairs into editable native

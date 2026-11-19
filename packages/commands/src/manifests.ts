@@ -122,6 +122,10 @@ const macroSemantics: Readonly<Record<string, MacroSemantics>> = {
     requiredAssets: requiredAsset(["image"], "Image asset to display."),
     outputRoles: ["image", "visual-overlay"],
   },
+  kineticSplit: {
+    requiredAssets: noAssets,
+    outputRoles: ["motion-graphic", "text"],
+  },
   kineticText: {
     requiredAssets: noAssets,
     outputRoles: ["motion-graphic", "text"],

@@ -944,3 +944,34 @@ describe("deterministic diagnostics and check envelope", () => {
     expect(JSON.stringify(scene)).toBe(before);
   });
 });
+
+it("ignores floating-point contact at a shared edge but reports a real subpixel overlap", () => {
+  const overlap = (left: number) =>
+    inspectLayout(
+      {
+        schemaVersion: 1,
+        width: 960,
+        height: 540,
+        fps: 24,
+        duration: 12,
+        assets: {},
+        nodes: [0.1, left].map((x, i) => ({
+          id: "box-" + i,
+          type: "div",
+          from: 0,
+          duration: 12,
+          style: {
+            position: "absolute",
+            left: x,
+            top: 50,
+            width: 0.2,
+            height: 80,
+            backgroundColor: "#ffffff",
+          },
+        })),
+      },
+      0,
+    ).diagnostics.filter((d) => d.code === "geometric_overlap");
+  expect(overlap(0.3)).toHaveLength(0);
+  expect(overlap(0.29).length).toBeGreaterThan(0);
+});

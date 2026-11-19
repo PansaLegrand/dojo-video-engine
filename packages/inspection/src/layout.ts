@@ -951,8 +951,10 @@ function diagnosticsFor(
         right.transformedBounds,
         right.clipBounds,
       );
-      const area = rectIntersectionArea(leftVisible, rightVisible);
-      if (area <= 0) continue;
+      const overlap = intersectRect(leftVisible, rightVisible);
+      // Abutting flex boxes can reach the same edge through different floating-point sums.
+      if (overlap.width <= 1e-9 || overlap.height <= 1e-9) continue;
+      const area = overlap.width * overlap.height;
       const overlapQuality = worstMeasurement(
         left.transformedBounds.measurement,
         left.clipBounds.measurement,
