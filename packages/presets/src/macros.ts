@@ -2,6 +2,7 @@ import { z } from "zod/v3";
 import { uiWalkthroughCardMacro } from "./ui-walkthrough-card.js";
 import { radialGroupMacro } from "./radial-group.js";
 import { kineticSplitMacro } from "./kinetic-split.js";
+import { comparisonChartMacro } from "./comparison-chart.js";
 import { dataChartMacro } from "./data-chart.js";
 import {
   canonicalEffectParamKeys,
@@ -1347,6 +1348,7 @@ registerMacro<z.infer<typeof calloutArrowParams>>({
 });
 
 registerMacro(dataChartMacro);
+registerMacro(comparisonChartMacro);
 registerMacro(kineticSplitMacro);
 registerMacro(radialGroupMacro);
 registerMacro(uiWalkthroughCardMacro);

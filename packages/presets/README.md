@@ -303,6 +303,41 @@ The layout supports eight rows and 64 reveal units. Use `line` for connected
 or bidirectional lettering. Set `fontSize` as an upper bound or let the macro
 choose a size for the canvas.
 
+## Multi-series comparisons
+
+Use `comparisonChart` for two to four named series on the same unit and domain.
+Supply all values in category order. The macro accepts two to eight distinct
+category labels and rejects missing, duplicate-name or out-of-domain inputs.
+
+```json
+{
+  "macro": "comparisonChart",
+  "kind": "bar",
+  "title": "Regional balance",
+  "unit": "Net change (points)",
+  "domain": { "min": -20, "max": 40 },
+  "categories": ["Q1", "Q2", "Q3"],
+  "series": [
+    { "name": "North", "values": [-12, 8, 24] },
+    { "name": "South", "values": [16, 0, 32] }
+  ],
+  "duration": 96
+}
+```
+
+Grouped bars use a common zero baseline and grow together. Lines use one
+horizontal reveal across every trace and marker. A named value row for each
+series aligns its exact numbers with the category headings. Line markers
+match the series symbols, including where traces cross. Coincident values
+share the same plotted coordinates. Use the table to read each value there.
+
+Choose the `linen` or `night` palette and optionally supply a font family.
+The expanded chart consists of ordinary editable nodes. To revise a data
+point, change the numeric text and its plotted geometry together. A line
+point and marker must agree; a grouped bar's top, height and corresponding
+keyframes must still meet the baseline. Inspect the generated IDs before
+targeting individual nodes.
+
 ## Data chart macro
 
 `dataChart` expands 2–8 ordered category/value pairs into editable native

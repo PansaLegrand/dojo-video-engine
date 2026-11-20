@@ -3,7 +3,7 @@ import type { SceneNode, SceneStyle } from "@dojo-video-engine/schema";
 import type { MacroDefinition } from "./macros.js";
 
 const finite = z.number().finite();
-const chartText = z
+export const chartText = z
   .string()
   .regex(
     /^[^\r\n\v\f\u0085\u2028\u2029]*$/,
