@@ -1,0 +1,41 @@
+{
+  "id": "orbit",
+  "title": "Orbit",
+  "category": "brand reveal",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/company.json",
+  "sourceSha256": "e344ced3ec998e637c511f31484d4ff9e04e23daff4ddda7863c4277d7a9676e",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "The orbital sculpture assembles beside a held wordmark.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "orbit",
+      "headline": "Future Assembly"
+    },
+    {
+      "blueprint": "orbit",
+      "headline": "Common Ground"
+    }
+  ]
+}

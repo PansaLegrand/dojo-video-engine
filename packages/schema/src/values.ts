@@ -76,7 +76,7 @@ export type TransformLength = {
 export type TransformFunctionValue =
   | { kind: "translate"; x: TransformLength; y: TransformLength }
   | { kind: "scale"; x: number; y: number }
-  | { kind: "rotate"; degrees: number };
+  | { kind: "rotate" | "skewX" | "skewY"; degrees: number };
 
 export type ParsedTransformValue =
   | { kind: "none"; functions: [] }
@@ -368,7 +368,7 @@ export function parseTransformValue(
       continue;
     }
 
-    if (fn.name === "rotate") {
+    if (fn.name === "rotate" || fn.name === "skewx" || fn.name === "skewy") {
       if (args.length !== 1) return null;
       const match = args[0]?.match(
         new RegExp(`^(${numberSource})(deg)?$`, "i"),
@@ -376,7 +376,16 @@ export function parseTransformValue(
       if (!match) return null;
       const degrees = Number.parseFloat(match[1] ?? "");
       if (!Number.isFinite(degrees)) return null;
-      parsed.push({ kind: "rotate", degrees });
+      if (fn.name !== "rotate" && Math.abs(degrees) > 85) return null;
+      parsed.push({
+        kind:
+          fn.name === "rotate"
+            ? "rotate"
+            : fn.name === "skewx"
+              ? "skewX"
+              : "skewY",
+        degrees,
+      });
       continue;
     }
 
@@ -398,7 +407,7 @@ export function serializeTransformValue(value: ParsedTransformValue): string {
       if (fn.kind === "scale") {
         return `scale(${formatNumber(fn.x)}, ${formatNumber(fn.y)})`;
       }
-      return `rotate(${formatNumber(fn.degrees)}deg)`;
+      return `${fn.kind}(${formatNumber(fn.degrees)}deg)`;
     })
     .join(" ");
 }
@@ -865,7 +874,7 @@ export const paintValueSchema = visualStringSchema(
 );
 export const transformValueSchema = visualStringSchema(
   isTransformValue,
-  "Expected none or a translate()/scale()/rotate() transform list.",
+  "Expected translate, scale, rotate, skewX or skewY transforms, or none.",
 );
 export const transformOriginValueSchema = visualStringSchema(
   isTransformOriginValue,
@@ -886,6 +895,23 @@ export const fontWeightValueSchema = z.union([
     "Expected normal/bold/bolder/lighter or a font weight from 1 to 1000.",
   ),
 ]);
+export function isBackdropFilterValue(value: string): boolean {
+  const chain = parseFilterValue(value);
+  return (
+    !!chain &&
+    chain.functions.length <= 4 &&
+    chain.functions.every((f) =>
+      f.kind === "blur"
+        ? f.value <= 32
+        : ["brightness", "contrast", "saturate"].includes(f.kind) &&
+          f.value <= (f.unit === "%" ? 400 : 4),
+    )
+  );
+}
+export const backdropFilterValueSchema = visualStringSchema(
+  isBackdropFilterValue,
+  "Bounded backdrop filter: up to four blur (0–32px), brightness, contrast or saturate (0–400%) functions.",
+);
 export const filterValueSchema = visualStringSchema(
   isFilterValue,
   "Expected none or a supported Canvas2D filter chain.",

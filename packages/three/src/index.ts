@@ -42,7 +42,19 @@ export function createThreeRegistryOptions(): {
     paramsSchema: threeSceneSchema,
     deterministic: true,
     workerCompatible: false,
-    resolveAssets: async ({ params, scene, signal }) => {
+    assets: ({ params }) =>
+      [
+        ...new Set(
+          Object.values(params.materials).flatMap((m) =>
+            m.mapAssetId ? [m.mapAssetId] : [],
+          ),
+        ),
+      ].map((assetId) => ({
+        assetId,
+        type: "image",
+        purpose: "3D material texture",
+      })),
+    resolveAssets: async ({ params, scene, signal, getImage }) => {
       validateThreeLayers(scene.nodes);
       signal?.throwIfAborted();
       const { ThreeLayerRuntime } = await import("./runtime.js");
@@ -60,7 +72,7 @@ export function createThreeRegistryOptions(): {
         }
       };
       try {
-        const resource = new ThreeLayerRuntime(params, release);
+        const resource = new ThreeLayerRuntime(params, release, getImage);
         owned.add(resource);
         return resource;
       } catch (error) {

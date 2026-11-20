@@ -419,7 +419,18 @@ function evaluateNode(
           continue;
         }
 
-        if (animation.property === "mask.opacity" && mask) {
+        if (
+          animation.property === "trimStart" ||
+          animation.property === "trimEnd" ||
+          animation.property === "trimOffset"
+        ) {
+          style[animation.property] = clampNumber(
+            value,
+            animation.property === "trimOffset" ? -1 : 0,
+            1,
+            0,
+          );
+        } else if (animation.property === "mask.opacity" && mask) {
           mask.opacity = clampNumber(value, 0, 1, mask.opacity ?? 1);
         } else if (animation.property === "mask.feather" && mask) {
           mask.feather = clampNumber(value, 0, 256, mask.feather ?? 0);
@@ -560,7 +571,7 @@ export function evaluateKeyframes(
 }
 
 export type TransformFunction = {
-  name: "translate" | "scale" | "rotate";
+  name: "translate" | "scale" | "rotate" | "skewX" | "skewY";
   args: Array<{ value: number; unit: "px" | "%" | "deg" | "" }>;
 };
 
@@ -641,7 +652,7 @@ export function parseTransform(value: string): TransformFunction[] | null {
       };
     }
     return {
-      name: "rotate",
+      name: fn.kind,
       args: [{ value: fn.degrees, unit: "deg" }],
     };
   });
@@ -1112,8 +1123,18 @@ export function resolveStyleTransformMatrix(
         );
       } else if (fn.kind === "scale") {
         matrix = multiplyAffineMatrices(matrix, scale(fn.x, fn.y));
-      } else {
+      } else if (fn.kind === "rotate") {
         matrix = multiplyAffineMatrices(matrix, rotate(fn.degrees));
+      } else {
+        const shear = Math.tan((fn.degrees * Math.PI) / 180);
+        matrix = multiplyAffineMatrices(matrix, {
+          a: 1,
+          d: 1,
+          b: fn.kind === "skewY" ? shear : 0,
+          c: fn.kind === "skewX" ? shear : 0,
+          e: 0,
+          f: 0,
+        });
       }
     }
   }

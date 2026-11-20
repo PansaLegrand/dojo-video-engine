@@ -84,9 +84,19 @@ describe("generated Scene JSON Schema parity", () => {
         }),
       },
       {
-        name: "unsupported transform function",
-        valid: false,
+        name: "supported skew",
+        valid: true,
         scene: sceneWith({ style: { transform: "skewX(10deg)" } }),
+      },
+      {
+        name: "reject near-singular skew",
+        valid: false,
+        scene: sceneWith({ style: { transform: "skewY(89deg)" } }),
+      },
+      {
+        name: "reject over-budget glass blur",
+        valid: false,
+        scene: sceneWith({ style: { backdropFilter: "blur(100px)" } }),
       },
       {
         name: "invalid transform origin",

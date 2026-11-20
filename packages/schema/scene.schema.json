@@ -1074,13 +1074,34 @@
                     "description": "Expected none or a supported Canvas2D filter chain.",
                     "format": "dojo-video-engine-filter"
                   },
+                  "backdropFilter": {
+                    "type": "string",
+                    "maxLength": 8192,
+                    "description": "Bounded backdrop filter: up to four blur (0–32px), brightness, contrast or saturate (0–400%) functions.",
+                    "format": "dojo-video-engine-backdrop-filter"
+                  },
+                  "trimStart": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "trimEnd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "trimOffset": {
+                    "type": "number",
+                    "minimum": -1,
+                    "maximum": 1
+                  },
                   "zIndex": {
                     "type": "integer"
                   },
                   "transform": {
                     "type": "string",
                     "maxLength": 8192,
-                    "description": "Expected none or a translate()/scale()/rotate() transform list.",
+                    "description": "Expected translate, scale, rotate, skewX or skewY transforms, or none.",
                     "format": "dojo-video-engine-transform"
                   },
                   "transformOrigin": {
@@ -1287,6 +1308,10 @@
                         "opacity",
                         "blendMode",
                         "filter",
+                        "backdropFilter",
+                        "trimStart",
+                        "trimEnd",
+                        "trimOffset",
                         "zIndex",
                         "transform",
                         "transformOrigin",
@@ -1882,6 +1907,8 @@
                           "property": {
                             "enum": [
                               "opacity",
+                              "trimStart",
+                              "trimEnd",
                               "mask.opacity"
                             ]
                           }
@@ -1982,6 +2009,61 @@
                       "if": {
                         "properties": {
                           "property": {
+                            "const": "backdropFilter"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 8192,
+                                  "description": "Bounded backdrop filter: up to four blur (0–32px), brightness, contrast or saturate (0–400%) functions.",
+                                  "format": "dojo-video-engine-backdrop-filter"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
+                            "const": "trimOffset"
+                          }
+                        },
+                        "required": [
+                          "property"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "frames": {
+                            "items": {
+                              "properties": {
+                                "value": {
+                                  "type": "number",
+                                  "minimum": -1,
+                                  "maximum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "property": {
                             "const": "zIndex"
                           }
                         },
@@ -2022,7 +2104,7 @@
                                 "value": {
                                   "type": "string",
                                   "maxLength": 8192,
-                                  "description": "Expected none or a translate()/scale()/rotate() transform list.",
+                                  "description": "Expected translate, scale, rotate, skewX or skewY transforms, or none.",
                                   "format": "dojo-video-engine-transform"
                                 }
                               }
@@ -2571,6 +2653,7 @@
     "dojo-video-engine-transform-origin",
     "dojo-video-engine-object-position",
     "dojo-video-engine-filter",
+    "dojo-video-engine-backdrop-filter",
     "dojo-video-engine-font-family",
     "dojo-video-engine-font-weight",
     "dojo-video-engine-font-weight-descriptor",

@@ -17,11 +17,13 @@ export class ThreeLayerRuntime {
   private readonly objects = new Map<string, THREE.Object3D>();
   private readonly geometries: THREE.BufferGeometry[] = [];
   private readonly materials = new Map<string, THREE.Material>();
+  private readonly textures = new Map<string, THREE.Texture>();
   private disposed = false;
 
   constructor(
     private readonly params: ThreeScene,
     private readonly release: () => void,
+    getImage?: (assetId: string) => ImageBitmap | undefined,
   ) {
     this.camera =
       params.camera.kind === "perspective"
@@ -49,10 +51,30 @@ export class ThreeLayerRuntime {
                 parsed.name === "transparent" ? "black" : parsed.name,
               );
         const opacity = material.opacity * alpha;
+        let map: THREE.Texture | undefined;
+        if (material.mapAssetId) {
+          map = this.textures.get(material.mapAssetId);
+          if (!map) {
+            const image = getImage?.(material.mapAssetId);
+            if (!image)
+              throw Error(
+                `Missing prepared image for texture ${material.mapAssetId}.`,
+              );
+            map = new THREE.Texture(image);
+            // ImageBitmap upload ignores WebGL flipY. Convert top-left image UVs on the texture.
+            map.flipY = false;
+            map.repeat.y = -1;
+            map.offset.y = 1;
+            map.colorSpace = THREE.SRGBColorSpace;
+            map.needsUpdate = true;
+            this.textures.set(material.mapAssetId, map);
+          }
+        }
         const options = {
+          ...(map ? { map } : {}),
           color,
           opacity,
-          transparent: opacity < 1,
+          transparent: opacity < 1 || map !== undefined,
           side: THREE.DoubleSide,
         };
         this.materials.set(
@@ -218,6 +240,8 @@ export class ThreeLayerRuntime {
     this.scene.clear();
     this.objects.clear();
     this.materials.clear();
+    for (const texture of this.textures.values()) texture.dispose();
+    this.textures.clear();
     this.geometries.length = 0;
     this.renderer?.dispose();
     this.renderer?.forceContextLoss();
@@ -230,6 +254,8 @@ function createGeometry(
   geometry: Extract<ThreeObject, { kind: "mesh" }>["geometry"],
 ): THREE.BufferGeometry {
   switch (geometry.kind) {
+    case "plane":
+      return new THREE.PlaneGeometry(geometry.width, geometry.height);
     case "box":
       return new THREE.BoxGeometry(
         geometry.width,

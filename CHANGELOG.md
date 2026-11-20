@@ -8,10 +8,13 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
-## 1.3.0 — 2026-11-18
+## 1.3.0 — 2026-11-20
+
+- Add nine editable motion blueprints adapted from the MIT showcases, with bounded catalog discovery, responsive layouts and replaceable copy and data. Add kinetic typography, radial groups, UI walkthroughs and multi-series charts.
+- Extend Scene v1 with animated stroke trim, skew transforms and bounded backdrop filters. The Three.js extension supports image textures on planes and keyframe easing. Older scenes keep their defaults.
 
 - Add the `dataChart` macro for a single bar or line series with an explicit domain and unit. It expands into editable Scene v1 nodes; signed bars grow from zero and a line shares its animated clipping boundary with its markers.
-- Expose the macro through the existing capability manifest. No Scene migration, renderer change, or new package entry point is required. See the [source candidate notes](docs/releases/1.3.0.md) for input limits, verification and adoption.
+- Expose the macro through the existing capability manifest. Chart expansion requires no Scene migration. See the [source candidate notes](docs/releases/1.3.0.md) for input limits, verification and adoption.
 
 ## 1.2.3 — 2026-11-09
 

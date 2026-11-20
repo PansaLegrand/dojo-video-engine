@@ -423,7 +423,7 @@ describe("applyScenePatch", () => {
 
   it("setStyle validates the merged style against the schema", () => {
     const errors = rejected([
-      { op: "setStyle", id: "title", style: { backdropFilter: "blur(4px)" } },
+      { op: "setStyle", id: "title", style: { perspectiveOrigin: "center" } },
     ]);
     expect(errors[0]?.message).toContain("Unsupported style property");
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Ajv } from "ajv";
-import { parseScene, type Scene } from "@dojo-video-engine/schema";
+import { parseScene, supportedStyleKeys, type Scene } from "@dojo-video-engine/schema";
 import {
   applySceneCommands,
   compileSceneCommands,
@@ -438,7 +438,7 @@ describe("Scene command schema", () => {
           {
             kind: "style.set",
             id: "title",
-            unset: Array.from({ length: 77 }, () => "left"),
+            unset: Array.from({ length: supportedStyleKeys.length+1 }, () => "left"),
           },
         ],
         accepted: false,

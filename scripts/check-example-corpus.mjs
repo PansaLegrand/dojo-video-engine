@@ -38,6 +38,8 @@ async function collectJson(directory, into) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) await collectJson(path, into);
+    // Blueprint descriptors have their own exact manifest check in the release gate.
+    else if (relative(root, path).startsWith("examples/blueprints/") && entry.name === "blueprint.json") continue;
     else if (entry.isFile() && entry.name.endsWith(".json")) into.push(path);
   }
 }

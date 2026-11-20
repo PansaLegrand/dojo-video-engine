@@ -1,0 +1,41 @@
+{
+  "id": "deepField",
+  "title": "Deep Field",
+  "category": "cinema ending",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/cinema.json",
+  "sourceSha256": "b3fd7bc74660fefecec4f2bf1bd826cc4c64d349cf22316c9c2c9874810bb1b6",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "A moving light tunnel frames a held closing message.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "deepField",
+      "headline": "Deep Field"
+    },
+    {
+      "blueprint": "deepField",
+      "headline": "Into the Blue"
+    }
+  ]
+}

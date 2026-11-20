@@ -38,6 +38,8 @@ export type ExtensionResolveContext<P> = {
   params: P;
   requirements: readonly NormalizedExtensionAssetRequirement[];
   assets: ReadonlyMap<string, SceneAsset>;
+  /** Decoded, borrowed images owned by this revision. Never close a borrowed image. */
+  getImage?: (assetId: string) => ImageBitmap | undefined;
   signal?: AbortSignal;
 };
 
@@ -48,7 +50,7 @@ export type ExtensionResolveContext<P> = {
  */
 export type ExtensionReuseContext<P> = Omit<
   ExtensionResolveContext<P>,
-  "signal"
+  "signal" | "getImage"
 >;
 
 /** Maximum opaque reuse-key length accepted from a trusted extension hook. */

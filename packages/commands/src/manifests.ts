@@ -106,6 +106,7 @@ const macroSemantics: Readonly<Record<string, MacroSemantics>> = {
     requiredAssets: noAssets,
     outputRoles: ["motion-graphic", "text"],
   },
+  remixBlueprint: { requiredAssets: noAssets, outputRoles:["motion-graphic","text"] },
   comparisonChart: {
     requiredAssets: noAssets,
     outputRoles: ["data-graphic", "text"],

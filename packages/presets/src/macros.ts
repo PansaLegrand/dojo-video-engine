@@ -1,3 +1,4 @@
+import {remixBlueprintMacro, blueprintIndex, blueprintDetails} from "./remix-blueprint.js";
 import { z } from "zod/v3";
 import { uiWalkthroughCardMacro } from "./ui-walkthrough-card.js";
 import { radialGroupMacro } from "./radial-group.js";
@@ -246,6 +247,8 @@ export function macroNames(): string[] {
  * to the mutable registry or to its execution surface.
  */
 export type MacroDocumentationDefinition = Readonly<{
+  blueprints?: typeof blueprintIndex;
+  describeBlueprint?: typeof blueprintDetails;
   name: string;
   description: string;
   usage: string;
@@ -260,7 +263,7 @@ export type MacroDocumentationDefinition = Readonly<{
 export function macroDefinitions(): readonly MacroDocumentationDefinition[] {
   return Object.freeze(
     Array.from(registry.values(), ({ name, description, usage, params }) =>
-      Object.freeze({ name, description, usage, params }),
+      Object.freeze({ name, description, usage, params, ...(name==="remixBlueprint"?{blueprints:blueprintIndex,describeBlueprint:blueprintDetails}:{}) }),
     ),
   );
 }
@@ -1348,6 +1351,7 @@ registerMacro<z.infer<typeof calloutArrowParams>>({
 });
 
 registerMacro(dataChartMacro);
+registerMacro(remixBlueprintMacro);
 registerMacro(comparisonChartMacro);
 registerMacro(kineticSplitMacro);
 registerMacro(radialGroupMacro);

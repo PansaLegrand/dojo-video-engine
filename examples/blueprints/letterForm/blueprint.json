@@ -1,0 +1,41 @@
+{
+  "id": "letterForm",
+  "title": "Letter Form",
+  "category": "kinetic typography",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/type-motion.json",
+  "sourceSha256": "c542cc0efde62f15c6e856ae176dc95da3b9d571f72993bc6840b9314dc8f634",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "Letters clear a measured baseline, then hold the complete phrase.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "title rows",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "letterForm",
+      "headline": "Shape\nSound"
+    },
+    {
+      "blueprint": "letterForm",
+      "headline": "After\nImage"
+    }
+  ]
+}

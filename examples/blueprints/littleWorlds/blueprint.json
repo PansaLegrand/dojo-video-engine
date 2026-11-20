@@ -1,0 +1,41 @@
+{
+  "id": "littleWorlds",
+  "title": "Little Worlds",
+  "category": "spatial scene",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/city.json",
+  "sourceSha256": "a9eff179ce77777728994fb74eb195784e5f24240f27f10f2079a9ca87950cbb",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "A miniature city turns under a steady camera.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "littleWorlds",
+      "headline": "Pocket City"
+    },
+    {
+      "blueprint": "littleWorlds",
+      "headline": "Urban Fieldnotes"
+    }
+  ]
+}

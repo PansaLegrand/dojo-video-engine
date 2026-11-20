@@ -115,6 +115,7 @@ export type DisplayRect = {
 };
 
 export type DisplayComposite = {
+  backdropFilter?: string;
   opacity: number;
   blendMode: NonNullable<SceneStyle["blendMode"]>;
   filter: string | null;
@@ -227,6 +228,7 @@ export type DisplayStroke = {
 };
 
 export type DisplayShapeOperation = DisplayOperationBase & {
+  trim?: { start: number; end: number; offset: number };
   kind: "shape";
   geometry: DisplayGeometry;
   fill: DisplayPaint | null;
@@ -532,6 +534,9 @@ function compileGroup(
     box.node.mask !== undefined &&
     ((box.node.mask.feather ?? 0) > 0 || (box.node.mask.opacity ?? 1) < 1);
   const composite: DisplayComposite = {
+    ...(style.backdropFilter && style.backdropFilter !== "none"
+      ? { backdropFilter: style.backdropFilter }
+      : {}),
     opacity: style.opacity ?? 1,
     blendMode: style.blendMode ?? "source-over",
     filter:
@@ -711,6 +716,17 @@ function compileShape(
   const strokeWidth = box.node.style.strokeWidth ?? 1;
   return operation(state, {
     kind: "shape",
+    ...(box.node.style.trimStart !== undefined ||
+    box.node.style.trimEnd !== undefined ||
+    box.node.style.trimOffset !== undefined
+      ? {
+          trim: {
+            start: box.node.style.trimStart ?? 0,
+            end: box.node.style.trimEnd ?? 1,
+            offset: box.node.style.trimOffset ?? 0,
+          },
+        }
+      : {}),
     engineId: `${nodeEngineId(box.id)}/shape`,
     nodeId: box.id,
     bounds: copyRect(box),

@@ -1,3 +1,4 @@
+import {parseScene} from "@dojo-video-engine/schema";
 import { describe, expect, it } from "vitest";
 import type { SceneAnimation, SceneAsset } from "@dojo-video-engine/schema";
 import {
@@ -1535,4 +1536,35 @@ describe("shared intrinsic metrics", () => {
       ),
     ).toThrow(/maxEntries/);
   });
+});
+
+it("interpolates skew and projects its bounds consistently for shuffled frames", () => {
+  const s = parseScene({
+    schemaVersion: 1,
+    width: 300,
+    height: 180,
+    fps: 24,
+    duration: 21,
+    nodes: [
+      {
+        id: "tile",
+        type: "div",
+        style: { width: 40, height: 30, transformOrigin: "left top" },
+        animations: [
+          {
+            kind: "keyframes",
+            property: "transform",
+            frames: [
+              { frame: 0, value: "skewX(0deg)" },
+              { frame: 20, value: "skewX(40deg)" },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  for (const f of [20, 10, 0, 10]) {
+    const n = evaluateScene(s, f).nodes[0]!;
+    expect(n.style.transform).toBe(`skewX(${f * 2}deg)`);
+  }
 });

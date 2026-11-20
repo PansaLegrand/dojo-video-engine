@@ -1,3 +1,5 @@
+import { applyEasing } from "@dojo-video-engine/core";
+import { easingValueSchema } from "@dojo-video-engine/schema/values";
 import { z } from "zod/v3";
 import {
   colorValueSchema,
@@ -26,6 +28,7 @@ const scalar = z.number().finite().min(-10_000).max(10_000);
 const vector = z.object({ x: scalar, y: scalar, z: scalar }).strict();
 const size = z.number().finite().positive().max(1000);
 const geometry = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("plane"), width: size, height: size }).strict(),
   z
     .object({ kind: z.literal("box"), width: size, height: size, depth: size })
     .strict(),
@@ -47,7 +50,11 @@ const geometry = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 const keyframe = z
-  .object({ time: z.number().finite().min(0).max(86_400), value: scalar })
+  .object({
+    time: z.number().finite().min(0).max(86_400),
+    value: scalar,
+    easing: easingValueSchema.optional(),
+  })
   .strict();
 const track = z
   .array(keyframe)
@@ -110,6 +117,7 @@ const camera = z
 const material = z
   .object({
     color: colorValueSchema,
+    mapAssetId: id.optional(),
     unlit: z.boolean().default(false),
     opacity: z.number().min(0).max(1).default(1),
     roughness: z.number().min(0).max(1).default(0.6),
@@ -228,9 +236,11 @@ export function sampleThreeTrack(
     const a = points[i - 1],
       b = points[i];
     if (a && b && time <= b.time)
-      return (
-        a.value + ((b.value - a.value) * (time - a.time)) / (b.time - a.time)
-      );
+      return b.easing
+        ? a.value +
+            (b.value - a.value) *
+              applyEasing((time - a.time) / (b.time - a.time), b.easing)
+        : a.value + ((b.value - a.value) * (time - a.time)) / (b.time - a.time);
   }
   return points[points.length - 1]?.value ?? first.value;
 }

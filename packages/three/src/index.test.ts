@@ -44,3 +44,35 @@ it("registers exact display capabilities without WebGL or DOM initialization", (
     }).ok,
   ).toBe(false);
 });
+
+it("preflights textured planes against declared image identities", () => {
+  const r = createThreeRegistryOptions(),
+    params = {
+      ...fixture,
+      materials: { red: { ...fixture.materials.red, mapAssetId: "screen" } },
+    };
+  const node = {
+    id: "card",
+    type: "extension",
+    extension: { ...THREE_EXTENSION, params },
+  };
+  const scene = {
+    schemaVersion: 1,
+    width: 320,
+    height: 180,
+    fps: 24,
+    duration: 24,
+    nodes: [node],
+  };
+  const run = (assets: Record<string, unknown>) =>
+    preflightExtensions({ ...scene, assets }, r.extensions, {
+      displayTarget: r.opaqueExtensionRegistry.displayTarget(),
+    });
+  expect(run({}).ok).toBe(false);
+  expect(
+    run({ screen: { id: "screen", type: "audio", src: "audio.mp3" } }).ok,
+  ).toBe(false);
+  expect(
+    run({ screen: { id: "screen", type: "image", src: "screen.png" } }).ok,
+  ).toBe(true);
+});

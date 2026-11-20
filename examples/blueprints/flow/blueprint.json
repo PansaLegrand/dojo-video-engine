@@ -1,0 +1,71 @@
+{
+  "id": "flow",
+  "title": "Flow",
+  "category": "walkthrough",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/software.json",
+  "sourceSha256": "c23b28ca9bed2e36d7b02038d44aa03b83da48b033d353ae51212079d3caa5b3",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "The pointer arrives at each supplied action before attention advances.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor",
+    "walkthrough"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor",
+    "walkthrough": "uiWalkthroughCard parameters"
+  },
+  "adaptations": [
+    {
+      "blueprint": "flow",
+      "headline": "Review flow",
+      "walkthrough": {
+        "windowTitle": "Review flow",
+        "steps": [
+          {
+            "label": "Collect"
+          },
+          {
+            "label": "Review"
+          },
+          {
+            "label": "Share"
+          }
+        ]
+      }
+    },
+    {
+      "blueprint": "flow",
+      "headline": "First release",
+      "walkthrough": {
+        "windowTitle": "First release",
+        "steps": [
+          {
+            "label": "Draft"
+          },
+          {
+            "label": "Approve"
+          },
+          {
+            "label": "Ship"
+          }
+        ]
+      }
+    }
+  ]
+}

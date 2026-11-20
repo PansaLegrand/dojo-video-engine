@@ -113,7 +113,7 @@ describe("scene schema", () => {
           id: "bad",
           type: "div",
           style: {
-            backdropFilter: "blur(8px)",
+            perspectiveOrigin: "center",
           },
         },
       ],

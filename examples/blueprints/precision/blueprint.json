@@ -1,0 +1,41 @@
+{
+  "id": "precision",
+  "title": "P-01",
+  "category": "product reveal",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/precision.json",
+  "sourceSha256": "073fa5fe552cdec56767b6ebf5001411e20ba596c20b052a56bd0200ec08fbee",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "An exploded instrument opens its layers before the lockup.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "precision",
+      "headline": "Inside the dial"
+    },
+    {
+      "blueprint": "precision",
+      "headline": "Assembly study"
+    }
+  ]
+}

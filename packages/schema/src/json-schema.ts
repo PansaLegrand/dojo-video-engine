@@ -3,6 +3,7 @@ import {
   isColorValue,
   isEasingValue,
   isFilterValue,
+  isBackdropFilterValue,
   isFontFamilyValue,
   isFontWeightString,
   isObjectPositionValue,
@@ -25,6 +26,7 @@ export const dojoVideoEngineJsonSchemaFormatNames = [
   "dojo-video-engine-transform-origin",
   "dojo-video-engine-object-position",
   "dojo-video-engine-filter",
+  "dojo-video-engine-backdrop-filter",
   "dojo-video-engine-font-family",
   "dojo-video-engine-font-weight",
   "dojo-video-engine-font-weight-descriptor",
@@ -38,16 +40,22 @@ export const dojoVideoEngineJsonSchemaFormatNames = [
 export type DojoVideoEngineJsonSchemaFormatName =
   (typeof dojoVideoEngineJsonSchemaFormatNames)[number];
 
-export type DojoVideoEngineJsonSchemaFormatPredicate = (value: string) => boolean;
+export type DojoVideoEngineJsonSchemaFormatPredicate = (
+  value: string,
+) => boolean;
 
 /**
  * Custom draft-07 string formats used by `scene.schema.json` when a portable
  * value parser is more precise than a maintainable regular expression.
  */
 export const dojoVideoEngineJsonSchemaFormats: Readonly<
-  Record<DojoVideoEngineJsonSchemaFormatName, DojoVideoEngineJsonSchemaFormatPredicate>
+  Record<
+    DojoVideoEngineJsonSchemaFormatName,
+    DojoVideoEngineJsonSchemaFormatPredicate
+  >
 > = {
-  "dojo-video-engine-length": (value) => lengthStringSchema.safeParse(value).success,
+  "dojo-video-engine-length": (value) =>
+    lengthStringSchema.safeParse(value).success,
   "dojo-video-engine-aspect-ratio": isAspectRatioString,
   "dojo-video-engine-color": isColorValue,
   "dojo-video-engine-paint": isPaintValue,
@@ -55,6 +63,7 @@ export const dojoVideoEngineJsonSchemaFormats: Readonly<
   "dojo-video-engine-transform-origin": isTransformOriginValue,
   "dojo-video-engine-object-position": isObjectPositionValue,
   "dojo-video-engine-filter": isFilterValue,
+  "dojo-video-engine-backdrop-filter": isBackdropFilterValue,
   "dojo-video-engine-font-family": isFontFamilyValue,
   "dojo-video-engine-font-weight": isFontWeightString,
   "dojo-video-engine-font-weight-descriptor": isFontWeightDescriptor,
@@ -82,7 +91,9 @@ export type JsonSchemaFormatRegistrar = {
 export function registerDojoVideoEngineJsonSchemaFormats<
   T extends JsonSchemaFormatRegistrar,
 >(validator: T): T {
-  for (const [name, validate] of Object.entries(dojoVideoEngineJsonSchemaFormats)) {
+  for (const [name, validate] of Object.entries(
+    dojoVideoEngineJsonSchemaFormats,
+  )) {
     validator.addFormat(name, { type: "string", validate });
   }
   return validator;
@@ -188,6 +199,8 @@ function annotatePortableFormats(value: unknown): void {
 function formatForDescription(
   description: string,
 ): DojoVideoEngineJsonSchemaFormatName | null {
+  if (description.startsWith("Bounded backdrop filter"))
+    return "dojo-video-engine-backdrop-filter";
   if (description.startsWith("FontFace weight descriptor"))
     return "dojo-video-engine-font-weight-descriptor";
   if (description.startsWith("Finite number string with optional px or %")) {
@@ -199,7 +212,10 @@ function formatForDescription(
   if (description.startsWith("Expected a supported color or")) {
     return "dojo-video-engine-paint";
   }
-  if (description.startsWith("Expected none or a translate")) {
+  if (
+    description.startsWith("Expected translate, scale, rotate") ||
+    description.startsWith("Expected none or a translate")
+  ) {
     return "dojo-video-engine-transform";
   }
   if (description.startsWith("Expected horizontal left/center/right")) {

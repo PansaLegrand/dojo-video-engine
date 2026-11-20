@@ -46,6 +46,7 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@dojo-video-engine/core": "workspace:*",
     "@dojo-video-engine/schema": "workspace:*",
     "@dojo-video-engine/extensions": "workspace:*",
     "@dojo-video-engine/renderer-canvas2d": "workspace:*",

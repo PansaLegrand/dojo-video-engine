@@ -679,6 +679,8 @@ function isStaticResolvedNode(
   if (
     !STATIC_NODE_TYPES.has(node.type) ||
     (node.animations?.length ?? 0) > 0 ||
+    (node.style?.backdropFilter !== undefined &&
+      node.style.backdropFilter !== "none") ||
     node.extension !== undefined ||
     node.effect !== undefined ||
     node.videoStartTime !== undefined ||

@@ -1,3 +1,4 @@
+import { trimmedStroke } from "./stroke-trim.js";
 import {
   fontAssetIdsForFamily,
   fontFamilyNames,
@@ -1948,6 +1949,10 @@ export async function resolveAssets(
                 Promise.resolve(
                   resolvedNode.definition.resolveAssets!({
                     ...reuseContext,
+                    getImage: (id) =>
+                      resolvedNode.requirements.some((r) => r.assetId === id)
+                        ? images.get(id)
+                        : undefined,
                     signal,
                   }),
                 ).catch((cause: unknown) => {
@@ -4159,6 +4164,10 @@ function assertDisplayGroupSemantics(
     !sameMatrix(group.transform, expectedTransform) ||
     !sameMatrix(group.worldTransform, expectedWorld) ||
     !sameRect(group.transformedBounds, expectedBounds) ||
+    group.composite.backdropFilter !==
+      (style.backdropFilter && style.backdropFilter !== "none"
+        ? style.backdropFilter
+        : undefined) ||
     group.composite.opacity !== (style.opacity ?? 1) ||
     group.composite.blendMode !== (style.blendMode ?? "source-over") ||
     group.composite.filter !==
@@ -4243,6 +4252,13 @@ function assertDisplayGroupSemantics(
     if (
       content?.kind !== "shape" ||
       content.nodeId !== node.id ||
+      (style.trimStart !== undefined ||
+      style.trimEnd !== undefined ||
+      style.trimOffset !== undefined
+        ? content.trim?.start !== (style.trimStart ?? 0) ||
+          content.trim?.end !== (style.trimEnd ?? 1) ||
+          content.trim?.offset !== (style.trimOffset ?? 0)
+        : content.trim !== undefined) ||
       content.fill?.source !== compiledPaintSource(fillSource) ||
       content.stroke?.paint.source !== compiledPaintSource(strokeSource) ||
       !sameRect(content.bounds, group.box)
@@ -4794,6 +4810,16 @@ function drawBox(
     box.node.mask !== undefined &&
     ((box.node.mask.feather ?? 0) > 0 || (box.node.mask.opacity ?? 1) < 1);
   if (box.node.style.isolation || softMask) {
+    const glass = box.node.style.backdropFilter;
+    if(glass && glass!=="none"){
+      if(softMask) throw Error("A frosted backdrop requires a hard clip. Put the soft-masked content in a child layer.");
+      withSavedContext(context,()=>{
+        context.globalAlpha *= box.node.style.opacity??1;
+        applyTransform(context,box,box.node.style);
+        applyVectorConstraints(context,box,box.node.clip,box.node.mask);
+        drawBackdrop(context,box,glass,scratchSurfacePool);
+      });
+    }
     drawIsolatedBox(
       context,
       box,
@@ -4819,6 +4845,97 @@ function drawBox(
     scratchSurfacePool,
     execution,
   );
+}
+
+// Snapshot only the transformed border box and filter halo. A parent isolation
+// surface defines its own backdrop; all scratch memory is session-budgeted.
+function drawBackdrop(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  box: LayoutBox,
+  filter: string,
+  pool: ScratchSurfacePool,
+) {
+  const m = context.getTransform();
+  const corners = [
+    [box.x, box.y],
+    [box.x + box.width, box.y],
+    [box.x, box.y + box.height],
+    [box.x + box.width, box.y + box.height],
+  ];
+  const xs = corners.map(([x, y]) => m.a * x! + m.c * y! + m.e),
+    ys = corners.map(([x, y]) => m.b * x! + m.d * y! + m.f);
+  const scale = Math.max(Math.hypot(m.a, m.b), Math.hypot(m.c, m.d));
+  let halo = 0;
+  const deviceFilter = filter.replace(
+    /blur\(\s*([.\d]+)px\s*\)/gi,
+    (_, v: string) => {
+      const r = Number(v) * scale;
+      halo += Math.ceil(r * 3);
+      return `blur(${r}px)`;
+    },
+  );
+  const x = Math.max(0, Math.floor(Math.min(...xs)) - halo),
+    y = Math.max(0, Math.floor(Math.min(...ys)) - halo);
+  const width =
+      Math.min(context.canvas.width, Math.ceil(Math.max(...xs)) + halo) - x,
+    height =
+      Math.min(context.canvas.height, Math.ceil(Math.max(...ys)) + halo) - y;
+  const alpha = context.globalAlpha;
+  if (width <= 0 || height <= 0 || alpha <= 0) return;
+  const lease = pool.acquire({ width, height, purpose: "backdrop-filter" });
+  let poisoned = true;
+  try {
+    const c = lease.context;
+    if (!("filter" in c))
+      throw Error("This Canvas2D context cannot render backdrop filters.");
+    c.save();
+    try {
+      c.clearRect(0, 0, width, height);
+      c.filter = deviceFilter;
+      c.globalAlpha = alpha;
+      c.drawImage(context.canvas, x, y, width, height, 0, 0, width, height);
+      if (alpha < 1) {
+        c.filter = "none";
+        c.globalAlpha = 1 - alpha;
+        c.globalCompositeOperation = "lighter";
+        c.drawImage(context.canvas, x, y, width, height, 0, 0, width, height);
+      }
+    } finally {
+      c.restore();
+    }
+    context.save();
+    try {
+      roundedRect(
+        context,
+        box.x,
+        box.y,
+        box.width,
+        box.height,
+        resolveCornerRadii(box.node.style, box),
+      );
+      context.clip();
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.globalAlpha = 1;
+      context.filter = "none";
+      context.globalCompositeOperation = "copy";
+      context.drawImage(
+        lease.surface,
+        0,
+        0,
+        width,
+        height,
+        x,
+        y,
+        width,
+        height,
+      );
+    } finally {
+      context.restore();
+    }
+    poisoned = false;
+  } finally {
+    lease.release({ poisoned });
+  }
 }
 
 function drawBoxDirect(
@@ -4865,6 +4982,8 @@ function drawBoxDirect(
       options.suppressRootMask ? undefined : node.mask,
     );
 
+    if (!options.suppressRootComposite && style.backdropFilter && style.backdropFilter !== "none")
+      drawBackdrop(context, box, style.backdropFilter, scratchSurfacePool);
     drawBackground(context, box, style, scratchSurfacePool);
 
     if (style.overflow === "hidden") {
@@ -5698,7 +5817,24 @@ function drawShape(
     context.lineCap = style.strokeLineCap ?? "butt";
     context.lineJoin = style.strokeLineJoin ?? "miter";
     context.setLineDash(style.strokeDash ?? []);
-    context.stroke(shapePath.path);
+    const start = style.trimStart ?? 0,
+      end = style.trimEnd ?? 1;
+    const radius =
+      geometry.kind === "rect" && geometry.radius !== undefined
+        ? readLength(geometry.radius, Math.min(box.width, box.height), 0)
+        : resolveCornerRadii(style, box);
+    context.stroke(
+      start === 0 && end === 1
+        ? shapePath.path
+        : trimmedStroke(
+            geometry,
+            box,
+            normalizeCornerRadii(radius, box.width, box.height),
+            start,
+            end,
+            style.trimOffset ?? 0,
+          ),
+    );
   }
 }
 
@@ -8448,8 +8584,18 @@ function applyTransform(
         );
       } else if (fn.kind === "scale") {
         context.scale(fn.x, fn.y);
-      } else {
+      } else if (fn.kind === "rotate") {
         context.rotate((fn.degrees * Math.PI) / 180);
+      } else {
+        const shear = Math.tan((fn.degrees * Math.PI) / 180);
+        context.transform(
+          1,
+          fn.kind === "skewY" ? shear : 0,
+          fn.kind === "skewX" ? shear : 0,
+          1,
+          0,
+          0,
+        );
       }
     }
   }

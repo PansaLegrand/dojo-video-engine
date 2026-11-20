@@ -1,0 +1,95 @@
+{
+  "id": "fieldNotes",
+  "title": "Field Notes",
+  "category": "data story",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/data-story.json",
+  "sourceSha256": "0514c0bc94f63105a41a26a54670686318cae12e16a2f9ec93aa0244e3728b38",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "Two or more series reveal on one scale with an exact value table.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "chart",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "chart.title",
+    "chart": "comparisonChart data and geometry",
+    "accentColor": "frame rules"
+  },
+  "adaptations": [
+    {
+      "blueprint": "fieldNotes",
+      "headline": "Field Notes",
+      "chart": {
+        "kind": "line",
+        "unit": "%",
+        "domain": {
+          "min": 0,
+          "max": 100
+        },
+        "categories": [
+          "A",
+          "B"
+        ],
+        "series": [
+          {
+            "name": "East",
+            "values": [
+              25,
+              60
+            ]
+          },
+          {
+            "name": "West",
+            "values": [
+              65,
+              40
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "blueprint": "fieldNotes",
+      "headline": "Survey Results",
+      "chart": {
+        "kind": "line",
+        "unit": "%",
+        "domain": {
+          "min": 0,
+          "max": 100
+        },
+        "categories": [
+          "A",
+          "B"
+        ],
+        "series": [
+          {
+            "name": "Spring",
+            "values": [
+              30,
+              55
+            ]
+          },
+          {
+            "name": "Autumn",
+            "values": [
+              52,
+              36
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

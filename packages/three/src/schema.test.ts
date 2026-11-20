@@ -90,3 +90,26 @@ describe("declarative 3D scenes", () => {
     ).toThrow(/version/);
   });
 });
+
+it("samples eased plane motion by absolute seconds in shuffled order", () => {
+  const s = parseThreeScene({
+    ...fixture,
+    objects: {
+      card: {
+        kind: "mesh",
+        geometry: { kind: "plane", width: 2, height: 1 },
+        materialId: "body",
+        keyframes: {
+          "position.x": [
+            { time: 0, value: 0 },
+            { time: 2, value: 8, easing: "easeIn" },
+          ],
+        },
+      },
+    },
+  });
+  const card = s.objects.card!;
+  expect(
+    [2, 1, 0, 1].map((t) => evaluateThreeTransform(card, t).position.x),
+  ).toEqual([8, 2, 0, 2]);
+});

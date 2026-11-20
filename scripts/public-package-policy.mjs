@@ -6,6 +6,7 @@ export const publicPackagePolicy = {
   "@dojo-video-engine/three": {
     owner: "Bounded declarative Three.js layers and optional GPU runtime",
     allowedDojoVideoEngineDependencies: [
+      "@dojo-video-engine/core",
       "@dojo-video-engine/schema",
       "@dojo-video-engine/extensions",
       "@dojo-video-engine/renderer-canvas2d",

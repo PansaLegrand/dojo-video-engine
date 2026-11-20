@@ -1,0 +1,41 @@
+{
+  "id": "nightLeague",
+  "title": "Night League",
+  "category": "sports opener",
+  "hasEditableBlueprint": true,
+  "source": "examples/creative-showcase/sports.json",
+  "sourceSha256": "bad2ea5f1fb6f8ae911de2f2fd352fbbf6d938425106030ca54e669610b63ab6",
+  "supportedFormats": [
+    "16:9",
+    "9:16",
+    "1:1"
+  ],
+  "fps": 30,
+  "durationInFrames": 180,
+  "invariants": [
+    "The original stadium pushes forward behind the event title.",
+    "Preserve ordered art layers and a final readable hold."
+  ],
+  "slots": [
+    "headline",
+    "subheadline",
+    "brandUrl",
+    "accentColor"
+  ],
+  "bindings": {
+    "headline": "headline.text",
+    "subheadline": "subhead.text",
+    "brandUrl": "url.text",
+    "accentColor": "accent.style.backgroundColor"
+  },
+  "adaptations": [
+    {
+      "blueprint": "nightLeague",
+      "headline": "Night League"
+    },
+    {
+      "blueprint": "nightLeague",
+      "headline": "Final Whistle"
+    }
+  ]
+}
