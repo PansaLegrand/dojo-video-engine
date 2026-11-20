@@ -209,6 +209,36 @@ fixed legacy clip layouts, and caller-style override precedence are unchanged.
 Future adaptive layout-plan compilers can be added under new manifest ids;
 they do not silently redefine an existing preset name.
 
+## Editable radial motion
+
+`radialGroup` arranges native shapes on a circle or an open arc. A complete
+circle uses distinct positions. An open arc includes both endpoints. The
+angle starts at twelve o'clock and increases clockwise. Radius, center, mark
+width and mark height are in canvas pixels. Leaving the dimensions and center
+unspecified sizes the motif to the shorter side of the canvas.
+
+```json
+{
+  "macro": "radialGroup",
+  "count": 26,
+  "radius": 107,
+  "itemShape": "path",
+  "itemWidth": 36,
+  "itemHeight": 105,
+  "fill": "linear-gradient(90deg, #ac3e37 0%, #ff9f5e 100%)",
+  "motion": "bloom",
+  "staggerFrames": 2,
+  "duration": 192
+}
+```
+
+Choose `bloom` for petals that open and hold, `orbit` for a rotating ring,
+`pulse` for a swell at a fixed radius, or `burst` for outward motion and a
+fade. The path option supplies a closed curved petal. Ellipses and rectangles
+also accept solid or gradient fills. Negative sweeps reverse arc order, and
+negative `orbitDegrees` reverses rotation. After expansion, each mark has
+its own native geometry and style. Changing a mark affects that mark alone.
+
 ## Editable staggered titles
 
 `kineticSplit` reveals a phrase as words, individual graphemes or whole lines.

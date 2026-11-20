@@ -1,4 +1,5 @@
 import { z } from "zod/v3";
+import { radialGroupMacro } from "./radial-group.js";
 import { kineticSplitMacro } from "./kinetic-split.js";
 import { dataChartMacro } from "./data-chart.js";
 import {
@@ -1346,6 +1347,7 @@ registerMacro<z.infer<typeof calloutArrowParams>>({
 
 registerMacro(dataChartMacro);
 registerMacro(kineticSplitMacro);
+registerMacro(radialGroupMacro);
 
 const kineticTextLooks = ["wordPop", "stack", "ticker"] as const;
 
