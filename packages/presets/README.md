@@ -209,6 +209,40 @@ fixed legacy clip layouts, and caller-style override precedence are unchanged.
 Future adaptive layout-plan compilers can be added under new manifest ids;
 they do not silently redefine an existing preset name.
 
+## Editable UI walkthrough
+
+`uiWalkthroughCard` builds an app window with one to six editable step rows.
+The active row changes at equal intervals on the local timeline. The pointer
+travels to the next row before the change, and a focus ring signals its arrival.
+Finished rows keep a checkmark.
+
+```json
+{
+  "macro": "uiWalkthroughCard",
+  "windowTitle": "Review flow",
+  "steps": [
+    { "label": "Capture", "detail": "Import source footage." },
+    { "label": "Organize", "detail": "Arrange the selects." },
+    { "label": "Share", "detail": "Send the review cut." }
+  ],
+  "palette": "midnight",
+  "duration": 192
+}
+```
+
+Use `activeStepIndex` or a single `status: "active"` to hold a particular
+screen. `cursorTargetStep` can point elsewhere on that screen. Indices start
+at zero. The automatic sequence skips authored `done` rows. With all rows
+done, the cursor appears only when a target is requested. The duration must
+supply at least one frame per automatic step.
+
+Window title, badge and labels use one line; optional details can take two.
+Choose `paper` for a light palette, or set a registered `fontFamily` for your
+copy. The window centers by default and accepts pixel `left`, `top`, `width`
+and `height`. Each label and detail appears once in the expanded scene. For
+example, a card with ID `flow` has a native `flow-step-2-label` text node.
+Inspect the actual IDs before revising a project that already has other layers.
+
 ## Editable radial motion
 
 `radialGroup` arranges native shapes on a circle or an open arc. A complete
