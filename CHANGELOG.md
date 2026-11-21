@@ -8,6 +8,10 @@ themselves assert that an npm package or Git tag exists; external publication
 requires the receipts and provenance in
 [`docs/release-process.md`](docs/release-process.md).
 
+## 1.3.1 — 2026-11-21
+
+- Add explicit background, text, mark and axis colors to the editable dataChart macro. The palette paints the chart's own surface and marks. Existing inputs preserve their previous colors and geometry.
+
 ## 1.3.0 — 2026-11-20
 
 - Add nine editable motion blueprints adapted from the MIT showcases, with bounded catalog discovery, responsive layouts and replaceable copy and data. Add kinetic typography, radial groups, UI walkthroughs and multi-series charts.

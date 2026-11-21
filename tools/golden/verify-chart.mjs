@@ -353,6 +353,59 @@ try {
     }
     report.charts[kind] = result;
   }
+  const paletteValues = [18, 31, 27];
+  const paletteScene = expand(1280, 720, {
+    macro: "dataChart",
+    id: "palette",
+    kind: "bar",
+    domain: { min: 0, max: 35 },
+    unit: "attendees",
+    data: paletteValues.map((value, index) => ({
+      label: ["April", "May", "June"][index],
+      value,
+    })),
+    palette: {
+      background: "#f4f0df",
+      text: "#173f32",
+      marks: "#245a45",
+      axis: "#879b8d",
+    },
+  });
+  report.charts.palette = await render(
+    page,
+    "palette",
+    paletteScene,
+    (rgb, width, height, frame) => {
+      const pixel = (x, y) =>
+        Array.from(rgb.subarray((y * width + x) * 3, (y * width + x) * 3 + 3));
+      const close = (actual, expected) =>
+        actual.every((v, i) => Math.abs(v - expected[i]) < 25);
+      assert(
+        close(pixel(2, 2), [244, 240, 223]),
+        "The chart surface must paint the requested ivory.",
+      );
+      const lengths = paletteValues.map((value, index) => {
+        const x = Math.round(width * (0.08 + (0.84 * (index + 0.5)) / 3));
+        const rows = [];
+        for (let y = Math.floor(height * 0.23); y < height * 0.715; y++)
+          if (close(pixel(x, y), [36, 90, 69])) rows.push(y);
+        const expected =
+          ((height * 0.48 * value) / 35) *
+          Math.min(1, frame / Math.round(fps * 0.4));
+        assert(
+          Math.abs(rows.length - expected) < 4,
+          "The green bar must encode its value throughout the reveal.",
+        );
+        if (rows.length)
+          assert(
+            Math.abs(rows.at(-1) - height * 0.71) < 4,
+            "Green bars must stay on their zero baseline.",
+          );
+        return rows.length;
+      });
+      return { background: pixel(2, 2), lengths };
+    },
+  );
   await writeFile(join(output, "report.json"), JSON.stringify(report, null, 2));
   console.log("Chart browser previews and decoded exports passed:", output);
 } finally {

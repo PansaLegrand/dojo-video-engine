@@ -1,5 +1,9 @@
 import { z } from "zod/v3";
-import type { SceneNode, SceneStyle } from "@dojo-video-engine/schema";
+import {
+  styleSchema,
+  type SceneNode,
+  type SceneStyle,
+} from "@dojo-video-engine/schema";
 import type { MacroDefinition } from "./macros.js";
 
 const finite = z.number().finite();
@@ -18,6 +22,15 @@ const chartParams = z
     kind: z.enum(["bar", "line"]),
     domain: z.object({ min: finite, max: finite }),
     unit: chartText,
+    palette: z
+      .object({
+        background: styleSchema.shape.backgroundColor,
+        text: styleSchema.shape.color,
+        marks: styleSchema.shape.color,
+        axis: styleSchema.shape.color,
+      })
+      .strict()
+      .optional(),
     data: z
       .array(z.object({ label: chartText, value: finite }))
       .min(2)
@@ -51,12 +64,21 @@ const chartParams = z
 export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
   name: "dataChart",
   description:
-    "Editable bar or line chart for 2–8 supplied category/value pairs. Requires kind, explicit domain {min,max} and unit. Bars start at zero; all marks share one scale during reveal.",
+    "Editable bar or line chart for 2–8 supplied category/value pairs. Requires kind, explicit domain {min,max} and unit. Bars start at zero; all marks share one scale during reveal. Use palette {background,text,marks,axis} to apply requested colors to the visible chart.",
   usage:
-    '{"macro":"dataChart","kind":"line","domain":{"min":0,"max":100},"unit":"%","data":[{"label":"Q1","value":25},{"label":"Q2","value":75}]}',
+    '{"macro":"dataChart","kind":"line","domain":{"min":0,"max":100},"unit":"%","data":[{"label":"Q1","value":25},{"label":"Q2","value":75}],"palette":{"background":"#f4f0df","text":"#173f32","marks":"#245a45","axis":"#879b8d"}}',
   params: chartParams,
   expand: (
-    { id: preferred, from = 0, duration, kind, domain, unit, data },
+    {
+      id: preferred,
+      from = 0,
+      duration,
+      kind,
+      domain,
+      unit,
+      data,
+      palette = {},
+    },
     runtime,
   ) => {
     const id = runtime.uniqueId(preferred ?? "data-chart");
@@ -110,7 +132,7 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
         style: {
           ...box(x, y, available, height * 0.095),
           fontSize,
-          color: "#f1f5f9",
+          color: palette.text ?? "#f1f5f9",
           textAlign: "center",
         },
       };
@@ -124,7 +146,7 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
         type: "div",
         style: {
           ...box(left, baseline, plotWidth, short * 0.003),
-          backgroundColor: "#94a3b8",
+          backgroundColor: palette.axis ?? "#94a3b8",
         },
       },
       label(
@@ -157,7 +179,7 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
         shape: { kind: "polyline", points },
         style: {
           ...box(left, top, plotWidth, plotHeight),
-          stroke: "#38bdf8",
+          stroke: palette.marks ?? "#38bdf8",
           strokeWidth: short * 0.006,
           fill: "transparent",
           strokeLineJoin: "round",
@@ -180,7 +202,7 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
               slot * 0.54,
               Math.abs(y - baseline),
             ),
-            fill: "#38bdf8",
+            fill: palette.marks ?? "#38bdf8",
           },
           ...(reveal > 0
             ? {
@@ -198,7 +220,7 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
           shape: { kind: "ellipse" },
           style: {
             ...box(x - radius, y - radius, radius * 2, radius * 2),
-            fill: "#38bdf8",
+            fill: palette.marks ?? "#38bdf8",
           },
         });
       children.push(
@@ -242,7 +264,10 @@ export const dataChartMacro: MacroDefinition<z.infer<typeof chartParams>> = {
       type: "div",
       from,
       duration: window,
-      style: { ...box(0, 0, width, height), backgroundColor: "#0f172a" },
+      style: {
+        ...box(0, 0, width, height),
+        backgroundColor: palette.background ?? "#0f172a",
+      },
       children,
     };
   },

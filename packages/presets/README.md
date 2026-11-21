@@ -574,3 +574,7 @@ Internal/not public:
 ## License
 
 MIT
+
+### Chart palette
+
+With Engine 1.3.1, supply `palette: {background, text, marks, axis}` on `dataChart` to set the visible chart colors. All fields are optional and accept the engine color grammar. The palette applies to the root surface, all labels, the bar fill or line and markers, and the axis. Omitted fields retain their original colors. The chart preserves its data scale, timing and editable node IDs.

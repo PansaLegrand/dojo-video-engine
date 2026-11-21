@@ -152,6 +152,48 @@ describe("dataChart macro", () => {
     validScene(nodes);
     return nodes[0] as SceneNode;
   };
+  it("applies a requested palette to the painted surface, labels, line and bars while preserving their geometry", () => {
+    const palette = {
+      background: "#f4f0df",
+      text: "#173f32",
+      marks: "#245a45",
+      axis: "#879b8d",
+    };
+    for (const kind of ["bar", "line"]) {
+      const plain = expand({ kind });
+      const chart = expand({ kind, palette });
+      expect(chart.style?.backgroundColor).toBe(palette.background);
+      expect(chart.children![0]!.style?.backgroundColor).toBe(palette.axis);
+      expect(
+        chart
+          .children!.filter((n) => n.type === "text")
+          .every((n) => n.style?.color === palette.text),
+      ).toBe(true);
+      for (const mark of chart.children!.at(-1)!.children!) {
+        expect(
+          mark.shape?.kind === "polyline"
+            ? mark.style?.stroke
+            : mark.style?.fill,
+        ).toBe(palette.marks);
+      }
+      const normalize = (node: SceneNode): SceneNode => ({
+        ...node,
+        style: {
+          ...node.style,
+          color: undefined,
+          fill: undefined,
+          stroke: undefined,
+          backgroundColor: undefined,
+        },
+        children: node.children?.map(normalize),
+      });
+      expect(normalize(chart)).toEqual(normalize(plain));
+      expect(expand({ kind, palette: {} })).toEqual(plain);
+    }
+    expect(
+      expandMacroNodes([{ ...input, palette: { marks: "garbage" } }], ctx).ok,
+    ).toBe(false);
+  });
   it("uses a single advancing clip while the line and every marker keep identical coordinates", () => {
     const chart = expand();
     const group = chart.children!.find(
